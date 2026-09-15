@@ -1,0 +1,98 @@
+# Continuous integration for the World Quiz monorepo.
+# Documentation: docs/deployment/ci-cd.md
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  # nrwl/nx-set-shas reads workflow runs to find the last successful commit on main.
+  actions: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # This project does not use Nx Cloud; tasks run and cache on the runner only.
+  NX_NO_CLOUD: true
+  NX_DAEMON: false
+
+jobs:
+  checks:
+    name: Format · Lint · Typecheck · Unit tests · Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Full history so `nx affected` can compare against the base commit.
+          fetch-depth: 0
+          filter: tree:0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          # The Cypress binary is only needed by the e2e job.
+          CYPRESS_INSTALL_BINARY: 0
+
+      - name: Derive base/head SHAs for nx affected
+        uses: nrwl/nx-set-shas@v5
+
+      - name: Check formatting
+        run: npx nx format:check
+
+      - name: Lint, typecheck, test and build affected projects
+        run: npx nx affected -t lint typecheck test build --parallel=3
+
+  e2e:
+    name: Cypress E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          filter: tree:0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Cache Cypress binary
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/Cypress
+          key: cypress-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify Cypress
+        run: npx cypress verify
+
+      - name: Derive base/head SHAs for nx affected
+        uses: nrwl/nx-set-shas@v5
+
+      # `e2e` depends on the continuous `shell:serve` target; the production
+      # configuration serves a production build and Cypress runs headless.
+      # (The atomized `e2e-ci` variant requires Nx Cloud, which is not used.)
+      - name: Run affected E2E suites
+        run: npx nx affected -t e2e --configuration=production --parallel=1
+
+      - name: Upload Cypress screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: cypress-screenshots
+          path: dist/cypress/**/screenshots
+          if-no-files-found: ignore

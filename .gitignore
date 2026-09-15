@@ -1,28 +1,50 @@
-# Angular specific
-/dist/
-/out-tsc/
-/tmp/
-/coverage/
-/e2e/test-output/
-/.angular/
-.angular/
+# NOTE: package-lock.json is intentionally committed (reproducible installs, Nx project graph).
 
-# Node modules and dependency files
-/node_modules/
-/package-lock.json
-/yarn.lock
+# Dependencies
+node_modules/
 
-# Environment files
-/.env
-
-# Angular CLI and build artefacts
-/.angular-cli.json
-/.ng/
-
-# TypeScript cache
+# Build output
+dist/
+out-tsc/
+tmp/
+coverage/
 *.tsbuildinfo
+
+# Angular / Vite / Vitest caches
+.angular/
+vitest.config.*.timestamp*
+__screenshots__/
+
+# Nx
+.nx/cache
+.nx/workspace-data
+.nx/polygraph
+.nx/self-healing
+.nx/migrate-runs
+
+# Cypress artefacts
+apps/*-e2e/src/videos/
+apps/*-e2e/src/screenshots/
+dist/cypress/
+
+# Environment files (never commit real credentials; see .env.example)
+.env
+.env.*
+!.env.example
+
+# IDEs and editors
+.idea/
+.vscode/
+*.sublime-workspace
+
+# Claude Code local files
+.claude/settings.local.json
+.claude/worktrees
 
 # Logs
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
