@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../../dist/out-tsc",
+    "declaration": true,
+    // Purity guard: only ECMAScript built-ins. No DOM (window, document,
+    // localStorage) and no Node.js ambient types (process, Buffer). Code that
+    // needs a platform API must receive it through an injected abstraction.
+    "lib": ["es2022"],
+    "types": []
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"]
+}

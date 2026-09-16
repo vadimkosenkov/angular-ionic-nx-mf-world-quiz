@@ -1,0 +1,158 @@
+# Nx workspace
+
+Why Nx: [ADR-001](../decisions/ADR-001-nx.md).
+
+## Concepts used in this repository
+
+### Project graph
+
+Nx builds a graph of every project (apps and libs) and the dependencies
+between them. It discovers dependencies by reading TypeScript imports and
+resolving them through `tsconfig.base.json` `paths`, and npm dependencies from
+`package-lock.json`. Every other Nx feature (affected, caching, boundaries)
+depends on this graph.
+
+```bash
+npx nx graph            # interactive visualisation
+npx nx show projects    # list projects
+npx nx show project api # resolved targets of one project
+```
+
+> The lockfile must be committed and not git-ignored. Nx reads it to know
+> external packages; without it, tasks fail with
+> `externalDependency 'eslint' could not be found`.
+
+### Targets, executors and inferred tasks
+
+A **target** is a runnable task of a project (`build`, `test`, `lint`,
+`typecheck`, `e2e`). Targets come from two places:
+
+- **Explicit** in `project.json`, using an **executor** (e.g.
+  `@angular/build:application`, `@nx/esbuild:esbuild`, or `nx:run-commands`
+  for plain shell commands such as `tsc --noEmit`).
+- **Inferred** by plugins listed in `nx.json#plugins`. `@nx/eslint/plugin` adds
+  `lint` to any project with an `eslint.config.mjs`; `@nx/vitest` adds `test`
+  wherever a `vitest.config.mts` exists; `@nx/cypress/plugin` adds `e2e` and
+  `e2e-ci`.
+
+`npx nx show project <name>` prints the final merged result.
+
+### Caching
+
+Cacheable targets (`targetDefaults` in `nx.json`) are hashed from their
+**inputs**: source files, dependency sources, relevant config, and external
+package versions. If the hash was seen before, Nx replays the output instead of
+re-running. `namedInputs.production` excludes spec files, so editing a test does
+not invalidate a production build. `tsconfig.base.json` is a shared global
+input because it affects every project.
+
+### Affected
+
+`nx affected -t <targets>` compares the current commit with a base commit,
+maps changed files to projects, and runs targets only for those projects **and
+everything that depends on them**. A change in `quiz-domain` re-tests the API
+and all frontends; a change in `apps/flags` only touches Flags.
+
+## Workspace layout
+
+```
+apps/
+  shell/        Angular app (future Ionic host)           scope:shell     type:app
+  capitals/     Angular app (future remote)               scope:capitals  type:app
+  flags/        Angular app (future remote)               scope:flags     type:app
+  api/          Express 5 (esbuild, ESM)                  scope:api       type:app
+  shell-e2e/    Cypress                                   scope:shell     type:e2e
+libs/
+  quiz/domain/  Pure TS quiz rules                        scope:shared    type:domain
+  shared/util/  Pure TS helpers                           scope:shared    type:util
+```
+
+Planned libraries (created in the phase that needs them, never as empty placeholders):
+
+| Library                                                    | Tags                               | Phase |
+| ---------------------------------------------------------- | ---------------------------------- | ----- |
+| `quiz/countries` – dataset + SVG flags                     | `scope:shared`, `type:domain`      | 2     |
+| `shared/contracts` – Zod API schemas/types                 | `scope:shared`, `type:contracts`   | 6     |
+| `client/ui` – design system                                | `scope:client`, `type:ui`          | 3     |
+| `client/i18n` – Transloco + en/ru                          | `scope:client`, `type:util`        | 3     |
+| `client/platform` – haptics, audio, network, preferences   | `scope:client`, `type:data-access` | 3     |
+| `client/quiz-ports` – shell ↔ remote injection tokens      | `scope:client`, `type:ports`       | 4     |
+| `client/quiz-feature` – shared quiz play UI                | `scope:client`, `type:feature`     | 4     |
+| `client/data-access` – API client, auth, local store, sync | `scope:client`, `type:data-access` | 6–8   |
+
+## Module boundaries
+
+Every project carries a **scope** tag (who may use it) and a **type** tag
+(which architectural layer it is). `@nx/enforce-module-boundaries` in
+[`eslint.config.mjs`](../../eslint.config.mjs) allows an import only when
+**both** rules pass.
+
+### Scope rules
+
+```mermaid
+flowchart TB
+  shell[scope:shell] --> client[scope:client]
+  capitals[scope:capitals] --> client
+  flags[scope:flags] --> client
+  client --> shared[scope:shared]
+  shell --> shared
+  capitals --> shared
+  flags --> shared
+  api[scope:api] --> shared
+  site[scope:site] --> shared
+```
+
+Remotes can never import the shell, the API can never import client code, and
+`scope:shared` can only import `scope:shared`.
+
+### Type (layer) rules
+
+| Source type   | May depend on                                              |
+| ------------- | ---------------------------------------------------------- |
+| `app`         | feature, ui, data-access, ports, contracts, domain, util   |
+| `e2e`         | contracts, util                                            |
+| `feature`     | feature, ui, data-access, ports, contracts, domain, util   |
+| `ui`          | ui, domain, util (no data-access: UI stays presentational) |
+| `data-access` | data-access, ports, contracts, domain, util                |
+| `ports`       | contracts, domain, util                                    |
+| `contracts`   | contracts, domain, util                                    |
+| `domain`      | domain, util                                               |
+| `util`        | util                                                       |
+
+### Platform purity of `domain` and `util`
+
+The shared libraries must run unchanged in a browser, a WebView and Node.js.
+Four independent guards enforce this (each was verified by adding a violating
+file and watching lint/typecheck fail):
+
+1. `tsconfig.lib.json` uses `lib: ["es2022"]` and `types: []`, so `window`,
+   `document`, `process` and `Buffer` do not exist for the compiler.
+2. `bannedExternalImports` blocks `@angular/*`, `@ionic/*`, `@capacitor/*`,
+   `rxjs`, `express`, `zod`, `dexie`, `drizzle-orm`.
+3. `no-restricted-imports` blocks `node:*` and bare Node built-ins (`fs`,
+   `path`, …), which are not npm packages and so are invisible to rule 2.
+4. `no-restricted-globals` blocks browser and Node globals, as a second line of defence.
+
+## TypeScript configuration
+
+- `tsconfig.base.json` holds shared strict settings (`strict`,
+  `noUncheckedIndexedAccess`, `noPropertyAccessFromIndexSignature`, …) and the
+  `paths` aliases. It deliberately has **no `baseUrl`**: TypeScript 6
+  deprecates it and `paths` resolve relative to the config file.
+- Each project has `tsconfig.json` (references only), plus
+  `tsconfig.app.json`/`tsconfig.lib.json` for production code and
+  `tsconfig.spec.json` for tests with test-only types.
+- Angular apps enable `strictTemplates`. Their `typecheck` target uses
+  `ngc --noEmit`, which type-checks templates too; plain `tsc` would not.
+
+## Adding a new library
+
+```bash
+npx nx g @nx/js:library libs/<area>/<name> \
+  --name=<area>-<name> \
+  --importPath=@world-quiz/<area>/<name> \
+  --tags="scope:<scope>,type:<type>"
+```
+
+Then add a `typecheck` target (copy from `libs/shared/util/project.json`) and,
+for platform-independent code, apply `pureLibraryConfig` in its ESLint config.
