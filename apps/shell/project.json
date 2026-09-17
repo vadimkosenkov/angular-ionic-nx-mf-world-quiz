@@ -19,16 +19,29 @@
           {
             "glob": "**/*",
             "input": "apps/shell/public"
+          },
+          {
+            "glob": "*.svg",
+            "input": "node_modules/flag-icons/flags/4x3",
+            "output": "flags"
+          },
+          {
+            "glob": "LICENSE",
+            "input": "node_modules/flag-icons",
+            "output": "licenses/flag-icons"
           }
         ],
-        "styles": ["apps/shell/src/styles.scss"]
+        "styles": [
+          "apps/shell/src/styles.scss",
+          "libs/client/ui/src/styles/index.scss"
+        ]
       },
       "configurations": {
         "production": {
           "budgets": [
             {
               "type": "initial",
-              "maximumWarning": "500kb",
+              "maximumWarning": "800kb",
               "maximumError": "1mb"
             },
             {
@@ -68,7 +81,8 @@
     "test": {
       "executor": "@angular/build:unit-test",
       "options": {
-        "watch": false
+        "watch": false,
+        "setupFiles": ["apps/shell/src/testing/test-setup.ts"]
       }
     },
     "serve-static": {

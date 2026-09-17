@@ -2,14 +2,15 @@
 // tab, line feed and carriage return. A single raw NUL byte makes Git treat a
 // source file as binary, which hides its diffs from code review.
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 const BINARY_EXTENSIONS = /\.(ico|png|jpe?g|gif|webp|woff2?|ttf|otf|pdf)$/i;
 const FORBIDDEN = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/;
 
 const files = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8' })
   .split('\x00')
-  .filter((file) => file && !BINARY_EXTENSIONS.test(file));
+  // Files deleted in the working tree are still listed until the deletion is staged.
+  .filter((file) => file && !BINARY_EXTENSIONS.test(file) && existsSync(file));
 
 const problems = [];
 for (const file of files) {

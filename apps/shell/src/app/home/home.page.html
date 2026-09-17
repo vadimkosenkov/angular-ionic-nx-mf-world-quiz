@@ -1,0 +1,141 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>{{ 'app.name' | transloco }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="wq-aurora">
+  <div class="wq-page">
+    <header class="greeting">
+      <h1 data-testid="greeting">
+        {{ 'home.greeting.' + greeting() | transloco }}
+      </h1>
+      <p class="wq-text-secondary">{{ 'home.subtitle' | transloco }}</p>
+    </header>
+
+    <wq-progress-card
+      variant="glass"
+      data-testid="overall-progress"
+      [heading]="'home.progress.title' | transloco"
+      [value]="progress.combinedProgress().mastered"
+      [max]="progress.combinedProgress().total"
+      [valueText]="
+        'common.progressValue'
+          | transloco
+            : {
+                value: progress.combinedProgress().mastered,
+                max: progress.combinedProgress().total,
+              }
+      "
+      [caption]="'home.progress.caption' | transloco"
+      [detail]="
+        'home.progress.percent'
+          | transloco: { percent: progress.combinedProgress().percent }
+      "
+    />
+
+    <section class="wq-section" aria-labelledby="categories-title">
+      <h2 id="categories-title" class="wq-section-title">
+        {{ 'home.categories.title' | transloco }}
+      </h2>
+
+      @for (card of categories; track card.category) { @let world =
+      progress.worldProgress()[card.category];
+      <article
+        class="category"
+        [class.featured]="card.featured"
+        [attr.data-testid]="'category-' + card.category"
+      >
+        <div class="category-header">
+          <div>
+            <p class="eyebrow">
+              {{ 'categories.' + card.category | transloco }}
+            </p>
+            <h3>
+              {{ 'home.categories.' + card.category + '.title' | transloco }}
+            </h3>
+            <p class="description">
+              {{ 'home.categories.' + card.category + '.description' | transloco
+              }}
+            </p>
+          </div>
+          <div class="category-icon" aria-hidden="true">
+            <ion-icon [name]="card.icon" />
+          </div>
+        </div>
+
+        <p class="meta">
+          {{ 'counts.countries' | wqPlural: progress.countryCount }} · {{
+          'counts.regions' | wqPlural: progress.regionCount }}
+        </p>
+
+        <wq-progress-bar
+          [value]="world.mastered"
+          [max]="world.total"
+          [label]="'categories.' + card.category | transloco"
+          [valueText]="
+              'achievements.progress'
+                | transloco: { mastered: world.mastered, total: world.total }
+            "
+        />
+
+        <div class="category-footer">
+          <span>
+            {{ 'achievements.progress' | transloco: { mastered: world.mastered,
+            total: world.total } }}
+          </span>
+          <ion-badge>{{ 'common.comingSoon' | transloco }}</ion-badge>
+        </div>
+      </article>
+      }
+    </section>
+
+    <section class="wq-section" aria-labelledby="practice-title">
+      <h2 id="practice-title" class="wq-section-title">
+        {{ 'home.practice.title' | transloco }}
+      </h2>
+      <div class="wq-card practice" data-testid="practice">
+        @if (progress.mistakeCount() === 0) {
+        <wq-empty-state
+          icon="sparkles-outline"
+          [heading]="'home.practice.emptyTitle' | transloco"
+          [message]="'home.practice.empty' | transloco"
+        />
+        } @else {
+        <p>{{ 'counts.mistakes' | wqPlural: progress.mistakeCount() }}</p>
+        }
+      </div>
+    </section>
+
+    <section class="wq-section" aria-labelledby="achievements-title">
+      <div class="section-row">
+        <h2 id="achievements-title" class="wq-section-title">
+          {{ 'home.achievements.title' | transloco }}
+        </h2>
+        <a routerLink="/achievements" class="see-all">
+          {{ 'home.achievements.seeAll' | transloco }}
+        </a>
+      </div>
+      <ul class="wq-card achievement-list" data-testid="achievement-preview">
+        @for (entry of achievementPreview(); track entry.achievement.id) { @let
+        name = 'achievements.name.' + entry.achievement.category | transloco : {
+        scope: 'regions.' + entry.achievement.scope | transloco };
+        <li>
+          <div class="achievement-row">
+            <span>{{ name }}</span>
+            <span class="wq-text-secondary"
+              >{{ entry.mastered }}/{{ entry.total }}</span
+            >
+          </div>
+          <wq-progress-bar
+            [value]="entry.mastered"
+            [max]="entry.total"
+            [label]="name"
+            [tone]="entry.status === 'unlocked' ? 'success' : 'primary'"
+          />
+        </li>
+        }
+      </ul>
+    </section>
+  </div>
+</ion-content>

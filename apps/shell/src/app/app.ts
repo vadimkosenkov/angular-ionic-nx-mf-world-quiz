@@ -1,10 +1,13 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { IonApp, IonRouterOutlet } from '@ionic/angular';
 
 @Component({
   selector: 'wq-root',
-  imports: [RouterOutlet],
-  templateUrl: './app.html',
-  styleUrl: './app.scss',
+  imports: [IonApp, IonRouterOutlet],
+  template: `
+    <ion-app>
+      <ion-router-outlet />
+    </ion-app>
+  `,
 })
 export class App {}

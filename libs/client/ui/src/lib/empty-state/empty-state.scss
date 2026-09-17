@@ -1,0 +1,32 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--wq-space-3);
+  padding: var(--wq-space-8) var(--wq-space-6);
+  text-align: center;
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--wq-radius-md);
+  background: var(--wq-color-primary-container);
+  color: var(--wq-color-on-primary-container);
+  font-size: 30px;
+}
+
+.heading {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.message {
+  max-width: 34ch;
+  margin: 0;
+  color: var(--wq-color-text-secondary);
+  line-height: 1.45;
+}

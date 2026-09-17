@@ -1,0 +1,93 @@
+// Page background, typography helpers and global accessibility rules.
+
+// Soft "aurora" behind content, so translucent surfaces have something to show.
+ion-content.wq-aurora {
+  --background:
+    radial-gradient(120% 60% at 0% 0%, var(--wq-aurora-1), transparent 60%),
+    radial-gradient(90% 50% at 100% 10%, var(--wq-aurora-2), transparent 65%),
+    radial-gradient(80% 60% at 50% 100%, var(--wq-aurora-3), transparent 70%),
+    var(--wq-color-background);
+}
+
+// iOS large titles: the condensed title sits directly on the page background;
+// the main header becomes a glass bar once content scrolls under it.
+ion-header.header-collapse-condense ion-toolbar {
+  --background: transparent;
+}
+
+ion-header.header-translucent ion-toolbar {
+  --background: var(--wq-color-glass-surface);
+}
+
+// Secondary values in lists must stay readable (Ionic's default is too faint).
+ion-note {
+  --color: var(--wq-color-text-secondary);
+}
+
+.wq-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wq-space-6);
+  max-width: 720px;
+  margin-inline: auto;
+  padding: var(--wq-space-4) var(--wq-space-5) var(--wq-space-8);
+}
+
+.wq-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wq-space-3);
+}
+
+.wq-section-title {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--wq-color-text-secondary);
+}
+
+.wq-card {
+  background: var(--wq-color-surface);
+  border: 1px solid var(--wq-color-border);
+  border-radius: var(--wq-radius-lg);
+  box-shadow: var(--wq-shadow-card);
+}
+
+.wq-text-secondary {
+  color: var(--wq-color-text-secondary);
+}
+
+// Visible keyboard focus for web (touch users never see it).
+:where(
+  a,
+  button,
+  [tabindex],
+  ion-item,
+  ion-segment-button,
+  ion-tab-button
+):focus-visible {
+  outline: 3px solid var(--wq-color-primary-bright);
+  outline-offset: 2px;
+}
+
+.wq-visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

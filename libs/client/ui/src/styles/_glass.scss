@@ -1,0 +1,108 @@
+// Liquid Glass-inspired surfaces, as progressive enhancement.
+//
+// Baseline: an opaque surface that is fully readable everywhere.
+// Enhancement: translucency + blur + a light edge, only where the browser
+// supports backdrop-filter AND the user has not asked for reduced
+// transparency. Functionality never depends on the effect.
+//
+// Use sparingly: navigation chrome, the progress summary, highlights.
+
+@mixin glass-surface {
+  background: var(--wq-color-surface);
+  border: 1px solid var(--wq-color-border);
+
+  @supports (
+    (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+  ) {
+    @media not (prefers-reduced-transparency: reduce) {
+      background: var(--wq-color-glass-surface);
+      border-color: var(--wq-color-glass-border);
+      box-shadow:
+        inset 0 1px 0 var(--wq-color-glass-highlight),
+        var(--wq-shadow-card);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      backdrop-filter: blur(24px) saturate(180%);
+    }
+  }
+}
+
+.wq-glass {
+  @include glass-surface;
+}
+
+// Floating Liquid Glass tab bar: a capsule hovering above the content, which
+// scrolls underneath it. Pages reserve `--wq-tab-bar-clearance` at the bottom.
+ion-tab-bar.wq-floating-tab-bar {
+  --background: transparent;
+  --border: 0;
+  position: absolute;
+  inset-inline: var(--wq-space-3);
+  bottom: max(var(--wq-space-3), var(--ion-safe-area-bottom, 0px));
+  z-index: 10;
+  --wq-tab-bar-height: 60px;
+  --wq-tab-bar-padding: 4px;
+  max-width: 560px;
+  margin-inline: auto;
+  padding: var(--wq-tab-bar-padding);
+  // Ionic forces `box-sizing: content-box !important` inside the tab bar's
+  // shadow DOM, which outside styles cannot override. Subtract padding and
+  // the 1 px borders so the total height is exactly --wq-tab-bar-height.
+  height: calc(var(--wq-tab-bar-height) - 2 * var(--wq-tab-bar-padding) - 2px);
+  border-radius: var(--wq-radius-pill);
+  background: var(--wq-color-surface);
+  border: 1px solid var(--wq-color-border);
+  box-shadow: var(--wq-shadow-floating);
+
+  @supports (
+    (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+  ) {
+    @media not (prefers-reduced-transparency: reduce) {
+      background:
+        linear-gradient(
+          180deg,
+          var(--wq-color-glass-highlight) 0%,
+          transparent 45%
+        ),
+        var(--wq-color-tab-bar-glass);
+      border-color: var(--wq-color-glass-border);
+      box-shadow:
+        inset 0 1px 0 var(--wq-color-glass-highlight),
+        inset 0 -1px 0 rgb(255 255 255 / 12%),
+        var(--wq-shadow-floating);
+      -webkit-backdrop-filter: blur(10px) saturate(200%);
+      backdrop-filter: blur(10px) saturate(200%);
+    }
+  }
+
+  // Breathing room between the labels and the edges of the selected pill.
+  ion-tab-button {
+    --background: transparent;
+    --background-focused: transparent;
+    --padding-top: 6px;
+    --padding-bottom: 6px;
+    --padding-start: 8px;
+    --padding-end: 8px;
+    height: 100%;
+    border-radius: var(--wq-radius-pill);
+    transition: background-color var(--wq-duration-base)
+      var(--wq-easing-standard);
+
+    &.tab-selected {
+      background: color-mix(in srgb, var(--wq-color-primary) 16%, transparent);
+    }
+  }
+}
+
+ion-tabs .wq-page {
+  padding-bottom: var(--wq-tab-bar-clearance);
+}
+
+// Toolbars use backdrop-filter too; fall back to opaque chrome when
+// transparency should be reduced.
+@media (prefers-reduced-transparency: reduce) {
+  ion-toolbar {
+    --background: var(--wq-color-surface);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}

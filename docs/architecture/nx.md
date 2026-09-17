@@ -65,17 +65,19 @@ apps/
 libs/
   quiz/domain/     Pure TS quiz rules                     scope:shared    type:domain
   quiz/countries/  Static 195-country dataset             scope:shared    type:domain
+  client/ui/       Design system (Angular)                scope:client    type:ui
+  client/i18n/     Transloco + en/ru translations         scope:client    type:data-access
+  client/settings/ Settings store, storage, theme sync    scope:client    type:data-access
   shared/util/  Pure TS helpers                           scope:shared    type:util
 ```
 
-Planned libraries (created in the phase that needs them, never as empty placeholders):
+Planned libraries (created in the phase that needs them, never as empty placeholders).
+Platform services (haptics, audio, network status) will join `client/settings`
+or a `client/platform` library when the features that need them arrive:
 
 | Library                                                    | Tags                               | Phase |
 | ---------------------------------------------------------- | ---------------------------------- | ----- |
 | `shared/contracts` – Zod API schemas/types                 | `scope:shared`, `type:contracts`   | 6     |
-| `client/ui` – design system                                | `scope:client`, `type:ui`          | 3     |
-| `client/i18n` – Transloco + en/ru                          | `scope:client`, `type:util`        | 3     |
-| `client/platform` – haptics, audio, network, preferences   | `scope:client`, `type:data-access` | 3     |
 | `client/quiz-ports` – shell ↔ remote injection tokens      | `scope:client`, `type:ports`       | 4     |
 | `client/quiz-feature` – shared quiz play UI                | `scope:client`, `type:feature`     | 4     |
 | `client/data-access` – API client, auth, local store, sync | `scope:client`, `type:data-access` | 6–8   |
@@ -128,7 +130,8 @@ file and watching lint/typecheck fail):
 
 1. `tsconfig.lib.json` uses `lib: ["es2022"]` and `types: []`, so `window`,
    `document`, `process` and `Buffer` do not exist for the compiler.
-2. `bannedExternalImports` blocks `@angular/*`, `@ionic/*`, `@capacitor/*`,
+2. `bannedExternalImports` (applied to projects tagged **both** `scope:shared`
+   and `type:domain`/`type:util`/`type:contracts`, via `allSourceTags`) blocks `@angular/*`, `@ionic/*`, `@capacitor/*`,
    `rxjs`, `express`, `zod`, `dexie`, `drizzle-orm`.
 3. `no-restricted-imports` blocks `node:*` and bare Node built-ins (`fs`,
    `path`, …), which are not npm packages and so are invisible to rule 2.
@@ -148,6 +151,29 @@ file and watching lint/typecheck fail):
   `tsconfig.spec.json` for tests with test-only types.
 - Angular apps enable `strictTemplates`. Their `typecheck` target uses
   `ngc --noEmit`, which type-checks templates too; plain `tsc` would not.
+
+## Tests for Angular libraries
+
+Angular's official unit-test builder (`@angular/build:unit-test`, Vitest) needs
+an application build to compile specs. Non-buildable Angular libraries
+therefore use the shell's development build as their test build:
+
+```json
+"test": {
+  "executor": "@angular/build:unit-test",
+  "options": {
+    "buildTarget": "shell:build:development",
+    "tsConfig": "libs/client/ui/tsconfig.spec.json",
+    "watch": false
+  }
+}
+```
+
+The builder only runs the spec files of the library's own tsconfig, so each
+library still has its own `nx test <lib>` target. The alternative Nx offers
+(AnalogJS's Vite plugin, `vitest-analog`) could not be installed: its optional
+peer dependency on `@angular-devkit/build-angular` makes npm's resolver fail
+with Angular 22. See docs/development/troubleshooting.md.
 
 ## Adding a new library
 

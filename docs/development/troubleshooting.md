@@ -77,6 +77,25 @@ disappear from code review. In Phase 2 this happened in `leaderboard.ts`: a
 leaderboard now builds composite keys with `JSON.stringify`). CI runs
 `npm run check:control-chars`, which fails with the file and line of any such character.
 
+## `ERESOLVE … @analogjs/vite-plugin-angular … Conflicting peer dependency: @angular/compiler-cli`
+
+**Cause:** `nx g @nx/angular:library --unitTestRunner=vitest-analog` adds
+AnalogJS. Its _optional_ peer dependency on `@angular-devkit/build-angular`
+makes npm evaluate an Angular 21 version against Angular 22 and fail.
+
+**Fix used here:** do not use AnalogJS. Angular libraries use Angular's own
+`@angular/build:unit-test` builder with `buildTarget: shell:build:development`
+(see docs/architecture/nx.md). The workspace default for new Angular
+libraries is `unitTestRunner: none`; add the test target by hand.
+
+## `window.matchMedia is not a function` / `scrollTo is not a function` in component tests
+
+**Cause:** jsdom does not implement these browser APIs; Ionic and the settings library use them.
+
+**Fix:** the shell's test target loads `apps/shell/src/testing/test-setup.ts`,
+which provides minimal implementations. Library tests that render such
+components need the same setup.
+
 ## Nx shows stale results or odd graph errors
 
 ```bash

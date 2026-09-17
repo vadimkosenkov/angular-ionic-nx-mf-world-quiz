@@ -90,6 +90,17 @@
       "bundler": "none",
       "unitTestRunner": "vitest",
       "useProjectJson": true
+    },
+    "@nx/angular:library": {
+      "linter": "eslint",
+      "unitTestRunner": "none",
+      "standalone": true,
+      "skipModule": true,
+      "style": "scss",
+      "prefix": "wq"
+    },
+    "@nx/angular:component": {
+      "style": "scss"
     }
   }
 }

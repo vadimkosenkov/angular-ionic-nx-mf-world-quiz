@@ -1,0 +1,121 @@
+// Semantic design tokens. Components use these names, never raw colours, so
+// the palette can change without touching component styles.
+//
+// Contrast (WCAG 2.2) was checked for every text/background pair listed in
+// docs/architecture/design-system.md; all normal-size text pairs are ≥ 4.5:1.
+
+:root {
+  // Brand: Apple-like indigo/blue with a subtle lavender accent.
+  --wq-color-primary: #4660f5; // filled controls (white text 4.9:1)
+  --wq-color-primary-bright: #4f6bff; // gradients and decoration only
+  --wq-color-primary-strong: #3a52e0; // primary-coloured text and pressed state
+  --wq-color-on-primary: #ffffff;
+  --wq-color-primary-container: #e7ebff;
+  --wq-color-on-primary-container: #2a3db8;
+  --wq-color-accent: #6b7cff;
+  --wq-color-lavender: #b9a8ff;
+
+  // Surfaces
+  --wq-color-background: #f4f5ff;
+  --wq-color-surface: #ffffff;
+  --wq-color-surface-secondary: #eceefb;
+  --wq-color-glass-surface: rgb(255 255 255 / 62%);
+  --wq-color-glass-border: rgb(255 255 255 / 75%);
+  --wq-color-glass-highlight: rgb(255 255 255 / 85%);
+  --wq-color-border: #e1e4f5;
+  --wq-color-segment-background: #ffffff;
+  --wq-color-segment-indicator: #e7ebff;
+  --wq-color-segment-checked: #2a3db8;
+  --wq-color-tab-bar-glass: rgb(255 255 255 / 45%);
+  --wq-color-overlay: rgb(20 26 58 / 35%);
+
+  // Text
+  --wq-color-text-primary: #141a3a;
+  --wq-color-text-secondary: #555b7c;
+
+  // Feedback
+  --wq-color-success: #16794d;
+  --wq-color-success-container: #dff6ea;
+  --wq-color-error: #c0322f;
+  --wq-color-error-container: #fde7e7;
+  --wq-color-warning: #955800;
+  --wq-color-warning-container: #fff1d6;
+
+  // Background "aurora" behind glass surfaces
+  --wq-aurora-1: rgb(79 107 255 / 18%);
+  --wq-aurora-2: rgb(185 168 255 / 26%);
+  --wq-aurora-3: rgb(107 124 255 / 12%);
+
+  // Shape, depth, spacing
+  --wq-radius-sm: 12px;
+  --wq-radius-md: 18px;
+  --wq-radius-lg: 24px;
+  --wq-radius-pill: 999px;
+  --wq-shadow-card: 0 1px 2px rgb(20 26 58 / 4%), 0 8px 24px rgb(20 26 58 / 6%);
+  --wq-shadow-raised: 0 12px 32px rgb(70 96 245 / 22%);
+  --wq-shadow-floating:
+    0 10px 30px rgb(20 26 58 / 16%), 0 2px 6px rgb(20 26 58 / 8%);
+  --wq-space-1: 4px;
+  --wq-space-2: 8px;
+  --wq-space-3: 12px;
+  --wq-space-4: 16px;
+  --wq-space-5: 20px;
+  --wq-space-6: 24px;
+  --wq-space-8: 32px;
+
+  // Motion
+  --wq-duration-fast: 120ms;
+  --wq-duration-base: 220ms;
+  --wq-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  // Touch
+  --wq-touch-target: 44px;
+
+  // Space reserved at the bottom of tab pages for the floating tab bar
+  --wq-tab-bar-clearance: calc(92px + var(--ion-safe-area-bottom, 0px));
+}
+
+// Dark theme: designed separately, not an inversion. Deep navy surfaces keep
+// the indigo identity; the primary colour is lighter so it stays readable.
+:root.ion-palette-dark {
+  --wq-color-primary: #8b9aff; // dark text on it: 7.4:1
+  --wq-color-primary-bright: #9aa7ff;
+  --wq-color-primary-strong: #a7b2ff;
+  --wq-color-on-primary: #0b0e1f;
+  --wq-color-primary-container: #252f6b;
+  --wq-color-on-primary-container: #dfe4ff;
+  --wq-color-accent: #9aa7ff;
+  --wq-color-lavender: #8f7ae6;
+
+  --wq-color-background: #0b0e1f;
+  --wq-color-surface: #151a33;
+  --wq-color-surface-secondary: #1c2242;
+  --wq-color-glass-surface: rgb(28 34 66 / 58%);
+  --wq-color-glass-border: rgb(255 255 255 / 9%);
+  --wq-color-glass-highlight: rgb(255 255 255 / 14%);
+  --wq-color-border: #262d52;
+  --wq-color-segment-background: #151a33;
+  --wq-color-segment-indicator: #2d3566;
+  --wq-color-segment-checked: #dfe4ff;
+  --wq-color-tab-bar-glass: rgb(21 26 51 / 55%);
+  --wq-color-overlay: rgb(0 0 0 / 55%);
+
+  --wq-color-text-primary: #eef0ff;
+  --wq-color-text-secondary: #a9aecb;
+
+  --wq-color-success: #4ad295;
+  --wq-color-success-container: #0f3a2a;
+  --wq-color-error: #ff7a7a;
+  --wq-color-error-container: #43161a;
+  --wq-color-warning: #f5b54a;
+  --wq-color-warning-container: #3d2a0c;
+
+  --wq-aurora-1: rgb(79 107 255 / 22%);
+  --wq-aurora-2: rgb(143 122 230 / 18%);
+  --wq-aurora-3: rgb(34 211 238 / 6%);
+
+  --wq-shadow-card: 0 1px 2px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 30%);
+  --wq-shadow-raised: 0 12px 32px rgb(0 0 0 / 45%);
+  --wq-shadow-floating:
+    0 12px 32px rgb(0 0 0 / 50%), 0 2px 6px rgb(0 0 0 / 35%);
+}

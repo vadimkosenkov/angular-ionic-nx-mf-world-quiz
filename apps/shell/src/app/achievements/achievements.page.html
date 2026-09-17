@@ -1,0 +1,92 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>{{ 'achievements.title' | transloco }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="wq-aurora">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">{{ 'achievements.title' | transloco }}</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <div class="wq-page">
+    <section class="summary wq-glass" data-testid="achievements-summary">
+      <div class="summary-icon" aria-hidden="true">
+        <ion-icon name="trophy" />
+      </div>
+      <div class="summary-body">
+        <div class="summary-row">
+          <h2>
+            {{ 'achievements.summary' | transloco : { unlocked:
+            summary().unlocked, total: summary().total } }}
+          </h2>
+          <span class="percent">
+            {{ 'achievements.percent' | transloco: { percent: summary().percent
+            } }}
+          </span>
+        </div>
+        <wq-progress-bar
+          [value]="summary().unlocked"
+          [max]="summary().total"
+          [label]="'achievements.title' | transloco"
+          [valueText]="
+            'common.progressValue'
+              | transloco: { value: summary().unlocked, max: summary().total }
+          "
+        />
+      </div>
+    </section>
+
+    <ul class="legend">
+      @for (status of statuses; track status) {
+      <li [class]="status">
+        <ion-icon [name]="statusIcons[status]" aria-hidden="true" />
+        {{ 'achievements.statuses.' + status | transloco }}
+      </li>
+      }
+    </ul>
+
+    <ul class="list" data-testid="achievement-list">
+      @for (entry of progress.achievements(); track entry.achievement.id) { @let
+      name = 'achievements.name.' + entry.achievement.category | transloco: {
+      scope: 'regions.' + entry.achievement.scope | transloco };
+      <li
+        class="achievement"
+        [class]="entry.status"
+        [attr.data-testid]="'achievement-' + entry.achievement.id"
+      >
+        <div class="achievement-icon" aria-hidden="true">
+          <ion-icon
+            [name]="entry.achievement.category === 'capitals' ? 'business-outline' : 'flag-outline'"
+          />
+        </div>
+        <div class="achievement-body">
+          <div class="achievement-row">
+            <h3>{{ name }}</h3>
+            <span class="status">
+              <ion-icon [name]="statusIcons[entry.status]" aria-hidden="true" />
+              {{ 'achievements.statuses.' + entry.status | transloco }}
+            </span>
+          </div>
+          <p class="wq-text-secondary">
+            {{ 'achievements.progress' | transloco: { mastered: entry.mastered,
+            total: entry.total } }}
+          </p>
+          <wq-progress-bar
+            [value]="entry.mastered"
+            [max]="entry.total"
+            [label]="name"
+            [tone]="entry.status === 'unlocked' ? 'success' : 'primary'"
+            [valueText]="
+                'common.progressValue'
+                  | transloco: { value: entry.mastered, max: entry.total }
+              "
+          />
+        </div>
+      </li>
+      }
+    </ul>
+  </div>
+</ion-content>
