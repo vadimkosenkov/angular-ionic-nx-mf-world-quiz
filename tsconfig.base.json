@@ -21,7 +21,8 @@
     "forceConsistentCasingInFileNames": true,
     "paths": {
       "@world-quiz/shared/util": ["./libs/shared/util/src/index.ts"],
-      "@world-quiz/quiz/domain": ["./libs/quiz/domain/src/index.ts"]
+      "@world-quiz/quiz/domain": ["./libs/quiz/domain/src/index.ts"],
+      "@world-quiz/quiz/countries": ["./libs/quiz/countries/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

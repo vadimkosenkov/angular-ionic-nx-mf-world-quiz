@@ -13,6 +13,7 @@ decision. A new ADR supersedes the old one.
 | ADR-005                              | Database access: PostgreSQL + Drizzle                           | Planned (backend phase)           |
 | ADR-006                              | Local persistence: IndexedDB (Dexie) behind a `LocalStore` port | Planned (offline phase)           |
 | [ADR-007](ADR-007-testing.md)        | Testing stack                                                   | Accepted                          |
+| [ADR-008](ADR-008-country-data.md)   | Curated static country dataset and `flag-icons` flags           | Accepted                          |
 
 Template:
 

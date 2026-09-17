@@ -9,14 +9,14 @@ Runs on every pull request and on pushes to `main`.
 flowchart LR
   PR[pull request / push to main] --> A[checks job]
   PR --> B[e2e job]
-  A --> A1[npm ci] --> A2[nx-set-shas] --> A3[format:check] --> A4["nx affected -t lint typecheck test build"]
+  A --> A1[npm ci] --> A2[nx-set-shas] --> A2b[control characters] --> A3[format:check] --> A4["nx affected -t lint typecheck test build"]
   B --> B1[npm ci + Cypress cache] --> B2[cypress verify] --> B3[nx-set-shas] --> B4["nx affected -t e2e --configuration=production"]
 ```
 
-| Job      | What fails it                                                                                                                                                                 |
-| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `checks` | Unformatted files, lint errors (including module-boundary violations), type errors (including Angular templates), failing unit/component/API tests, failing production builds |
-| `e2e`    | Failing Cypress specs against a production-configuration build. Screenshots are uploaded as an artifact on failure.                                                           |
+| Job      | What fails it                                                                                                                                                                                                               |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `checks` | Raw control characters in tracked text files, unformatted files, lint errors (including module-boundary violations), type errors (including Angular templates), failing unit/component/API tests, failing production builds |
+| `e2e`    | Failing Cypress specs against a production-configuration build. Screenshots are uploaded as an artifact on failure.                                                                                                         |
 
 Every step exits non-zero on failure. No step uses `continue-on-error`.
 
@@ -56,6 +56,7 @@ Settings → Branches → add a protection rule (or ruleset) for `main`:
 
 ```bash
 npm ci
+npm run check:control-chars
 npx nx format:check
 npx nx run-many -t lint typecheck test build
 npx nx run-many -t e2e --configuration=production
