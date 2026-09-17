@@ -2,6 +2,7 @@ import {
   ApplicationInitStatus,
   ApplicationRef,
   DOCUMENT,
+  ErrorHandler,
   signal,
 } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
@@ -11,21 +12,28 @@ import { DEVICE_LANGUAGES, SYSTEM_PREFERS_DARK } from './environment';
 import { SETTINGS_STORAGE_KEY } from './settings';
 import { DARK_PALETTE_CLASS, provideAppSettings } from './settings.providers';
 import { SettingsStore } from './settings.store';
-import { createMemoryStorage, KEY_VALUE_STORAGE } from './storage';
+import {
+  createMemoryStorage,
+  KEY_VALUE_STORAGE,
+  type KeyValueStorage,
+} from './storage';
 
 describe('provideAppSettings', () => {
   const systemDark = signal(false);
 
-  async function bootstrap(stored?: string) {
+  async function bootstrap(stored?: string, storage?: KeyValueStorage) {
     TestBed.configureTestingModule({
       providers: [
         provideAppI18n(),
         provideAppSettings(),
+        { provide: ErrorHandler, useValue: { handleError: vi.fn() } },
         {
           provide: KEY_VALUE_STORAGE,
-          useValue: createMemoryStorage(
-            stored ? { [SETTINGS_STORAGE_KEY]: stored } : {},
-          ),
+          useValue:
+            storage ??
+            createMemoryStorage(
+              stored ? { [SETTINGS_STORAGE_KEY]: stored } : {},
+            ),
         },
         { provide: DEVICE_LANGUAGES, useValue: ['en'] },
         { provide: SYSTEM_PREFERS_DARK, useValue: systemDark.asReadonly() },
@@ -62,6 +70,21 @@ describe('provideAppSettings', () => {
     expect(root.lang).toBe('ru');
     expect(transloco.getActiveLang()).toBe('ru');
     expect(transloco.translate('tabs.home')).toBe('Главная');
+  });
+
+  it('still starts, with defaults, when stored settings cannot be read', async () => {
+    const failing: KeyValueStorage = {
+      get: async () => Promise.reject(new Error('blocked')),
+      set: async () => undefined,
+      remove: async () => undefined,
+    };
+    const { root, transloco, settle } = await bootstrap(undefined, failing);
+    await settle();
+
+    expect(TestBed.inject(ApplicationInitStatus).done).toBe(true);
+    expect(root.lang).toBe('en');
+    expect(transloco.translate('tabs.home')).toBe('Home');
+    expect(TestBed.inject(ErrorHandler).handleError).toHaveBeenCalled();
   });
 
   it('switches the dark palette on and off', async () => {

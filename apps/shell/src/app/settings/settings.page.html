@@ -21,7 +21,7 @@
         data-testid="theme-segment"
         aria-labelledby="appearance-title"
         [value]="settings.theme()"
-        (ionChange)="onThemeChange($any($event).detail.value)"
+        (ionChange)="onThemeChange($event)"
       >
         @for (option of themes; track option.value) {
         <ion-segment-button
@@ -47,7 +47,7 @@
           data-testid="language-group"
           aria-labelledby="language-title"
           [value]="settings.locale()"
-          (ionChange)="onLanguageChange($any($event).detail.value)"
+          (ionChange)="onLanguageChange($event)"
         >
           @for (language of languages; track language.value) {
           <ion-item [attr.data-testid]="'language-' + language.value">

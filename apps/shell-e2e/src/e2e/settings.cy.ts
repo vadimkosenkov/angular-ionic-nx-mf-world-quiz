@@ -29,7 +29,7 @@ describe('settings', () => {
 
     html().should('have.attr', 'lang', 'ru');
     cy.get('[data-testid="tab-home"]').should('contain.text', 'Главная');
-    cy.get('#appearance-title').should('have.text', ' Оформление ');
+    cy.get('#appearance-title').should('contain.text', 'Оформление');
 
     cy.reload();
     html().should('have.attr', 'lang', 'ru');

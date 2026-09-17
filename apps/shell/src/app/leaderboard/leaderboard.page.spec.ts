@@ -38,4 +38,30 @@ describe('LeaderboardPage', () => {
       'Leaderboards are on their way',
     );
   });
+
+  it('only accepts known views and boards from segment events', async () => {
+    const { fixture } = await render(LeaderboardPage, {
+      providers: provideShellTesting(),
+    });
+    const page = fixture.componentInstance as unknown as {
+      view: () => string;
+      board: () => string;
+    };
+    const emit = (testId: string, value: unknown) =>
+      screen
+        .getByTestId(testId)
+        .dispatchEvent(new CustomEvent('ionChange', { detail: { value } }));
+    await screen.findByTestId('leaderboard-view');
+
+    emit('leaderboard-view', 'mine');
+    emit('leaderboard-board', 'flags-hard');
+    expect(page.view()).toBe('mine');
+    expect(page.board()).toBe('flags-hard');
+
+    emit('leaderboard-view', 'friends');
+    emit('leaderboard-board', 'flags-timed');
+    emit('leaderboard-board', undefined);
+    expect(page.view()).toBe('mine');
+    expect(page.board()).toBe('flags-hard');
+  });
 });

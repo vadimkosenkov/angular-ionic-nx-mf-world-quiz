@@ -13,6 +13,8 @@ import {
   IonSegmentButton,
   IonTitle,
   IonToolbar,
+  type RadioGroupCustomEvent,
+  type SegmentCustomEvent,
 } from '@ionic/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
@@ -72,13 +74,17 @@ export class SettingsPage {
     { value: 'ru', nativeName: 'Русский', flag: flagAssetPath('ru') },
   ];
 
-  protected onThemeChange(value: unknown): void {
+  // `ionChange` is a DOM event for Angular's strict templates, so the Ionic
+  // event type is applied here and the value is validated before use.
+  protected onThemeChange(event: Event): void {
+    const { value } = (event as SegmentCustomEvent).detail;
     if (isThemePreference(value)) {
       this.settings.setTheme(value);
     }
   }
 
-  protected onLanguageChange(value: unknown): void {
+  protected onLanguageChange(event: Event): void {
+    const { value } = (event as RadioGroupCustomEvent<unknown>).detail;
     if (isLocale(value)) {
       this.settings.setLocale(value);
     }

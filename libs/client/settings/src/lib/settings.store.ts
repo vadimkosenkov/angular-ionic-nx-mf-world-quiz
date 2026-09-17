@@ -45,10 +45,19 @@ export class SettingsStore {
     resolveColorScheme(this.theme(), this.systemPrefersDark()),
   );
 
-  /** Loads persisted settings. Called once during app initialization. */
+  /**
+   * Loads persisted settings. Called once during app initialization.
+   * Never throws: if storage cannot be read (plugin failure, blocked
+   * storage), the error is reported and the defaults stay in place, so the
+   * app still starts.
+   */
   async load(): Promise<void> {
-    const raw = await this.storage.get(SETTINGS_STORAGE_KEY);
-    this.state.set(parseStoredSettings(raw, this.state()));
+    try {
+      const raw = await this.storage.get(SETTINGS_STORAGE_KEY);
+      this.state.set(parseStoredSettings(raw, this.state()));
+    } catch (error: unknown) {
+      this.errorHandler.handleError(error);
+    }
   }
 
   setTheme(theme: ThemePreference): void {

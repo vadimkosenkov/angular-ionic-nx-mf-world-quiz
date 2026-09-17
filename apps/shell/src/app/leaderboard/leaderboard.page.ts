@@ -7,16 +7,23 @@ import {
   IonSegmentButton,
   IonTitle,
   IonToolbar,
+  type SegmentCustomEvent,
 } from '@ionic/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { EmptyState } from '@world-quiz/client/ui';
 import {
+  isLeaderboardBoardId,
   LEADERBOARD_BOARDS,
   type LeaderboardBoardId,
 } from '@world-quiz/quiz/domain';
 import { ProgressStore } from '../core/progress.store';
 
-type LeaderboardView = 'global' | 'mine';
+const LEADERBOARD_VIEWS = ['global', 'mine'] as const;
+type LeaderboardView = (typeof LEADERBOARD_VIEWS)[number];
+
+function isLeaderboardView(value: unknown): value is LeaderboardView {
+  return (LEADERBOARD_VIEWS as readonly unknown[]).includes(value);
+}
 
 /**
  * Global ranking and personal records for the four perfect-run boards.
@@ -57,7 +64,7 @@ type LeaderboardView = 'global' | 'mine';
           class="wq-segment-pill"
           data-testid="leaderboard-view"
           [value]="view()"
-          (ionChange)="view.set($any($event).detail.value)"
+          (ionChange)="onViewChange($event)"
         >
           <ion-segment-button value="global">
             <ion-label>{{ 'leaderboard.views.global' | transloco }}</ion-label>
@@ -73,7 +80,7 @@ type LeaderboardView = 'global' | 'mine';
           [scrollable]="true"
           [value]="board()"
           [attr.aria-label]="'leaderboard.boardsLabel' | transloco"
-          (ionChange)="board.set($any($event).detail.value)"
+          (ionChange)="onBoardChange($event)"
         >
           @for (item of boards; track item.id) {
             <ion-segment-button [value]="item.id">
@@ -116,4 +123,20 @@ export class LeaderboardPage {
   protected readonly boards = LEADERBOARD_BOARDS;
   protected readonly view = signal<LeaderboardView>('global');
   protected readonly board = signal<LeaderboardBoardId>('capitals-easy');
+
+  // `ionChange` is a DOM event for Angular's strict templates, so the Ionic
+  // event type is applied here and the value is validated before use.
+  protected onViewChange(event: Event): void {
+    const { value } = (event as SegmentCustomEvent).detail;
+    if (isLeaderboardView(value)) {
+      this.view.set(value);
+    }
+  }
+
+  protected onBoardChange(event: Event): void {
+    const { value } = (event as SegmentCustomEvent).detail;
+    if (isLeaderboardBoardId(value)) {
+      this.board.set(value);
+    }
+  }
 }

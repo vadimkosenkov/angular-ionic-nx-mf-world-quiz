@@ -174,10 +174,6 @@ export default [
               ],
             },
             {
-              allSourceTags: ['scope:shared', 'type:contracts'],
-              bannedExternalImports: PLATFORM_SPECIFIC_IMPORTS,
-            },
-            {
               sourceTag: 'type:domain',
               onlyDependOnLibsWithTags: ['type:domain', 'type:util'],
             },
@@ -198,8 +194,23 @@ export default [
               allSourceTags: ['scope:shared', 'type:util'],
               bannedExternalImports: [...PLATFORM_SPECIFIC_IMPORTS, 'zod'],
             },
+            {
+              // Contracts may use zod (runtime validation of API payloads).
+              allSourceTags: ['scope:shared', 'type:contracts'],
+              bannedExternalImports: PLATFORM_SPECIFIC_IMPORTS,
+            },
           ],
         },
+      ],
+    },
+  },
+  {
+    // Type-only imports are marked as such (they disappear at runtime).
+    files: ['**/*.ts'],
+    rules: {
+      '@typescript-eslint/consistent-type-imports': [
+        'error',
+        { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
       ],
     },
   },

@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
   IonBadge,
@@ -7,6 +7,7 @@ import {
   IonIcon,
   IonTitle,
   IonToolbar,
+  type ViewWillEnter,
 } from '@ionic/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { PluralPipe } from '@world-quiz/client/i18n';
@@ -41,18 +42,28 @@ interface CategoryCard {
   templateUrl: './home.page.html',
   styleUrl: './home.page.scss',
 })
-export class HomePage {
+export class HomePage implements ViewWillEnter {
   protected readonly progress = inject(ProgressStore);
   private readonly clock = inject(CLOCK);
 
-  protected readonly greeting = greetingFor(
-    new Date(this.clock.now()).getHours(),
-  );
+  /**
+   * Ionic keeps tab pages alive, so the greeting is refreshed every time the
+   * tab is entered instead of being computed once.
+   */
+  protected readonly greeting = signal(this.currentGreeting());
 
   protected readonly categories: readonly CategoryCard[] = [
     { category: 'capitals', icon: 'business', featured: true },
     { category: 'flags', icon: 'flag', featured: false },
   ];
+
+  ionViewWillEnter(): void {
+    this.greeting.set(this.currentGreeting());
+  }
+
+  private currentGreeting() {
+    return greetingFor(new Date(this.clock.now()).getHours());
+  }
 
   /** Most advanced achievements first, so the preview shows what is closest. */
   protected readonly achievementPreview = computed(() =>

@@ -8,7 +8,7 @@
   <div class="wq-page">
     <header class="greeting">
       <h1 data-testid="greeting">
-        {{ 'home.greeting.' + greeting | transloco }}
+        {{ 'home.greeting.' + greeting() | transloco }}
       </h1>
       <p class="wq-text-secondary">{{ 'home.subtitle' | transloco }}</p>
     </header>

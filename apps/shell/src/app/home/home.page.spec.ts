@@ -1,7 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { render, screen } from '@testing-library/angular';
 import { provideShellTesting } from '../../testing/shell-testing';
+import type { ManualClock } from '@world-quiz/shared/util';
 import { ProgressStore } from '../core/progress.store';
+import { CLOCK } from '../core/tokens';
 import { HomePage } from './home.page';
 
 describe('HomePage', () => {
@@ -22,6 +24,26 @@ describe('HomePage', () => {
     );
     expect(screen.getByTestId('category-flags').textContent).toContain(
       '0/195 mastered',
+    );
+  });
+
+  it('refreshes the greeting whenever the tab is entered again', async () => {
+    const { fixture } = await render(HomePage, {
+      providers: provideShellTesting({ now: new Date(2026, 8, 17, 8, 0) }),
+    });
+    expect((await screen.findByTestId('greeting')).textContent?.trim()).toBe(
+      'Good morning',
+    );
+
+    // Ionic keeps the page alive; later the user comes back to the tab.
+    (TestBed.inject(CLOCK) as ManualClock).set(
+      new Date(2026, 8, 17, 19, 0).getTime(),
+    );
+    fixture.componentInstance.ionViewWillEnter();
+    fixture.detectChanges();
+
+    expect(screen.getByTestId('greeting').textContent?.trim()).toBe(
+      'Good evening',
     );
   });
 

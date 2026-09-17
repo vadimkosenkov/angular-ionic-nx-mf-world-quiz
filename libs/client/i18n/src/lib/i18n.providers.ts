@@ -1,4 +1,8 @@
-import { EnvironmentProviders, Injectable, isDevMode } from '@angular/core';
+import {
+  type EnvironmentProviders,
+  Injectable,
+  isDevMode,
+} from '@angular/core';
 import {
   provideTransloco,
   type Translation,

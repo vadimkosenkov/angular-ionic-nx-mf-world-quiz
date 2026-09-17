@@ -62,6 +62,23 @@ describe('SettingsStore', () => {
     expect(store.locale()).toBe('ru');
   });
 
+  it('keeps the defaults and reports the error when storage cannot be read', async () => {
+    const failure = new Error('storage unavailable');
+    const { store, errorHandler } = setup({
+      languages: ['ru'],
+      storage: {
+        get: async () => Promise.reject(failure),
+        set: async () => undefined,
+        remove: async () => undefined,
+      },
+    });
+
+    await expect(store.load()).resolves.toBeUndefined();
+    expect(store.theme()).toBe('system');
+    expect(store.locale()).toBe('ru');
+    expect(errorHandler.handleError).toHaveBeenCalledWith(failure);
+  });
+
   it('applies changes immediately and persists them, last change winning', async () => {
     const { store, storage } = setup();
     store.setTheme('dark');
