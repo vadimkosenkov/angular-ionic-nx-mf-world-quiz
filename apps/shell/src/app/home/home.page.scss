@@ -1,0 +1,166 @@
+.greeting {
+  h1 {
+    margin: var(--wq-space-2) 0 var(--wq-space-1);
+    font-size: 2.125rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.category {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wq-space-3);
+  padding: var(--wq-space-5);
+  border-radius: var(--wq-radius-lg);
+  background: var(--wq-color-surface);
+  border: 1px solid var(--wq-color-border);
+  box-shadow: var(--wq-shadow-card);
+
+  h3 {
+    margin: var(--wq-space-1) 0;
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  // The featured card is an accent surface (not glass): solid brand gradient
+  // with white text, 4.9:1 contrast on its darkest stop.
+  &.featured {
+    border-color: transparent;
+    background: linear-gradient(
+      135deg,
+      var(--wq-color-primary),
+      var(--wq-color-primary-strong)
+    );
+    box-shadow: var(--wq-shadow-raised);
+    color: var(--wq-color-on-primary);
+
+    .eyebrow,
+    .description,
+    .meta,
+    .category-footer {
+      color: inherit;
+      opacity: 0.92;
+    }
+
+    .category-icon {
+      background: rgb(255 255 255 / 18%);
+      color: inherit;
+    }
+
+    // The bar takes the card's text colour in both themes.
+    wq-progress-bar {
+      --wq-color-surface-secondary: color-mix(
+        in srgb,
+        currentColor 25%,
+        transparent
+      );
+      --wq-color-primary: currentColor;
+      --wq-color-accent: currentColor;
+    }
+
+    ion-badge {
+      --background: color-mix(
+        in srgb,
+        var(--wq-color-on-primary) 22%,
+        transparent
+      );
+      --color: var(--wq-color-on-primary);
+    }
+  }
+}
+
+.category-header {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--wq-space-4);
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--wq-color-primary-strong);
+}
+
+.description,
+.meta {
+  margin: 0;
+  color: var(--wq-color-text-secondary);
+}
+
+.category-icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--wq-radius-md);
+  background: var(--wq-color-primary-container);
+  color: var(--wq-color-on-primary-container);
+  font-size: 30px;
+}
+
+.category-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wq-space-3);
+  font-size: 0.875rem;
+  color: var(--wq-color-text-secondary);
+
+  ion-badge {
+    --background: var(--wq-color-primary-container);
+    --color: var(--wq-color-on-primary-container);
+    --padding-start: 10px;
+    --padding-end: 10px;
+    --padding-top: 5px;
+    --padding-bottom: 5px;
+    border-radius: var(--wq-radius-pill);
+    font-weight: 600;
+  }
+}
+
+.practice p {
+  margin: 0;
+  padding: var(--wq-space-5);
+}
+
+.section-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.see-all {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--wq-touch-target);
+  font-weight: 600;
+  color: var(--wq-color-primary-strong);
+  text-decoration: none;
+}
+
+.achievement-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wq-space-4);
+  margin: 0;
+  padding: var(--wq-space-5);
+  list-style: none;
+}
+
+.achievement-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--wq-space-3);
+  margin-bottom: var(--wq-space-2);
+  font-weight: 600;
+}

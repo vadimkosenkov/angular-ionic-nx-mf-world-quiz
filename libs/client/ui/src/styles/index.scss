@@ -1,0 +1,6 @@
+// World Quiz design system. Include once, after Ionic's CSS, in each app:
+//   "styles": [..., "libs/client/ui/src/styles/index.scss"]
+@use 'tokens';
+@use 'ionic';
+@use 'glass';
+@use 'base';

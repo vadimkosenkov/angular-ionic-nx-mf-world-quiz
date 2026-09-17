@@ -1,0 +1,125 @@
+.summary {
+  display: flex;
+  align-items: center;
+  gap: var(--wq-space-4);
+  padding: var(--wq-space-5);
+  border-radius: var(--wq-radius-lg);
+}
+
+.summary-icon,
+.achievement-icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--wq-radius-md);
+  background: var(--wq-color-primary-container);
+  color: var(--wq-color-on-primary-container);
+  font-size: 28px;
+}
+
+.summary-body,
+.achievement-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--wq-space-2);
+  min-width: 0;
+}
+
+.summary-row,
+.achievement-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--wq-space-3);
+
+  h2,
+  h3 {
+    margin: 0;
+    font-weight: 700;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+  }
+
+  h3 {
+    font-size: 1.0625rem;
+  }
+}
+
+.percent {
+  font-weight: 600;
+  color: var(--wq-color-primary-strong);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wq-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--wq-color-text-secondary);
+
+  li {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--wq-space-1);
+  }
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wq-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.achievement {
+  display: flex;
+  gap: var(--wq-space-4);
+  padding: var(--wq-space-4);
+  border: 1px solid var(--wq-color-border);
+  border-radius: var(--wq-radius-lg);
+  background: var(--wq-color-surface);
+  box-shadow: var(--wq-shadow-card);
+
+  p {
+    margin: 0;
+    font-size: 0.875rem;
+  }
+
+  &.unlocked {
+    border-color: color-mix(in srgb, var(--wq-color-success) 35%, transparent);
+    background: var(--wq-color-success-container);
+
+    .achievement-icon {
+      background: color-mix(in srgb, var(--wq-color-success) 18%, transparent);
+      color: var(--wq-color-success);
+    }
+  }
+
+  &.locked .achievement-icon {
+    background: var(--wq-color-surface-secondary);
+    color: var(--wq-color-text-secondary);
+  }
+}
+
+.status {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--wq-space-1);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--wq-color-text-secondary);
+}
+
+.unlocked .status {
+  color: var(--wq-color-success);
+}

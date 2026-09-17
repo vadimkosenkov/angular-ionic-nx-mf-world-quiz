@@ -1,0 +1,105 @@
+// Maps the semantic tokens onto Ionic's theming variables, so Ionic
+// components (tabs, toolbars, items, segments) follow the design system.
+
+:root {
+  --ion-font-family:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+
+  --ion-color-primary: var(--wq-color-primary);
+  --ion-color-primary-rgb: 70, 96, 245;
+  --ion-color-primary-contrast: var(--wq-color-on-primary);
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: var(--wq-color-primary-strong);
+  --ion-color-primary-tint: var(--wq-color-primary-bright);
+
+  --ion-color-success: var(--wq-color-success);
+  --ion-color-danger: var(--wq-color-error);
+  --ion-color-warning: var(--wq-color-warning);
+
+  --ion-background-color: var(--wq-color-background);
+  --ion-text-color: var(--wq-color-text-primary);
+  --ion-color-step-600: var(--wq-color-text-secondary);
+  --ion-border-color: var(--wq-color-border);
+}
+
+// Ionic sets these per mode, so they need mode-level specificity.
+:root.ios,
+:root.md {
+  --ion-toolbar-background: transparent;
+  --ion-toolbar-border-color: transparent;
+  --ion-item-background: var(--wq-color-surface);
+  --ion-card-background: var(--wq-color-surface);
+  --ion-tab-bar-background: var(--wq-color-glass-surface);
+  --ion-tab-bar-border-color: var(--wq-color-glass-border);
+  --ion-tab-bar-color: var(--wq-color-text-secondary);
+  --ion-tab-bar-color-selected: var(--wq-color-primary-strong);
+}
+
+:root.ion-palette-dark {
+  --ion-color-primary-rgb: 139, 154, 255;
+  --ion-color-primary-contrast-rgb: 11, 14, 31;
+}
+
+:root.ion-palette-dark.ios,
+:root.ion-palette-dark.md {
+  --ion-background-color: var(--wq-color-background);
+  --ion-text-color: var(--wq-color-text-primary);
+  --ion-item-background: var(--wq-color-surface);
+  --ion-card-background: var(--wq-color-surface);
+  --ion-toolbar-background: transparent;
+  --ion-tab-bar-background: var(--wq-color-glass-surface);
+  --ion-tab-bar-border-color: var(--wq-color-glass-border);
+  --ion-tab-bar-color: var(--wq-color-text-secondary);
+  --ion-tab-bar-color-selected: var(--wq-color-primary-strong);
+}
+
+// Segmented controls (theme picker, leaderboard views and boards).
+//
+// The container is a light surface with a border and shadow, so it stays
+// visible on the aurora background. The selected pill uses the primary
+// container colour and its own text colour (state is not colour-only: the
+// label also changes colour and weight). The indicator radius is concentric:
+// container radius minus container padding, so both curves run parallel.
+ion-segment {
+  --wq-segment-radius: var(--wq-radius-lg);
+  --wq-segment-padding: 4px;
+  --background: var(--wq-color-segment-background);
+  padding: var(--wq-segment-padding);
+  border: 1px solid var(--wq-color-border);
+  border-radius: var(--wq-segment-radius);
+  box-shadow: var(--wq-shadow-card);
+}
+
+ion-segment-button {
+  --border-radius: calc(var(--wq-segment-radius) - var(--wq-segment-padding));
+  --indicator-color: var(--wq-color-segment-indicator);
+  --indicator-box-shadow: 0 1px 3px rgb(20 26 58 / 12%);
+  --color: var(--wq-color-text-secondary);
+  --color-checked: var(--wq-color-segment-checked);
+  min-height: 40px;
+  margin: 0;
+  font-weight: 600;
+
+  &::part(indicator) {
+    padding: 0;
+  }
+
+  &.segment-button-checked {
+    font-weight: 700;
+  }
+}
+
+// Pill-shaped variant for compact filters (leaderboard views and boards).
+ion-segment.wq-segment-pill {
+  --wq-segment-radius: var(--wq-radius-pill);
+}
+
+// Horizontally scrollable segments scroll by touch; no visible scrollbar.
+ion-segment.segment-scrollable {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

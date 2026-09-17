@@ -172,17 +172,30 @@ export default [
                 'type:domain',
                 'type:util',
               ],
+            },
+            {
+              allSourceTags: ['scope:shared', 'type:contracts'],
               bannedExternalImports: PLATFORM_SPECIFIC_IMPORTS,
             },
             {
-              // The quiz domain is shared by the Angular apps AND the Express API.
               sourceTag: 'type:domain',
               onlyDependOnLibsWithTags: ['type:domain', 'type:util'],
-              bannedExternalImports: [...PLATFORM_SPECIFIC_IMPORTS, 'zod'],
             },
             {
               sourceTag: 'type:util',
               onlyDependOnLibsWithTags: ['type:util'],
+            },
+
+            // ---- platform purity ----------------------------------------
+            // Everything in scope:shared runs in the Angular apps AND the
+            // Express API, so it must not depend on either platform.
+            // (Client utilities such as i18n are scope:client and may use Angular.)
+            {
+              allSourceTags: ['scope:shared', 'type:domain'],
+              bannedExternalImports: [...PLATFORM_SPECIFIC_IMPORTS, 'zod'],
+            },
+            {
+              allSourceTags: ['scope:shared', 'type:util'],
               bannedExternalImports: [...PLATFORM_SPECIFIC_IMPORTS, 'zod'],
             },
           ],

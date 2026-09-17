@@ -1,0 +1,95 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>{{ 'settings.title' | transloco }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="wq-aurora">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">{{ 'settings.title' | transloco }}</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <div class="wq-page">
+    <section class="wq-section" aria-labelledby="appearance-title">
+      <h2 id="appearance-title" class="wq-section-title">
+        {{ 'settings.appearance.title' | transloco }}
+      </h2>
+      <ion-segment
+        class="theme-segment wq-glass"
+        data-testid="theme-segment"
+        aria-labelledby="appearance-title"
+        [value]="settings.theme()"
+        (ionChange)="onThemeChange($any($event).detail.value)"
+      >
+        @for (option of themes; track option.value) {
+        <ion-segment-button
+          layout="icon-top"
+          [value]="option.value"
+          [attr.data-testid]="'theme-' + option.value"
+        >
+          <ion-icon [name]="option.icon" aria-hidden="true" />
+          <ion-label
+            >{{ 'settings.appearance.' + option.value | transloco }}</ion-label
+          >
+        </ion-segment-button>
+        }
+      </ion-segment>
+    </section>
+
+    <section class="wq-section" aria-labelledby="language-title">
+      <h2 id="language-title" class="wq-section-title">
+        {{ 'settings.language.title' | transloco }}
+      </h2>
+      <ion-list [inset]="true" class="list">
+        <ion-radio-group
+          data-testid="language-group"
+          aria-labelledby="language-title"
+          [value]="settings.locale()"
+          (ionChange)="onLanguageChange($any($event).detail.value)"
+        >
+          @for (language of languages; track language.value) {
+          <ion-item [attr.data-testid]="'language-' + language.value">
+            <img slot="start" class="flag" [src]="language.flag" alt="" />
+            <ion-radio [value]="language.value" justify="space-between">
+              <span class="language-name" [attr.lang]="language.value">
+                {{ language.nativeName }}
+              </span>
+              <span class="language-translation">
+                {{ 'settings.language.' + language.value | transloco }}
+              </span>
+            </ion-radio>
+          </ion-item>
+          }
+        </ion-radio-group>
+      </ion-list>
+    </section>
+
+    <section class="wq-section" aria-labelledby="about-title">
+      <h2 id="about-title" class="wq-section-title">
+        {{ 'settings.about.title' | transloco }}
+      </h2>
+      <ion-list [inset]="true" class="list">
+        <ion-item>
+          <ion-label>{{ 'settings.about.version' | transloco }}</ion-label>
+          <ion-note slot="end" data-testid="app-version"
+            >{{ version }}</ion-note
+          >
+        </ion-item>
+        <ion-item>
+          <ion-label>{{ 'settings.about.data' | transloco }}</ion-label>
+          <ion-note slot="end"
+            >{{ 'settings.about.dataValue' | transloco }}</ion-note
+          >
+        </ion-item>
+        <ion-item lines="none">
+          <ion-label>{{ 'settings.about.flags' | transloco }}</ion-label>
+          <ion-note slot="end"
+            >{{ 'settings.about.flagsValue' | transloco }}</ion-note
+          >
+        </ion-item>
+      </ion-list>
+    </section>
+  </div>
+</ion-content>

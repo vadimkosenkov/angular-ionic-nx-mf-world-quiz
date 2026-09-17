@@ -22,7 +22,10 @@
     "paths": {
       "@world-quiz/shared/util": ["./libs/shared/util/src/index.ts"],
       "@world-quiz/quiz/domain": ["./libs/quiz/domain/src/index.ts"],
-      "@world-quiz/quiz/countries": ["./libs/quiz/countries/src/index.ts"]
+      "@world-quiz/quiz/countries": ["./libs/quiz/countries/src/index.ts"],
+      "@world-quiz/client/ui": ["./libs/client/ui/src/index.ts"],
+      "@world-quiz/client/i18n": ["./libs/client/i18n/src/index.ts"],
+      "@world-quiz/client/settings": ["./libs/client/settings/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

@@ -1,0 +1,37 @@
+.theme-segment {
+  --background: transparent;
+
+  ion-segment-button {
+    min-height: 72px;
+  }
+}
+
+.list {
+  margin: 0;
+  border-radius: var(--wq-radius-lg);
+  border: 1px solid var(--wq-color-border);
+  box-shadow: var(--wq-shadow-card);
+}
+
+ion-item {
+  --min-height: 56px;
+}
+
+.flag {
+  width: 32px;
+  height: 24px;
+  border-radius: 4px;
+  object-fit: cover;
+  box-shadow: 0 0 0 1px var(--wq-color-border);
+}
+
+.language-name {
+  display: block;
+  font-weight: 600;
+}
+
+.language-translation {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--wq-color-text-secondary);
+}
