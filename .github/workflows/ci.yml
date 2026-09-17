@@ -47,6 +47,9 @@ jobs:
       - name: Derive base/head SHAs for nx affected
         uses: nrwl/nx-set-shas@v5
 
+      - name: Check for control characters
+        run: npm run check:control-chars
+
       - name: Check formatting
         run: npx nx format:check
 

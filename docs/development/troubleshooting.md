@@ -66,6 +66,17 @@ Today this is a warning and the scripts still run.
 explicitly is tracked as a follow-up, because future npm versions may block
 unapproved scripts by default.
 
+## Git shows a source file as binary (`git diff --numstat` prints `-  -`)
+
+**Cause:** the file contains a raw control character, for example a NUL byte
+inside a string literal. Git then treats the whole file as binary, and diffs
+disappear from code review. In Phase 2 this happened in `leaderboard.ts`: a
+`\u0000` escape was turned into the real byte by the tool that wrote the file.
+
+**Fix:** write escape sequences, or avoid special separators altogether (the
+leaderboard now builds composite keys with `JSON.stringify`). CI runs
+`npm run check:control-chars`, which fails with the file and line of any such character.
+
 ## Nx shows stale results or odd graph errors
 
 ```bash

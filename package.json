@@ -19,7 +19,8 @@
     "build": "nx run-many -t build",
     "e2e": "nx run-many -t e2e --configuration=production",
     "check": "nx run-many -t lint typecheck test build",
-    "graph": "nx graph"
+    "graph": "nx graph",
+    "check:control-chars": "node tools/scripts/check-control-characters.mjs"
   },
   "dependencies": {
     "@angular/common": "~22.1.0",

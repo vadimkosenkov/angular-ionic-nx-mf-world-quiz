@@ -158,6 +158,16 @@ describe('ranking', () => {
     expect(bests.map((e) => e.entryId).sort()).toEqual(['2', '3', '4']);
   });
 
+  it('never merges different users or boards, whatever characters ids contain', () => {
+    const bests = personalBests([
+      entry({ entryId: '1', userId: 'ann' }),
+      entry({ entryId: '2', userId: 'ann ' }),
+      entry({ entryId: '3', userId: '["capitals-easy","ann"]' }),
+      entry({ entryId: '4', userId: 'ann', boardId: 'capitals-hard' }),
+    ]);
+    expect(bests.map((e) => e.entryId).sort()).toEqual(['1', '2', '3', '4']);
+  });
+
   it('ranks one board with unique ranks starting at 1', () => {
     const ranked = rankLeaderboard(
       [
