@@ -1,8 +1,11 @@
 # Leaderboard: perfect-run challenges
 
-> Status: **rules approved** (Phase 0). The board vocabulary exists in
-> `quiz-domain` (`LEADERBOARD_BOARDS`). Challenge flow, server validation and
-> ranking queries are implemented in Phase 9 (`feat/leaderboard-records`).
+> Status: **domain rules implemented** (Phase 2):
+> [`leaderboard.ts`](../../libs/quiz/domain/src/lib/leaderboard.ts) —
+> `evaluateChallengeRun`, `compareLeaderboardEntries`, `rankLeaderboard`,
+> `personalBests`, `isNewPersonalRecord`; challenge mode in the
+> [quiz engine](quiz-engine.md). Seed issuance, persistence, plausibility
+> checks and the ranking SQL follow in Phase 9 (`feat/leaderboard-records`).
 
 ## Concept
 
@@ -27,6 +30,12 @@ A unit test in `quiz-domain` asserts exactly these four ids.
 
 ## Eligibility
 
+`evaluateChallengeRun(session, summary, dataset)` returns
+`{ eligible: true, board, completionTimeMs }` or a reason:
+`not-a-challenge`, `not-finished`, `incomplete`, `has-incorrect-answers`,
+`invalid-question-set`. The server calls it on the session **it replayed
+itself** from the uploaded record ([quiz-engine.md](quiz-engine.md#determinism-seeds)).
+
 A run is ranked only if **all** of the following hold:
 
 1. It is a leaderboard challenge run for one of the four boards (not a training session).
@@ -40,12 +49,13 @@ Any incorrect answer makes the run ineligible. Abandoned or incomplete runs are 
 ## Ranking
 
 1. **Primary:** completion time, ascending (faster is better).
-2. **Tie-break:** a deterministic server-side criterion: the more precise
-   server-measured duration, then the earlier server-recorded completion
-   timestamp, then a stable id. The exact order is fixed in Phase 9 and covered by tests.
+2. **Tie-breaks:** the earlier server-recorded time (`recordedAt`, when the
+   server accepted the run), then the entry id. The order is total, so ranks
+   are unique and stable. Implemented in `compareLeaderboardEntries` and covered by tests.
 
 Each user appears **once per board** with their best eligible run (their
-personal record). The UI separates **Global Leaderboard** from **My Records**.
+personal record, `personalBests`). A new personal record must be **strictly**
+faster than the previous best (`isNewPersonalRecord`). The UI separates **Global Leaderboard** from **My Records**.
 
 ## Comparability
 

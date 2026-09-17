@@ -1,0 +1,32 @@
+{
+  "name": "quiz-countries",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/quiz/countries/src",
+  "projectType": "library",
+  "tags": ["scope:shared", "type:domain"],
+  "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{projectRoot}",
+        "commands": [
+          "tsc -p tsconfig.lib.json --noEmit",
+          "tsc -p tsconfig.spec.json --noEmit",
+          "tsc -p tsconfig.tools.json"
+        ],
+        "parallel": false
+      }
+    },
+    "check-wikidata": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "commands": [
+          "esbuild libs/quiz/countries/tools/check-wikidata.ts --bundle --platform=node --format=esm --log-level=warning --tsconfig=libs/quiz/countries/tsconfig.tools.json --outfile=tmp/tools/check-wikidata.mjs",
+          "node tmp/tools/check-wikidata.mjs"
+        ],
+        "parallel": false
+      }
+    }
+  }
+}

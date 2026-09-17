@@ -63,7 +63,8 @@ apps/
   api/          Express 5 (esbuild, ESM)                  scope:api       type:app
   shell-e2e/    Cypress                                   scope:shell     type:e2e
 libs/
-  quiz/domain/  Pure TS quiz rules                        scope:shared    type:domain
+  quiz/domain/     Pure TS quiz rules                     scope:shared    type:domain
+  quiz/countries/  Static 195-country dataset             scope:shared    type:domain
   shared/util/  Pure TS helpers                           scope:shared    type:util
 ```
 
@@ -71,7 +72,6 @@ Planned libraries (created in the phase that needs them, never as empty placehol
 
 | Library                                                    | Tags                               | Phase |
 | ---------------------------------------------------------- | ---------------------------------- | ----- |
-| `quiz/countries` – dataset + SVG flags                     | `scope:shared`, `type:domain`      | 2     |
 | `shared/contracts` – Zod API schemas/types                 | `scope:shared`, `type:contracts`   | 6     |
 | `client/ui` – design system                                | `scope:client`, `type:ui`          | 3     |
 | `client/i18n` – Transloco + en/ru                          | `scope:client`, `type:util`        | 3     |
@@ -121,7 +121,8 @@ Remotes can never import the shell, the API can never import client code, and
 
 ### Platform purity of `domain` and `util`
 
-The shared libraries must run unchanged in a browser, a WebView and Node.js.
+The shared libraries (`quiz-domain`, `quiz-countries`, `shared-util`) must run
+unchanged in a browser, a WebView and Node.js.
 Four independent guards enforce this (each was verified by adding a violating
 file and watching lint/typecheck fail):
 
@@ -131,6 +132,9 @@ file and watching lint/typecheck fail):
    `rxjs`, `express`, `zod`, `dexie`, `drizzle-orm`.
 3. `no-restricted-imports` blocks `node:*` and bare Node built-ins (`fs`,
    `path`, …), which are not npm packages and so are invisible to rule 2.
+   Bare names are listed as exact `paths`, not `patterns`: patterns use
+   gitignore semantics, so `util` would also match `@world-quiz/shared/util`
+   (a bug found in Phase 2 when the domain first imported that library).
 4. `no-restricted-globals` blocks browser and Node globals, as a second line of defence.
 
 ## TypeScript configuration
@@ -156,3 +160,16 @@ npx nx g @nx/js:library libs/<area>/<name> \
 
 Then add a `typecheck` target (copy from `libs/shared/util/project.json`) and,
 for platform-independent code, apply `pureLibraryConfig` in its ESLint config.
+
+## Dependency direction between the quiz libraries
+
+```mermaid
+flowchart LR
+  countries[quiz-countries<br/>data] --> domain[quiz-domain<br/>rules]
+  domain --> util[shared-util]
+```
+
+`quiz-domain` never imports the dataset: the engine receives it as a
+parameter (`createQuizEngine(COUNTRIES)`). This keeps the dependency acyclic,
+lets domain tests use a small fixture dataset, and lets the real 195-country
+dataset be tested in `quiz-countries`, including a full challenge replay.

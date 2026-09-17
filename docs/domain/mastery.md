@@ -1,7 +1,8 @@
 # Mastery
 
-> Status: **rules approved** (Phase 0). Implemented in Phase 2
-> (`feat/domain-model`) as a pure, deterministic state machine in `quiz-domain`.
+> Status: **implemented** (Phase 2). Code:
+> [`mastery.ts`](../../libs/quiz/domain/src/lib/mastery.ts) (state machine) and
+> [`progress.ts`](../../libs/quiz/domain/src/lib/progress.ts) (aggregation, rebuild, practice list).
 
 Mastery is tracked per **user × category × country** (Capitals and Flags are
 independent: knowing France's capital does not mean you recognise its flag).
@@ -48,3 +49,29 @@ mastery, so progress reflects current knowledge.
 | Hard ✓, Easy ✓         | 3      | yes      | no          |
 | Easy ✓, Easy ✓, Easy ✗ | 0      | no       | yes         |
 | Easy ✗, Hard ✓, Hard ✓ | 4      | yes      | no          |
+
+## Which answers count
+
+Every recorded answer counts, whatever the mode: Fixed, Endless, Timed,
+Practice Mistakes and leaderboard challenges. A correct answer in Practice
+Mistakes is how a mistake gets fixed.
+
+## Progress as a fold over events
+
+Each answer becomes a `ProgressEvent` (category, country, difficulty, correct,
+answer time, session id, position in session). Progress is the result of
+applying events in order:
+
+- `applyProgressEvents(progress, events)` appends new events on top of existing progress (client, after a session).
+- `rebuildProgress(events)` sorts events canonically, by answer time, then
+  session id, then position, and rebuilds from scratch.
+
+Because the order is canonical, answers from two offline devices that sync
+late in any order produce the **same** result. This is what the server relies
+on in the synchronization phase.
+
+## Practice Mistakes list
+
+`practiceCandidates(dataset, progress, category)` returns every country with
+`everWrong && !mastered`, **most recently answered first**, ties in dataset
+order. An empty list drives the "No mistakes — great job!" empty state.

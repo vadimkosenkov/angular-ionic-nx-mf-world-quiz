@@ -47,6 +47,25 @@ cannot be executed.
 
 **Fix:** run `npm install` again; `node_modules/esbuild/bin/esbuild --version` should print a version.
 
+## `'@world-quiz/shared/util' import is restricted … must not depend on Node.js built-ins`
+
+**Cause:** ESLint `no-restricted-imports` **patterns** use gitignore
+semantics, so a pattern `util` matches any path segment named `util`,
+including the workspace library `@world-quiz/shared/util`.
+
+**Fix:** list bare module names under `paths` (exact match) and keep only
+`node:*` under `patterns`. This is how `eslint.config.mjs` does it.
+
+## `npm warn install-scripts … packages have install scripts not yet covered by allowScripts`
+
+**Cause:** npm 11.19+ (shipped with Node 24.21) reports dependencies with
+install scripts (esbuild, Cypress, Nx, lmdb, …) that are not explicitly allowed.
+Today this is a warning and the scripts still run.
+
+**Fix:** none needed yet. Reviewing and allowing the required scripts
+explicitly is tracked as a follow-up, because future npm versions may block
+unapproved scripts by default.
+
 ## Nx shows stale results or odd graph errors
 
 ```bash

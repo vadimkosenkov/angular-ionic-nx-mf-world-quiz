@@ -28,15 +28,19 @@ const PLATFORM_SPECIFIC_IMPORTS = [
   'drizzle-orm/*',
 ];
 
-const NODE_BUILTIN_PATTERNS = [
-  'node:*',
+/**
+ * Node.js built-in module names. Matched exactly (`paths`), because
+ * gitignore-style `patterns` would also match workspace paths such as
+ * `@world-quiz/shared/util`.
+ */
+const NODE_BUILTIN_MODULES = [
   'assert',
   'buffer',
   'child_process',
   'crypto',
   'events',
   'fs',
-  'fs/*',
+  'fs/promises',
   'http',
   'https',
   'net',
@@ -48,6 +52,9 @@ const NODE_BUILTIN_PATTERNS = [
   'util',
   'worker_threads',
 ];
+
+const NODE_BUILTIN_MESSAGE =
+  'Pure libraries must not depend on Node.js built-ins. Inject an abstraction instead.';
 
 export default [
   ...nx.configs['flat/base'],
@@ -183,6 +190,13 @@ export default [
       ],
     },
   },
+  {
+    // Tests may assert that a value they just looked up exists.
+    files: ['**/*.spec.ts', '**/*.test.ts'],
+    rules: {
+      '@typescript-eslint/no-non-null-assertion': 'off',
+    },
+  },
 ];
 
 /**
@@ -199,13 +213,11 @@ export const pureLibraryConfig = [
       'no-restricted-imports': [
         'error',
         {
-          patterns: [
-            {
-              group: NODE_BUILTIN_PATTERNS,
-              message:
-                'Pure libraries must not depend on Node.js built-ins. Inject an abstraction instead.',
-            },
-          ],
+          paths: NODE_BUILTIN_MODULES.map((name) => ({
+            name,
+            message: NODE_BUILTIN_MESSAGE,
+          })),
+          patterns: [{ group: ['node:*'], message: NODE_BUILTIN_MESSAGE }],
         },
       ],
       'no-restricted-globals': [
