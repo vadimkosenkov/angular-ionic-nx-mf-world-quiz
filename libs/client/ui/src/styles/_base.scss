@@ -9,16 +9,6 @@ ion-content.wq-aurora {
     var(--wq-color-background);
 }
 
-// iOS large titles: the condensed title sits directly on the page background;
-// the main header becomes a glass bar once content scrolls under it.
-ion-header.header-collapse-condense ion-toolbar {
-  --background: transparent;
-}
-
-ion-header.header-translucent ion-toolbar {
-  --background: var(--wq-color-glass-surface);
-}
-
 // Secondary values in lists must stay readable (Ionic's default is too faint).
 ion-note {
   --color: var(--wq-color-text-secondary);

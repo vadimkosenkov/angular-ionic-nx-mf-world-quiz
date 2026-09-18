@@ -2,7 +2,12 @@
 
 ## Status
 
-Accepted (2026-09-14). Implementation: Phase 4 (`feat/capitals-mfe`).
+Accepted (2026-09-14). **Implemented for Capitals in Phase 4**
+(`feat/capitals-mfe`, 2026-09-17): the shell loads `apps/capitals` over Native
+Federation at `/quiz/capitals`, verified end to end in Cypress against two
+separately served applications. Flags follows in Phase 5; the iOS manifest
+swap in Phase 13. What runs today is described in
+[microfrontends.md](../architecture/microfrontends.md).
 
 ## Context
 
@@ -63,7 +68,9 @@ Use **Native Federation** (`@angular-architects/native-federation` **22.x**, mat
   `@angular/core`) resolve to one instance.
 - **Failure modes to handle:** remote unreachable (web), version mismatch of a
   singleton, and a missing exposed module. The shell must render a recoverable
-  error route instead of a blank screen.
+  error route instead of a blank screen. _(Implemented in Phase 4:
+  `loadQuizRemoteRoutes` reports the error and mounts a "Quiz unavailable"
+  page. Version-mismatch handling is not implemented yet.)_
 
 ## Consequences
 

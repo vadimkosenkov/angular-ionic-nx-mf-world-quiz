@@ -4,7 +4,7 @@
   "projectType": "application",
   "sourceRoot": "apps/shell-e2e/src",
   "tags": ["scope:shell", "type:e2e"],
-  "implicitDependencies": ["shell"],
+  "implicitDependencies": ["shell", "capitals"],
   "targets": {
     "typecheck": {
       "executor": "nx:run-commands",

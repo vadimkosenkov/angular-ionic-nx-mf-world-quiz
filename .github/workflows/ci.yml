@@ -86,9 +86,10 @@ jobs:
       - name: Derive base/head SHAs for nx affected
         uses: nrwl/nx-set-shas@v5
 
-      # `e2e` depends on the continuous `shell:serve` target; the production
-      # configuration serves a production build and Cypress runs headless.
-      # (The atomized `e2e-ci` variant requires Nx Cloud, which is not used.)
+      # The production configuration serves production builds of the shell and
+      # of every remote it loads (see apps/shell-e2e/cypress.config.ts) and
+      # Cypress runs headless. (The atomized `e2e-ci` variant requires Nx
+      # Cloud, which is not used.)
       - name: Run affected E2E suites
         run: npx nx affected -t e2e --configuration=production --parallel=1
 

@@ -33,18 +33,21 @@ flowchart LR
 
 ## Building blocks
 
-| Unit                                               | Responsibility                                                                                                                 | Status                                                                                                        |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| `apps/shell`                                       | Bootstrap, auth, tabs, Home, Quiz Setup, Leaderboard, Achievements, Settings; Native Federation host                           | ✅ tabs, Home, Leaderboard (placeholder data state), Achievements, Settings · 📐 auth, quiz setup, federation |
-| `apps/capitals`, `apps/flags`                      | Category-specific play + results routes; Native Federation remotes                                                             | 🧱                                                                                                            |
-| `apps/api`                                         | REST API: auth, sessions (idempotent result ingestion), progress sync, leaderboard                                             | 🧱 (`/health` only)                                                                                           |
-| `apps/site`                                        | Angular SSR: prerendered legal pages, server-rendered public leaderboard                                                       | 📐                                                                                                            |
-| `apps/shell-e2e`                                   | Cypress user journeys                                                                                                          | ✅ navigation, theme, language · 📐 quiz journeys                                                             |
-| `libs/quiz/domain`                                 | Pure TS quiz rules shared by client and server: engine, answer matching, scoring, mastery, progress, achievements, leaderboard | ✅                                                                                                            |
-| `libs/quiz/countries`                              | 195-country dataset (en/ru), UN M49 regions, flag asset paths                                                                  | ✅                                                                                                            |
-| `libs/shared/util`                                 | Dependency-free helpers (`Clock`, `Result`, `assertNever`)                                                                     | ✅                                                                                                            |
-| `libs/client/ui`, `client/i18n`, `client/settings` | Design system, English/Russian i18n, settings store and theme/language sync                                                    | ✅                                                                                                            |
-| Other libs                                         | `shared/contracts`, `client/quiz-*`, `client/data-access`                                                                      | 📐 (see [nx.md](nx.md))                                                                                       |
+| Unit                                               | Responsibility                                                                                                                 | Status                                                                                                             |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| `apps/shell`                                       | Bootstrap, auth, tabs, Home, Quiz Setup, Leaderboard, Achievements, Settings; Native Federation host                           | ✅ tabs, Home, quiz setup, Leaderboard (placeholder data state), Achievements, Settings, federation host · 📐 auth |
+| `apps/capitals`                                    | Capitals play + results route; Native Federation remote                                                                        | ✅ ([microfrontends.md](microfrontends.md))                                                                        |
+| `apps/flags`                                       | Flags play + results route; Native Federation remote                                                                           | 🧱 (Phase 5)                                                                                                       |
+| `apps/api`                                         | REST API: auth, sessions (idempotent result ingestion), progress sync, leaderboard                                             | 🧱 (`/health` only)                                                                                                |
+| `apps/site`                                        | Angular SSR: prerendered legal pages, server-rendered public leaderboard                                                       | 📐                                                                                                                 |
+| `apps/shell-e2e`                                   | Cypress user journeys                                                                                                          | ✅ navigation, theme, language, Capitals quiz across the federation boundary · 📐 the remaining journeys           |
+| `libs/quiz/domain`                                 | Pure TS quiz rules shared by client and server: engine, answer matching, scoring, mastery, progress, achievements, leaderboard | ✅                                                                                                                 |
+| `libs/quiz/countries`                              | 195-country dataset (en/ru), UN M49 regions, flag asset paths                                                                  | ✅                                                                                                                 |
+| `libs/shared/util`                                 | Dependency-free helpers (`Clock`, `Result`, `assertNever`)                                                                     | ✅                                                                                                                 |
+| `libs/client/ui`, `client/i18n`, `client/settings` | Design system, English/Russian i18n, settings store and theme/language sync                                                    | ✅                                                                                                                 |
+| `libs/client/quiz-ports`                           | The shell ↔ remote contract: `QUIZ_RESULT_SINK`, `QUIZ_PROGRESS_READER`, `COUNTRY_DATASET`, `CLOCK`                            | ✅                                                                                                                 |
+| `libs/client/quiz-feature`                         | The quiz screens themselves (play, results), used by every remote                                                              | ✅                                                                                                                 |
+| Other libs                                         | `shared/contracts`, `client/data-access`                                                                                       | 📐 (see [nx.md](nx.md))                                                                                            |
 
 ## Key architectural principles
 
@@ -55,7 +58,8 @@ flowchart LR
 3. **Offline-first core.** Dataset, flags, quiz play, progress and mistakes work
    without a network. Auth, sync and leaderboards are online features.
 4. **Minimal microfrontend coupling.** Shell ↔ remotes communicate via routes,
-   query-param contracts and injected ports, never shared mutable global state.
+   query-param contracts and injected ports, never shared mutable global state
+   ([microfrontends.md](microfrontends.md)).
 5. **Boundaries are enforced by tooling**, not by convention (tags, tsconfig, ESLint).
 
 ## Approved product rules (Phase 0)
@@ -93,8 +97,8 @@ typos). The app has no custom speech-recognition UI and no external AI/LLM judgi
 | --- | ---------------------------- | -------------------------------------------------------------------------------------- | -------------- |
 | 1   | `feat/project-foundation`    | Nx, apps/libs skeleton, boundaries, CI, ADR-001/002/007                                | ✅ merged      |
 | 2   | `feat/domain-model`          | 195-country dataset + flags, engine, matching, scoring, mastery, achievements, ranking | ✅ merged      |
-| 3   | `feat/shell-design-system`   | Ionic shell, tokens, Liquid Glass, themes, i18n, Settings                              | ✅ this branch |
-| 4   | `feat/capitals-mfe`          | Native Federation host/remote, setup, play, results                                    | 📐             |
+| 3   | `feat/shell-design-system`   | Ionic shell, tokens, Liquid Glass, themes, i18n, Settings                              | ✅ merged      |
+| 4   | `feat/capitals-mfe`          | Native Federation host/remote, setup, play, results                                    | ✅ this branch |
 | 5   | `feat/flags-mfe`             | Flags remote                                                                           | 📐             |
 | 6   | `feat/backend-database`      | Express, Drizzle, migrations, API tests                                                | 📐             |
 | 7   | `feat/authentication`        | Apple, Google, sessions, account deletion                                              | 📐             |

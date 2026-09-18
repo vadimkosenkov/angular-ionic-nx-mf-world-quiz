@@ -55,13 +55,21 @@
 
     // The bar takes the card's text colour in both themes.
     wq-progress-bar {
-      --wq-color-surface-secondary: color-mix(
+      --wq-color-progress-track: color-mix(
         in srgb,
         currentColor 25%,
         transparent
       );
       --wq-color-primary: currentColor;
       --wq-color-accent: currentColor;
+    }
+
+    // Inverted pill, so the only action on the card stands out from the
+    // brand gradient in both themes.
+    .play {
+      --background: var(--wq-color-on-primary);
+      --background-activated: var(--wq-color-on-primary);
+      --color: var(--wq-color-primary-strong);
     }
 
     ion-badge {
@@ -115,6 +123,17 @@
   gap: var(--wq-space-3);
   font-size: 0.875rem;
   color: var(--wq-color-text-secondary);
+
+  .play {
+    --border-radius: var(--wq-radius-pill);
+    --padding-start: 16px;
+    --padding-end: 12px;
+    --box-shadow: none;
+    min-height: 36px;
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 700;
+  }
 
   ion-badge {
     --background: var(--wq-color-primary-container);

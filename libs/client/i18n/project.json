@@ -12,7 +12,7 @@
     "test": {
       "executor": "@angular/build:unit-test",
       "options": {
-        "buildTarget": "shell:build:development",
+        "buildTarget": "shell:esbuild:development",
         "tsConfig": "libs/client/i18n/tsconfig.spec.json",
         "watch": false
       }

@@ -130,15 +130,23 @@ is supported in Chromium and WebKit; where it is not, the enhancement stays on.
 
 ## Components
 
-| Component          | Purpose                                                                             | Accessibility                                                                                                                |
-| ------------------ | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `wq-progress-bar`  | Thin gradient bar, `primary` or `success` tone                                      | `role="progressbar"` with `aria-valuemin/max/now`, a label and a translated `aria-valuetext` ("3 of 44"); values are clamped |
-| `wq-progress-card` | Heading, big `value / max`, bar, caption row; `solid` or `glass`                    | The visual number is `aria-hidden`; the bar carries the accessible value                                                     |
-| `wq-empty-state`   | Icon, heading, message, projected actions for empty, unavailable and offline states | `role="status"`; decorative icon hidden                                                                                      |
+| Component          | Purpose                                                                                          | Accessibility                                                                                                                |
+| ------------------ | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `wq-progress-bar`  | Thin gradient bar; `primary`, `success` or `warning` tone (the last for a countdown running out) | `role="progressbar"` with `aria-valuemin/max/now`, a label and a translated `aria-valuetext` ("3 of 44"); values are clamped |
+| `wq-progress-card` | Heading, big `value / max`, bar, caption row; `solid` or `glass`                                 | The visual number is `aria-hidden`; the bar carries the accessible value                                                     |
+| `wq-empty-state`   | Icon, heading, message, projected actions for empty, unavailable and offline states              | `role="status"`; decorative icon hidden                                                                                      |
 
 UI components are **i18n-free**: they receive already translated strings.
 Ionic components (tabs, segments, lists, radios, badges) are used directly
 where they already fit; nothing is rebuilt from scratch.
+
+### Type scale for controls
+
+Every choice control uses one size, `--wq-font-size-control` (15 px, iOS
+"subheadline"): segments across the app and the option lists on the quiz
+setup page. Secondary lines under or inside a control use
+`--wq-font-size-caption` (13 px, iOS "footnote"). Ionic's iOS segments default
+to 13 px, which made them look smaller than neighbouring option buttons.
 
 ### Segmented controls
 
@@ -161,6 +169,57 @@ where they already fit; nothing is rebuilt from scratch.
 Global helpers in `_base.scss`: `.wq-page` (max width 720 px for tablet and
 web), `.wq-section`, `.wq-section-title`, `.wq-card`, `.wq-text-secondary`,
 `.wq-visually-hidden`.
+
+### One glass material for all chrome
+
+The floating tab bar and translucent page headers share the `glass-chrome`
+mixin (`_glass.scss`): the tab bar's tint, a top
+highlight, an inner light edge and `blur(10px) saturate(200%)`. Headers apply
+it to Ionic's `.header-background` layer and keep the toolbar transparent, so
+content scrolling underneath is visibly blurred. Every page shows this bar
+with its title at all times; iOS large titles that only turn into a bar on
+scroll were dropped in favour of one consistent header. Without
+`backdrop-filter`,
+or with reduced transparency requested, all of them fall back to an opaque
+surface.
+
+### Actions live at the bottom
+
+A screen's next step is always in the same place: `.wq-action-bar`, fixed to
+the bottom above the content (which keeps `--wq-action-bar-clearance` free).
+Its buttons are `ion-button.wq-glass-button`: pill-shaped with a **solid**
+fill — primary, or `secondary` (surface, primary label, border). A
+translucent tinted fill was tried and dropped: over busy content the label
+lost contrast and the button looked washed out. Used for Start quiz, Check,
+Continue, Finish, Play again and Back to home.
+
+The verdict of an answer is shown under the flag, never next to the button.
+After a wrong answer the correct answer gets its own white block with the
+largest text on the screen, because it is what the player should remember.
+
+Feedback blocks are tinted with `--wq-color-success-vivid` /
+`--wq-color-error-vivid` (the iOS system green and red) and glow softly in the
+same hue. The darker `success` / `error` tokens are for text only: mixed into a
+fill they turned greyish and did not read as "correct" on the lavender page.
+
+The quiz's exit button is a 44 px round surface button with the filled
+`close` icon; a bare hairline cross was too easy to miss.
+
+Progress bars use `--wq-color-progress-track` for the unfilled part; the
+lighter `surface-secondary` disappeared on the page background.
+
+### A solid button never goes inside an `ion-toolbar`
+
+For a solid button in a toolbar, Ionic paints the **label** in the toolbar's
+own background colour (`--ion-toolbar-background`), assuming the button sits
+on a coloured bar. This design system makes toolbars transparent, so the label
+became invisible. Full-width primary actions therefore live in a plain
+container inside `ion-footer` (see the quiz setup page), not in a toolbar.
+
+### Screens without a header keep clear of the notch
+
+The quiz screens have no `ion-header` to reserve the status bar area, so their
+page container adds `var(--ion-safe-area-top)` to its top padding.
 
 ## Accessibility rules applied
 

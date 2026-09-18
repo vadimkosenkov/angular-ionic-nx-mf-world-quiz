@@ -1,6 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 
-export type ProgressTone = 'primary' | 'success';
+export type ProgressTone = 'primary' | 'success' | 'warning';
 
 /**
  * Accessible progress bar. Screen readers get the numbers through

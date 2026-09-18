@@ -6,7 +6,7 @@
   height: 8px;
   overflow: hidden;
   border-radius: var(--wq-radius-pill);
-  background: var(--wq-color-surface-secondary);
+  background: var(--wq-color-progress-track);
 }
 
 .fill {
@@ -24,5 +24,10 @@
 
   &.success {
     background: var(--wq-color-success);
+  }
+
+  // Used for a countdown that is running out, not for an error.
+  &.warning {
+    background: var(--wq-color-warning);
   }
 }

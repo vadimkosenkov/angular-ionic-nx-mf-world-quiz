@@ -79,6 +79,8 @@ ion-segment-button {
   --color-checked: var(--wq-color-segment-checked);
   min-height: 40px;
   margin: 0;
+  // Ionic's iOS default is 13 px; controls share one size across the app.
+  font-size: var(--wq-font-size-control);
   font-weight: 600;
 
   &::part(indicator) {

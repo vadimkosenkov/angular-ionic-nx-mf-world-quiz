@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.app.json",
+  "files": [
+    "../../libs/client/i18n/src/index.ts",
+    "../../libs/client/settings/src/index.ts",
+    "../../libs/quiz/domain/src/index.ts",
+    "../../libs/shared/util/src/index.ts",
+    "../../libs/client/quiz-ports/src/index.ts",
+    "../../libs/quiz/countries/src/index.ts",
+    "../../libs/client/ui/src/index.ts",
+    "../../libs/client/quiz-feature/src/index.ts"
+  ],
+  "include": ["src/**/*.d.ts"]
+}

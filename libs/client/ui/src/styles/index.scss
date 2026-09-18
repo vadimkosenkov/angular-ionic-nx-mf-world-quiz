@@ -1,5 +1,11 @@
 // World Quiz design system. Include once, after Ionic's CSS, in each app:
-//   "styles": [..., "libs/client/ui/src/styles/index.scss"]
+//   "styles": [
+//     "node_modules/@ionic/angular/css/core.css", ...,
+//     "libs/client/ui/src/styles/index.scss"
+//   ]
+// Ionic's files are listed in project.json rather than imported from Sass:
+// the Native Federation dev server leaves a CSS `@import` of a package
+// unresolved, and `@ionic/angular` only exports the exact `css/*.css` paths.
 @use 'tokens';
 @use 'ionic';
 @use 'glass';

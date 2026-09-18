@@ -1,0 +1,156 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wq-space-5);
+  // Room for the floating action bar, so the last answer is never under it.
+  padding-bottom: var(--wq-action-bar-clearance);
+}
+
+.quiz-header {
+  display: flex;
+  align-items: center;
+  gap: var(--wq-space-3);
+
+  // A round surface button: easy to find and to hit (44 px), unlike a bare
+  // hairline cross on the aurora background.
+  .exit {
+    --padding-start: 0;
+    --padding-end: 0;
+    --border-radius: var(--wq-radius-pill);
+    --background: var(--wq-color-surface);
+    --background-activated: var(--wq-color-surface-secondary);
+    --color: var(--wq-color-text-primary);
+    --box-shadow: var(--wq-shadow-card);
+    width: var(--wq-touch-target);
+    height: var(--wq-touch-target);
+    margin: 0;
+    font-size: 1.375rem;
+  }
+
+  .progress {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--wq-space-1);
+  }
+
+  .counter {
+    margin: 0;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--wq-color-text-secondary);
+  }
+
+  .score {
+    min-width: 2.5rem;
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 700;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--wq-color-primary-strong);
+  }
+}
+
+.question {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--wq-color-text-secondary);
+}
+
+// No card: the flag is the subject and sits directly on the page background.
+.prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--wq-space-4);
+  text-align: center;
+
+  h1 {
+    margin: 0;
+    font-size: 1.875rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  // A thin ring plus a soft drop shadow, so a flag whose colours match the
+  // background (white, light blue) still has a visible edge.
+  .flag {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: contain; // flag-icons 4x3 are all 4:3; never crop a flag
+    border-radius: var(--wq-radius-md);
+    box-shadow:
+      0 0 0 1px rgb(20 26 58 / 12%),
+      0 8px 24px rgb(20 26 58 / 18%);
+  }
+}
+
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wq-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.choice {
+  display: flex;
+  align-items: center;
+  gap: var(--wq-space-4);
+  width: 100%;
+  min-height: 60px;
+  padding: var(--wq-space-4) var(--wq-space-5);
+  border: 1px solid var(--wq-color-border);
+  border-radius: var(--wq-radius-lg);
+  background: var(--wq-color-surface);
+  box-shadow: var(--wq-shadow-card);
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    transform var(--wq-duration-fast) var(--wq-easing-standard),
+    border-color var(--wq-duration-fast) var(--wq-easing-standard);
+
+  &:active {
+    transform: scale(0.99);
+    border-color: var(--wq-color-primary);
+  }
+}
+
+.marker {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--wq-radius-pill);
+  background: var(--wq-color-primary-container);
+  color: var(--wq-color-on-primary-container);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.typed {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wq-space-3);
+
+  .answer-input {
+    --background: var(--wq-color-surface);
+    --border-radius: var(--wq-radius-lg);
+    --padding-start: var(--wq-space-4);
+    --padding-end: var(--wq-space-4);
+  }
+
+  .error {
+    margin: 0;
+    color: var(--wq-color-error);
+    font-size: 0.875rem;
+  }
+}

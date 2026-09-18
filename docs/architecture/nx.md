@@ -78,8 +78,8 @@ or a `client/platform` library when the features that need them arrive:
 | Library                                                    | Tags                               | Phase |
 | ---------------------------------------------------------- | ---------------------------------- | ----- |
 | `shared/contracts` – Zod API schemas/types                 | `scope:shared`, `type:contracts`   | 6     |
-| `client/quiz-ports` – shell ↔ remote injection tokens      | `scope:client`, `type:ports`       | 4     |
-| `client/quiz-feature` – shared quiz play UI                | `scope:client`, `type:feature`     | 4     |
+| `client/quiz-ports` – shell ↔ remote injection tokens      | `scope:client`, `type:ports`       | ✅ 4  |
+| `client/quiz-feature` – shared quiz play UI                | `scope:client`, `type:feature`     | ✅ 4  |
 | `client/data-access` – API client, auth, local store, sync | `scope:client`, `type:data-access` | 6–8   |
 
 ## Module boundaries
