@@ -7,6 +7,68 @@
   "tags": ["scope:flags", "type:app"],
   "targets": {
     "build": {
+      "executor": "@angular-architects/native-federation:build",
+      "options": {
+        "cacheExternalArtifacts": true,
+        "tsConfig": "apps/flags/tsconfig.federation.json"
+      },
+      "configurations": {
+        "production": {
+          "target": "flags:esbuild:production"
+        },
+        "development": {
+          "target": "flags:esbuild:development",
+          "dev": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "executor": "@angular-architects/native-federation:build",
+      "options": {
+        "target": "flags:serve-original:development",
+        "tsConfig": "apps/flags/tsconfig.federation.json",
+        "rebuildDelay": 500,
+        "cacheExternalArtifacts": true,
+        "dev": true,
+        "devServer": true,
+        "port": 4202
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "buildTarget": "flags:esbuild:development",
+        "watch": false,
+        "setupFiles": ["tools/testing/jsdom-setup.ts"]
+      }
+    },
+    "serve-static": {
+      "continuous": true,
+      "executor": "@nx/web:file-server",
+      "options": {
+        "buildTarget": "flags:build",
+        "port": 4202,
+        "staticFilePath": "dist/apps/flags/browser",
+        "spa": true,
+        "cors": true
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{projectRoot}",
+        "commands": [
+          "ngc -p tsconfig.app.json --noEmit",
+          "tsc -p tsconfig.spec.json --noEmit"
+        ],
+        "parallel": false
+      }
+    },
+    "esbuild": {
       "executor": "@angular/build:application",
       "outputs": ["{options.outputPath}"],
       "defaultConfiguration": "production",
@@ -19,16 +81,36 @@
           {
             "glob": "**/*",
             "input": "apps/flags/public"
+          },
+          {
+            "glob": "*.svg",
+            "input": "node_modules/flag-icons/flags/4x3",
+            "output": "flags"
+          },
+          {
+            "glob": "LICENSE",
+            "input": "node_modules/flag-icons",
+            "output": "licenses/flag-icons"
           }
         ],
-        "styles": ["apps/flags/src/styles.scss"]
+        "styles": [
+          "node_modules/@ionic/angular/css/core.css",
+          "node_modules/@ionic/angular/css/normalize.css",
+          "node_modules/@ionic/angular/css/structure.css",
+          "node_modules/@ionic/angular/css/typography.css",
+          "node_modules/@ionic/angular/css/padding.css",
+          "node_modules/@ionic/angular/css/text-alignment.css",
+          "node_modules/@ionic/angular/css/palettes/dark.class.css",
+          "libs/client/ui/src/styles/index.scss"
+        ],
+        "polyfills": ["es-module-shims"]
       },
       "configurations": {
         "production": {
           "budgets": [
             {
               "type": "initial",
-              "maximumWarning": "500kb",
+              "maximumWarning": "800kb",
               "maximumError": "1mb"
             },
             {
@@ -46,7 +128,7 @@
         }
       }
     },
-    "serve": {
+    "serve-original": {
       "continuous": true,
       "executor": "@angular/build:dev-server",
       "defaultConfiguration": "development",
@@ -55,41 +137,11 @@
       },
       "configurations": {
         "production": {
-          "buildTarget": "flags:build:production"
+          "buildTarget": "flags:esbuild:production"
         },
         "development": {
-          "buildTarget": "flags:build:development"
+          "buildTarget": "flags:esbuild:development"
         }
-      }
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint"
-    },
-    "test": {
-      "executor": "@angular/build:unit-test",
-      "options": {
-        "watch": false
-      }
-    },
-    "serve-static": {
-      "continuous": true,
-      "executor": "@nx/web:file-server",
-      "options": {
-        "buildTarget": "flags:build",
-        "port": 4202,
-        "staticFilePath": "dist/apps/flags/browser",
-        "spa": true
-      }
-    },
-    "typecheck": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "{projectRoot}",
-        "commands": [
-          "ngc -p tsconfig.app.json --noEmit",
-          "tsc -p tsconfig.spec.json --noEmit"
-        ],
-        "parallel": false
       }
     }
   }

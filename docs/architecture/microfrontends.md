@@ -1,6 +1,6 @@
 # Microfrontends (Native Federation)
 
-> Status: ✅ Capitals remote implemented (Phase 4) · 📐 Flags remote (Phase 5) ·
+> Status: ✅ Capitals remote (Phase 4) · ✅ Flags remote (Phase 5) ·
 > 📐 iOS bundling of the manifest (Phase 13)
 
 Why Native Federation and not classic Module Federation is decided in
@@ -9,16 +9,17 @@ actually runs today.
 
 ## The pieces
 
-| Piece          | File                                                | Role                                                          |
-| -------------- | --------------------------------------------------- | ------------------------------------------------------------- |
-| Host (dynamic) | `apps/shell/federation.config.mjs`                  | Declares the shared packages; the shell has nothing to expose |
-| Manifest       | `apps/shell/public/federation.manifest.json`        | Maps a remote name to its `remoteEntry.json` URL              |
-| Host bootstrap | `apps/shell/src/main.ts` → `src/bootstrap.ts`       | `initFederation(manifest)` runs **before** Angular bootstraps |
-| Remote         | `apps/capitals/federation.config.mjs`               | `exposes: { './routes': '…/remote.routes.ts' }`               |
-| Exposed module | `apps/capitals/src/app/remote.routes.ts`            | The only thing the host knows about the remote                |
-| Contract type  | `libs/client/quiz-ports` (`QuizRemoteRoutesModule`) | Compile-time shape of that module on both sides               |
-| Host route     | `apps/shell/src/app/app.routes.ts`                  | `loadChildren: () => loadQuizRemoteRoutes('capitals')`        |
-| Ports          | `apps/shell/src/app/quiz/quiz-ports.providers.ts`   | The shell's implementations, provided on the federated route  |
+| Piece          | File                                                | Role                                                                      |
+| -------------- | --------------------------------------------------- | ------------------------------------------------------------------------- |
+| Host (dynamic) | `apps/shell/federation.config.mjs`                  | Declares the shared packages; the shell has nothing to expose             |
+| Manifest       | `apps/shell/public/federation.manifest.json`        | Maps a remote name to its `remoteEntry.json` URL                          |
+| Host bootstrap | `apps/shell/src/main.ts` → `src/bootstrap.ts`       | `initFederation(manifest)` runs **before** Angular bootstraps             |
+| Remotes        | `apps/{capitals,flags}/federation.config.mjs`       | `exposes: { './routes': '…/remote.routes.ts' }` (:4201, :4202)            |
+| Exposed module | `apps/{capitals,flags}/src/app/remote.routes.ts`    | `quizRemoteRoutes('capitals' \| 'flags')` — the only thing the host knows |
+| Shared page    | `libs/client/quiz-feature` (`QuizPage`)             | The quiz screen both remotes mount, told its category by route `data`     |
+| Contract type  | `libs/client/quiz-ports` (`QuizRemoteRoutesModule`) | Compile-time shape of that module on both sides                           |
+| Host routes    | `apps/shell/src/app/app.routes.ts`                  | `quiz/capitals` and `quiz/flags` → `loadQuizRemoteRoutes(name)`           |
+| Ports          | `apps/shell/src/app/quiz/quiz-ports.providers.ts`   | The shell's implementations, provided on the federated route              |
 
 ## What happens at runtime
 
@@ -105,26 +106,35 @@ this problem disappear; it can only be handled honestly.
 
 ## Running it
 
-The shell alone is not enough — with the remote down, `/quiz/capitals` shows
-the "Quiz unavailable" page:
+The shell alone is not enough — with a remote down, its `/quiz/...` route
+shows the "Quiz unavailable" page:
 
 ```bash
-npx nx run-many -t serve -p shell capitals
+npm run start:quiz   # nx run-many -t serve -p shell capitals flags
 ```
 
-The Capitals app also runs on its own at <http://localhost:4201> for
-development of the quiz screens. It then mounts the same
-`remote.routes.ts`, but supplies **in-memory** ports
-(`apps/capitals/src/app/dev/dev-quiz-ports.ts`), so progress is lost on reload.
-That dev app is the only reason `apps/capitals` has an `app.config.ts`,
+Each remote also runs on its own (<http://localhost:4201>,
+<http://localhost:4202>) for development of the quiz screens. It then mounts
+the same `remote.routes.ts`, but supplies **in-memory** ports
+(`provideInMemoryQuizPorts()` from `client/quiz-ports`), so progress is lost on
+reload. That dev app is the only reason a remote has an `app.config.ts`,
 `app.routes.ts` and an `App` component at all; in production the shell
 bootstraps everything.
 
+## Two remotes, one page
+
+Capitals and Flags differ only in the category, so neither remote contains a
+screen of its own: both expose `quizRemoteRoutes(category)`, which mounts the
+shared `QuizPage` with the category in route `data`. What each remote still
+owns is its build, its dev server, its `remoteEntry.json` and its deployment
+URL — which is what the host composes at runtime. Adding a third quiz type is a
+new app with a one-line `remote.routes.ts`, a manifest entry and a host route.
+
 ## Honest limitations
 
-- The remote is **thin**. Play and results live in `libs/client/quiz-feature`
-  because Capitals and Flags differ only in what the prompt shows. The split
-  is a learning vehicle for runtime composition, not a size argument.
+- The remotes are **thin**: each is little more than its routes, because
+  Capitals and Flags differ only in the category. The split is a learning
+  vehicle for runtime composition, not a size argument.
 - **One repository, one release.** Both apps are versioned together here;
   independent _deployment_ is possible (the manifest points at URLs), but
   independent _release trains_ are not demonstrated.

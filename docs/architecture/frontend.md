@@ -1,9 +1,9 @@
 # Frontend (shell)
 
 > Status: **implemented**: Ionic shell, navigation, Home, Leaderboard,
-> Achievements, Settings (Phase 3); quiz setup and the Capitals quiz loaded
-> from its microfrontend (Phase 4). Flags follows in Phase 5, sign-in in
-> Phase 7.
+> Achievements, Settings (Phase 3); quiz setup and the Capitals (Phase 4)
+> and Flags (Phase 5) quizzes, each loaded from its own microfrontend.
+> Sign-in follows in Phase 7.
 
 ## Stack
 
@@ -53,13 +53,15 @@ Libraries used by the shell:
 
 ## Routing
 
-| URL                                                   | Page                        | Loading                               |
-| ----------------------------------------------------- | --------------------------- | ------------------------------------- |
-| `/`                                                   | redirect to `/home`         | —                                     |
-| `/home`, `/leaderboard`, `/achievements`, `/settings` | tab pages inside `TabsPage` | lazy (`loadComponent`)                |
-| `/quiz/setup`                                         | quiz setup (shell)          | lazy (`loadComponent`)                |
-| `/quiz/capitals?scope=&difficulty=&mode=&count=`      | Capitals microfrontend      | `loadChildren` over Native Federation |
-| anything else                                         | redirect to `/home`         | —                                     |
+| URL                                                   | Page                                                  | Loading                               |
+| ----------------------------------------------------- | ----------------------------------------------------- | ------------------------------------- |
+| `/`                                                   | redirect to `/home`                                   | —                                     |
+| `/home`, `/leaderboard`, `/achievements`, `/settings` | tab pages inside `TabsPage`                           | lazy (`loadComponent`)                |
+| `/quiz/setup`                                         | quiz setup (shell)                                    | lazy (`loadComponent`)                |
+| `/quiz/setup?category=`                               | preselects Capitals or Flags (Home's cards link here) | —                                     |
+| `/quiz/capitals?scope=&difficulty=&mode=&count=`      | Capitals microfrontend                                | `loadChildren` over Native Federation |
+| `/quiz/flags?scope=&difficulty=&mode=&count=`         | Flags microfrontend                                   | `loadChildren` over Native Federation |
+| anything else                                         | redirect to `/home`                                   | —                                     |
 
 All URLs are deep-linkable, including a quiz with its options (tested in
 Cypress). How the federated route is wired, and what the shell and the remote

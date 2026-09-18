@@ -16,13 +16,12 @@
       <ion-segment
         data-testid="setup-category"
         aria-labelledby="setup-category"
-        [value]="category()"
+        [value]="selectedCategory()"
         (ionChange)="onCategoryChange($event)"
       >
         @for (item of categories; track item) {
         <ion-segment-button
           [value]="item"
-          [disabled]="!isAvailable(item)"
           [attr.data-testid]="'setup-category-' + item"
         >
           <ion-icon [name]="categoryIcons[item]" aria-hidden="true" />
@@ -30,11 +29,6 @@
         </ion-segment-button>
         }
       </ion-segment>
-      @if (hasUnavailableCategory) {
-      <p class="hint wq-text-secondary">
-        {{ 'setup.categorySoon' | transloco }}
-      </p>
-      }
     </section>
 
     <section class="wq-section" aria-labelledby="setup-scope">

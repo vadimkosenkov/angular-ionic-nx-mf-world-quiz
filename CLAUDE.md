@@ -8,11 +8,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 World Quiz — a mobile-first quiz app (country → capital, flag → country, 195 countries, English/Russian) and a **learning/portfolio project**. Nx 23 monorepo with Angular 22 (standalone, zoneless, signals), Ionic 9, Native Federation microfrontends, Capacitor 8, Express 5. Planned: PostgreSQL + Drizzle, Apple/Google sign-in, offline sync, SSR `site`, iOS.
 
-Delivery is in numbered phases, one `feat/<phase>` branch and PR each (table in `docs/architecture/overview.md`). Merged so far: foundation, domain model, shell + design system, Capitals microfrontend (Phase 4). Next: Phase 5, `feat/flags-mfe`.
+Delivery is in numbered phases, one `feat/<phase>` branch and PR each (table in `docs/architecture/overview.md`). Merged so far: foundation, domain model, shell + design system, Capitals microfrontend (Phase 4). In progress: Phase 5, `feat/flags-mfe` (Flags microfrontend). Next: Phase 6, `feat/backend-database`.
 
 Project rules that override defaults:
 
-- **Never fake a feature.** Anything not implemented is labelled as such in the UI and in docs (e.g. Flags is a disabled option with "arrives in the next release"; the leaderboard shows an honest "not available yet" state). Docs describe what exists; planned items are marked.
+- **Never fake a feature.** Anything not implemented is labelled as such in the UI and in docs (e.g. the leaderboard shows an honest "not available yet" state until sign-in and the API exist). Docs describe what exists; planned items are marked.
 - **Workflow:** implement + tests + docs → run the full verification below → show a summary → **stop and ask before commit, push or PR**. The user merges; never merge or force-push.
 - Code, comments, docs, commits and PRs are in English. Every change of substance updates the matching doc in `docs/` (and an ADR when a decision changes).
 
@@ -21,9 +21,9 @@ Project rules that override defaults:
 Node `^24.15` (`.nvmrc`), npm. Lockfile is committed; use `npm ci`.
 
 ```bash
-npm run start:quiz        # shell :4200 + capitals remote :4201 (needed to play; first start ~1 min)
-npm run start:shell       # shell only — /quiz/capitals then shows "Quiz unavailable" (expected)
-npm run start:capitals    # remote standalone on :4201, with in-memory dev ports
+npm run start:quiz        # shell :4200 + capitals :4201 + flags :4202 (needed to play; first start ~1 min)
+npm run start:shell       # shell only — /quiz/* then shows "Quiz unavailable" (expected)
+npm run start:capitals    # a remote standalone (:4201; start:flags → :4202), with in-memory ports
 npm run start:api         # http://localhost:3333/health
 
 npx nx <target> <project>                     # e.g. npx nx test quiz-domain
@@ -41,7 +41,7 @@ Full verification before any commit (this is what CI runs, plus E2E):
 npm run check:control-chars
 npx nx format:check                                           # fix with: npx nx format:write
 npx nx run-many -t lint typecheck test build --skip-nx-cache
-npx nx e2e shell-e2e --configuration=production               # starts BOTH shell and capitals static servers
+npx nx e2e shell-e2e --configuration=production               # starts shell, capitals and flags static servers
 ```
 
 `typecheck` runs `ngc --noEmit` for Angular projects, so template errors fail it.
@@ -52,21 +52,20 @@ npx nx e2e shell-e2e --configuration=production               # starts BOTH shel
 
 Tags in each `project.json` + `@nx/enforce-module-boundaries` in the root `eslint.config.mjs` (details: `docs/architecture/nx.md`).
 
-| Project                    | Tags                               | Role                                                                                                        |
-| -------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `apps/shell`               | `scope:shell`, `type:app`          | Ionic host: tabs, Home, quiz setup, Leaderboard, Achievements, Settings; Native Federation **dynamic host** |
-| `apps/capitals`            | `scope:capitals`, `type:app`       | Federation **remote**; exposes only `./routes`                                                              |
-| `apps/flags`               | `scope:flags`, `type:app`          | Placeholder, becomes a remote in Phase 5                                                                    |
-| `apps/api`                 | `scope:api`, `type:app`            | Express 5 (`/health` only so far)                                                                           |
-| `apps/shell-e2e`           | `scope:shell`, `type:e2e`          | Cypress 15                                                                                                  |
-| `libs/quiz/domain`         | `scope:shared`, `type:domain`      | Pure TS quiz rules: engine, answer matching, scoring, mastery, progress, achievements, leaderboard          |
-| `libs/quiz/countries`      | `scope:shared`, `type:domain`      | The 195-country dataset + flag asset paths                                                                  |
-| `libs/shared/util`         | `scope:shared`, `type:util`        | `Clock`, `Result`, `assertNever`                                                                            |
-| `libs/client/ui`           | `scope:client`, `type:ui`          | Design system: SCSS tokens/themes/glass + small components                                                  |
-| `libs/client/i18n`         | `scope:client`, `type:data-access` | Transloco with bundled, typed translations                                                                  |
-| `libs/client/settings`     | `scope:client`, `type:data-access` | Theme/language store, storage port, document sync                                                           |
-| `libs/client/quiz-ports`   | `scope:client`, `type:ports`       | The shell ↔ remote contract                                                                                 |
-| `libs/client/quiz-feature` | `scope:client`, `type:feature`     | Quiz screens used by every remote (play, results, answer feedback)                                          |
+| Project                       | Tags                                         | Role                                                                                                        |
+| ----------------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `apps/shell`                  | `scope:shell`, `type:app`                    | Ionic host: tabs, Home, quiz setup, Leaderboard, Achievements, Settings; Native Federation **dynamic host** |
+| `apps/capitals`, `apps/flags` | `scope:capitals` / `scope:flags`, `type:app` | Federation **remotes** (:4201, :4202); each exposes only `./routes` = `quizRemoteRoutes(category)`          |
+| `apps/api`                    | `scope:api`, `type:app`                      | Express 5 (`/health` only so far)                                                                           |
+| `apps/shell-e2e`              | `scope:shell`, `type:e2e`                    | Cypress 15                                                                                                  |
+| `libs/quiz/domain`            | `scope:shared`, `type:domain`                | Pure TS quiz rules: engine, answer matching, scoring, mastery, progress, achievements, leaderboard          |
+| `libs/quiz/countries`         | `scope:shared`, `type:domain`                | The 195-country dataset + flag asset paths                                                                  |
+| `libs/shared/util`            | `scope:shared`, `type:util`                  | `Clock`, `Result`, `assertNever`                                                                            |
+| `libs/client/ui`              | `scope:client`, `type:ui`                    | Design system: SCSS tokens/themes/glass + small components                                                  |
+| `libs/client/i18n`            | `scope:client`, `type:data-access`           | Transloco with bundled, typed translations                                                                  |
+| `libs/client/settings`        | `scope:client`, `type:data-access`           | Theme/language store, storage port, document sync                                                           |
+| `libs/client/quiz-ports`      | `scope:client`, `type:ports`                 | The shell ↔ remote contract (+ in-memory ports for standalone remotes)                                      |
+| `libs/client/quiz-feature`    | `scope:client`, `type:feature`               | Everything a quiz remote shows: `QuizPage`, play, results, answer feedback, `quizRemoteRoutes()`            |
 
 Rules that bite:
 
@@ -83,12 +82,13 @@ Everything is deterministic and immutable so the server can later **replay** a s
 
 Read `docs/architecture/microfrontends.md` before touching federation. Key points:
 
-- `apps/*/src/main.ts` only calls `initFederation(...)`, then imports `bootstrap.ts`. The shell reads `apps/shell/public/federation.manifest.json` (`capitals → http://localhost:4201/remoteEntry.json`).
-- The shell mounts the remote at `/quiz/capitals` via `loadChildren: () => loadQuizRemoteRoutes('capitals')` (`apps/shell/src/app/quiz/remote-routes.ts`), which falls back to a "Quiz unavailable" page and reports to `ErrorHandler` if loading fails.
+- `apps/*/src/main.ts` only calls `initFederation(...)`, then imports `bootstrap.ts`. The shell reads `apps/shell/public/federation.manifest.json` (`capitals` → :4201, `flags` → :4202).
+- The shell mounts `/quiz/capitals` and `/quiz/flags` via `loadChildren: () => loadQuizRemoteRoutes(name)` (`apps/shell/src/app/quiz/remote-routes.ts`), which falls back to a "Quiz unavailable" page and reports to `ErrorHandler` if loading fails.
+- Both remotes expose `quizRemoteRoutes(category)` from `client/quiz-feature`: the shared `QuizPage` with the category in route `data`. A remote contains no screens of its own — its value is its separate build, dev server, `remoteEntry.json` and URL. Adding a quiz type = new app + one-line `remote.routes.ts` + manifest entry + host route + E2E server.
 - The contract lives in `libs/client/quiz-ports`: `QUIZ_RESULT_SINK`, `QUIZ_PROGRESS_READER`, `COUNTRY_DATASET`, `CLOCK`, and `QuizRemoteRoutesModule` (the compile-time type of the exposed module). The shell provides implementations **on the route** with `provideQuizPorts()`; the remote never reaches shell stores. Quiz options travel as query params bound with `withComponentInputBinding()`.
 - Only **finished** sessions go to the sink (all questions answered, Timed expired, Endless "Finish"). Leaving via the exit button abandons the session and records nothing.
 - Workspace libraries are shared through the tsconfig path mappings, so tokens and the dataset exist once at runtime. A library missing from `shared` in `remoteEntry.json` produces duplicate `InjectionToken`s and `NullInjectorError` inside the remote.
-- `apps/capitals` has `app.config.ts` / `app.routes.ts` / `App` only for standalone dev, with in-memory ports in `src/app/dev/`.
+- A remote's `app.config.ts` / `app.routes.ts` / `App` exist only for standalone dev, using `provideInMemoryQuizPorts()`.
 
 ### Frontend conventions
 
@@ -109,6 +109,7 @@ Read `docs/architecture/microfrontends.md` before touching federation. Key point
 
 - **Never run a production `build` while `nx serve` is running.** The federation dev server serves shared bundles from `dist/`; a build overwrites them and the app turns blank (404 on `*-dev.js`). Restart the dev server after building.
 - **Ionic's global CSS is listed in each app's `styles` array** (`project.json`), not `@import`ed from Sass. The federation dev server leaves package `@import`s unresolved (UI falls back to Times), and `@ionic/angular` only exports exact `css/*.css` paths.
+- **Ionic caches pages.** `ion-router-outlet` keeps a stack of page instances and reuses an existing one when the same URL is opened again, so a page may be shown again with its old state. Leave a flow with `NavController.navigateRoot(...)` (the quiz does, for exit and "Back to home"), and reset in `ionViewWillEnter` when a page must start fresh (`QuizPage` does).
 - **No solid `ion-button` inside `ion-toolbar`**: Ionic paints its label in the toolbar background colour, which is transparent here.
 - **Never type `�`-style escapes for control characters in tool input**: they become raw bytes and git treats the file as binary. `npm run check:control-chars` (also in CI) catches this.
 - Nx 23 has no Angular Module Federation support; everything federation-related is `@angular-architects/native-federation` 22.x, set up by hand. TypeScript 6 rejects `baseUrl`; only `paths` is used.

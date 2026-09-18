@@ -1,5 +1,5 @@
 import type { Route } from '@angular/router';
-import { provideDevQuizPorts } from './dev/dev-quiz-ports';
+import { provideInMemoryQuizPorts } from '@world-quiz/client/quiz-ports';
 
 /**
  * Routes of the standalone dev app. In production this remote has no routes
@@ -9,7 +9,7 @@ import { provideDevQuizPorts } from './dev/dev-quiz-ports';
 export const appRoutes: Route[] = [
   {
     path: 'quiz',
-    providers: [provideDevQuizPorts()],
+    providers: [provideInMemoryQuizPorts()],
     loadChildren: () => import('./remote.routes').then((m) => m.remoteRoutes),
   },
   { path: '', pathMatch: 'full', redirectTo: 'quiz' },

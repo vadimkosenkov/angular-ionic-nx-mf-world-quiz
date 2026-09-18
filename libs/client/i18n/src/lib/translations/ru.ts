@@ -6,7 +6,6 @@ export const ru: TranslationShape = {
     name: 'World Quiz',
   },
   common: {
-    comingSoon: 'Скоро',
     progressValue: '{{value}} из {{max}}',
   },
   tabs: {
@@ -131,7 +130,6 @@ export const ru: TranslationShape = {
   setup: {
     title: 'Настройка квиза',
     category: 'Тип квиза',
-    categorySoon: 'Квизы по флагам появятся в следующем релизе.',
     scope: 'Регион',
     difficulty: 'Сложность',
     difficultyHint: {

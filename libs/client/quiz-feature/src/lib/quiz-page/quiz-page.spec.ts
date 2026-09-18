@@ -1,14 +1,17 @@
-import { Router } from '@angular/router';
+import { NavController } from '@ionic/angular';
 import { fireEvent, render, screen } from '@testing-library/angular';
-import { provideQuizTesting } from '@world-quiz/client/quiz-feature/testing';
+import { provideQuizTesting } from '../../testing/quiz-testing';
 import {
   QUIZ_RESULT_SINK,
   type QuizResultSink,
   type QuizSessionOutcome,
 } from '@world-quiz/client/quiz-ports';
-import type { QuizSession, SessionSummary } from '@world-quiz/quiz/domain';
-import { FIXTURE_DATASET } from '@world-quiz/quiz/domain/testing';
-import { CapitalsQuizPage } from './capitals-quiz.page';
+import type {
+  QuizCategory,
+  QuizSession,
+  SessionSummary,
+} from '@world-quiz/quiz/domain';
+import { QuizPage } from './quiz-page';
 
 /** Records what the remote hands to the host. */
 class RecordingSink implements QuizResultSink {
@@ -21,9 +24,13 @@ class RecordingSink implements QuizResultSink {
   }
 }
 
-async function renderPage(sink: RecordingSink, query: Record<string, string>) {
-  return render(CapitalsQuizPage, {
-    inputs: query,
+async function renderPage(
+  sink: RecordingSink,
+  query: Record<string, string>,
+  category: QuizCategory = 'capitals',
+) {
+  return render(QuizPage, {
+    inputs: { category, ...query },
     providers: [
       ...provideQuizTesting(),
       { provide: QUIZ_RESULT_SINK, useValue: sink },
@@ -33,14 +40,12 @@ async function renderPage(sink: RecordingSink, query: Record<string, string>) {
 
 /** Answers the visible question correctly and acknowledges the feedback. */
 function answerCorrectly(): void {
-  const name = screen.getByTestId('quiz-country').textContent?.trim();
-  const country = FIXTURE_DATASET.find((entry) => entry.name.en === name);
-  if (!country) throw new Error(`Unknown country in prompt: "${name}"`);
-  fireEvent.click(screen.getByTestId(`quiz-choice-${country.code}`));
+  const code = screen.getByTestId('quiz-prompt').dataset['countryCode'];
+  fireEvent.click(screen.getByTestId(`quiz-choice-${code}`));
   fireEvent.click(screen.getByTestId('quiz-continue'));
 }
 
-describe('CapitalsQuizPage', () => {
+describe('QuizPage', () => {
   it('builds the quiz from the query parameters', async () => {
     await renderPage(new RecordingSink(), {
       scope: 'europe',
@@ -83,13 +88,16 @@ describe('CapitalsQuizPage', () => {
     const { fixture } = await renderPage(sink, { mode: 'fixed', count: '3' });
     await screen.findByTestId('quiz-prompt');
     answerCorrectly();
-    const navigate = vi
-      .spyOn(fixture.debugElement.injector.get(Router), 'navigate')
+    const navigateRoot = vi
+      .spyOn(fixture.debugElement.injector.get(NavController), 'navigateRoot')
       .mockResolvedValue(true);
 
     fireEvent.click(screen.getByTestId('quiz-exit'));
 
-    expect(navigate).toHaveBeenCalledWith(['/home']);
+    // A new root, so the quiz does not stay hidden in Ionic's page stack.
+    expect(navigateRoot).toHaveBeenCalledWith('/home', {
+      animationDirection: 'back',
+    });
     expect(sink.submissions).toHaveLength(0);
     expect(screen.queryByTestId('results-score')).toBeNull();
   });
@@ -116,6 +124,43 @@ describe('CapitalsQuizPage', () => {
 
     fireEvent.click(screen.getByTestId('results-play-again'));
 
+    expect(screen.getByTestId('quiz-position').textContent).toContain(
+      'Question 1 of 1',
+    );
+    expect(sink.submissions).toHaveLength(1);
+  });
+
+  it('plays the category it is given by its route: Flags', async () => {
+    const sink = new RecordingSink();
+    await renderPage(sink, { mode: 'fixed', count: '1' }, 'flags');
+
+    expect((await screen.findByTestId('quiz-question')).textContent).toContain(
+      'Which country does this flag belong to?',
+    );
+    expect(screen.getByTestId('quiz-flag').getAttribute('alt')).toBe(
+      'Flag of the country in question',
+    );
+    // The answer would give itself away: no country name on a flags question.
+    expect(screen.queryByTestId('quiz-country')).toBeNull();
+
+    answerCorrectly();
+
+    expect(sink.submissions[0]?.session.config.category).toBe('flags');
+  });
+
+  it('starts a new quiz when Ionic shows the cached page again', async () => {
+    const sink = new RecordingSink();
+    const { fixture } = await renderPage(sink, { mode: 'fixed', count: '1' });
+    const page = fixture.componentInstance;
+    page.ionViewWillEnter();
+    await screen.findByTestId('quiz-prompt');
+    answerCorrectly();
+    expect(screen.getByTestId('results-score')).toBeTruthy();
+
+    page.ionViewWillEnter();
+    fixture.detectChanges();
+
+    expect(screen.queryByTestId('results-score')).toBeNull();
     expect(screen.getByTestId('quiz-position').textContent).toContain(
       'Question 1 of 1',
     );

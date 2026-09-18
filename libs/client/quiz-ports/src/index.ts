@@ -10,3 +10,7 @@ export type {
   QuizResultSink,
   QuizSessionOutcome,
 } from './lib/quiz-ports';
+export {
+  InMemoryQuizPorts,
+  provideInMemoryQuizPorts,
+} from './lib/in-memory-quiz-ports';

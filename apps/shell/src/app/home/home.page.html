@@ -84,19 +84,16 @@
             {{ 'achievements.progress' | transloco: { mastered: world.mastered,
             total: world.total } }}
           </span>
-          @if (card.available) {
           <ion-button
             class="play"
             size="small"
             [routerLink]="['/quiz/setup']"
+            [queryParams]="{ category: card.category }"
             [attr.data-testid]="'play-' + card.category"
           >
             {{ 'setup.play' | transloco }}
             <ion-icon slot="end" name="arrow-forward" aria-hidden="true" />
           </ion-button>
-          } @else {
-          <ion-badge>{{ 'common.comingSoon' | transloco }}</ion-badge>
-          }
         </div>
       </article>
       }

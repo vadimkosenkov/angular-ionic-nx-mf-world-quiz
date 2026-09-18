@@ -8,8 +8,9 @@ function emitIonChange(element: Element, value: unknown) {
   element.dispatchEvent(new CustomEvent('ionChange', { detail: { value } }));
 }
 
-async function renderSetup() {
+async function renderSetup(inputs: { category?: string } = {}) {
   const view = await render(QuizSetupPage, {
+    inputs,
     providers: provideShellTesting(),
   });
   const router = TestBed.inject(Router);
@@ -74,13 +75,29 @@ describe('QuizSetupPage', () => {
     });
   });
 
-  it('disables the categories that have no microfrontend yet', async () => {
-    await renderSetup();
+  it('preselects the category passed in the link and starts that quiz', async () => {
+    const { navigate } = await renderSetup({ category: 'flags' });
 
-    const flags = (await screen.findByTestId(
-      'setup-category-flags',
-    )) as HTMLElement & { disabled?: boolean };
-    expect(flags.disabled).toBe(true);
-    expect(screen.getByTestId('setup-category-capitals')).toBeTruthy();
+    const segment = (await screen.findByTestId(
+      'setup-category',
+    )) as HTMLElement & { value?: string };
+    expect(segment.value).toBe('flags');
+
+    fireEvent.click(screen.getByTestId('setup-start'));
+    expect(navigate).toHaveBeenCalledWith(['/quiz', 'flags'], {
+      queryParams: expect.objectContaining({ mode: 'fixed' }),
+    });
+  });
+
+  it('falls back to Capitals for an unknown category and lets the player switch', async () => {
+    const { navigate } = await renderSetup({ category: 'rivers' });
+
+    emitIonChange(await screen.findByTestId('setup-category'), 'flags');
+    fireEvent.click(screen.getByTestId('setup-start'));
+
+    expect(navigate).toHaveBeenCalledWith(
+      ['/quiz', 'flags'],
+      expect.anything(),
+    );
   });
 });
