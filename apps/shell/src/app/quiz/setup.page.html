@@ -1,0 +1,130 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home" />
+    </ion-buttons>
+    <ion-title>{{ 'setup.title' | transloco }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="wq-aurora">
+  <div class="wq-page setup">
+    <section class="wq-section" aria-labelledby="setup-category">
+      <h2 id="setup-category" class="wq-section-title">
+        {{ 'setup.category' | transloco }}
+      </h2>
+      <ion-segment
+        data-testid="setup-category"
+        aria-labelledby="setup-category"
+        [value]="category()"
+        (ionChange)="onCategoryChange($event)"
+      >
+        @for (item of categories; track item) {
+        <ion-segment-button
+          [value]="item"
+          [disabled]="!isAvailable(item)"
+          [attr.data-testid]="'setup-category-' + item"
+        >
+          <ion-icon [name]="categoryIcons[item]" aria-hidden="true" />
+          <ion-label>{{ 'categories.' + item | transloco }}</ion-label>
+        </ion-segment-button>
+        }
+      </ion-segment>
+      @if (hasUnavailableCategory) {
+      <p class="hint wq-text-secondary">
+        {{ 'setup.categorySoon' | transloco }}
+      </p>
+      }
+    </section>
+
+    <section class="wq-section" aria-labelledby="setup-scope">
+      <h2 id="setup-scope" class="wq-section-title">
+        {{ 'setup.scope' | transloco }}
+      </h2>
+      <ul class="options grid" data-testid="setup-scope">
+        @for (item of scopes; track item) {
+        <li>
+          <button
+            type="button"
+            class="option"
+            [class.selected]="scope() === item"
+            [attr.aria-pressed]="scope() === item"
+            [attr.data-testid]="'setup-scope-' + item"
+            (click)="selectScope(item)"
+          >
+            {{ 'regions.' + item | transloco }}
+          </button>
+        </li>
+        }
+      </ul>
+    </section>
+
+    <section class="wq-section" aria-labelledby="setup-difficulty">
+      <h2 id="setup-difficulty" class="wq-section-title">
+        {{ 'setup.difficulty' | transloco }}
+      </h2>
+      <ion-segment
+        data-testid="setup-difficulty"
+        aria-labelledby="setup-difficulty"
+        [value]="difficulty()"
+        (ionChange)="onDifficultyChange($event)"
+      >
+        @for (item of difficulties; track item) {
+        <ion-segment-button
+          [value]="item"
+          [attr.data-testid]="'setup-difficulty-' + item"
+        >
+          <ion-label>{{ 'difficulty.' + item | transloco }}</ion-label>
+        </ion-segment-button>
+        }
+      </ion-segment>
+      <p class="hint wq-text-secondary">
+        {{ 'setup.difficultyHint.' + difficulty() | transloco }}
+      </p>
+    </section>
+
+    <section class="wq-section" aria-labelledby="setup-mode">
+      <h2 id="setup-mode" class="wq-section-title">
+        {{ 'setup.mode' | transloco }}
+      </h2>
+      <ul class="options" data-testid="setup-mode">
+        @for (item of modes; track item) {
+        <li>
+          <button
+            type="button"
+            class="option mode"
+            [class.selected]="mode() === item"
+            [attr.aria-pressed]="mode() === item"
+            [attr.data-testid]="'setup-mode-' + item"
+            (click)="selectMode(item)"
+          >
+            <span class="mode-icon" aria-hidden="true">
+              <ion-icon [name]="modeIcons[item]" />
+            </span>
+            <span class="mode-text">
+              <span class="mode-name">{{ 'modes.' + item | transloco }}</span>
+              <span class="mode-hint">
+                {{ 'setup.modeHint.' + item | transloco: modeHintParams() }}
+              </span>
+            </span>
+          </button>
+        </li>
+        }
+      </ul>
+    </section>
+  </div>
+</ion-content>
+
+<!-- The primary action floats above the content in the tab bar's glass
+     material. It is deliberately not inside an ion-toolbar: Ionic paints a
+     solid button there in the toolbar's own (here transparent) colour. -->
+<div class="wq-action-bar">
+  <ion-button
+    class="wq-glass-button"
+    expand="block"
+    data-testid="setup-start"
+    (click)="start()"
+  >
+    {{ 'setup.start' | transloco }}
+  </ion-button>
+</div>

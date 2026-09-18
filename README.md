@@ -5,13 +5,16 @@ built as a full-stack portfolio project on a modern Angular ecosystem: **Nx,
 Angular 22 (signals, zoneless), Native Federation microfrontends, Ionic,
 Capacitor (iOS), Express 5, PostgreSQL** and a multi-level test strategy.
 
-> **Project status: Phase 3, shell and design system.** The workspace, CI,
-> the 195-country dataset and the platform-independent quiz domain are in
-> place, together with the Ionic shell: tab navigation, Home, Achievements,
-> Leaderboard (with an honest "not available yet" state), Settings, a light and
-> dark design system with Liquid Glass accents, and English/Russian UI. Quizzes
-> are not playable yet; they arrive with the Capitals/Flags microfrontends.
-> This README only describes what exists; planned items are marked as such.
+> **Project status: Phase 4, the Capitals microfrontend.** The workspace, CI,
+> the 195-country dataset, the platform-independent quiz domain and the Ionic
+> shell (tabs, Home, Achievements, Leaderboard with an honest "not available
+> yet" state, Settings, light/dark design system, English/Russian UI) are in
+> place. **The Capitals quiz is playable**: quiz setup lives in the shell, and
+> the quiz itself is loaded at runtime from a separate application over Native
+> Federation. Progress, mistakes and achievements update from real sessions,
+> but are kept in memory until the persistence phase. Flags, sign-in, the API
+> and offline sync are not implemented yet. This README only describes what
+> exists; planned items are marked as such.
 
 ## Product in one minute
 
@@ -23,7 +26,7 @@ Capacitor (iOS), Express 5, PostgreSQL** and a multi-level test strategy.
 - **Offline-first:** play and progress work without a network; results sync later without duplicates.
 - **Sign in with Apple / Google**, light/dark themes, Liquid Glass-inspired UI.
 
-Screenshots will be added once quizzes are playable. The visual direction
+Screenshots will be added once both categories are playable. The visual direction
 comes from a Figma prototype; its placeholder data is not used.
 
 ## Architecture
@@ -46,25 +49,25 @@ The same quiz rules run in the browser (offline play) and on the server
 
 ## Technology stack
 
-| Area                     | Choice                                                            | Status        |
-| ------------------------ | ----------------------------------------------------------------- | ------------- |
-| Monorepo                 | Nx 23 (integrated, tag-enforced boundaries)                       | ✅            |
-| Frontend                 | Angular 22 (standalone, zoneless, signals), esbuild               | ✅ skeleton   |
-| Microfrontends           | Native Federation 22                                              | 📐 Phase 4    |
-| Mobile UI                | Ionic 9 (iOS mode), design tokens, Liquid Glass                   | ✅            |
-| i18n                     | Transloco, English + Russian, `Intl.PluralRules`                  | ✅            |
-| State                    | Angular signal stores (no NgRx)                                   | ✅            |
-| Native (iOS)             | Capacitor 8 (Preferences plugin in use)                           | 📐 Phase 13   |
-| Backend                  | Node 24, Express 5, Zod, esbuild (ESM)                            | ✅ skeleton   |
-| Database                 | PostgreSQL + Drizzle ORM                                          | 📐 Phase 6    |
-| Auth                     | Sign in with Apple, Google; server-verified tokens                | 📐 Phase 7    |
-| Offline                  | IndexedDB (Dexie) + outbox sync                                   | 📐 Phase 8    |
-| SSR                      | Separate Angular SSR `site` app                                   | 📐 Phase 9    |
-| Quiz domain              | Pure TS engine, seeded questions, typo-tolerant matching, mastery | ✅            |
-| Country data             | 195 countries (en/ru), UN M49 regions, `flag-icons` SVGs          | ✅            |
-| Unit/component/API tests | Vitest 4, Angular TestBed, supertest, PGlite                      | ✅ foundation |
-| E2E                      | Cypress 15                                                        | ✅ smoke test |
-| CI                       | GitHub Actions + `nx affected`                                    | ✅            |
+| Area                     | Choice                                                            | Status                           |
+| ------------------------ | ----------------------------------------------------------------- | -------------------------------- |
+| Monorepo                 | Nx 23 (integrated, tag-enforced boundaries)                       | ✅                               |
+| Frontend                 | Angular 22 (standalone, zoneless, signals), esbuild               | ✅ skeleton                      |
+| Microfrontends           | Native Federation 22 (shell host + capitals remote)               | ✅ Capitals · 📐 Flags (Phase 5) |
+| Mobile UI                | Ionic 9 (iOS mode), design tokens, Liquid Glass                   | ✅                               |
+| i18n                     | Transloco, English + Russian, `Intl.PluralRules`                  | ✅                               |
+| State                    | Angular signal stores (no NgRx)                                   | ✅                               |
+| Native (iOS)             | Capacitor 8 (Preferences plugin in use)                           | 📐 Phase 13                      |
+| Backend                  | Node 24, Express 5, Zod, esbuild (ESM)                            | ✅ skeleton                      |
+| Database                 | PostgreSQL + Drizzle ORM                                          | 📐 Phase 6                       |
+| Auth                     | Sign in with Apple, Google; server-verified tokens                | 📐 Phase 7                       |
+| Offline                  | IndexedDB (Dexie) + outbox sync                                   | 📐 Phase 8                       |
+| SSR                      | Separate Angular SSR `site` app                                   | 📐 Phase 9                       |
+| Quiz domain              | Pure TS engine, seeded questions, typo-tolerant matching, mastery | ✅                               |
+| Country data             | 195 countries (en/ru), UN M49 regions, `flag-icons` SVGs          | ✅                               |
+| Unit/component/API tests | Vitest 4, Angular TestBed, supertest, PGlite                      | ✅ foundation                    |
+| E2E                      | Cypress 15                                                        | ✅ smoke test                    |
+| CI                       | GitHub Actions + `nx affected`                                    | ✅                               |
 
 ✅ implemented · 📐 designed and approved, not implemented yet
 
@@ -73,7 +76,7 @@ The same quiz rules run in the browser (offline play) and on the server
 ```
 apps/
   shell/       Angular host application
-  capitals/    Angular app, future Capitals remote
+  capitals/    Capitals quiz, loaded by the shell as a federated remote
   flags/       Angular app, future Flags remote
   api/         Express API
   shell-e2e/   Cypress tests
@@ -83,6 +86,8 @@ libs/
   client/ui/       Design system: tokens, themes, glass, UI components
   client/i18n/     Transloco setup and English/Russian translations
   client/settings/ Theme and language settings, storage, document sync
+  client/quiz-ports/   Tokens and interfaces shared by the shell and the remotes
+  client/quiz-feature/ Quiz play and results screens used by the remotes
   shared/util/ Pure TypeScript helpers
 docs/          Architecture, decisions (ADRs), domain rules, testing, deployment
 ```
@@ -93,7 +98,7 @@ Requires **Node 24.15+** (`nvm use`).
 
 ```bash
 npm ci
-npm run start:shell    # http://localhost:4200
+npm run start:quiz     # shell + Capitals remote: http://localhost:4200
 npm run start:api      # http://localhost:3333/health
 ```
 
@@ -115,6 +120,7 @@ Details: [setup](docs/development/setup.md) · [environment](docs/development/en
 | Nx workspace and boundaries      | [docs/architecture/nx.md](docs/architecture/nx.md)                             |
 | Decisions (ADRs)                 | [docs/decisions](docs/decisions/README.md)                                     |
 | Frontend (shell)                 | [docs/architecture/frontend.md](docs/architecture/frontend.md)                 |
+| Microfrontends (what runs today) | [docs/architecture/microfrontends.md](docs/architecture/microfrontends.md)     |
 | Design system and Liquid Glass   | [docs/architecture/design-system.md](docs/architecture/design-system.md)       |
 | Internationalization             | [docs/architecture/i18n.md](docs/architecture/i18n.md)                         |
 | State management                 | [docs/architecture/state-management.md](docs/architecture/state-management.md) |

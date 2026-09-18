@@ -98,6 +98,18 @@ describe('HomePage', () => {
     );
   });
 
+  it('starts a Capitals quiz and marks Flags as coming soon', async () => {
+    await render(HomePage, { providers: provideShellTesting() });
+
+    expect(
+      (await screen.findByTestId('play-capitals')).getAttribute('href'),
+    ).toBe('/quiz/setup');
+    expect(screen.queryByTestId('play-flags')).toBeNull();
+    expect(screen.getByTestId('category-flags').textContent).toContain(
+      'Coming soon',
+    );
+  });
+
   it('previews three achievements with accessible progress', async () => {
     await render(HomePage, { providers: provideShellTesting() });
 

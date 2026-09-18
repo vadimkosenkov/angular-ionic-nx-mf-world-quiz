@@ -51,14 +51,6 @@ function isLeaderboardView(value: unknown): value is LeaderboardView {
     </ion-header>
 
     <ion-content [fullscreen]="true" class="wq-aurora">
-      <ion-header collapse="condense">
-        <ion-toolbar>
-          <ion-title size="large">{{
-            'leaderboard.title' | transloco
-          }}</ion-title>
-        </ion-toolbar>
-      </ion-header>
-
       <div class="wq-page">
         <ion-segment
           class="wq-segment-pill"

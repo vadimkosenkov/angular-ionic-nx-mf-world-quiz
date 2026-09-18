@@ -1,0 +1,71 @@
+@let result = summary();
+
+<section class="hero wq-glass" data-testid="results-hero">
+  <div class="icon" aria-hidden="true">
+    <ion-icon [name]="result.perfect ? 'trophy' : 'sparkles-outline'" />
+  </div>
+  <h1>{{ 'results.title' | transloco }}</h1>
+  <p class="score" data-testid="results-score">
+    {{ 'results.correctOf' | transloco: { correct: result.correct, answered:
+    result.answered } }}
+  </p>
+  @if (result.perfect) {
+  <p class="perfect">{{ 'results.perfect' | transloco }}</p>
+  }
+  <dl class="stats">
+    <div>
+      <dt>{{ 'results.accuracy' | transloco }}</dt>
+      <dd data-testid="results-accuracy">{{ accuracyPercent() }}%</dd>
+    </div>
+    <div>
+      <dt>{{ 'results.time' | transloco }}</dt>
+      <dd data-testid="results-time">{{ duration() }}</dd>
+    </div>
+  </dl>
+</section>
+
+@if (outcome(); as outcome) { @if (outcome.newlyUnlocked.length > 0) {
+<section class="wq-card unlocked" data-testid="results-unlocked">
+  <h2>{{ 'results.unlocked' | transloco }}</h2>
+  <ul>
+    @for (achievement of outcome.newlyUnlocked; track achievement.id) {
+    <li>
+      <ion-icon name="trophy" aria-hidden="true" />
+      {{ 'achievements.name.' + achievement.category | transloco: { scope:
+      'regions.' + achievement.scope | transloco } }}
+    </li>
+    }
+  </ul>
+</section>
+} } @if (mistakes().length > 0) {
+<section class="wq-card review" data-testid="results-review">
+  <h2>{{ 'results.review' | transloco }}</h2>
+  <ul>
+    @for (mistake of mistakes(); track mistake.code) {
+    <li>
+      <span>{{ mistake.country }}</span>
+      <span class="wq-text-secondary">{{ mistake.answer }}</span>
+    </li>
+    }
+  </ul>
+</section>
+}
+
+<div class="wq-action-bar">
+  <ion-button
+    class="wq-glass-button secondary"
+    expand="block"
+    data-testid="results-exit"
+    (click)="exited.emit()"
+  >
+    {{ 'results.backHome' | transloco }}
+  </ion-button>
+  <ion-button
+    class="wq-glass-button"
+    expand="block"
+    data-testid="results-play-again"
+    (click)="playAgain.emit()"
+  >
+    {{ 'results.playAgain' | transloco }}
+  </ion-button>
+</div>

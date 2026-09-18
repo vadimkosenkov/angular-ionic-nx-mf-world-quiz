@@ -84,7 +84,7 @@ AnalogJS. Its _optional_ peer dependency on `@angular-devkit/build-angular`
 makes npm evaluate an Angular 21 version against Angular 22 and fail.
 
 **Fix used here:** do not use AnalogJS. Angular libraries use Angular's own
-`@angular/build:unit-test` builder with `buildTarget: shell:build:development`
+`@angular/build:unit-test` builder with `buildTarget: shell:esbuild:development`
 (see docs/architecture/nx.md). The workspace default for new Angular
 libraries is `unitTestRunner: none`; add the test target by hand.
 
@@ -92,9 +92,9 @@ libraries is `unitTestRunner: none`; add the test target by hand.
 
 **Cause:** jsdom does not implement these browser APIs; Ionic and the settings library use them.
 
-**Fix:** the shell's test target loads `apps/shell/src/testing/test-setup.ts`,
-which provides minimal implementations. Library tests that render such
-components need the same setup.
+**Fix:** test targets that render components load
+`tools/testing/jsdom-setup.ts` (`setupFiles` in the project's `test` target),
+which provides minimal implementations.
 
 ## Nx shows stale results or odd graph errors
 
@@ -103,3 +103,47 @@ npx nx reset
 ```
 
 This clears the local cache, workspace data and daemon.
+
+## `/quiz/capitals` shows "Quiz unavailable"
+
+**Cause:** the Capitals microfrontend is not being served. The shell fetches
+`http://localhost:4201/remoteEntry.json` (from
+`apps/shell/public/federation.manifest.json`) at start-up; the browser console
+shows the failed request.
+
+**Fix:** start both applications with `npm run start:quiz`. The fallback page
+itself is intended behaviour, not a bug — see
+[microfrontends.md](../architecture/microfrontends.md).
+
+## The remote loads, but injection fails inside it (`NullInjectorError`)
+
+**Cause:** a token exists twice because its library was not shared. Native
+Federation shares workspace libraries through the `tsconfig` path mappings, so
+a library that is missing from `shared` in `remoteEntry.json` is bundled
+separately into both applications — and two `InjectionToken` instances never
+match.
+
+**Fix:** make sure the library has a path mapping in `tsconfig.base.json` and
+appears in the `shared` list of both `remoteEntry.json` files after a build.
+
+## Cypress cannot click an element that is "covered by another element"
+
+**Cause:** Ionic's translucent header. Cypress scrolls the target to the top
+of the scroll container, which is exactly where the toolbar sits.
+
+**Fix:** click with `{ scrollBehavior: 'center' }` instead of forcing the
+click, so the test still proves the element is really clickable.
+
+## Dev server: the UI renders in Times and Ionic looks unstyled
+
+**Cause:** Ionic's global stylesheets were not loaded. They used to be pulled
+in from `styles.scss` with `@import '@ionic/angular/css/core.css'`. The Native
+Federation dev server leaves such a package `@import` untouched in the served
+CSS, and the browser cannot resolve it; the production build inlined it, so
+tests and E2E did not notice. `@use '@ionic/angular/css/core'` (without the
+extension) fails too, because the package only exports the exact
+`css/*.css` paths.
+
+**Fix used here:** Ionic's CSS files are listed directly in the `styles`
+array of each app's `project.json`, followed by the design system
+(`libs/client/ui/src/styles/index.scss`).

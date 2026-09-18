@@ -1,0 +1,242 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wq-space-5);
+  // Room for the floating action bar, so the last answer is never under it.
+  padding-bottom: var(--wq-action-bar-clearance);
+}
+
+.quiz-header {
+  display: flex;
+  align-items: center;
+  gap: var(--wq-space-3);
+
+  // A round surface button: easy to find and to hit (44 px), unlike a bare
+  // hairline cross on the aurora background.
+  .exit {
+    --padding-start: 0;
+    --padding-end: 0;
+    --border-radius: var(--wq-radius-pill);
+    --background: var(--wq-color-surface);
+    --background-activated: var(--wq-color-surface-secondary);
+    --color: var(--wq-color-text-primary);
+    --box-shadow: var(--wq-shadow-card);
+    width: var(--wq-touch-target);
+    height: var(--wq-touch-target);
+    margin: 0;
+    font-size: 1.375rem;
+  }
+
+  .progress {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--wq-space-1);
+  }
+
+  .counter {
+    margin: 0;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--wq-color-text-secondary);
+  }
+
+  .score {
+    min-width: 2.5rem;
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 700;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--wq-color-primary-strong);
+  }
+}
+
+.question {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--wq-color-text-secondary);
+}
+
+// No card: the flag is the subject and sits directly on the page background.
+.prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--wq-space-4);
+  text-align: center;
+
+  h1 {
+    margin: 0;
+    font-size: 1.875rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  // A thin ring plus a soft drop shadow, so a flag whose colours match the
+  // background (white, light blue) still has a visible edge.
+  .flag {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: contain; // flag-icons 4x3 are all 4:3; never crop a flag
+    border-radius: var(--wq-radius-md);
+    box-shadow:
+      0 0 0 1px rgb(20 26 58 / 12%),
+      0 8px 24px rgb(20 26 58 / 18%);
+  }
+}
+
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wq-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.choice {
+  display: flex;
+  align-items: center;
+  gap: var(--wq-space-4);
+  width: 100%;
+  min-height: 60px;
+  padding: var(--wq-space-4) var(--wq-space-5);
+  border: 1px solid var(--wq-color-border);
+  border-radius: var(--wq-radius-lg);
+  background: var(--wq-color-surface);
+  box-shadow: var(--wq-shadow-card);
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    transform var(--wq-duration-fast) var(--wq-easing-standard),
+    border-color var(--wq-duration-fast) var(--wq-easing-standard);
+
+  &:active {
+    transform: scale(0.99);
+    border-color: var(--wq-color-primary);
+  }
+}
+
+.marker {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--wq-radius-pill);
+  background: var(--wq-color-primary-container);
+  color: var(--wq-color-on-primary-container);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.typed {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wq-space-3);
+
+  .answer-input {
+    --background: var(--wq-color-surface);
+    --border-radius: var(--wq-radius-lg);
+    --padding-start: var(--wq-space-4);
+    --padding-end: var(--wq-space-4);
+  }
+
+  .error {
+    margin: 0;
+    color: var(--wq-color-error);
+    font-size: 0.875rem;
+  }
+}
+
+.feedback {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wq-space-3);
+  padding: var(--wq-space-4) var(--wq-space-5);
+  border: 1px solid
+    color-mix(in srgb, var(--wq-color-error-vivid) 45%, transparent);
+  border-radius: var(--wq-radius-lg);
+  // Tinted from the surface, not the pale container token, so the verdict
+  // stands out on the lavender page background.
+  background: color-mix(
+    in srgb,
+    var(--wq-color-error-vivid) 18%,
+    var(--wq-color-surface)
+  );
+  // A soft glow in the verdict colour lifts the block off the page background.
+  box-shadow:
+    0 8px 24px color-mix(in srgb, var(--wq-color-error-vivid) 30%, transparent),
+    var(--wq-shadow-card);
+  color: var(--wq-color-error);
+  text-align: center;
+
+  &.correct {
+    border-color: color-mix(
+      in srgb,
+      var(--wq-color-success-vivid) 55%,
+      transparent
+    );
+    background: color-mix(
+      in srgb,
+      var(--wq-color-success-vivid) 26%,
+      var(--wq-color-surface)
+    );
+    box-shadow:
+      0 8px 24px
+        color-mix(in srgb, var(--wq-color-success-vivid) 38%, transparent),
+      var(--wq-shadow-card);
+    color: var(--wq-color-success);
+  }
+
+  .verdict {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--wq-space-2);
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 700;
+  }
+
+  .detail {
+    margin: 0;
+    color: var(--wq-color-text-primary);
+  }
+
+  .correct-answer {
+    padding: var(--wq-space-3) var(--wq-space-4);
+    border-radius: var(--wq-radius-md);
+    background: var(--wq-color-surface);
+
+    p {
+      margin: 0;
+    }
+
+    .label {
+      font-size: var(--wq-font-size-caption);
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--wq-color-text-secondary);
+    }
+
+    // The answer to remember: the largest text on screen, in the brand
+    // colour so it does not read like the surrounding labels.
+    .answer {
+      margin-top: var(--wq-space-1);
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+      color: var(--wq-color-primary-strong);
+      overflow-wrap: anywhere;
+    }
+  }
+}

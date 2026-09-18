@@ -28,12 +28,25 @@ npm ci
 
 ## Run
 
-| What                          | Command                  | URL                          |
-| ----------------------------- | ------------------------ | ---------------------------- |
-| Shell                         | `npm run start:shell`    | http://localhost:4200        |
-| Capitals (standalone for now) | `npm run start:capitals` | http://localhost:4201        |
-| Flags (standalone for now)    | `npm run start:flags`    | http://localhost:4202        |
-| API                           | `npm run start:api`      | http://localhost:3333/health |
+| What                                 | Command                  | URL                          |
+| ------------------------------------ | ------------------------ | ---------------------------- |
+| **Shell + Capitals remote** (normal) | `npm run start:quiz`     | http://localhost:4200        |
+| Shell only                           | `npm run start:shell`    | http://localhost:4200        |
+| Capitals standalone (dev ports)      | `npm run start:capitals` | http://localhost:4201        |
+| Flags (standalone for now)           | `npm run start:flags`    | http://localhost:4202        |
+| API                                  | `npm run start:api`      | http://localhost:3333/health |
+
+`start:quiz` streams both servers' logs with a `shell:` / `capitals:` prefix
+(`--output-style=stream`); Nx's interactive task view would only show a
+spinner for these never-ending tasks. The first start takes up to a minute
+while Native Federation bundles the shared packages; wait for both
+`Local: http://localhost:420x/` lines.
+
+The Capitals quiz is a Native Federation remote: with the shell alone,
+`/quiz/capitals` shows a "Quiz unavailable" page, because nothing is serving
+`http://localhost:4201/remoteEntry.json`. Served on its own, the Capitals app
+runs the same quiz against in-memory progress. See
+[microfrontends.md](../architecture/microfrontends.md).
 
 Configuration for the API comes from environment variables; see
 [environment.md](environment.md).

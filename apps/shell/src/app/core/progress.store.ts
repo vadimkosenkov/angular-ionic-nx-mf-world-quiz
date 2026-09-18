@@ -26,6 +26,9 @@ export class ProgressStore {
   readonly dataset = inject(COUNTRY_DATASET);
   private readonly progress = signal<ProgressMap>(new Map());
 
+  /** Current progress, for domain functions that take a `ProgressMap`. */
+  readonly snapshot = this.progress.asReadonly();
+
   readonly countryCount = this.dataset.length;
   readonly regionCount = REGIONS.filter((region) =>
     this.dataset.some((country) => country.region === region),

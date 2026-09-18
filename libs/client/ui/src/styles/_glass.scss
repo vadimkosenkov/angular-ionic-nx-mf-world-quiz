@@ -30,25 +30,11 @@
   @include glass-surface;
 }
 
-// Floating Liquid Glass tab bar: a capsule hovering above the content, which
-// scrolls underneath it. Pages reserve `--wq-tab-bar-clearance` at the bottom.
-ion-tab-bar.wq-floating-tab-bar {
-  --background: transparent;
-  --border: 0;
-  position: absolute;
-  inset-inline: var(--wq-space-3);
-  bottom: max(var(--wq-space-3), var(--ion-safe-area-bottom, 0px));
-  z-index: 10;
-  --wq-tab-bar-height: 60px;
-  --wq-tab-bar-padding: 4px;
-  max-width: 560px;
-  margin-inline: auto;
-  padding: var(--wq-tab-bar-padding);
-  // Ionic forces `box-sizing: content-box !important` inside the tab bar's
-  // shadow DOM, which outside styles cannot override. Subtract padding and
-  // the 1 px borders so the total height is exactly --wq-tab-bar-height.
-  height: calc(var(--wq-tab-bar-height) - 2 * var(--wq-tab-bar-padding) - 2px);
-  border-radius: var(--wq-radius-pill);
+// The Liquid Glass of the app's chrome: the floating tab bar, headers and the
+// floating action capsule share it, so they read as one material. A top
+// highlight and an inner light edge make the glass visible even over a plain
+// background; the opaque baseline stays readable without backdrop-filter.
+@mixin glass-chrome {
   background: var(--wq-color-surface);
   border: 1px solid var(--wq-color-border);
   box-shadow: var(--wq-shadow-floating);
@@ -73,6 +59,77 @@ ion-tab-bar.wq-floating-tab-bar {
       backdrop-filter: blur(10px) saturate(200%);
     }
   }
+}
+
+// Bottom action bar: a page's next step always sits in the same place, at the
+// bottom of the screen above the content, which scrolls underneath. Pages
+// keep `--wq-action-bar-clearance` free at the bottom. `position: fixed` is
+// relative to the Ionic page while it animates (it is transformed then) and
+// to the viewport afterwards, so the bar travels with page transitions.
+.wq-action-bar {
+  position: fixed;
+  inset-inline: var(--wq-space-3);
+  bottom: max(var(--wq-space-3), var(--ion-safe-area-bottom, 0px));
+  z-index: 10;
+  display: flex;
+  gap: var(--wq-space-2);
+  max-width: 560px;
+  margin-inline: auto;
+
+  > * {
+    flex: 1 1 0;
+  }
+}
+
+// Buttons of the action bar: solid fills, pill shaped. `secondary` is a
+// white (dark theme: navy) surface with a primary label and a border, so it
+// stays visible on the page background next to the primary button.
+ion-button.wq-glass-button {
+  --background: var(--wq-color-primary);
+  --background-hover: var(--wq-color-primary-strong);
+  --background-activated: var(--wq-color-primary-strong);
+  --background-focused: var(--wq-color-primary-strong);
+  --border-radius: var(--wq-radius-pill);
+  --box-shadow: var(--wq-shadow-floating);
+  --color: var(--wq-color-on-primary);
+  min-height: 52px;
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+
+  &.secondary {
+    --background: var(--wq-color-surface);
+    --background-hover: var(--wq-color-surface-secondary);
+    --background-activated: var(--wq-color-surface-secondary);
+    --background-focused: var(--wq-color-surface-secondary);
+    --border-color: var(--wq-color-border);
+    --border-style: solid;
+    --border-width: 1px;
+    --color: var(--wq-color-primary-strong);
+  }
+}
+
+// Floating Liquid Glass tab bar: a capsule hovering above the content, which
+// scrolls underneath it. Pages reserve `--wq-tab-bar-clearance` at the bottom.
+ion-tab-bar.wq-floating-tab-bar {
+  --background: transparent;
+  --border: 0;
+  position: absolute;
+  inset-inline: var(--wq-space-3);
+  bottom: max(var(--wq-space-3), var(--ion-safe-area-bottom, 0px));
+  z-index: 10;
+  --wq-tab-bar-height: 60px;
+  --wq-tab-bar-padding: 4px;
+  max-width: 560px;
+  margin-inline: auto;
+  padding: var(--wq-tab-bar-padding);
+  // Ionic forces `box-sizing: content-box !important` inside the tab bar's
+  // shadow DOM, which outside styles cannot override. Subtract padding and
+  // the 1 px borders so the total height is exactly --wq-tab-bar-height.
+  height: calc(var(--wq-tab-bar-height) - 2 * var(--wq-tab-bar-padding) - 2px);
+  border-radius: var(--wq-radius-pill);
+
+  @include glass-chrome;
 
   // Breathing room between the labels and the edges of the selected pill.
   ion-tab-button {
@@ -89,6 +146,51 @@ ion-tab-bar.wq-floating-tab-bar {
 
     &.tab-selected {
       background: color-mix(in srgb, var(--wq-color-primary) 16%, transparent);
+    }
+
+    // Ionic's iOS label is an 11 px line box for 10 px text with
+    // `overflow: hidden` (for the ellipsis), and in a 60 px bar the 30 px icon
+    // left the label squeezed further: the tail of "g" in "Settings" was cut
+    // off, most visibly when zoomed. A 26 px icon (the usual iOS tab size) and
+    // a label that never shrinks keep the descenders inside the line box.
+    ion-icon {
+      font-size: 26px;
+    }
+
+    ion-label {
+      flex-shrink: 0;
+      line-height: 1.35;
+    }
+  }
+}
+
+// Translucent headers get the same material as the tab bar. Ionic renders a
+// `.header-background` layer behind the toolbar for exactly this purpose; the
+// toolbar itself stays transparent so the layer shows through.
+ion-header.header-translucent {
+  ion-toolbar {
+    --background: transparent;
+  }
+
+  .header-background {
+    background: var(--wq-color-surface);
+    box-shadow: inset 0 -1px 0 var(--wq-color-border);
+
+    @supports (
+      (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+    ) {
+      @media not (prefers-reduced-transparency: reduce) {
+        background:
+          linear-gradient(
+            180deg,
+            var(--wq-color-glass-highlight) 0%,
+            transparent 70%
+          ),
+          var(--wq-color-tab-bar-glass);
+        box-shadow: inset 0 -1px 0 var(--wq-color-glass-border);
+        -webkit-backdrop-filter: blur(10px) saturate(200%);
+        backdrop-filter: blur(10px) saturate(200%);
+      }
     }
   }
 }

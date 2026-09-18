@@ -19,6 +19,9 @@
   --wq-color-background: #f4f5ff;
   --wq-color-surface: #ffffff;
   --wq-color-surface-secondary: #eceefb;
+  // Unfilled part of a progress bar; darker than surface-secondary so the
+  // track stays visible on the page background as well as on white cards.
+  --wq-color-progress-track: #d5d9ef;
   --wq-color-glass-surface: rgb(255 255 255 / 62%);
   --wq-color-glass-border: rgb(255 255 255 / 75%);
   --wq-color-glass-highlight: rgb(255 255 255 / 85%);
@@ -36,6 +39,10 @@
   // Feedback
   --wq-color-success: #16794d;
   --wq-color-success-container: #dff6ea;
+  // Vivid hues for tinted fills and glows (iOS system colours). The darker
+  // success/error values above are for text and stay AA-readable.
+  --wq-color-success-vivid: #34c759;
+  --wq-color-error-vivid: #ff3b30;
   --wq-color-error: #c0322f;
   --wq-color-error-container: #fde7e7;
   --wq-color-warning: #955800;
@@ -71,8 +78,15 @@
   // Touch
   --wq-touch-target: 44px;
 
+  // Type scale for controls. Every choice control (segments, option lists)
+  // uses the same size; secondary lines under or inside them are smaller.
+  --wq-font-size-control: 0.9375rem; // 15 px, iOS "subheadline"
+  --wq-font-size-caption: 0.8125rem; // 13 px, iOS "footnote"
+
   // Space reserved at the bottom of tab pages for the floating tab bar
   --wq-tab-bar-clearance: calc(92px + var(--ion-safe-area-bottom, 0px));
+  // Space a page keeps free under the floating `.wq-action-bar`.
+  --wq-action-bar-clearance: calc(96px + var(--ion-safe-area-bottom, 0px));
 }
 
 // Dark theme: designed separately, not an inversion. Deep navy surfaces keep
@@ -90,6 +104,7 @@
   --wq-color-background: #0b0e1f;
   --wq-color-surface: #151a33;
   --wq-color-surface-secondary: #1c2242;
+  --wq-color-progress-track: #2f3766;
   --wq-color-glass-surface: rgb(28 34 66 / 58%);
   --wq-color-glass-border: rgb(255 255 255 / 9%);
   --wq-color-glass-highlight: rgb(255 255 255 / 14%);
@@ -105,6 +120,8 @@
 
   --wq-color-success: #4ad295;
   --wq-color-success-container: #0f3a2a;
+  --wq-color-success-vivid: #30d158;
+  --wq-color-error-vivid: #ff453a;
   --wq-color-error: #ff7a7a;
   --wq-color-error-container: #43161a;
   --wq-color-warning: #f5b54a;

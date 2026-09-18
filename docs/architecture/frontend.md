@@ -1,8 +1,9 @@
 # Frontend (shell)
 
-> Status: **implemented** (Phase 3): Ionic shell, navigation, Home,
-> Leaderboard, Achievements, Settings. Quiz screens arrive with the
-> Capitals/Flags microfrontends (Phase 4–5); sign-in in Phase 7.
+> Status: **implemented**: Ionic shell, navigation, Home, Leaderboard,
+> Achievements, Settings (Phase 3); quiz setup and the Capitals quiz loaded
+> from its microfrontend (Phase 4). Flags follows in Phase 5, sign-in in
+> Phase 7.
 
 ## Stack
 
@@ -25,13 +26,18 @@ apps/shell/src/app/
   leaderboard/         view and board selectors, rules, "not available yet" state
   achievements/        summary, legend, all 14 achievements
   settings/            theme, language, about
+  quiz/
+    setup.page.*       category, region, difficulty and mode; starts the quiz
+    quiz-ports.providers.ts  the shell's side of the microfrontend contract
+    remote-routes.ts   loads a remote's routes, with a fallback when it fails
+    remote-unavailable.page.ts
   core/
     progress.store.ts  learning progress as signals (in memory until Phase 8)
     tokens.ts          COUNTRY_DATASET, CLOCK
     greeting.ts        time-of-day greeting rule
   icons.ts             explicit ionicons registration
   app-info.ts          version shown in Settings
-apps/shell/src/testing/ shared test providers and jsdom setup (not in the app build)
+apps/shell/src/testing/ shared test providers (not in the app build)
 ```
 
 Libraries used by the shell:
@@ -39,20 +45,26 @@ Libraries used by the shell:
 | Library                          | Role                                                                           |
 | -------------------------------- | ------------------------------------------------------------------------------ |
 | `client-ui`                      | Tokens, themes, glass, `wq-progress-bar`, `wq-progress-card`, `wq-empty-state` |
+| `client-quiz-ports`              | Tokens and interfaces the shell and the remotes share                          |
+| `client-quiz-feature`            | The quiz screens themselves (`wq-quiz-play`, `wq-quiz-results`)                |
 | `client-i18n`                    | Transloco setup, bundled translations, `wqPlural`, locale detection            |
 | `client-settings`                | `SettingsStore`, storage port, system colour-scheme signal, document sync      |
 | `quiz-domain` / `quiz-countries` | Progress, achievements and all counts come from the domain and the dataset     |
 
 ## Routing
 
-| URL                                                   | Page                        | Loading                |
-| ----------------------------------------------------- | --------------------------- | ---------------------- |
-| `/`                                                   | redirect to `/home`         | —                      |
-| `/home`, `/leaderboard`, `/achievements`, `/settings` | tab pages inside `TabsPage` | lazy (`loadComponent`) |
-| anything else                                         | redirect to `/home`         | —                      |
+| URL                                                   | Page                        | Loading                               |
+| ----------------------------------------------------- | --------------------------- | ------------------------------------- |
+| `/`                                                   | redirect to `/home`         | —                                     |
+| `/home`, `/leaderboard`, `/achievements`, `/settings` | tab pages inside `TabsPage` | lazy (`loadComponent`)                |
+| `/quiz/setup`                                         | quiz setup (shell)          | lazy (`loadComponent`)                |
+| `/quiz/capitals?scope=&difficulty=&mode=&count=`      | Capitals microfrontend      | `loadChildren` over Native Federation |
+| anything else                                         | redirect to `/home`         | —                                     |
 
-Tab URLs are deep-linkable (tested in Cypress). Quiz routes will be mounted
-from the federated remotes under `/quiz/...` in Phase 4.
+All URLs are deep-linkable, including a quiz with its options (tested in
+Cypress). How the federated route is wired, and what the shell and the remote
+may know about each other, is described in
+[microfrontends.md](microfrontends.md).
 
 ## Start-up sequence
 
@@ -82,14 +94,29 @@ progress; persistence and sync arrive in Phase 8. The quiz phases call
 
 ## Bundle size
 
-Production build (Phase 3):
+Native Federation changes how this is measured: the entry point only starts
+federation, and nearly everything — including Angular, Ionic and the workspace
+libraries — is loaded as **shared ES modules through a generated import map**.
+The builder's "initial" number therefore no longer equals what the browser
+fetches for the first paint.
 
-|                                              | Raw        | Transferred (est.) |
-| -------------------------------------------- | ---------- | ------------------ |
-| Initial total                                | ≈ 712 kB   | ≈ 171 kB           |
-| Largest initial chunk (Angular + Ionic core) | ≈ 579 kB   | ≈ 130 kB           |
-| Each tab page                                | 3–10 kB    | 1–3 kB             |
-| Each translation file                        | 2.5–3.5 kB | ≈ 1 kB             |
+Production build (Phase 4):
+
+|                                                           | Raw        | Transferred (est.) |
+| --------------------------------------------------------- | ---------- | ------------------ |
+| Shell entry (`main` + polyfills)                          | ≈ 46 kB    | ≈ 15 kB            |
+| Shared framework module (Angular + Ionic), loaded at once | ≈ 710 kB   | ≈ 150 kB           |
+| Each tab page                                             | 3–10 kB    | 1–3 kB             |
+| Each translation file                                     | 2.5–3.5 kB | ≈ 1 kB             |
+| Capitals remote's own code (loaded when a quiz starts)    | ≈ 8 kB     | ≈ 3 kB             |
+
+The remote is that small because the host and the remote **share the workspace
+libraries too**: `@world-quiz/quiz/domain`, `quiz/countries`, `client/ui`,
+`client/i18n`, `client/settings`, `client/quiz-ports` and
+`client/quiz-feature` appear in both `remoteEntry.json` files and resolve to
+one copy at runtime. Native Federation picks them up from the `tsconfig`
+path mappings; without that, opening a quiz would download a second country
+dataset.
 
 The Angular CLI template budget (500 kB warning) is below the Angular + Ionic
 baseline, so the initial budget is **800 kB warning / 1 MB error**. On iOS
@@ -100,9 +127,11 @@ lazy.
 
 - Component tests render pages with the real providers
   (`provideShellTesting()`), using in-memory storage, a fixed clock and a chosen language.
-- `src/testing/test-setup.ts` adds the two browser APIs jsdom lacks and Ionic
-  uses (`matchMedia`, `Element.scrollTo`).
+- `tools/testing/jsdom-setup.ts` adds the two browser APIs jsdom lacks and
+  Ionic uses (`matchMedia`, `Element.scrollTo`); every project that renders
+  components loads it.
 - Ionic events (`ionChange`) are dispatched as DOM events in tests, which is
   exactly how Angular's Ionic bindings receive them.
 - Cypress covers navigation, deep links, system/explicit theme, language
-  switching and persistence across reloads, and bundled flag assets.
+  switching and persistence across reloads, bundled flag assets, and the full
+  Capitals quiz journey across the microfrontend boundary.

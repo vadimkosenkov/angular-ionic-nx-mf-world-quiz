@@ -36,6 +36,17 @@ describe('ProgressBar', () => {
     expect(fill.style.width).toBe(`${percent}%`);
   });
 
+  it.each(['primary', 'success', 'warning'] as const)(
+    'paints the fill with the %s tone',
+    async (tone) => {
+      const { fixture } = await render(ProgressBar, {
+        inputs: { value: 1, max: 2, label: 'Time left', valueText: '', tone },
+      });
+      const fill = fixture.nativeElement.querySelector('.fill') as HTMLElement;
+      expect(fill.classList.contains(tone)).toBe(true);
+    },
+  );
+
   it('omits aria-valuetext when none is given', async () => {
     await renderBar({ value: 1, max: 2 });
     expect(screen.getByRole('progressbar').hasAttribute('aria-valuetext')).toBe(

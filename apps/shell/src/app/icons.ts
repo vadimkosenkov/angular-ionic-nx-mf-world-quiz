@@ -1,24 +1,26 @@
+import { registerQuizIcons } from '@world-quiz/client/quiz-feature';
 import { addIcons } from 'ionicons';
 import {
+  arrowForward,
   business,
   businessOutline,
-  checkmarkCircle,
   flag,
   flagOutline,
   home,
   homeOutline,
+  infiniteOutline,
+  listOutline,
   lockClosedOutline,
   moonOutline,
   phonePortraitOutline,
   podiumOutline,
   settings,
   settingsOutline,
-  sparklesOutline,
   star,
   starOutline,
   sunnyOutline,
   timeOutline,
-  trophy,
+  timerOutline,
   trophyOutline,
 } from 'ionicons/icons';
 
@@ -27,26 +29,31 @@ import {
  * (no CDN), so they also work offline. Only registered icons are shipped.
  */
 export function registerIcons(): void {
+  // The quiz screens live in a library that both the shell and the remotes
+  // use, so they register their own icons.
+  registerQuizIcons();
+
   addIcons({
+    'arrow-forward': arrowForward,
     business,
     'business-outline': businessOutline,
-    'checkmark-circle': checkmarkCircle,
     flag,
     'flag-outline': flagOutline,
     home,
     'home-outline': homeOutline,
+    'infinite-outline': infiniteOutline,
+    'list-outline': listOutline,
     'lock-closed-outline': lockClosedOutline,
     'moon-outline': moonOutline,
     'phone-portrait-outline': phonePortraitOutline,
     'podium-outline': podiumOutline,
     settings,
     'settings-outline': settingsOutline,
-    'sparkles-outline': sparklesOutline,
     star,
     'star-outline': starOutline,
     'sunny-outline': sunnyOutline,
     'time-outline': timeOutline,
-    trophy,
+    'timer-outline': timerOutline,
     'trophy-outline': trophyOutline,
   });
 }

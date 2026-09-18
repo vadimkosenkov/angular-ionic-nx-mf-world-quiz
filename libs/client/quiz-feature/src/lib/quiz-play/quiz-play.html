@@ -1,0 +1,178 @@
+@let feedback = store.feedback(); @let question = store.question(); @let country
+= promptCountry(); @let total = store.total();
+
+<header class="quiz-header">
+  <ion-button
+    fill="solid"
+    class="exit"
+    data-testid="quiz-exit"
+    [attr.aria-label]="'quiz.exit' | transloco"
+    (click)="exit()"
+  >
+    <ion-icon name="close" slot="icon-only" aria-hidden="true" />
+  </ion-button>
+
+  <div class="progress">
+    @if (isTimed()) {
+    <p class="counter" data-testid="quiz-timer">
+      {{ 'quiz.timeLeft' | transloco }}: {{ secondsLeft() }}
+    </p>
+    <wq-progress-bar
+      [value]="timerPercent()"
+      [max]="100"
+      [label]="'quiz.timeLeft' | transloco"
+      [valueText]="secondsLeft() + ''"
+      [tone]="secondsLeft() <= 10 ? 'warning' : 'primary'"
+    />
+    } @else {
+    <p class="counter" data-testid="quiz-position">
+      @if (total !== null) { {{ 'quiz.progress' | transloco: { position:
+      store.position(), total } }} } @else { {{ 'quiz.progressEndless' |
+      transloco: { position: store.position() } }} }
+    </p>
+    <wq-progress-bar
+      [value]="store.answeredCount()"
+      [max]="total ?? store.answeredCount() + 1"
+      [label]="'quiz.progress' | transloco: { position: store.position(), total: total ?? 0 }"
+      [valueText]="store.answeredCount() + ''"
+    />
+    }
+  </div>
+
+  <p class="score" data-testid="quiz-score">
+    <span class="wq-visually-hidden">{{ 'quiz.score' | transloco }}</span>
+    {{ store.correctCount() }}
+  </p>
+</header>
+
+@if (country) {
+<p class="question" data-testid="quiz-question">
+  {{ 'quiz.prompt.' + config().category | transloco }}
+</p>
+<section
+  class="prompt"
+  data-testid="quiz-prompt"
+  [attr.data-country-code]="country.code"
+>
+  @if (config().category === 'capitals') {
+  <!-- The name below says which country it is; the flag is decorative. -->
+  <img class="flag" [src]="flagFor(country)" alt="" />
+  <h1 data-testid="quiz-country">{{ country.name[locale()] }}</h1>
+  } @else {
+  <img
+    class="flag"
+    [src]="flagFor(country)"
+    [alt]="'quiz.flagLabel' | transloco"
+    data-testid="quiz-flag"
+  />
+  }
+</section>
+} @if (feedback) {
+<!-- The verdict sits where the answers were, right under the flag. -->
+<section
+  class="feedback"
+  [class.correct]="feedback.record.correct"
+  role="status"
+  data-testid="quiz-feedback"
+>
+  <p class="verdict">
+    <ion-icon
+      [name]="feedback.record.correct ? 'checkmark-circle' : 'close-circle'"
+      aria-hidden="true"
+    />
+    {{ (feedback.record.correct ? 'quiz.correct' : 'quiz.incorrect') | transloco
+    }}
+  </p>
+  @if (feedback.record.judgement === 'typo' && feedback.record.matchedText) {
+  <p class="detail">
+    {{ 'quiz.accepted' | transloco: { answer: feedback.record.matchedText } }}
+  </p>
+  } @if (!feedback.record.correct) {
+  <!-- The right answer is what the player should remember, so it is the
+       most prominent text of the block. -->
+  <div class="correct-answer">
+    <p class="label">{{ 'quiz.correctAnswer' | transloco }}</p>
+    <p class="answer" data-testid="quiz-correct-answer">
+      {{ answerLabel(feedback.record.countryCode) }}
+    </p>
+  </div>
+  }
+</section>
+} @else if (question) { @if (config().difficulty === 'easy') {
+<ul class="choices" data-testid="quiz-choices">
+  @for (choice of choices(); track choice.code; let index = $index) {
+  <li>
+    <button
+      type="button"
+      class="choice"
+      [attr.data-testid]="'quiz-choice-' + choice.code"
+      (click)="selectChoice(choice.code)"
+    >
+      <span class="marker" aria-hidden="true">{{ 'ABCD'[index] }}</span>
+      {{ choice.label }}
+    </button>
+  </li>
+  }
+</ul>
+} @else {
+<!-- Enter / "done" on the keyboard checks the answer; the button that
+         does the same lives in the action bar, outside this form. -->
+<form class="typed" (submit)="$event.preventDefault()">
+  <ion-input
+    #answerInput
+    class="answer-input"
+    data-testid="quiz-answer-input"
+    fill="outline"
+    autocapitalize="words"
+    enterkeyhint="done"
+    [autocorrect]="true"
+    [label]="'quiz.answerLabel' | transloco"
+    labelPlacement="stacked"
+    [placeholder]="
+          'quiz.answerPlaceholder.' + config().category | transloco
+        "
+    [ngModel]="typedAnswer()"
+    (ngModelChange)="typedAnswer.set($event)"
+    name="answer"
+    (keydown.enter)="submitTyped()"
+  />
+  @if (showEmptyAnswerError()) {
+  <p class="error" role="alert">{{ 'quiz.emptyAnswer' | transloco }}</p>
+  }
+</form>
+} }
+
+<!-- Every next step lives in the same place: the glass bar at the bottom. -->
+@if (feedback || (question && (config().difficulty === 'hard' || config().mode
+=== 'endless'))) {
+<div class="wq-action-bar">
+  @if (feedback) {
+  <ion-button
+    class="wq-glass-button"
+    expand="block"
+    data-testid="quiz-continue"
+    (click)="continue()"
+  >
+    {{ 'quiz.continue' | transloco }}
+  </ion-button>
+  } @else { @if (config().mode === 'endless') {
+  <ion-button
+    class="wq-glass-button secondary"
+    expand="block"
+    data-testid="quiz-finish"
+    (click)="finish()"
+  >
+    {{ 'quiz.finish' | transloco }}
+  </ion-button>
+  } @if (config().difficulty === 'hard') {
+  <ion-button
+    class="wq-glass-button"
+    expand="block"
+    data-testid="quiz-submit"
+    (click)="submitTyped()"
+  >
+    {{ 'quiz.check' | transloco }}
+  </ion-button>
+  } }
+</div>
+}

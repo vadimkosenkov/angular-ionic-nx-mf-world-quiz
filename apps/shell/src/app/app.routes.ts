@@ -1,9 +1,19 @@
 import type { Route } from '@angular/router';
+import { loadQuizRemoteRoutes } from './quiz/remote-routes';
+import { provideQuizPorts } from './quiz/quiz-ports.providers';
 import { TabsPage } from './tabs/tabs.page';
 
 /**
- * Shell routes. The tab pages are lazy-loaded. Quiz routes (served by the
- * Capitals and Flags microfrontends) and sign-in are added in later phases.
+ * Shell routes.
+ *
+ * The tab pages are lazy-loaded from the shell bundle. `quiz/capitals` is
+ * served by the Capitals microfrontend: `loadQuizRemoteRoutes` fetches the
+ * remote's entry point at navigation time (the URL comes from
+ * `public/federation.manifest.json`) and mounts the routes it exposes like
+ * any other lazy route. `provideQuizPorts()` is attached here, so the remote
+ * resolves the shell's implementations of the quiz ports.
+ *
+ * Sign-in is added in a later phase.
  */
 export const appRoutes: Route[] = [
   {
@@ -35,6 +45,16 @@ export const appRoutes: Route[] = [
       },
       { path: '', pathMatch: 'full', redirectTo: 'home' },
     ],
+  },
+  {
+    path: 'quiz/setup',
+    loadComponent: () =>
+      import('./quiz/setup.page').then((m) => m.QuizSetupPage),
+  },
+  {
+    path: 'quiz/capitals',
+    providers: [provideQuizPorts()],
+    loadChildren: () => loadQuizRemoteRoutes('capitals'),
   },
   { path: '**', redirectTo: 'home' },
 ];

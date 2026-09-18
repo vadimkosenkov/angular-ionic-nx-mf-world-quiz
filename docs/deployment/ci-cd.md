@@ -16,7 +16,7 @@ flowchart LR
 | Job      | What fails it                                                                                                                                                                                                               |
 | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `checks` | Raw control characters in tracked text files, unformatted files, lint errors (including module-boundary violations), type errors (including Angular templates), failing unit/component/API tests, failing production builds |
-| `e2e`    | Failing Cypress specs against a production-configuration build. Screenshots are uploaded as an artifact on failure.                                                                                                         |
+| `e2e`    | Failing Cypress specs against production-configuration builds of **both** the shell and the Capitals remote. Screenshots are uploaded as an artifact on failure.                                                            |
 
 Every step exits non-zero on failure. No step uses `continue-on-error`.
 
@@ -39,6 +39,12 @@ affects every project.
   because Nx requires Nx Cloud for it, so CI runs the regular `e2e` target.
 - **Two parallel jobs.** E2E is the slowest step and needs the Cypress binary,
   so it runs separately. The `checks` job skips the binary download (`CYPRESS_INSTALL_BINARY=0`).
+- **E2E starts two servers.** The Cypress web-server command is
+  `nx run-many -t serve-static -p shell capitals`, because the quiz is only
+  really federated if the remote is fetched from its own origin
+  (`http://localhost:4201`). `shell-e2e` therefore declares `capitals` as an
+  implicit dependency, so `nx affected` also runs E2E when only the remote
+  changes.
 - **Node version from `.nvmrc`**, so local and CI use the same major.
 - **`concurrency` with `cancel-in-progress`**: a new push cancels the outdated run for the same branch.
 - **Least privilege:** `contents: read`, plus `actions: read` for `nx-set-shas`.
