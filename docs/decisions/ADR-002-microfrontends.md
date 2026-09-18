@@ -5,8 +5,9 @@
 Accepted (2026-09-14). **Implemented for Capitals in Phase 4**
 (`feat/capitals-mfe`, 2026-09-17): the shell loads `apps/capitals` over Native
 Federation at `/quiz/capitals`, verified end to end in Cypress against two
-separately served applications. Flags follows in Phase 5; the iOS manifest
-swap in Phase 13. What runs today is described in
+separately served applications. **Flags followed in Phase 5**
+(`feat/flags-mfe`, 2026-09-18) at `/quiz/flags`, with both remotes mounting the
+shared `QuizPage`. The iOS manifest swap is planned for Phase 13. What runs today is described in
 [microfrontends.md](../architecture/microfrontends.md).
 
 ## Context

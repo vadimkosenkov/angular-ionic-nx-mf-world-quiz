@@ -1,3 +1,4 @@
 {
-  "capitals": "http://localhost:4201/remoteEntry.json"
+  "capitals": "http://localhost:4201/remoteEntry.json",
+  "flags": "http://localhost:4202/remoteEntry.json"
 }

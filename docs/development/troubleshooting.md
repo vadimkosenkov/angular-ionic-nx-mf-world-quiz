@@ -104,14 +104,15 @@ npx nx reset
 
 This clears the local cache, workspace data and daemon.
 
-## `/quiz/capitals` shows "Quiz unavailable"
+## `/quiz/capitals` or `/quiz/flags` shows "Quiz unavailable"
 
-**Cause:** the Capitals microfrontend is not being served. The shell fetches
-`http://localhost:4201/remoteEntry.json` (from
-`apps/shell/public/federation.manifest.json`) at start-up; the browser console
+**Cause:** that microfrontend is not being served. The shell fetches
+`http://localhost:4201/remoteEntry.json` (Capitals) and
+`http://localhost:4202/remoteEntry.json` (Flags), listed in
+`apps/shell/public/federation.manifest.json`, at start-up; the browser console
 shows the failed request.
 
-**Fix:** start both applications with `npm run start:quiz`. The fallback page
+**Fix:** start all three applications with `npm run start:quiz`. The fallback page
 itself is intended behaviour, not a bug — see
 [microfrontends.md](../architecture/microfrontends.md).
 
@@ -147,3 +148,19 @@ extension) fails too, because the package only exports the exact
 **Fix used here:** Ionic's CSS files are listed directly in the `styles`
 array of each app's `project.json`, followed by the design system
 (`libs/client/ui/src/styles/index.scss`).
+
+## Starting a quiz shows the results of the previous one
+
+**Cause:** Ionic's `ion-router-outlet` keeps a stack of page instances and
+reuses an existing page when the same URL is opened again. Leaving the quiz
+with a plain `router.navigate(['/home'])` could leave the finished quiz page
+in that stack; starting a quiz with the same options (the same URL) then
+brought the old page, with its results, back.
+
+**Fix used here:** leaving the quiz calls `NavController.navigateRoot('/home')`,
+which replaces the whole stack, and `QuizPage` resets itself in
+`ionViewDidLeave`, so a cached page brought back by Ionic starts a new quiz.
+(`ionViewWillEnter` would be the wrong hook: it also fires when an iOS
+swipe-back is started and cancelled, which would restart a quiz in progress.)
+Covered by a unit
+test and by the Flags E2E journey.

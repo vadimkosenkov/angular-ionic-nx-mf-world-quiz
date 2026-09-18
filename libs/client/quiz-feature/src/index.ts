@@ -1,3 +1,4 @@
+export { quizRemoteRoutes } from './lib/quiz-remote-routes';
 export { registerQuizIcons } from './lib/quiz-icons';
 export { QuizPlay } from './lib/quiz-play/quiz-play';
 export { QuizResults } from './lib/quiz-results/quiz-results';

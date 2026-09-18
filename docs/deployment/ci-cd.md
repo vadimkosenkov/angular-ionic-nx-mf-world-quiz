@@ -39,12 +39,12 @@ affects every project.
   because Nx requires Nx Cloud for it, so CI runs the regular `e2e` target.
 - **Two parallel jobs.** E2E is the slowest step and needs the Cypress binary,
   so it runs separately. The `checks` job skips the binary download (`CYPRESS_INSTALL_BINARY=0`).
-- **E2E starts two servers.** The Cypress web-server command is
-  `nx run-many -t serve-static -p shell capitals`, because the quiz is only
-  really federated if the remote is fetched from its own origin
-  (`http://localhost:4201`). `shell-e2e` therefore declares `capitals` as an
-  implicit dependency, so `nx affected` also runs E2E when only the remote
-  changes.
+- **E2E starts three servers.** The Cypress web-server command is
+  `nx run-many -t serve-static -p shell capitals flags`, because a quiz is only
+  really federated if its remote is fetched from its own origin
+  (`http://localhost:4201`, `:4202`). `shell-e2e` therefore declares `capitals`
+  and `flags` as implicit dependencies, so `nx affected` also runs E2E when
+  only a remote changes.
 - **Node version from `.nvmrc`**, so local and CI use the same major.
 - **`concurrency` with `cancel-in-progress`**: a new push cancels the outdated run for the same branch.
 - **Least privilege:** `contents: read`, plus `actions: read` for `nx-set-shas`.

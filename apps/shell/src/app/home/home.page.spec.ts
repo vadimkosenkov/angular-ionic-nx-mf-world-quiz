@@ -98,16 +98,14 @@ describe('HomePage', () => {
     );
   });
 
-  it('starts a Capitals quiz and marks Flags as coming soon', async () => {
+  it('opens the quiz setup with the category of the card preselected', async () => {
     await render(HomePage, { providers: provideShellTesting() });
 
-    expect(
-      (await screen.findByTestId('play-capitals')).getAttribute('href'),
-    ).toBe('/quiz/setup');
-    expect(screen.queryByTestId('play-flags')).toBeNull();
-    expect(screen.getByTestId('category-flags').textContent).toContain(
-      'Coming soon',
-    );
+    for (const category of ['capitals', 'flags']) {
+      expect(
+        (await screen.findByTestId(`play-${category}`)).getAttribute('href'),
+      ).toBe(`/quiz/setup?category=${category}`);
+    }
   });
 
   it('previews three achievements with accessible progress', async () => {

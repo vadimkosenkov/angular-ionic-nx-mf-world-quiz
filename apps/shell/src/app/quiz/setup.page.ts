@@ -1,4 +1,11 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  input,
+  linkedSignal,
+  signal,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import {
   IonBackButton,
@@ -64,7 +71,17 @@ export class QuizSetupPage {
   protected readonly modes = TRAINING_MODES;
   protected readonly defaultQuestionCount = DEFAULT_FIXED_QUESTION_COUNT;
 
-  protected readonly category = signal<QuizCategory>('capitals');
+  /**
+   * `?category=` from the link that opened the setup (Home's category cards),
+   * bound by `withComponentInputBinding()`. Unknown values fall back to
+   * Capitals; the player can still switch.
+   */
+  readonly category = input<string>();
+
+  protected readonly selectedCategory = linkedSignal<QuizCategory>(() => {
+    const requested = this.category();
+    return isQuizCategory(requested) ? requested : 'capitals';
+  });
   protected readonly scope = signal<QuizScope>('world');
   protected readonly difficulty = signal<Difficulty>('easy');
   protected readonly mode = signal<TrainingMode>('fixed');
@@ -73,17 +90,6 @@ export class QuizSetupPage {
     capitals: 'business-outline',
     flags: 'flag-outline',
   };
-  /**
-   * Only categories with a microfrontend behind them can be started. Flags
-   * follows in the next phase; until then the option is visible but disabled
-   * rather than pretending to work.
-   */
-  protected readonly availableCategories: readonly QuizCategory[] = [
-    'capitals',
-  ];
-  protected readonly hasUnavailableCategory = QUIZ_CATEGORIES.some(
-    (category) => !this.availableCategories.includes(category),
-  );
   protected readonly modeIcons: Readonly<Record<TrainingMode, string>> = {
     fixed: 'list-outline',
     endless: 'infinite-outline',
@@ -96,8 +102,7 @@ export class QuizSetupPage {
 
   protected onCategoryChange(event: Event): void {
     const { value } = (event as SegmentCustomEvent).detail;
-    if (isQuizCategory(value) && this.isAvailable(value))
-      this.category.set(value);
+    if (isQuizCategory(value)) this.selectedCategory.set(value);
   }
 
   protected onDifficultyChange(event: Event): void {
@@ -113,12 +118,8 @@ export class QuizSetupPage {
     if (isTrainingMode(mode)) this.mode.set(mode);
   }
 
-  protected isAvailable(category: QuizCategory): boolean {
-    return this.availableCategories.includes(category);
-  }
-
   protected start(): void {
-    void this.router.navigate(['/quiz', this.category()], {
+    void this.router.navigate(['/quiz', this.selectedCategory()], {
       queryParams: {
         scope: this.scope(),
         difficulty: this.difficulty(),

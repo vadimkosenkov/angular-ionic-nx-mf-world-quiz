@@ -28,18 +28,18 @@ npm ci
 
 ## Run
 
-| What                                 | Command                  | URL                          |
-| ------------------------------------ | ------------------------ | ---------------------------- |
-| **Shell + Capitals remote** (normal) | `npm run start:quiz`     | http://localhost:4200        |
-| Shell only                           | `npm run start:shell`    | http://localhost:4200        |
-| Capitals standalone (dev ports)      | `npm run start:capitals` | http://localhost:4201        |
-| Flags (standalone for now)           | `npm run start:flags`    | http://localhost:4202        |
-| API                                  | `npm run start:api`      | http://localhost:3333/health |
+| What                              | Command                  | URL                          |
+| --------------------------------- | ------------------------ | ---------------------------- |
+| **Shell + both remotes** (normal) | `npm run start:quiz`     | http://localhost:4200        |
+| Shell only                        | `npm run start:shell`    | http://localhost:4200        |
+| Capitals standalone (dev ports)   | `npm run start:capitals` | http://localhost:4201        |
+| Flags standalone (dev ports)      | `npm run start:flags`    | http://localhost:4202        |
+| API                               | `npm run start:api`      | http://localhost:3333/health |
 
-`start:quiz` streams both servers' logs with a `shell:` / `capitals:` prefix
+`start:quiz` streams the three servers' logs with a `shell:` / `capitals:` / `flags:` prefix
 (`--output-style=stream`); Nx's interactive task view would only show a
 spinner for these never-ending tasks. The first start takes up to a minute
-while Native Federation bundles the shared packages; wait for both
+while Native Federation bundles the shared packages; wait for all three
 `Local: http://localhost:420x/` lines.
 
 The Capitals quiz is a Native Federation remote: with the shell alone,

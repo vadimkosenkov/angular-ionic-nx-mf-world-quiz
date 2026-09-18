@@ -1,7 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
-  IonBadge,
   IonButton,
   IonContent,
   IonHeader,
@@ -22,8 +21,6 @@ interface CategoryCard {
   readonly category: QuizCategory;
   readonly icon: string;
   readonly featured: boolean;
-  /** Whether a microfrontend can play this category yet. */
-  readonly available: boolean;
 }
 
 @Component({
@@ -34,7 +31,6 @@ interface CategoryCard {
     IonTitle,
     IonContent,
     IonIcon,
-    IonBadge,
     IonButton,
     RouterLink,
     TranslocoPipe,
@@ -57,8 +53,8 @@ export class HomePage implements ViewWillEnter {
   protected readonly greeting = signal(this.currentGreeting());
 
   protected readonly categories: readonly CategoryCard[] = [
-    { category: 'capitals', icon: 'business', featured: true, available: true },
-    { category: 'flags', icon: 'flag', featured: false, available: false },
+    { category: 'capitals', icon: 'business', featured: true },
+    { category: 'flags', icon: 'flag', featured: false },
   ];
 
   ionViewWillEnter(): void {

@@ -1,22 +1,24 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { Router } from '@angular/router';
-import { IonContent } from '@ionic/angular';
+import { IonContent, NavController, type ViewDidLeave } from '@ionic/angular';
 import {
   COUNTRY_DATASET,
   QUIZ_RESULT_SINK,
   type QuizSessionOutcome,
 } from '@world-quiz/client/quiz-ports';
-import { QuizPlay, QuizResults } from '@world-quiz/client/quiz-feature';
 import {
   createQuizEngine,
   DEFAULT_FIXED_QUESTION_COUNT,
   isDifficulty,
   isQuizScope,
   isTrainingMode,
+  type QuizCategory,
   type QuizConfig,
   type QuizSession,
   type SessionSummary,
 } from '@world-quiz/quiz/domain';
+
+import { QuizPlay } from '../quiz-play/quiz-play';
+import { QuizResults } from '../quiz-results/quiz-results';
 
 interface FinishedQuiz {
   readonly summary: SessionSummary;
@@ -24,16 +26,18 @@ interface FinishedQuiz {
 }
 
 /**
- * The Capitals microfrontend's only screen: it turns the route's query
- * parameters into a `QuizConfig`, plays the session and hands the finished
- * session to the shell through `QUIZ_RESULT_SINK`.
+ * The screen every quiz microfrontend exposes: it turns the route into a
+ * `QuizConfig`, plays the session and hands the finished session to the host
+ * through `QUIZ_RESULT_SINK`.
  *
- * The remote owns the quiz; it does not know how progress is stored. Route
- * inputs are bound from the query string (`withComponentInputBinding`), so a
- * quiz is deep-linkable and reloading replays the same configuration.
+ * The category comes from the route's `data` (each remote mounts this page
+ * with its own, see `quizRemoteRoutes`); the options come from the query
+ * string. Both are bound as inputs by `withComponentInputBinding()`, so a quiz
+ * is deep-linkable and reloading replays the same configuration. The remote
+ * owns the quiz; it does not know how progress is stored.
  */
 @Component({
-  selector: 'wq-capitals-quiz-page',
+  selector: 'wq-quiz-page',
   imports: [IonContent, QuizPlay, QuizResults],
   template: `
     <ion-content [fullscreen]="true" class="wq-aurora">
@@ -68,8 +72,8 @@ interface FinishedQuiz {
     }
   `,
 })
-export class CapitalsQuizPage {
-  private readonly router = inject(Router);
+export class QuizPage implements ViewDidLeave {
+  private readonly nav = inject(NavController);
   private readonly results = inject(QUIZ_RESULT_SINK);
   private readonly engine = createQuizEngine(inject(COUNTRY_DATASET));
 
@@ -78,12 +82,15 @@ export class CapitalsQuizPage {
    * parameters are always strings, and anything unknown falls back to the
    * default instead of failing the navigation.
    */
+  /** Set by the remote's routes (`quizRemoteRoutes`), never by the user. */
+  readonly category = input.required<QuizCategory>();
   readonly scope = input('world');
   readonly difficulty = input('easy');
   readonly mode = input('fixed');
   readonly count = input<string | undefined>(undefined);
 
   protected readonly config = computed<QuizConfig>(() => {
+    const category = this.category();
     const scope = this.scope();
     const difficulty = this.difficulty();
     const mode = this.mode();
@@ -91,7 +98,7 @@ export class CapitalsQuizPage {
     const resolvedMode = isTrainingMode(mode) ? mode : 'fixed';
 
     return {
-      category: 'capitals',
+      category,
       scope: isQuizScope(scope) ? scope : 'world',
       difficulty: isDifficulty(difficulty) ? difficulty : 'easy',
       mode: resolvedMode,
@@ -120,12 +127,31 @@ export class CapitalsQuizPage {
     });
   }
 
+  /**
+   * Ionic caches pages in its navigation stack and can show an existing one
+   * again when the same URL is opened. Once the player has left, the page is
+   * reset, so if Ionic brings it back it starts a new quiz instead of showing
+   * the previous results.
+   *
+   * `ionViewDidLeave` fires only when leaving has completed. Resetting on
+   * `ionViewWillEnter` instead would also restart a quiz in progress when an
+   * iOS swipe-back gesture is started and then cancelled.
+   */
+  ionViewDidLeave(): void {
+    this.playAgain();
+  }
+
   protected playAgain(): void {
     this.finished.set(null);
     this.seed.set(crypto.randomUUID());
   }
 
+  /**
+   * Leaving ends the quiz: `navigateRoot` replaces the whole navigation stack,
+   * so neither this page nor the setup page stays behind hidden. A plain
+   * forward navigation to /home could leave them in the stack.
+   */
   protected exit(): void {
-    void this.router.navigate(['/home']);
+    void this.nav.navigateRoot('/home', { animationDirection: 'back' });
   }
 }

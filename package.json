@@ -7,7 +7,7 @@
     "node": "^24.15.0"
   },
   "scripts": {
-    "start:quiz": "nx run-many -t serve -p shell capitals --output-style=stream",
+    "start:quiz": "nx run-many -t serve -p shell capitals flags --output-style=stream",
     "start:shell": "nx serve shell",
     "start:capitals": "nx serve capitals",
     "start:flags": "nx serve flags",

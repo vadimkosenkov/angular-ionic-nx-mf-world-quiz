@@ -37,7 +37,7 @@ flowchart LR
 | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
 | `apps/shell`                                       | Bootstrap, auth, tabs, Home, Quiz Setup, Leaderboard, Achievements, Settings; Native Federation host                           | ✅ tabs, Home, quiz setup, Leaderboard (placeholder data state), Achievements, Settings, federation host · 📐 auth |
 | `apps/capitals`                                    | Capitals play + results route; Native Federation remote                                                                        | ✅ ([microfrontends.md](microfrontends.md))                                                                        |
-| `apps/flags`                                       | Flags play + results route; Native Federation remote                                                                           | 🧱 (Phase 5)                                                                                                       |
+| `apps/flags`                                       | Flags play + results route; Native Federation remote                                                                           | ✅ ([microfrontends.md](microfrontends.md))                                                                        |
 | `apps/api`                                         | REST API: auth, sessions (idempotent result ingestion), progress sync, leaderboard                                             | 🧱 (`/health` only)                                                                                                |
 | `apps/site`                                        | Angular SSR: prerendered legal pages, server-rendered public leaderboard                                                       | 📐                                                                                                                 |
 | `apps/shell-e2e`                                   | Cypress user journeys                                                                                                          | ✅ navigation, theme, language, Capitals quiz across the federation boundary · 📐 the remaining journeys           |
@@ -98,8 +98,8 @@ typos). The app has no custom speech-recognition UI and no external AI/LLM judgi
 | 1   | `feat/project-foundation`    | Nx, apps/libs skeleton, boundaries, CI, ADR-001/002/007                                | ✅ merged      |
 | 2   | `feat/domain-model`          | 195-country dataset + flags, engine, matching, scoring, mastery, achievements, ranking | ✅ merged      |
 | 3   | `feat/shell-design-system`   | Ionic shell, tokens, Liquid Glass, themes, i18n, Settings                              | ✅ merged      |
-| 4   | `feat/capitals-mfe`          | Native Federation host/remote, setup, play, results                                    | ✅ this branch |
-| 5   | `feat/flags-mfe`             | Flags remote                                                                           | 📐             |
+| 4   | `feat/capitals-mfe`          | Native Federation host/remote, setup, play, results                                    | ✅ merged      |
+| 5   | `feat/flags-mfe`             | Flags remote                                                                           | ✅ this branch |
 | 6   | `feat/backend-database`      | Express, Drizzle, migrations, API tests                                                | 📐             |
 | 7   | `feat/authentication`        | Apple, Google, sessions, account deletion                                              | 📐             |
 | 8   | `feat/offline-sync`          | Local store, outbox, sync                                                              | 📐             |

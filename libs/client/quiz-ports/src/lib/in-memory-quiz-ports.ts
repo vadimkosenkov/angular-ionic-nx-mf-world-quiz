@@ -6,7 +6,7 @@ import {
   type QuizProgressReader,
   type QuizResultSink,
   type QuizSessionOutcome,
-} from '@world-quiz/client/quiz-ports';
+} from './quiz-ports';
 import {
   applyProgressEvents,
   evaluateAchievements,
@@ -21,13 +21,13 @@ import {
 } from '@world-quiz/quiz/domain';
 
 /**
- * In-memory stand-in for the shell's ports, used only when this remote is
- * served on its own (`nx serve capitals`) so the quiz can be developed
- * without starting the shell. Progress is lost on reload — the real
- * implementation lives in the shell (apps/shell/src/app/quiz).
+ * In-memory implementation of the quiz ports, for a remote served on its own
+ * (`nx serve capitals`, `nx serve flags`) so the quiz can be developed without
+ * the shell. Progress is lost on reload; the real implementation lives in the
+ * shell (apps/shell/src/app/quiz).
  */
 @Injectable({ providedIn: 'root' })
-export class DevQuizPorts implements QuizResultSink, QuizProgressReader {
+export class InMemoryQuizPorts implements QuizResultSink, QuizProgressReader {
   private readonly dataset = inject(COUNTRY_DATASET);
   private readonly progress = signal<ProgressMap>(new Map());
 
@@ -56,9 +56,9 @@ export class DevQuizPorts implements QuizResultSink, QuizProgressReader {
   }
 }
 
-export function provideDevQuizPorts(): Provider[] {
+export function provideInMemoryQuizPorts(): Provider[] {
   return [
-    { provide: QUIZ_RESULT_SINK, useExisting: DevQuizPorts },
-    { provide: QUIZ_PROGRESS_READER, useExisting: DevQuizPorts },
+    { provide: QUIZ_RESULT_SINK, useExisting: InMemoryQuizPorts },
+    { provide: QUIZ_PROGRESS_READER, useExisting: InMemoryQuizPorts },
   ];
 }

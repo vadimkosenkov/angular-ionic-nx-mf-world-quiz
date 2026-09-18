@@ -14,7 +14,7 @@ import type { QuizRemoteRoutesModule } from '@world-quiz/client/quiz-ports';
  * at runtime.
  */
 const routesModule: QuizRemoteRoutesModule = {
-  remoteRoutes: quizRemoteRoutes('capitals'),
+  remoteRoutes: quizRemoteRoutes('flags'),
 };
 
 export const remoteRoutes = routesModule.remoteRoutes;

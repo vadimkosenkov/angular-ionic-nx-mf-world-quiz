@@ -16,7 +16,6 @@ export const en = {
     name: 'World Quiz',
   },
   common: {
-    comingSoon: 'Coming soon',
     progressValue: '{{value}} of {{max}}',
   },
   tabs: {
@@ -141,7 +140,6 @@ export const en = {
   setup: {
     title: 'Quiz setup',
     category: 'Quiz type',
-    categorySoon: 'Flag quizzes arrive in the next release.',
     scope: 'Region',
     difficulty: 'Difficulty',
     difficultyHint: {
