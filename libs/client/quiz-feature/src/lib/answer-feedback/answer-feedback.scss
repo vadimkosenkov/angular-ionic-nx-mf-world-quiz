@@ -1,0 +1,77 @@
+// Tinted from the surface with the vivid hues, not the pale container
+// tokens, so the verdict stands out on the lavender page background; a soft
+// glow in the same hue lifts the block off the page.
+:host {
+  --wq-feedback-hue: var(--wq-color-error-vivid);
+  --wq-feedback-text: var(--wq-color-error);
+  display: flex;
+  flex-direction: column;
+  gap: var(--wq-space-3);
+  padding: var(--wq-space-4) var(--wq-space-5);
+  border: 1px solid color-mix(in srgb, var(--wq-feedback-hue) 45%, transparent);
+  border-radius: var(--wq-radius-lg);
+  background: color-mix(
+    in srgb,
+    var(--wq-feedback-hue) 18%,
+    var(--wq-color-surface)
+  );
+  box-shadow:
+    0 8px 24px color-mix(in srgb, var(--wq-feedback-hue) 30%, transparent),
+    var(--wq-shadow-card);
+  color: var(--wq-feedback-text);
+  text-align: center;
+}
+
+:host(.correct) {
+  --wq-feedback-hue: var(--wq-color-success-vivid);
+  --wq-feedback-text: var(--wq-color-success);
+  border-color: color-mix(in srgb, var(--wq-feedback-hue) 55%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--wq-feedback-hue) 26%,
+    var(--wq-color-surface)
+  );
+}
+
+p {
+  margin: 0;
+}
+
+.verdict {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--wq-space-2);
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.detail {
+  color: var(--wq-color-text-primary);
+}
+
+.correct-answer {
+  padding: var(--wq-space-3) var(--wq-space-4);
+  border-radius: var(--wq-radius-md);
+  background: var(--wq-color-surface);
+}
+
+.label {
+  font-size: var(--wq-font-size-caption);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--wq-color-text-secondary);
+}
+
+// The answer to remember: the largest text on screen, in the brand colour so
+// it does not read like the surrounding labels.
+.answer {
+  margin-top: var(--wq-space-1);
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--wq-color-primary-strong);
+  overflow-wrap: anywhere;
+}

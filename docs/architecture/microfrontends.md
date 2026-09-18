@@ -82,6 +82,11 @@ The shell provides the sink and the reader **on the route**:
 }
 ```
 
+Only **finished** sessions are handed to the sink: all planned questions
+answered, Timed run out, or Endless ended with "Finish". Leaving with the exit
+button abandons the session and records nothing, so progress, mistakes and
+achievements only ever come from completed quizzes.
+
 So the remote cannot reach the shell's `ProgressStore`, and later phases can
 add persistence, sync and server validation behind the same two interfaces
 without touching the remote.

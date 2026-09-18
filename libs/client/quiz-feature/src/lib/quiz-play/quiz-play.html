@@ -69,35 +69,11 @@
 </section>
 } @if (feedback) {
 <!-- The verdict sits where the answers were, right under the flag. -->
-<section
-  class="feedback"
-  [class.correct]="feedback.record.correct"
-  role="status"
+<wq-answer-feedback
   data-testid="quiz-feedback"
->
-  <p class="verdict">
-    <ion-icon
-      [name]="feedback.record.correct ? 'checkmark-circle' : 'close-circle'"
-      aria-hidden="true"
-    />
-    {{ (feedback.record.correct ? 'quiz.correct' : 'quiz.incorrect') | transloco
-    }}
-  </p>
-  @if (feedback.record.judgement === 'typo' && feedback.record.matchedText) {
-  <p class="detail">
-    {{ 'quiz.accepted' | transloco: { answer: feedback.record.matchedText } }}
-  </p>
-  } @if (!feedback.record.correct) {
-  <!-- The right answer is what the player should remember, so it is the
-       most prominent text of the block. -->
-  <div class="correct-answer">
-    <p class="label">{{ 'quiz.correctAnswer' | transloco }}</p>
-    <p class="answer" data-testid="quiz-correct-answer">
-      {{ answerLabel(feedback.record.countryCode) }}
-    </p>
-  </div>
-  }
-</section>
+  [record]="feedback.record"
+  [correctAnswer]="answerLabel(feedback.record.countryCode)"
+/>
 } @else if (question) { @if (config().difficulty === 'easy') {
 <ul class="choices" data-testid="quiz-choices">
   @for (choice of choices(); track choice.code; let index = $index) {

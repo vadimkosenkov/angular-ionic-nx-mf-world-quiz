@@ -28,6 +28,7 @@ import {
   TIMED_MODE_DURATION_MS,
 } from '@world-quiz/quiz/domain';
 import { COUNTRY_DATASET } from '@world-quiz/client/quiz-ports';
+import { AnswerFeedback } from '../answer-feedback/answer-feedback';
 import { QuizSessionStore } from '../quiz-session.store';
 
 /** The part of Ionic's `<ion-input>` element used for autofocus. */
@@ -53,6 +54,7 @@ const TICK_INTERVAL_MS = 250;
     FormsModule,
     TranslocoPipe,
     ProgressBar,
+    AnswerFeedback,
   ],
   providers: [QuizSessionStore],
   templateUrl: './quiz-play.html',
@@ -62,8 +64,18 @@ export class QuizPlay {
   readonly config = input.required<QuizConfig>();
   readonly seed = input.required<string>();
 
-  /** Emitted once the player has seen the feedback of the last answer. */
+  /**
+   * Emitted when the quiz is over: the last planned answer's feedback was
+   * acknowledged, Timed ran out, or Endless was finished with "Finish".
+   * Only these sessions are results; the host records them.
+   */
   readonly finished = output<QuizSession>();
+
+  /**
+   * Emitted when the player leaves with the exit button. The session is
+   * abandoned, not finished: nothing is emitted through `finished`, so its
+   * answers are not recorded.
+   */
   readonly exited = output<void>();
 
   protected readonly store = inject(QuizSessionStore);
@@ -189,7 +201,6 @@ export class QuizPlay {
   }
 
   protected exit(): void {
-    this.store.stop();
     this.exited.emit();
   }
 

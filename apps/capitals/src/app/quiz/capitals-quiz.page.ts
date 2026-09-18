@@ -2,6 +2,7 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonContent } from '@ionic/angular';
 import {
+  COUNTRY_DATASET,
   QUIZ_RESULT_SINK,
   type QuizSessionOutcome,
 } from '@world-quiz/client/quiz-ports';
@@ -16,7 +17,6 @@ import {
   type QuizSession,
   type SessionSummary,
 } from '@world-quiz/quiz/domain';
-import { COUNTRY_DATASET } from '@world-quiz/client/quiz-ports';
 
 interface FinishedQuiz {
   readonly summary: SessionSummary;
@@ -97,9 +97,12 @@ export class CapitalsQuizPage {
       mode: resolvedMode,
       ...(resolvedMode === 'fixed'
         ? {
-            questionCount: Number.isInteger(requested)
-              ? requested
-              : DEFAULT_FIXED_QUESTION_COUNT,
+            // Same rule as the domain: a positive whole number, otherwise
+            // the default (a hand-edited `?count=0` must not break the quiz).
+            questionCount:
+              Number.isInteger(requested) && requested >= 1
+                ? requested
+                : DEFAULT_FIXED_QUESTION_COUNT,
           }
         : {}),
     };

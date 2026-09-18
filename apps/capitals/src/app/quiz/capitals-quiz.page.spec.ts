@@ -1,3 +1,4 @@
+import { Router } from '@angular/router';
 import { fireEvent, render, screen } from '@testing-library/angular';
 import { provideQuizTesting } from '@world-quiz/client/quiz-feature/testing';
 import {
@@ -64,6 +65,33 @@ describe('CapitalsQuizPage', () => {
       'Question 1 of 10',
     );
     expect(screen.getByTestId('quiz-choices')).toBeTruthy();
+  });
+
+  it.each(['0', '-3', '2.5', 'ten'])(
+    'uses the default length for ?count=%s',
+    async (count) => {
+      await renderPage(new RecordingSink(), { mode: 'fixed', count });
+
+      expect(
+        (await screen.findByTestId('quiz-position')).textContent,
+      ).toContain('Question 1 of 10');
+    },
+  );
+
+  it('records nothing when the player leaves mid-quiz', async () => {
+    const sink = new RecordingSink();
+    const { fixture } = await renderPage(sink, { mode: 'fixed', count: '3' });
+    await screen.findByTestId('quiz-prompt');
+    answerCorrectly();
+    const navigate = vi
+      .spyOn(fixture.debugElement.injector.get(Router), 'navigate')
+      .mockResolvedValue(true);
+
+    fireEvent.click(screen.getByTestId('quiz-exit'));
+
+    expect(navigate).toHaveBeenCalledWith(['/home']);
+    expect(sink.submissions).toHaveLength(0);
+    expect(screen.queryByTestId('results-score')).toBeNull();
   });
 
   it('hands the finished session to the host and shows the results', async () => {

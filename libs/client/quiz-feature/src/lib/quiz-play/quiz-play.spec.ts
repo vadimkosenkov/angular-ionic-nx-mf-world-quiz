@@ -15,12 +15,16 @@ const config = (overrides: Partial<QuizConfig> = {}): QuizConfig => ({
 
 async function renderPlay(overrides: Partial<QuizConfig> = {}) {
   const finished: QuizSession[] = [];
+  let exits = 0;
   const view = await render(QuizPlay, {
     inputs: { config: config(overrides), seed: 'spec-seed' },
-    on: { finished: (session: QuizSession) => finished.push(session) },
+    on: {
+      finished: (session: QuizSession) => finished.push(session),
+      exited: () => exits++,
+    },
     providers: provideQuizTesting(),
   });
-  return { ...view, finished };
+  return { ...view, finished, exits: () => exits };
 }
 
 /** The country the current question asks about, read from the prompt. */
@@ -129,5 +133,18 @@ describe('QuizPlay', () => {
     expect(screen.getByTestId('quiz-feedback').textContent).toContain(
       'Correct',
     );
+  });
+
+  it('abandons the session on exit: nothing is reported as finished', async () => {
+    const { finished, exits, fixture } = await renderPlay();
+    const country = askedCountry();
+    fireEvent.click(await screen.findByTestId(`quiz-choice-${country.code}`));
+    fireEvent.click(screen.getByTestId('quiz-continue'));
+
+    fireEvent.click(screen.getByTestId('quiz-exit'));
+    fixture.detectChanges();
+
+    expect(exits()).toBe(1);
+    expect(finished).toHaveLength(0);
   });
 });
