@@ -7,11 +7,12 @@ import { TabsPage } from './tabs/tabs.page';
  * Shell routes.
  *
  * The tab pages are lazy-loaded from the shell bundle. `quiz/capitals` and
- * `quiz/flags` are served by the Capitals and Flags microfrontends: `loadQuizRemoteRoutes` fetches the
- * remote's entry point at navigation time (the URL comes from
- * `public/federation.manifest.json`) and mounts the routes it exposes like
- * any other lazy route. `provideQuizPorts()` is attached here, so the remote
- * resolves the shell's implementations of the quiz ports.
+ * `quiz/flags` are served by the Capitals and Flags microfrontends:
+ * `loadQuizRemoteRoutes` fetches the remote's entry point at navigation time
+ * (the URL comes from `public/federation.manifest.json`) and mounts the
+ * routes it exposes like any other lazy route. `provideQuizPorts()` is
+ * attached to each of these routes, so the remote resolves the shell's
+ * implementations of the quiz ports.
  *
  * Sign-in is added in a later phase.
  */

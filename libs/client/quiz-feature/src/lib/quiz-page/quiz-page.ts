@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { IonContent, NavController, type ViewWillEnter } from '@ionic/angular';
+import { IonContent, NavController, type ViewDidLeave } from '@ionic/angular';
 import {
   COUNTRY_DATASET,
   QUIZ_RESULT_SINK,
@@ -72,7 +72,7 @@ interface FinishedQuiz {
     }
   `,
 })
-export class QuizPage implements ViewWillEnter {
+export class QuizPage implements ViewDidLeave {
   private readonly nav = inject(NavController);
   private readonly results = inject(QUIZ_RESULT_SINK);
   private readonly engine = createQuizEngine(inject(COUNTRY_DATASET));
@@ -127,16 +127,18 @@ export class QuizPage implements ViewWillEnter {
     });
   }
 
-  private hasEntered = false;
-
   /**
    * Ionic caches pages in its navigation stack and can show an existing one
-   * again when the same URL is opened. A quiz page shown again must start a
-   * new quiz, never replay the results of the previous one.
+   * again when the same URL is opened. Once the player has left, the page is
+   * reset, so if Ionic brings it back it starts a new quiz instead of showing
+   * the previous results.
+   *
+   * `ionViewDidLeave` fires only when leaving has completed. Resetting on
+   * `ionViewWillEnter` instead would also restart a quiz in progress when an
+   * iOS swipe-back gesture is started and then cancelled.
    */
-  ionViewWillEnter(): void {
-    if (this.hasEntered) this.playAgain();
-    this.hasEntered = true;
+  ionViewDidLeave(): void {
+    this.playAgain();
   }
 
   protected playAgain(): void {

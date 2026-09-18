@@ -148,16 +148,14 @@ describe('QuizPage', () => {
     expect(sink.submissions[0]?.session.config.category).toBe('flags');
   });
 
-  it('starts a new quiz when Ionic shows the cached page again', async () => {
+  it('resets once the player has left, so a cached page starts a new quiz', async () => {
     const sink = new RecordingSink();
     const { fixture } = await renderPage(sink, { mode: 'fixed', count: '1' });
-    const page = fixture.componentInstance;
-    page.ionViewWillEnter();
     await screen.findByTestId('quiz-prompt');
     answerCorrectly();
     expect(screen.getByTestId('results-score')).toBeTruthy();
 
-    page.ionViewWillEnter();
+    fixture.componentInstance.ionViewDidLeave();
     fixture.detectChanges();
 
     expect(screen.queryByTestId('results-score')).toBeNull();

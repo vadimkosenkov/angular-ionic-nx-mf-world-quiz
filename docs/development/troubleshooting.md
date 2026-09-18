@@ -158,6 +158,9 @@ in that stack; starting a quiz with the same options (the same URL) then
 brought the old page, with its results, back.
 
 **Fix used here:** leaving the quiz calls `NavController.navigateRoot('/home')`,
-which replaces the whole stack, and `QuizPage` starts a new quiz whenever Ionic
-shows it again (`ionViewWillEnter` after the first entry). Covered by a unit
+which replaces the whole stack, and `QuizPage` resets itself in
+`ionViewDidLeave`, so a cached page brought back by Ionic starts a new quiz.
+(`ionViewWillEnter` would be the wrong hook: it also fires when an iOS
+swipe-back is started and cancelled, which would restart a quiz in progress.)
+Covered by a unit
 test and by the Flags E2E journey.
