@@ -1,10 +1,10 @@
-import { submitSessionRequestSchema } from '@world-quiz/shared/contracts';
+import {
+  submitSessionRequestSchema,
+  uuidSchema,
+} from '@world-quiz/shared/contracts';
 import { Router } from 'express';
-import { z } from 'zod';
 import { sendProblem, validationErrors } from '../http/problem';
 import type { SessionService } from './session-service';
-
-const sessionIdSchema = z.uuid();
 
 /**
  * `/v1/sessions` — recording finished quiz sessions.
@@ -59,7 +59,7 @@ export function sessionsRouter(sessions: SessionService): Router {
   });
 
   router.get('/:id', async (request, response) => {
-    const id = sessionIdSchema.safeParse(request.params.id);
+    const id = uuidSchema.safeParse(request.params.id);
     if (!id.success) {
       sendProblem(response, {
         status: 400,

@@ -36,12 +36,14 @@ const server = app.listen(config.port, config.host, () => {
 });
 
 // Graceful shutdown: stop accepting connections, let in-flight requests
-// finish, then close the database.
+// finish, then close the database. `close()` alone waits for idle keep-alive
+// connections to time out; closing those at once makes shutdown prompt.
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.once(signal, () => {
     console.log(`[api] received ${signal}, shutting down`);
     server.close(() => {
       void database.close().finally(() => process.exit(0));
     });
+    server.closeIdleConnections();
   });
 }

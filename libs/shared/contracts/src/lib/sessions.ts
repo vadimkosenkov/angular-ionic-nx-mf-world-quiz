@@ -5,7 +5,7 @@ import {
   QUIZ_SCOPES,
 } from '@world-quiz/quiz/domain';
 import { z } from 'zod';
-import { countryCodeSchema, epochMillisSchema } from './common';
+import { countryCodeSchema, epochMillisSchema, uuidSchema } from './common';
 
 /**
  * Upper bound for answers in one session. Fixed and challenge sessions are at
@@ -49,7 +49,7 @@ export const quizConfigSchema = z.strictObject({
  * idempotent, so a retry after a lost response cannot record it twice.
  */
 export const submitSessionRequestSchema = z.strictObject({
-  id: z.uuid(),
+  id: uuidSchema,
   config: quizConfigSchema,
   seed: z.string().min(1).max(100),
   startedAt: epochMillisSchema,
@@ -69,7 +69,7 @@ export type SubmitSessionRequest = z.infer<typeof submitSessionRequestSchema>;
 
 /** The server's own grading of a recorded session. */
 export const sessionResultSchema = z.object({
-  id: z.uuid(),
+  id: uuidSchema,
   config: quizConfigSchema,
   summary: z.object({
     answered: z.int(),

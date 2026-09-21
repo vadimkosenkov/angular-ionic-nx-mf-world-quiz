@@ -5,7 +5,7 @@ import type {
   SessionEndReason,
   SubmittedAnswer,
 } from '@world-quiz/quiz/domain';
-import { asc, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import type { Database } from '../db/database';
 import { quizAnswers, quizSessions } from '../db/schema';
 
@@ -48,8 +48,6 @@ export interface SessionRepository {
    * nothing is written in that case.
    */
   insert(session: NewSession): Promise<boolean>;
-  /** The answers of a session in order (used by tests and future sync). */
-  answersOf(id: string): Promise<NewSession['answers']>;
 }
 
 export function createSessionRepository(db: Database): SessionRepository {
@@ -126,21 +124,6 @@ export function createSessionRepository(db: Database): SessionRepository {
         }
         return true;
       });
-    },
-
-    async answersOf(id) {
-      const rows = await db
-        .select()
-        .from(quizAnswers)
-        .where(eq(quizAnswers.sessionId, id))
-        .orderBy(asc(quizAnswers.sequence));
-      return rows.map((row) => ({
-        countryCode: row.countryCode,
-        answer: row.answer,
-        correct: row.correct,
-        judgement: row.judgement as AnswerJudgement,
-        answeredAt: row.answeredAt.getTime(),
-      }));
     },
   };
 }

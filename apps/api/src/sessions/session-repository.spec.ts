@@ -1,6 +1,7 @@
 import { count, eq } from 'drizzle-orm';
 import type { DatabaseHandle } from '../db/database';
 import { quizAnswers, quizSessions } from '../db/schema';
+import { readAnswers } from '../testing/read-answers';
 import { createTestDatabase } from '../testing/test-database';
 import { createSessionRepository, type NewSession } from './session-repository';
 
@@ -72,7 +73,7 @@ describe('SessionRepository', () => {
       perfect: false,
     });
     expect(stored?.result.recordedAt).toBe(new Date(10_000).toISOString());
-    expect(await repository.answersOf(id)).toEqual(session(id).answers);
+    expect(await readAnswers(database.db, id)).toEqual(session(id).answers);
   });
 
   it('writes nothing when the id already exists', async () => {

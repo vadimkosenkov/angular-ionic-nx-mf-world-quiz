@@ -59,6 +59,12 @@ describe('submitSessionRequestSchema', () => {
     expect(issuePaths({ ...validRequest(), ...override })).toContain(path);
   });
 
+  it('normalises the id to lower case, as PostgreSQL stores it', () => {
+    const upper = { ...validRequest(), id: validRequest().id.toUpperCase() };
+
+    expect(submitSessionRequestSchema.parse(upper).id).toBe(validRequest().id);
+  });
+
   it('rejects results the client must never claim', () => {
     // Score and correctness are computed by the server from the answers.
     expect(issuePaths({ ...validRequest(), score: 10 })).toEqual(['']);

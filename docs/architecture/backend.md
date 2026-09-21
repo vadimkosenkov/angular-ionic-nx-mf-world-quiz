@@ -70,9 +70,12 @@ sequenceDiagram
   that was not offered, a text answer in Easy mode, answers after the time ran
   out, or an ending that does not match the answers make the whole session
   **rejected** (422) — the server does not "fix" a session.
-- **Idempotency.** `id` is a UUID the client generates once per session. The
-  server stores a SHA-256 of the canonical request (keys sorted, so key order
-  does not matter). A retry with the same body returns the stored result
+- **Idempotency.** `id` is a UUID the client generates once per session,
+  normalised to lower case (as PostgreSQL stores it). The server stores a
+  SHA-256 of the canonical request as parsed by the contract (keys sorted, so
+  key order does not matter). Because the parsed request is hashed, a new
+  request field must not get a `.default()`: older clients' retries would hash
+  differently and get 409. A retry with the same body returns the stored result
   (200); a different body under the same id is a conflict (409). Two identical
   requests racing each other are resolved by the primary key and
   `ON CONFLICT DO NOTHING`: exactly one inserts.
@@ -85,6 +88,9 @@ the id is not a UUID).
 
 ### Honest limits of Phase 6
 
+- **Health is liveness only.** `/health` answers without touching the
+  database. A readiness check that also runs `SELECT 1` (what an orchestrator
+  needs before sending traffic) comes with deployment in Phase 12.
 - **No authentication.** Sessions are anonymous (`user_id` is null) and can be
   read by anyone who knows their random id. The API is not deployed before
   sign-in exists (Phase 7).

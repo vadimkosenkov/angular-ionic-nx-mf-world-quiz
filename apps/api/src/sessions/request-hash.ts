@@ -18,7 +18,16 @@ export function canonicalJson(value: unknown): string {
   return JSON.stringify(value);
 }
 
-/** SHA-256 of the canonical JSON of a request body. */
+/**
+ * SHA-256 of the canonical JSON of a request body.
+ *
+ * It is computed from the request as parsed by the contract, so key order,
+ * `undefined` values and the case of the id do not matter. The flip side:
+ * whatever the parser adds is hashed too. A new request field with a
+ * `.default()` would change the hash of every retry from an older client and
+ * turn it into a 409. Add request fields without defaults, or plan how stored
+ * hashes are recomputed.
+ */
 export function requestHash(body: unknown): string {
   return createHash('sha256').update(canonicalJson(body)).digest('hex');
 }

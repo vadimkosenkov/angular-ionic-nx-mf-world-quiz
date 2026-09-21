@@ -7,6 +7,7 @@ import request from 'supertest';
 import { createApp } from '../app';
 import type { DatabaseHandle } from '../db/database';
 import { quizSessions } from '../db/schema';
+import { readAnswers } from '../testing/read-answers';
 import { createTestDatabase } from '../testing/test-database';
 import { playSession } from '../testing/play-session';
 import { createSessionRepository } from './session-repository';
@@ -82,9 +83,7 @@ describe('/v1/sessions', () => {
         recordedAt: new Date(START + 60_000).toISOString(),
       });
 
-      const answers = await createSessionRepository(database.db).answersOf(
-        session.id,
-      );
+      const answers = await readAnswers(database.db, session.id);
       expect(answers.map((answer) => answer.correct)).toEqual([
         true,
         false,
@@ -128,6 +127,20 @@ describe('/v1/sessions', () => {
 
       const reordered = Object.fromEntries(Object.entries(session).reverse());
       expect((await post(reordered)).status).toBe(200);
+    });
+
+    it('treats an id in upper case as the same session', async () => {
+      const session = playSession(engine, easyFixed);
+      const created = await post({ ...session, id: session.id.toUpperCase() });
+
+      expect(created.status).toBe(201);
+      expect(created.body.id).toBe(session.id);
+      expect(created.headers['location']).toBe(`/v1/sessions/${session.id}`);
+      expect((await post(session)).status).toBe(200);
+      expect(
+        (await request(app()).get(`/v1/sessions/${session.id.toUpperCase()}`))
+          .body,
+      ).toEqual(created.body);
     });
 
     it('refuses a different session under an id that is already used', async () => {

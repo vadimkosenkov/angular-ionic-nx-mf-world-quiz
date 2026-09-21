@@ -2,6 +2,7 @@ export {
   countryCodeSchema,
   epochMillisSchema,
   problemDetailsSchema,
+  uuidSchema,
 } from './lib/common';
 export type { ProblemDetails } from './lib/common';
 export {

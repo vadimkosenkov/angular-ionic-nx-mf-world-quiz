@@ -19,9 +19,36 @@ export interface DatabaseHandle {
   close(): Promise<void>;
 }
 
-/** A PostgreSQL server, through a `pg` connection pool. */
-export function openPostgres(connectionString: string): DatabaseHandle {
+/** Where errors of idle pooled connections are reported. */
+export type PoolErrorHandler = (error: Error) => void;
+
+const logPoolError: PoolErrorHandler = (error) =>
+  console.error('[api] idle database connection failed', error);
+
+/**
+ * A `pg` connection pool that survives a lost connection.
+ *
+ * When an idle pooled connection breaks (the server restarts, the network
+ * drops, an idle timeout on the server side), `pg` emits `error` on the pool.
+ * Without a listener, Node treats that as an unhandled `error` event and ends
+ * the process. With one, the broken client is discarded and the next query
+ * opens a new connection.
+ */
+export function createPool(
+  connectionString: string,
+  onError: PoolErrorHandler = logPoolError,
+): pg.Pool {
   const pool = new pg.Pool({ connectionString });
+  pool.on('error', onError);
+  return pool;
+}
+
+/** A PostgreSQL server, through a `pg` connection pool. */
+export function openPostgres(
+  connectionString: string,
+  onError?: PoolErrorHandler,
+): DatabaseHandle {
+  const pool = createPool(connectionString, onError);
   const db = drizzlePostgres({ client: pool, schema });
   return {
     db,
