@@ -87,6 +87,21 @@
           "env": "TEST_DATABASE_URL"
         }
       ]
+    },
+    "serve-e2e": {
+      "continuous": true,
+      "executor": "nx:run-commands",
+      "dependsOn": ["build"],
+      "options": {
+        "command": "rm -rf tmp/e2e-api && node dist/apps/api/main.js",
+        "env": {
+          "NODE_ENV": "development",
+          "PORT": "3333",
+          "PGLITE_DIR": "tmp/e2e-api",
+          "AUTH_DEV_LOGIN": "true",
+          "CORS_ORIGINS": "http://localhost:4200"
+        }
+      }
     }
   }
 }

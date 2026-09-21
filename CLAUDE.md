@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 World Quiz — a mobile-first quiz app (country → capital, flag → country, 195 countries, English/Russian) and a **learning/portfolio project**. Nx 23 monorepo with Angular 22 (standalone, zoneless, signals), Ionic 9, Native Federation microfrontends, Capacitor 8, Express 5. Planned: PostgreSQL + Drizzle, Apple/Google sign-in, offline sync, SSR `site`, iOS.
 
-Delivery is in numbered phases, one `feat/<phase>` branch and PR each (table in `docs/architecture/overview.md`). Merged so far: foundation, domain model, shell + design system, Capitals and Flags microfrontends (Phases 4–5). Merged: Phase 6 (API + PostgreSQL). Phase 7 is split in two PRs: in progress 7a `feat/auth-server` (sign-in on the API); next 7b `feat/auth-client` (sign-in in the app).
+Delivery is in numbered phases, one `feat/<phase>` branch and PR each (table in `docs/architecture/overview.md`). Merged so far: foundation, domain model, shell + design system, Capitals and Flags microfrontends (Phases 4–5). Merged: Phase 6 (API + PostgreSQL). Phase 7 is split in two PRs: 7a `feat/auth-server` (sign-in on the API) is merged; in progress 7b `feat/auth-client` (sign-in in the app). Next: Phase 8, `feat/offline-sync`.
 
 Project rules that override defaults:
 
@@ -21,7 +21,8 @@ Project rules that override defaults:
 Node `^24.15` (`.nvmrc`), npm. Lockfile is committed; use `npm ci`.
 
 ```bash
-npm run start:quiz        # shell :4200 + capitals :4201 + flags :4202 (needed to play; first start ~1 min)
+cp apps/api/.env.example apps/api/.env  # once: API config (Google client id, dev sign-in) — only the API loads it
+npm run start:quiz        # shell :4200 + capitals :4201 + flags :4202 + api :3333 (first start ~1 min)
 npm run start:shell       # shell only — /quiz/* then shows "Quiz unavailable" (expected)
 npm run start:capitals    # a remote standalone (:4201; start:flags → :4202), with in-memory ports
 npm run start:api         # http://localhost:3333/health — embedded PGlite in .data/pglite unless DATABASE_URL is set
@@ -43,7 +44,7 @@ Full verification before any commit (this is what CI runs, plus E2E):
 npm run check:control-chars
 npx nx format:check                                           # fix with: npx nx format:write
 npx nx run-many -t lint typecheck test build --skip-nx-cache
-npx nx e2e shell-e2e --configuration=production               # starts shell, capitals and flags static servers
+npx nx e2e shell-e2e --configuration=production               # starts shell, capitals, flags (static) and api:serve-e2e (fresh PGlite, dev sign-in)
 ```
 
 `typecheck` runs `ngc --noEmit` for Angular projects, so template errors fail it.
@@ -65,6 +66,7 @@ Tags in each `project.json` + `@nx/enforce-module-boundaries` in the root `eslin
 | `libs/shared/contracts`       | `scope:shared`, `type:contracts`             | Zod schemas of the API: sessions, auth, problem details                                                        |
 | `libs/shared/util`            | `scope:shared`, `type:util`                  | `Clock`, `Result`, `assertNever`                                                                               |
 | `libs/client/ui`              | `scope:client`, `type:ui`                    | Design system: SCSS tokens/themes/glass + small components                                                     |
+| `libs/client/auth`            | `scope:client`, `type:data-access`           | `AuthStore`, sign-in API calls, `authInterceptor`, Google (GIS) button                                         |
 | `libs/client/i18n`            | `scope:client`, `type:data-access`           | Transloco with bundled, typed translations                                                                     |
 | `libs/client/settings`        | `scope:client`, `type:data-access`           | Theme/language store, storage port, document sync                                                              |
 | `libs/client/quiz-ports`      | `scope:client`, `type:ports`                 | The shell ↔ remote contract (+ in-memory ports for standalone remotes)                                         |
@@ -105,11 +107,12 @@ Read `docs/architecture/backend.md` and ADR-005 first. Key points:
 - **Auth** (ADR-010, `src/auth/`): the client sends a provider ID token; `identity-verifier.ts` checks it against the provider's JWKS (`jose`), `user-repository.ts` maps `(provider, sub)` to a user. The API issues a 15-min HS256 access token (`Authorization: Bearer`) and an opaque refresh token (SHA-256 stored) that **rotates with reuse detection** (reused → whole family revoked). Refresh token delivery: httpOnly `SameSite=Strict` cookie `wq_refresh` scoped to `/v1/auth` (web) or the response body (native, `refreshTokenIn: 'body'`). `requireAuth` guards `/v1/me` and `/v1/sessions`; `currentUserId(response)` reads the user.
 - `POST /v1/auth/dev` exists only with `AUTH_DEV_LOGIN=true` and is refused in production (config). Tests never need real Google/Apple: `testing/fake-identity-provider.ts` signs ID tokens with its own RSA key served as a local JWKS; `testing/test-api.ts` wires the whole app (`signIn()` returns a bearer header).
 - Deleting a user cascades to identities, refresh tokens and sessions. A still-valid access token of a deleted user gets 401 where it matters (`owner-missing` on session insert).
-- Not yet: client sign-in (Phase 7b), client calls to `/v1/sessions` (Phase 8), Apple token revocation on deletion (Phase 13).
+- Not yet: client calls to `/v1/sessions` (Phase 8), native Apple sign-in, Keychain storage and Apple token revocation (Phase 13).
 
 ### Frontend conventions
 
-- Stores are signal-based `@Injectable` classes (`ProgressStore` in the shell, `SettingsStore`, per-page `QuizSessionStore`). Progress is **in memory** until Phase 8.
+- Stores are signal-based `@Injectable` classes (`ProgressStore` in the shell, `SettingsStore`, `AuthStore`, per-page `QuizSessionStore`). Progress is **in memory** until Phase 8.
+- Sign-in on the web (`client/auth`, Settings → Account): Google's button via Google Identity Services (not the Capacitor social-login plugin — its web code stores tokens in `localStorage`); the access token only in `AuthStore` memory, the refresh token only in the httpOnly cookie; `provideAuth()` restores at start-up; `authInterceptor` adds `Bearer` to `API_URL` requests only and renews **once, shared** on 401 (parallel refreshes would trip reuse detection). API URL and Google client id: `apps/shell/src/app/api-config.ts`.
 - `provideAppSettings()` loads settings and the translation file in an app initializer, so theme and language apply before first render. Dark mode is Ionic's class-based palette (`ion-palette-dark` on `<html>`).
 - Translations are TypeScript objects in `libs/client/i18n/src/lib/translations/{en,ru}.ts`; `ru` must match the `TranslationShape` of `en` (compile-time + unit test). Plurals use `wqPlural` (`Intl.PluralRules`). Country names never go into translations — they come from the dataset.
 - Ionic runs in `mode: 'ios'` on every platform. Ionic's `ionChange` events are not Angular outputs under strict templates: handlers take `Event`, cast to e.g. `SegmentCustomEvent`, and validate the value with the domain guards (`isDifficulty`, `isQuizScope`, …).
@@ -125,9 +128,12 @@ Read `docs/architecture/backend.md` and ADR-005 first. Key points:
 
 ## Gotchas (each cost real debugging time)
 
+- **Never put `PORT`/`HOST`/`NODE_ENV` in a root `.env`**: Nx loads it into every task, the frontend dev servers read `PORT`, and all of them tried to start on the API's port. API variables live in `apps/api/.env` (loaded only for API tasks).
+- **Changing `cypress.config.ts` web-server commands needs `npx nx reset`** (or a daemon restart): the inferred `e2e` target is computed from it and cached in the project graph.
 - **Never run a production `build` while `nx serve` is running.** The federation dev server serves shared bundles from `dist/`; a build overwrites them and the app turns blank (404 on `*-dev.js`). Restart the dev server after building.
 - **Ionic's global CSS is listed in each app's `styles` array** (`project.json`), not `@import`ed from Sass. The federation dev server leaves package `@import`s unresolved (UI falls back to Times), and `@ionic/angular` only exports exact `css/*.css` paths.
 - **Ionic caches pages.** `ion-router-outlet` keeps a stack of page instances and reuses an existing one when the same URL is opened again, so a page may be shown again with its old state. Leave a flow with `NavController.navigateRoot(...)` (the quiz does, for exit and "Back to home"), and reset in `ionViewDidLeave` when a page must start fresh next time (`QuizPage` does; `ionViewWillEnter` would also fire when an iOS swipe-back is cancelled).
+- **Third-party iframes on a dark page** (Google's sign-in button) get an opaque white backdrop when their colour scheme differs from the page's; give the iframe's container `color-scheme: light` (see `google-sign-in-button.ts`). GIS also cannot change a rendered button: redraw it when the language changes. Google may ignore its `locale` for browsers signed in to Google, and answers 403 to `gsi/client` for some Google sessions (incognito works): not our bug.
 - **No solid `ion-button` inside `ion-toolbar`**: Ionic paints its label in the toolbar background colour, which is transparent here.
 - **Never write control-character escape sequences in tool input** (a backslash, the letter `u` and four hex digits such as `0000`): they are decoded into raw bytes, and a NUL byte makes git treat the file as binary. `npm run check:control-chars` (also in CI) catches control characters and the U+FFFD replacement character left by such corruption; describe these sequences in words, as here.
 - Nx 23 has no Angular Module Federation support; everything federation-related is `@angular-architects/native-federation` 22.x, set up by hand. TypeScript 6 rejects `baseUrl`; only `paths` is used.

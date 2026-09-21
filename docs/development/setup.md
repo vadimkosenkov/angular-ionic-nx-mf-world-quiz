@@ -28,19 +28,24 @@ npm ci
 
 ## Run
 
-| What                              | Command                  | URL                          |
-| --------------------------------- | ------------------------ | ---------------------------- |
-| **Shell + both remotes** (normal) | `npm run start:quiz`     | http://localhost:4200        |
-| Shell only                        | `npm run start:shell`    | http://localhost:4200        |
-| Capitals standalone (dev ports)   | `npm run start:capitals` | http://localhost:4201        |
-| Flags standalone (dev ports)      | `npm run start:flags`    | http://localhost:4202        |
-| API                               | `npm run start:api`      | http://localhost:3333/health |
+| What                                    | Command                  | URL                          |
+| --------------------------------------- | ------------------------ | ---------------------------- |
+| **Shell + both remotes + API** (normal) | `npm run start:quiz`     | http://localhost:4200        |
+| Shell only                              | `npm run start:shell`    | http://localhost:4200        |
+| Capitals standalone (dev ports)         | `npm run start:capitals` | http://localhost:4201        |
+| Flags standalone (dev ports)            | `npm run start:flags`    | http://localhost:4202        |
+| API                                     | `npm run start:api`      | http://localhost:3333/health |
 
-`start:quiz` streams the three servers' logs with a `shell:` / `capitals:` / `flags:` prefix
+`start:quiz` streams the four servers' logs with a `shell:` / `capitals:` / `flags:` / `api:` prefix
 (`--output-style=stream`); Nx's interactive task view would only show a
 spinner for these never-ending tasks. The first start takes up to a minute
-while Native Federation bundles the shared packages; wait for all three
-`Local: http://localhost:420x/` lines.
+while Native Federation bundles the shared packages; wait for the three
+`Local: http://localhost:420x/` lines and `[api] listening`. For Google
+sign-in and the dev sign-in, create the API's local configuration once:
+
+```bash
+cp apps/api/.env.example apps/api/.env
+```
 
 The Capitals quiz is a Native Federation remote: with the shell alone,
 `/quiz/capitals` shows a "Quiz unavailable" page, because nothing is serving

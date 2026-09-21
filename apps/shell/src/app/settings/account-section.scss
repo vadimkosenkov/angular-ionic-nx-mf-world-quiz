@@ -1,0 +1,81 @@
+.account {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wq-space-3);
+  padding: var(--wq-space-4);
+}
+
+p {
+  margin: 0;
+}
+
+.muted {
+  font-size: var(--wq-font-size-caption);
+  color: var(--wq-color-text-secondary);
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: var(--wq-space-3);
+
+  ion-icon {
+    flex: none;
+    font-size: 44px;
+    color: var(--wq-color-primary);
+  }
+}
+
+.name {
+  font-weight: 700;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wq-space-1);
+}
+
+.delete {
+  --color: var(--wq-color-error);
+  font-weight: 600;
+}
+
+// The destructive step: explained in words, in the error colour.
+.confirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wq-space-2);
+  padding: var(--wq-space-4);
+  border: 1px solid color-mix(in srgb, var(--wq-color-error) 35%, transparent);
+  border-radius: var(--wq-radius-md);
+  background: color-mix(
+    in srgb,
+    var(--wq-color-error-vivid) 10%,
+    var(--wq-color-surface)
+  );
+}
+
+.confirm-title {
+  font-weight: 700;
+  color: var(--wq-color-error);
+}
+
+ion-button.danger {
+  --background: var(--wq-color-error);
+  --background-activated: var(--wq-color-error);
+}
+
+.apple {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--wq-space-2);
+  font-size: var(--wq-font-size-caption);
+  color: var(--wq-color-text-secondary);
+}
+
+.error {
+  font-size: var(--wq-font-size-caption);
+  color: var(--wq-color-error);
+}

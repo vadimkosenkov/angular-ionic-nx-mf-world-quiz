@@ -35,7 +35,7 @@ flowchart LR
 
 | Unit                                               | Responsibility                                                                                                                 | Status                                                                                                                          |
 | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/shell`                                       | Bootstrap, auth, tabs, Home, Quiz Setup, Leaderboard, Achievements, Settings; Native Federation host                           | ✅ tabs, Home, quiz setup, Leaderboard (placeholder data state), Achievements, Settings, federation host · 📐 auth              |
+| `apps/shell`                                       | Bootstrap, auth, tabs, Home, Quiz Setup, Leaderboard, Achievements, Settings; Native Federation host                           | ✅ tabs, Home, quiz setup, Leaderboard (placeholder data state), Achievements, Settings with Google sign-in, federation host    |
 | `apps/capitals`                                    | Capitals play + results route; Native Federation remote                                                                        | ✅ ([microfrontends.md](microfrontends.md))                                                                                     |
 | `apps/flags`                                       | Flags play + results route; Native Federation remote                                                                           | ✅ ([microfrontends.md](microfrontends.md))                                                                                     |
 | `apps/api`                                         | REST API: auth, sessions (idempotent result ingestion), progress sync, leaderboard                                             | ✅ sign-in (Google, Apple), sessions per player, server-graded and idempotent ([backend.md](backend.md)) · 📐 sync, leaderboard |
@@ -102,7 +102,7 @@ typos). The app has no custom speech-recognition UI and no external AI/LLM judgi
 | 5   | `feat/flags-mfe`             | Flags remote                                                                           | ✅ merged      |
 | 6   | `feat/backend-database`      | Express, Drizzle, migrations, API tests                                                | ✅ merged      |
 | 7a  | `feat/auth-server`           | Sign-in (Apple, Google ID tokens), tokens, account deletion — API                      | ✅ this branch |
-| 7b  | `feat/auth-client`           | Sign-in, sign-out and account deletion in the app                                      | 📐             |
+| 7b  | `feat/auth-client`           | Sign-in, sign-out and account deletion in the app                                      | ✅ this branch |
 | 8   | `feat/offline-sync`          | Local store, outbox, sync                                                              | 📐             |
 | 9   | `feat/leaderboard-records`   | Perfect-run challenges, records, `apps/site` SSR                                       | 📐             |
 | 10  | `feat/achievements-mistakes` | Achievements, practice mistakes                                                        | 📐             |

@@ -200,6 +200,37 @@ export const en = {
   },
   settings: {
     title: 'Settings',
+    account: {
+      title: 'Account',
+      checking: 'Checking your sign-in…',
+      intro:
+        'Sign in to create your World Quiz account. Keeping your progress in sync across devices comes in a later update.',
+      googleUnavailable:
+        'Google sign-in is unavailable right now. Check your connection or content blocker, then reload.',
+      appleOnIos: 'Sign in with Apple arrives with the iPhone app.',
+      player: 'Player',
+      signedInWith: 'Signed in with {{provider}}',
+      providers: {
+        google: 'Google',
+        apple: 'Apple',
+        dev: 'a development account',
+      },
+      syncLater:
+        'Your results stay on this device for now; syncing them to your account comes in a later update.',
+      signOut: 'Sign out',
+      delete: 'Delete account',
+      deleteTitle: 'Delete your account?',
+      deleteText:
+        'Your account and everything stored with it on our server are deleted permanently. This cannot be undone.',
+      deleteConfirm: 'Delete permanently',
+      cancel: 'Cancel',
+      errors: {
+        'sign-in-failed': 'Sign-in did not work. Please try again.',
+        unreachable:
+          'The World Quiz server cannot be reached. Check your connection.',
+        'delete-failed': 'Your account could not be deleted. Please try again.',
+      },
+    },
     appearance: {
       title: 'Appearance',
       light: 'Light',

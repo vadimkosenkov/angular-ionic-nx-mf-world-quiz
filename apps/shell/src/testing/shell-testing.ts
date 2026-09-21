@@ -1,6 +1,13 @@
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import type { EnvironmentProviders, Provider } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideIonicAngular } from '@ionic/angular';
+import {
+  AUTH_CONFIG,
+  authInterceptor,
+  GoogleIdentityServices,
+} from '@world-quiz/client/auth';
 import { provideAppI18n } from '@world-quiz/client/i18n';
 import {
   createMemoryStorage,
@@ -17,6 +24,14 @@ import { CLOCK } from '../app/core/tokens';
 import { registerIcons } from '../app/icons';
 
 registerIcons();
+
+/** The API origin in shell tests; requests go to `HttpTestingController`. */
+export const TEST_API_URL = 'http://api.test';
+
+/** Google's script never loads in jsdom; tests that need it provide a fake. */
+const googleNeverLoads: Pick<GoogleIdentityServices, 'load'> = {
+  load: () => new Promise(() => undefined),
+};
 
 export interface ShellTestingOptions {
   readonly locale?: Locale;
@@ -39,6 +54,13 @@ export function provideShellTesting(
     provideRouter([]),
     provideAppI18n(),
     provideAppSettings(),
+    provideHttpClient(withInterceptors([authInterceptor])),
+    provideHttpClientTesting(),
+    {
+      provide: AUTH_CONFIG,
+      useValue: { apiUrl: TEST_API_URL, googleClientId: 'test-client-id' },
+    },
+    { provide: GoogleIdentityServices, useValue: googleNeverLoads },
     { provide: KEY_VALUE_STORAGE, useValue: storage },
     { provide: DEVICE_LANGUAGES, useValue: ['en'] },
     { provide: SYSTEM_PREFERS_DARK, useValue: signal(false).asReadonly() },

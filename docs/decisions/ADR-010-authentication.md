@@ -2,8 +2,9 @@
 
 ## Status
 
-Accepted (2026-09-21). Server side implemented in Phase 7a (`feat/auth-server`);
-the client follows in Phase 7b (`feat/auth-client`), native iOS storage in Phase 13.
+Accepted (2026-09-21). Server side implemented in Phase 7a (`feat/auth-server`),
+web client in Phase 7b (`feat/auth-client`); native iOS sign-in and Keychain
+storage in Phase 13.
 
 ## Context
 
@@ -44,6 +45,23 @@ the client follows in Phase 7b (`feat/auth-client`), native iOS storage in Phase
    production. Tests use a fake identity provider: an RSA key pair served as a
    local JWKS, verified by the same code as the real providers.
 7. Sign-in endpoints are **rate-limited** per client address.
+
+### Web client (Phase 7b)
+
+- Google's own button, rendered by **Google Identity Services** (GIS), returns
+  the ID token to a callback. The web app sends it to the API with a nonce of
+  256 random bits (`crypto.getRandomValues`).
+- The **Capacitor social-login plugin is not used on the web**: its web
+  implementation keeps Google's access and ID tokens in `localStorage`, uses
+  the implicit OAuth flow with a redirect URI per page, and makes nonces with
+  `Math.random`. GIS needs only the JavaScript origin and stores nothing. The
+  native app uses the provider SDKs (Phase 13).
+- The access token lives in a private field of `AuthStore`; the refresh token
+  only in the httpOnly cookie. At start-up the app restores the sign-in with
+  one `POST /v1/auth/refresh`. An interceptor adds `Authorization: Bearer` to
+  API requests only, and on 401 renews the token **once for all waiting
+  requests** before retrying — two refreshes with the same token would look
+  like theft (reuse detection) and sign the player out.
 
 ## Alternatives
 
