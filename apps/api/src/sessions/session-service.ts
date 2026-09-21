@@ -25,11 +25,18 @@ export type SubmitSessionOutcome =
   | { readonly kind: 'duplicate'; readonly result: SessionResult }
   /** The id is taken by a different session. */
   | { readonly kind: 'conflict' }
+  /** The signed-in account was deleted meanwhile. */
+  | { readonly kind: 'owner-missing' }
   | { readonly kind: 'rejected'; readonly reason: SessionRejection };
 
 export interface SessionService {
-  submit(request: SubmitSessionRequest): Promise<SubmitSessionOutcome>;
-  find(id: string): Promise<SessionResult | null>;
+  /** Records a session for the signed-in player `userId`. */
+  submit(
+    request: SubmitSessionRequest,
+    userId: string,
+  ): Promise<SubmitSessionOutcome>;
+  /** The player's own session; other players' sessions do not exist for them. */
+  find(id: string, userId: string): Promise<SessionResult | null>;
 }
 
 export interface SessionServiceDependencies {
@@ -52,22 +59,26 @@ export function createSessionService({
   engine,
   clock,
 }: SessionServiceDependencies): SessionService {
-  /** A second request with the same id: a retry, or a different session. */
+  /**
+   * A second request with the same id: the same player's retry, or a
+   * different session (another body, or another player's id).
+   */
   const resolveExisting = async (
     id: string,
     hash: string,
+    userId: string,
   ): Promise<SubmitSessionOutcome | null> => {
     const existing = await repository.findById(id);
     if (!existing) return null;
-    return existing.requestHash === hash
+    return existing.userId === userId && existing.requestHash === hash
       ? { kind: 'duplicate', result: existing.result }
       : { kind: 'conflict' };
   };
 
   return {
-    async submit(request) {
+    async submit(request, userId) {
       const hash = requestHash(request);
-      const existing = await resolveExisting(request.id, hash);
+      const existing = await resolveExisting(request.id, hash, userId);
       if (existing) return existing;
 
       const now = clock.now();
@@ -90,6 +101,7 @@ export function createSessionService({
       const summary = engine.summarize(session);
       const graded: NewSession = {
         id: request.id,
+        userId,
         config: request.config,
         seed: request.seed,
         startedAt: request.startedAt,
@@ -111,10 +123,14 @@ export function createSessionService({
         })),
       };
 
-      if (!(await repository.insert(graded))) {
+      const stored = await repository.insert(graded);
+      if (stored === 'owner-missing') return { kind: 'owner-missing' };
+      if (stored === 'exists') {
         // Lost a race against an identical (or conflicting) request.
         return (
-          (await resolveExisting(request.id, hash)) ?? { kind: 'conflict' }
+          (await resolveExisting(request.id, hash, userId)) ?? {
+            kind: 'conflict',
+          }
         );
       }
 
@@ -138,8 +154,9 @@ export function createSessionService({
       };
     },
 
-    async find(id) {
-      return (await repository.findById(id))?.result ?? null;
+    async find(id, userId) {
+      const stored = await repository.findById(id);
+      return stored?.userId === userId ? stored.result : null;
     },
   };
 }

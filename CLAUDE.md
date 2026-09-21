@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 World Quiz — a mobile-first quiz app (country → capital, flag → country, 195 countries, English/Russian) and a **learning/portfolio project**. Nx 23 monorepo with Angular 22 (standalone, zoneless, signals), Ionic 9, Native Federation microfrontends, Capacitor 8, Express 5. Planned: PostgreSQL + Drizzle, Apple/Google sign-in, offline sync, SSR `site`, iOS.
 
-Delivery is in numbered phases, one `feat/<phase>` branch and PR each (table in `docs/architecture/overview.md`). Merged so far: foundation, domain model, shell + design system, Capitals and Flags microfrontends (Phases 4–5). In progress: Phase 6, `feat/backend-database` (API + PostgreSQL). Next: Phase 7, `feat/authentication`.
+Delivery is in numbered phases, one `feat/<phase>` branch and PR each (table in `docs/architecture/overview.md`). Merged so far: foundation, domain model, shell + design system, Capitals and Flags microfrontends (Phases 4–5). Merged: Phase 6 (API + PostgreSQL). Phase 7 is split in two PRs: in progress 7a `feat/auth-server` (sign-in on the API); next 7b `feat/auth-client` (sign-in in the app).
 
 Project rules that override defaults:
 
@@ -54,21 +54,21 @@ npx nx e2e shell-e2e --configuration=production               # starts shell, ca
 
 Tags in each `project.json` + `@nx/enforce-module-boundaries` in the root `eslint.config.mjs` (details: `docs/architecture/nx.md`).
 
-| Project                       | Tags                                         | Role                                                                                                        |
-| ----------------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `apps/shell`                  | `scope:shell`, `type:app`                    | Ionic host: tabs, Home, quiz setup, Leaderboard, Achievements, Settings; Native Federation **dynamic host** |
-| `apps/capitals`, `apps/flags` | `scope:capitals` / `scope:flags`, `type:app` | Federation **remotes** (:4201, :4202); each exposes only `./routes` = `quizRemoteRoutes(category)`          |
-| `apps/api`                    | `scope:api`, `type:app`                      | Express 5 + Drizzle: `POST/GET /v1/sessions` (server-graded, idempotent), `/health`                         |
-| `apps/shell-e2e`              | `scope:shell`, `type:e2e`                    | Cypress 15                                                                                                  |
-| `libs/quiz/domain`            | `scope:shared`, `type:domain`                | Pure TS quiz rules: engine, answer matching, scoring, mastery, progress, achievements, leaderboard          |
-| `libs/quiz/countries`         | `scope:shared`, `type:domain`                | The 195-country dataset + flag asset paths                                                                  |
-| `libs/shared/contracts`       | `scope:shared`, `type:contracts`             | Zod schemas of the API: requests, responses, problem details                                                |
-| `libs/shared/util`            | `scope:shared`, `type:util`                  | `Clock`, `Result`, `assertNever`                                                                            |
-| `libs/client/ui`              | `scope:client`, `type:ui`                    | Design system: SCSS tokens/themes/glass + small components                                                  |
-| `libs/client/i18n`            | `scope:client`, `type:data-access`           | Transloco with bundled, typed translations                                                                  |
-| `libs/client/settings`        | `scope:client`, `type:data-access`           | Theme/language store, storage port, document sync                                                           |
-| `libs/client/quiz-ports`      | `scope:client`, `type:ports`                 | The shell ↔ remote contract (+ in-memory ports for standalone remotes)                                      |
-| `libs/client/quiz-feature`    | `scope:client`, `type:feature`               | Everything a quiz remote shows: `QuizPage`, play, results, answer feedback, `quizRemoteRoutes()`            |
+| Project                       | Tags                                         | Role                                                                                                           |
+| ----------------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `apps/shell`                  | `scope:shell`, `type:app`                    | Ionic host: tabs, Home, quiz setup, Leaderboard, Achievements, Settings; Native Federation **dynamic host**    |
+| `apps/capitals`, `apps/flags` | `scope:capitals` / `scope:flags`, `type:app` | Federation **remotes** (:4201, :4202); each exposes only `./routes` = `quizRemoteRoutes(category)`             |
+| `apps/api`                    | `scope:api`, `type:app`                      | Express 5 + Drizzle: `/v1/auth` (Google/Apple ID tokens), `/v1/me`, `/v1/sessions` (per player, server-graded) |
+| `apps/shell-e2e`              | `scope:shell`, `type:e2e`                    | Cypress 15                                                                                                     |
+| `libs/quiz/domain`            | `scope:shared`, `type:domain`                | Pure TS quiz rules: engine, answer matching, scoring, mastery, progress, achievements, leaderboard             |
+| `libs/quiz/countries`         | `scope:shared`, `type:domain`                | The 195-country dataset + flag asset paths                                                                     |
+| `libs/shared/contracts`       | `scope:shared`, `type:contracts`             | Zod schemas of the API: sessions, auth, problem details                                                        |
+| `libs/shared/util`            | `scope:shared`, `type:util`                  | `Clock`, `Result`, `assertNever`                                                                               |
+| `libs/client/ui`              | `scope:client`, `type:ui`                    | Design system: SCSS tokens/themes/glass + small components                                                     |
+| `libs/client/i18n`            | `scope:client`, `type:data-access`           | Transloco with bundled, typed translations                                                                     |
+| `libs/client/settings`        | `scope:client`, `type:data-access`           | Theme/language store, storage port, document sync                                                              |
+| `libs/client/quiz-ports`      | `scope:client`, `type:ports`                 | The shell ↔ remote contract (+ in-memory ports for standalone remotes)                                         |
+| `libs/client/quiz-feature`    | `scope:client`, `type:feature`               | Everything a quiz remote shows: `QuizPage`, play, results, answer feedback, `quizRemoteRoutes()`               |
 
 Rules that bite:
 
@@ -102,7 +102,10 @@ Read `docs/architecture/backend.md` and ADR-005 first. Key points:
 - Idempotency: client-generated UUID `id` (normalised to lower case by `uuidSchema`) + SHA-256 of the canonical, contract-parsed request (`request-hash.ts`). Never give a new request field a `.default()`: older clients' retries would hash differently and get 409. Same body → 200 with the stored result; different body → 409; races resolved by the primary key + `ON CONFLICT DO NOTHING`.
 - Every error is RFC 9457 `application/problem+json` (`http/problem.ts`); 500s are logged, never leak details.
 - Two drivers behind one `Database` type: `pg` pool (`DATABASE_URL`) or PGlite (tests: in memory with the real migrations via `createTestDatabase()`; dev: `.data/pglite`). Production requires `DATABASE_URL`. Migrations run at start-up.
-- Not yet: authentication (sessions are anonymous, `user_id` null), rate limiting, client calls (Phase 8).
+- **Auth** (ADR-010, `src/auth/`): the client sends a provider ID token; `identity-verifier.ts` checks it against the provider's JWKS (`jose`), `user-repository.ts` maps `(provider, sub)` to a user. The API issues a 15-min HS256 access token (`Authorization: Bearer`) and an opaque refresh token (SHA-256 stored) that **rotates with reuse detection** (reused → whole family revoked). Refresh token delivery: httpOnly `SameSite=Strict` cookie `wq_refresh` scoped to `/v1/auth` (web) or the response body (native, `refreshTokenIn: 'body'`). `requireAuth` guards `/v1/me` and `/v1/sessions`; `currentUserId(response)` reads the user.
+- `POST /v1/auth/dev` exists only with `AUTH_DEV_LOGIN=true` and is refused in production (config). Tests never need real Google/Apple: `testing/fake-identity-provider.ts` signs ID tokens with its own RSA key served as a local JWKS; `testing/test-api.ts` wires the whole app (`signIn()` returns a bearer header).
+- Deleting a user cascades to identities, refresh tokens and sessions. A still-valid access token of a deleted user gets 401 where it matters (`owner-missing` on session insert).
+- Not yet: client sign-in (Phase 7b), client calls to `/v1/sessions` (Phase 8), Apple token revocation on deletion (Phase 13).
 
 ### Frontend conventions
 
@@ -130,6 +133,7 @@ Read `docs/architecture/backend.md` and ADR-005 first. Key points:
 - Nx 23 has no Angular Module Federation support; everything federation-related is `@angular-architects/native-federation` 22.x, set up by hand. TypeScript 6 rejects `baseUrl`; only `paths` is used.
 - In Ionic's standalone build, `<ion-input>` has no `componentOnReady`; wait for `customElements.whenDefined('ion-input')` before `setFocus()`.
 
+- **Adding a NOT NULL column or FK to a table with data needs a data migration first**: `npx drizzle-kit generate --config apps/api/drizzle.config.ts --custom --name <name>` creates an empty, tracked SQL file (write the `UPDATE`/`DELETE` there), then run `db-generate` for the schema change — see `0001_drop_anonymous_sessions.sql`.
 - **A `pg.Pool` must have an `error` listener** (`createPool` in `db/database.ts`): a dropped idle connection otherwise emits an unhandled `error` and kills the API process.
 - **Only commit migrations generated by `db-generate`.** Hand-edited SQL drifts from `drizzle/meta` snapshots and the next generation will be wrong. Change `schema.ts`, generate, review the SQL.
 - The zod contract for `SubmitSessionRequest` must stay assignable to the domain's `SessionRecord` (a compile-time check in `sessions.spec.ts`); array schemas that mirror domain `readonly` arrays need `.readonly()`.

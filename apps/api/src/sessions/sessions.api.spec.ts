@@ -1,20 +1,18 @@
 import type { SubmitSessionRequest } from '@world-quiz/shared/contracts';
 import { createQuizEngine, type QuizConfig } from '@world-quiz/quiz/domain';
 import { FIXTURE_DATASET } from '@world-quiz/quiz/domain/testing';
-import { createManualClock } from '@world-quiz/shared/util';
 import { count, sql } from 'drizzle-orm';
 import request from 'supertest';
-import { createApp } from '../app';
 import type { DatabaseHandle } from '../db/database';
 import { quizSessions } from '../db/schema';
 import { readAnswers } from '../testing/read-answers';
+import { createTestApi, TEST_START, type TestApi } from '../testing/test-api';
 import { createTestDatabase } from '../testing/test-database';
 import { playSession } from '../testing/play-session';
-import { createSessionRepository } from './session-repository';
-import { createSessionService, MAX_CLOCK_SKEW_MS } from './session-service';
+import { MAX_CLOCK_SKEW_MS } from './session-service';
 
 const engine = createQuizEngine(FIXTURE_DATASET);
-const START = 1_700_000_000_000;
+const START = TEST_START;
 
 const easyFixed: QuizConfig = {
   category: 'capitals',
@@ -26,29 +24,27 @@ const easyFixed: QuizConfig = {
 
 describe('/v1/sessions', () => {
   let database: DatabaseHandle;
-  const clock = createManualClock(START + 60_000);
+  let api: TestApi;
+  /** `Authorization` header of the signed-in test player. */
+  let player: string;
 
-  const app = () =>
-    createApp({
-      clock,
-      sessions: createSessionService({
-        repository: createSessionRepository(database.db),
-        engine,
-        clock,
-      }),
-    });
-
-  const post = (body: unknown) =>
-    request(app())
+  const post = (body: unknown, authorization = player) =>
+    request(api.app)
       .post('/v1/sessions')
+      .set('Authorization', authorization)
       .send(body as object);
+
+  const get = (path: string, authorization = player) =>
+    request(api.app).get(path).set('Authorization', authorization);
 
   beforeAll(async () => {
     database = await createTestDatabase();
+    api = await createTestApi(database);
+    ({ authorization: player } = await api.signIn('player-1'));
   });
 
   beforeEach(() => {
-    clock.set(START + 60_000);
+    api.clock.set(START + 60_000);
   });
 
   afterEach(async () => {
@@ -57,6 +53,42 @@ describe('/v1/sessions', () => {
 
   afterAll(async () => {
     await database.close();
+  });
+
+  describe('who may record and read', () => {
+    it('requires a signed-in player', async () => {
+      const session = playSession(engine, easyFixed);
+
+      const response = await request(api.app)
+        .post('/v1/sessions')
+        .send(session);
+
+      expect(response.status).toBe(401);
+      expect(response.headers['www-authenticate']).toBe('Bearer');
+      expect(
+        (await get(`/v1/sessions/${session.id}`, 'Bearer x.y.z')).status,
+      ).toBe(401);
+    });
+
+    it('hides a session from other players, and refuses its id to them', async () => {
+      const session = playSession(engine, easyFixed);
+      await post(session);
+      const { authorization: other } = await api.signIn('player-2');
+
+      expect((await get(`/v1/sessions/${session.id}`, other)).status).toBe(404);
+      expect((await post(session, other)).status).toBe(409);
+      expect((await get(`/v1/sessions/${session.id}`)).status).toBe(200);
+    });
+
+    it('answers 401 when the account was deleted but the access token is still valid', async () => {
+      const { authorization: doomed } = await api.signIn('player-to-delete');
+      await request(api.app).delete('/v1/me').set('Authorization', doomed);
+
+      const response = await post(playSession(engine, easyFixed), doomed);
+
+      expect(response.status).toBe(401);
+      expect(response.body.detail).toBe('This account no longer exists.');
+    });
   });
 
   describe('POST', () => {
@@ -95,7 +127,7 @@ describe('/v1/sessions', () => {
       const session = playSession(engine, easyFixed);
 
       const first = await post(session);
-      clock.advance(5_000);
+      api.clock.advance(5_000);
       const retry = await post(session);
 
       expect(first.status).toBe(201);
@@ -138,8 +170,7 @@ describe('/v1/sessions', () => {
       expect(created.headers['location']).toBe(`/v1/sessions/${session.id}`);
       expect((await post(session)).status).toBe(200);
       expect(
-        (await request(app()).get(`/v1/sessions/${session.id.toUpperCase()}`))
-          .body,
+        (await get(`/v1/sessions/${session.id.toUpperCase()}`)).body,
       ).toEqual(created.body);
     });
 
@@ -279,9 +310,7 @@ describe('/v1/sessions', () => {
         const session = playSession(engine, easyFixed);
         await post({ ...session, finishedAt: session.finishedAt - 1 });
 
-        expect(
-          (await request(app()).get(`/v1/sessions/${session.id}`)).status,
-        ).toBe(404);
+        expect((await get(`/v1/sessions/${session.id}`)).status).toBe(404);
       });
     });
 
@@ -298,8 +327,9 @@ describe('/v1/sessions', () => {
     });
 
     it('answers 400 for malformed JSON', async () => {
-      const response = await request(app())
+      const response = await request(api.app)
         .post('/v1/sessions')
+        .set('Authorization', player)
         .set('Content-Type', 'application/json')
         .send('{"id": ');
 
@@ -319,18 +349,17 @@ describe('/v1/sessions', () => {
       const session = playSession(engine, easyFixed);
       const created = await post(session);
 
-      const response = await request(app()).get(`/v1/sessions/${session.id}`);
+      const response = await get(`/v1/sessions/${session.id}`);
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(created.body);
     });
 
     it('answers 404 for an unknown id and 400 for a malformed one', async () => {
-      expect(
-        (await request(app()).get(`/v1/sessions/${crypto.randomUUID()}`))
-          .status,
-      ).toBe(404);
-      expect((await request(app()).get('/v1/sessions/42')).status).toBe(400);
+      expect((await get(`/v1/sessions/${crypto.randomUUID()}`)).status).toBe(
+        404,
+      );
+      expect((await get('/v1/sessions/42')).status).toBe(400);
     });
   });
 });

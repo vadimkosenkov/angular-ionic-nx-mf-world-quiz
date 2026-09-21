@@ -1,4 +1,5 @@
 import { PGlite } from '@electric-sql/pglite';
+import { mkdirSync } from 'node:fs';
 import { drizzle as drizzlePostgres } from 'drizzle-orm/node-postgres';
 import { migrate as migratePostgres } from 'drizzle-orm/node-postgres/migrator';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
@@ -64,6 +65,9 @@ export function openPostgres(
  * It serves one connection at a time, so it is for development and tests only.
  */
 export async function openPglite(dataDir?: string): Promise<DatabaseHandle> {
+  // PGlite creates only the last directory; on a fresh checkout `.data` does
+  // not exist yet.
+  if (dataDir) mkdirSync(dataDir, { recursive: true });
   const client = await PGlite.create(dataDir);
   const db = drizzlePglite({ client, schema });
   return {

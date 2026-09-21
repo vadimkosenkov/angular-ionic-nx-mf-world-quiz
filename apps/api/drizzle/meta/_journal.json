@@ -8,6 +8,20 @@
       "when": 1789751730241,
       "tag": "0000_initial",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790010383789,
+      "tag": "0001_drop_anonymous_sessions",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790010415867,
+      "tag": "0002_users_and_refresh_tokens",
+      "breakpoints": true
     }
   ]
 }

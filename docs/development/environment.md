@@ -20,12 +20,30 @@
 | `DATABASE_URL` | unset          | `postgres://…` or `postgresql://…`  | PostgreSQL server. **Required when `NODE_ENV=production`.** Contains credentials: never logged, never echoed in errors |
 | `PGLITE_DIR`   | `.data/pglite` | non-empty path                      | Embedded PGlite database used when `DATABASE_URL` is unset (development only; git-ignored)                             |
 
+### Sign-in
+
+| Variable            | Default                                                      | Purpose                                                                           |
+| ------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------- |
+| `AUTH_JWT_SECRET`   | unset → random key per start (not production)                | HMAC key for access tokens, ≥ 32 characters. **Required in production.** Secret   |
+| `GOOGLE_CLIENT_IDS` | empty (Google sign-in disabled)                              | Comma-separated Google OAuth client ids accepted as ID-token audience. Not secret |
+| `APPLE_CLIENT_IDS`  | empty (Apple sign-in disabled)                               | Comma-separated Apple client ids (bundle id, Services ID). Not secret             |
+| `AUTH_DEV_LOGIN`    | `false`                                                      | `true` enables `POST /v1/auth/dev` (any subject). **Refused in production**       |
+| `CORS_ORIGINS`      | `http://localhost:4200` (not production), none in production | Browser origins allowed to call the API with credentials                          |
+| `COOKIE_SECURE`     | `true` in production, `false` otherwise                      | `Secure` attribute of the refresh cookie                                          |
+
+The Google client id of the project ("World Quiz Web", Google Auth Platform,
+authorized JavaScript origins `http://localhost:4200` and `http://localhost`)
+is in `.env.example`. Nx loads a `.env` file in the workspace root into
+`nx serve api`, so copying `.env.example` to `.env` is enough to run with
+Google and the dev sign-in enabled.
+
+Design: [ADR-010](../decisions/ADR-010-authentication.md).
+
 Test-only: `TEST_DATABASE_URL` (a PostgreSQL server where the user may create
 databases) runs the API tests against PostgreSQL instead of PGlite; see
 [backend.md](../architecture/backend.md#tests-on-pglite-and-on-postgresql).
 
-Variables for authentication providers and token signing are added in their
-phases, together with this table. Why PGlite: [ADR-005](../decisions/ADR-005-database.md).
+Why PGlite: [ADR-005](../decisions/ADR-005-database.md).
 
 ## Frontend configuration
 
