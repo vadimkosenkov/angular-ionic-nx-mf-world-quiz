@@ -1,12 +1,15 @@
 import { count, eq } from 'drizzle-orm';
 import type { DatabaseHandle } from '../db/database';
-import { quizAnswers, quizSessions } from '../db/schema';
+import { quizAnswers, quizSessions, users } from '../db/schema';
 import { readAnswers } from '../testing/read-answers';
 import { createTestDatabase } from '../testing/test-database';
 import { createSessionRepository, type NewSession } from './session-repository';
 
+let ownerId: string;
+
 const session = (id: string): NewSession => ({
   id,
+  userId: ownerId,
   config: {
     category: 'flags',
     difficulty: 'hard',
@@ -48,6 +51,11 @@ describe('SessionRepository', () => {
 
   beforeAll(async () => {
     database = await createTestDatabase();
+    const [owner] = await database.db
+      .insert(users)
+      .values({ displayName: 'Owner' })
+      .returning({ id: users.id });
+    ownerId = owner!.id;
   });
 
   afterAll(async () => {
@@ -58,7 +66,7 @@ describe('SessionRepository', () => {
     const repository = createSessionRepository(database.db);
     const id = crypto.randomUUID();
 
-    expect(await repository.insert(session(id))).toBe(true);
+    expect(await repository.insert(session(id))).toBe('inserted');
 
     const stored = await repository.findById(id);
     expect(stored?.requestHash).toBe('hash');
@@ -83,7 +91,7 @@ describe('SessionRepository', () => {
 
     expect(
       await repository.insert({ ...session(id), requestHash: 'other' }),
-    ).toBe(false);
+    ).toBe('exists');
     expect((await repository.findById(id))?.requestHash).toBe('hash');
   });
 
@@ -99,6 +107,17 @@ describe('SessionRepository', () => {
       .from(quizAnswers)
       .where(eq(quizAnswers.sessionId, id));
     expect(row?.answers).toBe(0);
+  });
+
+  it('reports a missing owner instead of failing', async () => {
+    const repository = createSessionRepository(database.db);
+
+    expect(
+      await repository.insert({
+        ...session(crypto.randomUUID()),
+        userId: crypto.randomUUID(),
+      }),
+    ).toBe('owner-missing');
   });
 
   it('enforces the invariants in the database too', async () => {

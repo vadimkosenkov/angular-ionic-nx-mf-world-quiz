@@ -7,6 +7,14 @@ describe('loadConfig', () => {
       host: 'localhost',
       port: 3333,
       database: { kind: 'pglite', dataDir: '.data/pglite' },
+      auth: {
+        jwtSecret: null,
+        googleClientIds: [],
+        appleClientIds: [],
+        devLogin: false,
+        secureCookies: false,
+      },
+      corsOrigins: ['http://localhost:4200'],
     });
   });
 
@@ -17,6 +25,11 @@ describe('loadConfig', () => {
         HOST: '0.0.0.0',
         PORT: '8080',
         DATABASE_URL: 'postgres://quiz:secret@db.internal:5432/world_quiz',
+        AUTH_JWT_SECRET: 'x'.repeat(32),
+        GOOGLE_CLIENT_IDS:
+          'web.apps.googleusercontent.com, ios.apps.googleusercontent.com',
+        APPLE_CLIENT_IDS: 'dev.worldquiz.app',
+        CORS_ORIGINS: 'https://worldquiz.example',
       }),
     ).toEqual({
       nodeEnv: 'production',
@@ -26,6 +39,17 @@ describe('loadConfig', () => {
         kind: 'postgres',
         url: 'postgres://quiz:secret@db.internal:5432/world_quiz',
       },
+      auth: {
+        jwtSecret: 'x'.repeat(32),
+        googleClientIds: [
+          'web.apps.googleusercontent.com',
+          'ios.apps.googleusercontent.com',
+        ],
+        appleClientIds: ['dev.worldquiz.app'],
+        devLogin: false,
+        secureCookies: true,
+      },
+      corsOrigins: ['https://worldquiz.example'],
     });
   });
 
@@ -53,10 +77,46 @@ describe('loadConfig', () => {
     });
   });
 
-  it('requires DATABASE_URL in production', () => {
+  it('requires DATABASE_URL and AUTH_JWT_SECRET in production', () => {
     expect(() => loadConfig({ NODE_ENV: 'production' })).toThrow(
-      'Invalid environment configuration: DATABASE_URL',
+      'Invalid environment configuration: DATABASE_URL, AUTH_JWT_SECRET',
     );
+  });
+
+  const production = {
+    NODE_ENV: 'production',
+    DATABASE_URL: 'postgres://localhost/world_quiz',
+    AUTH_JWT_SECRET: 'x'.repeat(32),
+  };
+
+  it('never allows the development sign-in in production', () => {
+    expect(() => loadConfig({ ...production, AUTH_DEV_LOGIN: 'true' })).toThrow(
+      'Invalid environment configuration: AUTH_DEV_LOGIN',
+    );
+    expect(loadConfig({ AUTH_DEV_LOGIN: 'true' }).auth.devLogin).toBe(true);
+  });
+
+  it('rejects a short signing key without echoing it', () => {
+    try {
+      loadConfig({ AUTH_JWT_SECRET: 'short-secret-value' });
+      expect.unreachable();
+    } catch (error) {
+      expect((error as InvalidConfigError).invalidVariables).toEqual([
+        'AUTH_JWT_SECRET',
+      ]);
+      expect((error as Error).message).not.toContain('short-secret-value');
+    }
+  });
+
+  it('allows no browser origin in production unless configured', () => {
+    expect(loadConfig(production).corsOrigins).toEqual([]);
+  });
+
+  it('lets COOKIE_SECURE override the default', () => {
+    expect(loadConfig({ COOKIE_SECURE: 'true' }).auth.secureCookies).toBe(true);
+    expect(
+      loadConfig({ ...production, COOKIE_SECURE: 'false' }).auth.secureCookies,
+    ).toBe(false);
   });
 
   it('rejects a DATABASE_URL that is not a PostgreSQL URL, without echoing it', () => {

@@ -1,19 +1,33 @@
 import { createManualClock } from '@world-quiz/shared/util';
 import request from 'supertest';
 import { createApp } from './app';
+import { createAccessTokens } from './auth/access-tokens';
+import type { AuthService } from './auth/auth-service';
 import type { SessionService } from './sessions/session-service';
 
-/** The health and fallback routes need no sessions. */
-const unusedSessions: SessionService = {
-  submit: () => Promise.reject(new Error('not used')),
-  find: () => Promise.reject(new Error('not used')),
+const notUsed = () => Promise.reject(new Error('not used'));
+
+/** The health, fallback and error routes need no real services. */
+const unusedSessions: SessionService = { submit: notUsed, find: notUsed };
+const unusedAuth: AuthService = {
+  signIn: notUsed,
+  devSignIn: notUsed,
+  refresh: notUsed,
+  signOut: notUsed,
+  currentUser: notUsed,
+  deleteAccount: notUsed,
 };
+const accessTokens = createAccessTokens(
+  'a-secret-that-is-at-least-32-characters',
+);
 
 describe('API app', () => {
   const fixedTime = Date.UTC(2026, 8, 14, 12, 0, 0);
   const app = createApp({
     clock: createManualClock(fixedTime),
     sessions: unusedSessions,
+    auth: unusedAuth,
+    accessTokens,
   });
 
   describe('GET /health', () => {
@@ -61,12 +75,18 @@ describe('API app', () => {
           ...unusedSessions,
           find: () => Promise.reject(new Error('connection to db-7 refused')),
         },
+        auth: unusedAuth,
+        accessTokens,
         logError: (error) => logged.push(error),
       });
-
-      const response = await request(failing).get(
-        '/v1/sessions/0b8f1f6e-6f0e-4c1a-9a55-6a1f2f3e4d5c',
+      const { token } = await accessTokens.issue(
+        '1f0e6b8f-0000-4000-8000-000000000001',
+        fixedTime,
       );
+
+      const response = await request(failing)
+        .get('/v1/sessions/0b8f1f6e-6f0e-4c1a-9a55-6a1f2f3e4d5c')
+        .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(500);
       expect(response.body).toEqual({

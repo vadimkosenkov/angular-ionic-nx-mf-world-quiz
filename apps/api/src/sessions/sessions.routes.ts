@@ -3,15 +3,14 @@ import {
   uuidSchema,
 } from '@world-quiz/shared/contracts';
 import { Router } from 'express';
+import { currentUserId } from '../auth/require-auth';
 import { sendProblem, validationErrors } from '../http/problem';
 import type { SessionService } from './session-service';
 
 /**
- * `/v1/sessions` — recording finished quiz sessions.
- *
- * There is no sign-in yet (Phase 7), so sessions are anonymous and can be
- * read back by anyone who knows their random id. The API is not deployed
- * before authentication exists.
+ * `/v1/sessions` — recording finished quiz sessions. Mounted behind
+ * `requireAuth`: every session belongs to the signed-in player, and a player
+ * can read back only their own sessions.
  */
 export function sessionsRouter(sessions: SessionService): Router {
   const router = Router();
@@ -28,7 +27,7 @@ export function sessionsRouter(sessions: SessionService): Router {
       return;
     }
 
-    const outcome = await sessions.submit(parsed.data);
+    const outcome = await sessions.submit(parsed.data, currentUserId(response));
     switch (outcome.kind) {
       case 'created':
         response
@@ -39,6 +38,13 @@ export function sessionsRouter(sessions: SessionService): Router {
       case 'duplicate':
         // Idempotent retry: the stored result, not a second session.
         response.status(200).json(outcome.result);
+        return;
+      case 'owner-missing':
+        sendProblem(response, {
+          status: 401,
+          title: 'Unauthorized',
+          detail: 'This account no longer exists.',
+        });
         return;
       case 'conflict':
         sendProblem(response, {
@@ -69,7 +75,7 @@ export function sessionsRouter(sessions: SessionService): Router {
       return;
     }
 
-    const result = await sessions.find(id.data);
+    const result = await sessions.find(id.data, currentUserId(response));
     if (!result) {
       sendProblem(response, {
         status: 404,
