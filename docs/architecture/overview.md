@@ -38,7 +38,7 @@ flowchart LR
 | `apps/shell`                                       | Bootstrap, auth, tabs, Home, Quiz Setup, Leaderboard, Achievements, Settings; Native Federation host                           | ✅ tabs, Home, quiz setup, Leaderboard (placeholder data state), Achievements, Settings, federation host · 📐 auth |
 | `apps/capitals`                                    | Capitals play + results route; Native Federation remote                                                                        | ✅ ([microfrontends.md](microfrontends.md))                                                                        |
 | `apps/flags`                                       | Flags play + results route; Native Federation remote                                                                           | ✅ ([microfrontends.md](microfrontends.md))                                                                        |
-| `apps/api`                                         | REST API: auth, sessions (idempotent result ingestion), progress sync, leaderboard                                             | 🧱 (`/health` only)                                                                                                |
+| `apps/api`                                         | REST API: auth, sessions (idempotent result ingestion), progress sync, leaderboard                                             | ✅ sessions: server-graded, idempotent ([backend.md](backend.md)) · 📐 auth, sync, leaderboard                     |
 | `apps/site`                                        | Angular SSR: prerendered legal pages, server-rendered public leaderboard                                                       | 📐                                                                                                                 |
 | `apps/shell-e2e`                                   | Cypress user journeys                                                                                                          | ✅ navigation, theme, language, Capitals quiz across the federation boundary · 📐 the remaining journeys           |
 | `libs/quiz/domain`                                 | Pure TS quiz rules shared by client and server: engine, answer matching, scoring, mastery, progress, achievements, leaderboard | ✅                                                                                                                 |
@@ -47,7 +47,7 @@ flowchart LR
 | `libs/client/ui`, `client/i18n`, `client/settings` | Design system, English/Russian i18n, settings store and theme/language sync                                                    | ✅                                                                                                                 |
 | `libs/client/quiz-ports`                           | The shell ↔ remote contract: `QUIZ_RESULT_SINK`, `QUIZ_PROGRESS_READER`, `COUNTRY_DATASET`, `CLOCK`                            | ✅                                                                                                                 |
 | `libs/client/quiz-feature`                         | The quiz screens themselves (play, results), used by every remote                                                              | ✅                                                                                                                 |
-| Other libs                                         | `shared/contracts`, `client/data-access`                                                                                       | 📐 (see [nx.md](nx.md))                                                                                            |
+| `libs/shared/contracts`                            | Zod schemas of API requests, responses and errors, shared by server and client                                                 | ✅                                                                                                                 |
 
 ## Key architectural principles
 
@@ -99,8 +99,8 @@ typos). The app has no custom speech-recognition UI and no external AI/LLM judgi
 | 2   | `feat/domain-model`          | 195-country dataset + flags, engine, matching, scoring, mastery, achievements, ranking | ✅ merged      |
 | 3   | `feat/shell-design-system`   | Ionic shell, tokens, Liquid Glass, themes, i18n, Settings                              | ✅ merged      |
 | 4   | `feat/capitals-mfe`          | Native Federation host/remote, setup, play, results                                    | ✅ merged      |
-| 5   | `feat/flags-mfe`             | Flags remote                                                                           | ✅ this branch |
-| 6   | `feat/backend-database`      | Express, Drizzle, migrations, API tests                                                | 📐             |
+| 5   | `feat/flags-mfe`             | Flags remote                                                                           | ✅ merged      |
+| 6   | `feat/backend-database`      | Express, Drizzle, migrations, API tests                                                | ✅ this branch |
 | 7   | `feat/authentication`        | Apple, Google, sessions, account deletion                                              | 📐             |
 | 8   | `feat/offline-sync`          | Local store, outbox, sync                                                              | 📐             |
 | 9   | `feat/leaderboard-records`   | Perfect-run challenges, records, `apps/site` SSR                                       | 📐             |

@@ -20,6 +20,7 @@
     "noUncheckedIndexedAccess": true,
     "forceConsistentCasingInFileNames": true,
     "paths": {
+      "@world-quiz/shared/contracts": ["./libs/shared/contracts/src/index.ts"],
       "@world-quiz/shared/util": ["./libs/shared/util/src/index.ts"],
       "@world-quiz/quiz/domain": ["./libs/quiz/domain/src/index.ts"],
       "@world-quiz/quiz/domain/testing": [

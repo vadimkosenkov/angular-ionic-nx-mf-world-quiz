@@ -48,3 +48,6 @@ npm-debug.log*
 # OS files
 .DS_Store
 Thumbs.db
+
+# Local PGlite database of the API in development (apps/api)
+.data/

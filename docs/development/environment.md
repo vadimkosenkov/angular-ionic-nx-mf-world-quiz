@@ -12,14 +12,20 @@
 
 ## API variables
 
-| Variable   | Default       | Allowed                             | Purpose                                  |
-| ---------- | ------------- | ----------------------------------- | ---------------------------------------- |
-| `NODE_ENV` | `development` | `development`, `test`, `production` | Runtime mode                             |
-| `HOST`     | `localhost`   | non-empty string                    | Bind interface (`0.0.0.0` in containers) |
-| `PORT`     | `3333`        | integer 1–65535                     | Listen port                              |
+| Variable       | Default        | Allowed                             | Purpose                                                                                                                |
+| -------------- | -------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `NODE_ENV`     | `development`  | `development`, `test`, `production` | Runtime mode                                                                                                           |
+| `HOST`         | `localhost`    | non-empty string                    | Bind interface (`0.0.0.0` in containers)                                                                               |
+| `PORT`         | `3333`         | integer 1–65535                     | Listen port                                                                                                            |
+| `DATABASE_URL` | unset          | `postgres://…` or `postgresql://…`  | PostgreSQL server. **Required when `NODE_ENV=production`.** Contains credentials: never logged, never echoed in errors |
+| `PGLITE_DIR`   | `.data/pglite` | non-empty path                      | Embedded PGlite database used when `DATABASE_URL` is unset (development only; git-ignored)                             |
 
-Variables for the database, authentication providers and token signing are
-added in their phases, together with this table.
+Test-only: `TEST_DATABASE_URL` (a PostgreSQL server where the user may create
+databases) runs the API tests against PostgreSQL instead of PGlite; see
+[backend.md](../architecture/backend.md#tests-on-pglite-and-on-postgresql).
+
+Variables for authentication providers and token signing are added in their
+phases, together with this table. Why PGlite: [ADR-005](../decisions/ADR-005-database.md).
 
 ## Frontend configuration
 

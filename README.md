@@ -5,15 +5,17 @@ built as a full-stack portfolio project on a modern Angular ecosystem: **Nx,
 Angular 22 (signals, zoneless), Native Federation microfrontends, Ionic,
 Capacitor (iOS), Express 5, PostgreSQL** and a multi-level test strategy.
 
-> **Project status: Phase 5, both quiz microfrontends.** The workspace, CI,
+> **Project status: Phase 6, backend and database.** The workspace, CI,
 > the 195-country dataset, the platform-independent quiz domain and the Ionic
 > shell (tabs, Home, Achievements, Leaderboard with an honest "not available
 > yet" state, Settings, light/dark design system, English/Russian UI) are in
 > place. **Capitals and Flags quizzes are playable**: quiz setup lives in the
 > shell, and each quiz is loaded at runtime from its own application over
 > Native Federation. Progress, mistakes and achievements update from finished
-> sessions, but are kept in memory until the persistence phase. Sign-in, the
-> API and offline sync are not implemented yet. This README only describes what
+> sessions, but are kept in memory until the persistence phase. The API records
+> finished sessions in PostgreSQL after **re-grading them on the server**
+> (Drizzle, migrations, API tests on PGlite); the app does not call it yet.
+> Sign-in, offline sync and leaderboards are not implemented yet. This README only describes what
 > exists; planned items are marked as such.
 
 ## Product in one minute
@@ -59,7 +61,7 @@ The same quiz rules run in the browser (offline play) and on the server
 | State                    | Angular signal stores (no NgRx)                                   | ✅            |
 | Native (iOS)             | Capacitor 8 (Preferences plugin in use)                           | 📐 Phase 13   |
 | Backend                  | Node 24, Express 5, Zod, esbuild (ESM)                            | ✅ skeleton   |
-| Database                 | PostgreSQL + Drizzle ORM                                          | 📐 Phase 6    |
+| Database                 | PostgreSQL + Drizzle ORM (PGlite for tests and development)       | ✅            |
 | Auth                     | Sign in with Apple, Google; server-verified tokens                | 📐 Phase 7    |
 | Offline                  | IndexedDB (Dexie) + outbox sync                                   | 📐 Phase 8    |
 | SSR                      | Separate Angular SSR `site` app                                   | 📐 Phase 9    |
@@ -78,7 +80,7 @@ apps/
   shell/       Angular host application
   capitals/    Capitals quiz, loaded by the shell as a federated remote
   flags/       Flags quiz, loaded by the shell as a federated remote
-  api/         Express API
+  api/         Express API: sessions graded on the server, Drizzle schema + migrations
   shell-e2e/   Cypress tests
 libs/
   quiz/domain/    Pure TypeScript quiz rules (no Angular, DOM or Node)
@@ -89,6 +91,7 @@ libs/
   client/quiz-ports/   Tokens and interfaces shared by the shell and the remotes
   client/quiz-feature/ Quiz play and results screens used by the remotes
   shared/util/ Pure TypeScript helpers
+  shared/contracts/ Zod schemas of the API contract (server and client)
 docs/          Architecture, decisions (ADRs), domain rules, testing, deployment
 ```
 
@@ -99,7 +102,7 @@ Requires **Node 24.15+** (`nvm use`).
 ```bash
 npm ci
 npm run start:quiz     # shell + Capitals + Flags remotes: http://localhost:4200
-npm run start:api      # http://localhost:3333/health
+npm run start:api      # http://localhost:3333/health (embedded PGlite, no setup)
 ```
 
 | Task                                      | Command          |
@@ -120,6 +123,7 @@ Details: [setup](docs/development/setup.md) · [environment](docs/development/en
 | Nx workspace and boundaries      | [docs/architecture/nx.md](docs/architecture/nx.md)                             |
 | Decisions (ADRs)                 | [docs/decisions](docs/decisions/README.md)                                     |
 | Frontend (shell)                 | [docs/architecture/frontend.md](docs/architecture/frontend.md)                 |
+| Backend (API, database)          | [docs/architecture/backend.md](docs/architecture/backend.md)                   |
 | Microfrontends (what runs today) | [docs/architecture/microfrontends.md](docs/architecture/microfrontends.md)     |
 | Design system and Liquid Glass   | [docs/architecture/design-system.md](docs/architecture/design-system.md)       |
 | Internationalization             | [docs/architecture/i18n.md](docs/architecture/i18n.md)                         |
