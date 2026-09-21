@@ -2,13 +2,13 @@
 
 ## Prerequisites
 
-| Tool              | Version                   | Notes                                                                                                                            |
-| ----------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Node.js           | **24.15+** (see `.nvmrc`) | Angular 22 requires `^22.22.3 \|\| ^24.15.0 \|\| >=26`. Older 24.x installs with `EBADENGINE` warnings.                          |
-| npm               | 11+                       | Ships with Node 24. The lockfile is committed; use `npm ci` for clean installs.                                                  |
-| Git               | any recent                |                                                                                                                                  |
-| Xcode + CocoaPods | –                         | Only from the iOS phase onward                                                                                                   |
-| PostgreSQL        | –                         | Only from the backend phase onward; the simplest setup is recommended then. Automated API tests use PGlite and need no database. |
+| Tool              | Version                   | Notes                                                                                                                                                                                  |
+| ----------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Node.js           | **24.15+** (see `.nvmrc`) | Angular 22 requires `^22.22.3 \|\| ^24.15.0 \|\| >=26`. Older 24.x installs with `EBADENGINE` warnings.                                                                                |
+| npm               | 11+                       | Ships with Node 24. The lockfile is committed; use `npm ci` for clean installs.                                                                                                        |
+| Git               | any recent                |                                                                                                                                                                                        |
+| Xcode + CocoaPods | –                         | Only from the iOS phase onward                                                                                                                                                         |
+| PostgreSQL        | optional                  | Not needed to develop or test: the API falls back to an embedded PGlite database and the tests use PGlite in memory. Install a server only to run against real PostgreSQL (see below). |
 
 With nvm:
 
@@ -47,6 +47,26 @@ The Capitals quiz is a Native Federation remote: with the shell alone,
 `http://localhost:4201/remoteEntry.json`. Served on its own, the Capitals app
 runs the same quiz against in-memory progress. See
 [microfrontends.md](../architecture/microfrontends.md).
+
+### A real PostgreSQL server (optional)
+
+The simplest setup on macOS without Docker is Homebrew:
+
+```bash
+brew install postgresql@17
+brew services start postgresql@17
+createdb world_quiz
+DATABASE_URL=postgres://localhost:5432/world_quiz npm run start:api
+```
+
+The API applies its migrations on start. The API tests can use the same
+server — each test file gets a temporary database:
+
+```bash
+TEST_DATABASE_URL=postgres://localhost:5432/world_quiz npx nx test api
+```
+
+Details: [backend.md](../architecture/backend.md).
 
 Configuration for the API comes from environment variables; see
 [environment.md](environment.md).

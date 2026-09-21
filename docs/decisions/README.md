@@ -10,7 +10,7 @@ decision. A new ADR supersedes the old one.
 | [ADR-002](ADR-002-microfrontends.md)   | Native Federation for Capitals/Flags microfrontends             | Accepted                          |
 | ADR-003                                | SSR: separate `apps/site` + SSR-in-shell spike result           | Planned (written after the spike) |
 | [ADR-004](ADR-004-state-management.md) | State management: signal stores, no NgRx                        | Accepted                          |
-| ADR-005                                | Database access: PostgreSQL + Drizzle                           | Planned (backend phase)           |
+| [ADR-005](ADR-005-database.md)         | Database access: PostgreSQL + Drizzle, PGlite for tests/dev     | Accepted                          |
 | ADR-006                                | Local persistence: IndexedDB (Dexie) behind a `LocalStore` port | Planned (offline phase)           |
 | [ADR-007](ADR-007-testing.md)          | Testing stack                                                   | Accepted                          |
 | [ADR-008](ADR-008-country-data.md)     | Curated static country dataset and `flag-icons` flags           | Accepted                          |

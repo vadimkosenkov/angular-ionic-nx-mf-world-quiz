@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 World Quiz — a mobile-first quiz app (country → capital, flag → country, 195 countries, English/Russian) and a **learning/portfolio project**. Nx 23 monorepo with Angular 22 (standalone, zoneless, signals), Ionic 9, Native Federation microfrontends, Capacitor 8, Express 5. Planned: PostgreSQL + Drizzle, Apple/Google sign-in, offline sync, SSR `site`, iOS.
 
-Delivery is in numbered phases, one `feat/<phase>` branch and PR each (table in `docs/architecture/overview.md`). Merged so far: foundation, domain model, shell + design system, Capitals microfrontend (Phase 4). In progress: Phase 5, `feat/flags-mfe` (Flags microfrontend). Next: Phase 6, `feat/backend-database`.
+Delivery is in numbered phases, one `feat/<phase>` branch and PR each (table in `docs/architecture/overview.md`). Merged so far: foundation, domain model, shell + design system, Capitals and Flags microfrontends (Phases 4–5). In progress: Phase 6, `feat/backend-database` (API + PostgreSQL). Next: Phase 7, `feat/authentication`.
 
 Project rules that override defaults:
 
@@ -24,7 +24,9 @@ Node `^24.15` (`.nvmrc`), npm. Lockfile is committed; use `npm ci`.
 npm run start:quiz        # shell :4200 + capitals :4201 + flags :4202 (needed to play; first start ~1 min)
 npm run start:shell       # shell only — /quiz/* then shows "Quiz unavailable" (expected)
 npm run start:capitals    # a remote standalone (:4201; start:flags → :4202), with in-memory ports
-npm run start:api         # http://localhost:3333/health
+npm run start:api         # http://localhost:3333/health — embedded PGlite in .data/pglite unless DATABASE_URL is set
+npx nx run api:db-generate  # after editing apps/api/src/db/schema.ts: writes a SQL migration into apps/api/drizzle/
+TEST_DATABASE_URL=postgres://localhost:5432/world_quiz npx nx test api  # API tests on a real PostgreSQL (temporary DB per test file)
 
 npx nx <target> <project>                     # e.g. npx nx test quiz-domain
 npx nx affected -t lint typecheck test build  # only what the branch changed
@@ -56,10 +58,11 @@ Tags in each `project.json` + `@nx/enforce-module-boundaries` in the root `eslin
 | ----------------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | `apps/shell`                  | `scope:shell`, `type:app`                    | Ionic host: tabs, Home, quiz setup, Leaderboard, Achievements, Settings; Native Federation **dynamic host** |
 | `apps/capitals`, `apps/flags` | `scope:capitals` / `scope:flags`, `type:app` | Federation **remotes** (:4201, :4202); each exposes only `./routes` = `quizRemoteRoutes(category)`          |
-| `apps/api`                    | `scope:api`, `type:app`                      | Express 5 (`/health` only so far)                                                                           |
+| `apps/api`                    | `scope:api`, `type:app`                      | Express 5 + Drizzle: `POST/GET /v1/sessions` (server-graded, idempotent), `/health`                         |
 | `apps/shell-e2e`              | `scope:shell`, `type:e2e`                    | Cypress 15                                                                                                  |
 | `libs/quiz/domain`            | `scope:shared`, `type:domain`                | Pure TS quiz rules: engine, answer matching, scoring, mastery, progress, achievements, leaderboard          |
 | `libs/quiz/countries`         | `scope:shared`, `type:domain`                | The 195-country dataset + flag asset paths                                                                  |
+| `libs/shared/contracts`       | `scope:shared`, `type:contracts`             | Zod schemas of the API: requests, responses, problem details                                                |
 | `libs/shared/util`            | `scope:shared`, `type:util`                  | `Clock`, `Result`, `assertNever`                                                                            |
 | `libs/client/ui`              | `scope:client`, `type:ui`                    | Design system: SCSS tokens/themes/glass + small components                                                  |
 | `libs/client/i18n`            | `scope:client`, `type:data-access`           | Transloco with bundled, typed translations                                                                  |
@@ -90,6 +93,17 @@ Read `docs/architecture/microfrontends.md` before touching federation. Key point
 - Workspace libraries are shared through the tsconfig path mappings, so tokens and the dataset exist once at runtime. A library missing from `shared` in `remoteEntry.json` produces duplicate `InjectionToken`s and `NullInjectorError` inside the remote.
 - A remote's `app.config.ts` / `app.routes.ts` / `App` exist only for standalone dev, using `provideInMemoryQuizPorts()`.
 
+### Backend (`apps/api`)
+
+Read `docs/architecture/backend.md` and ADR-005 first. Key points:
+
+- Layers: `sessions.routes.ts` (parse with the `shared/contracts` Zod schema, map outcomes to status codes) → `session-service.ts` (plausibility, `engine.replay`, idempotency) → `session-repository.ts` (SQL only) → `db/database.ts`. `createApp()` takes its dependencies; `main.ts` is the only composition root.
+- **The server grades.** Requests carry config, seed, timestamps and answers only (strict schema: `score` etc. are rejected). The service replays the session with `quiz-domain` and stores the server's results; a session that cannot be replayed is rejected (422), never corrected.
+- Idempotency: client-generated UUID `id` (normalised to lower case by `uuidSchema`) + SHA-256 of the canonical, contract-parsed request (`request-hash.ts`). Never give a new request field a `.default()`: older clients' retries would hash differently and get 409. Same body → 200 with the stored result; different body → 409; races resolved by the primary key + `ON CONFLICT DO NOTHING`.
+- Every error is RFC 9457 `application/problem+json` (`http/problem.ts`); 500s are logged, never leak details.
+- Two drivers behind one `Database` type: `pg` pool (`DATABASE_URL`) or PGlite (tests: in memory with the real migrations via `createTestDatabase()`; dev: `.data/pglite`). Production requires `DATABASE_URL`. Migrations run at start-up.
+- Not yet: authentication (sessions are anonymous, `user_id` null), rate limiting, client calls (Phase 8).
+
 ### Frontend conventions
 
 - Stores are signal-based `@Injectable` classes (`ProgressStore` in the shell, `SettingsStore`, per-page `QuizSessionStore`). Progress is **in memory** until Phase 8.
@@ -100,6 +114,7 @@ Read `docs/architecture/microfrontends.md` before touching federation. Key point
 
 ### Testing
 
+- API tests use supertest against `createApp()` with an in-memory PGlite from `apps/api/src/testing/test-database.ts` (or a temporary PostgreSQL database per file when `TEST_DATABASE_URL` is set — PGlite runs one query at a time, so concurrency is only real on PostgreSQL), and build requests by really playing a session (`testing/play-session.ts`) instead of hand-writing answers.
 - Vitest everywhere; Angular projects run through `@angular/build:unit-test` with `buildTarget: shell:esbuild:development` (AnalogJS does not install with Angular 22) and `setupFiles: tools/testing/jsdom-setup.ts` (jsdom lacks `matchMedia` and `scrollTo`).
 - Component tests use Testing Library and dispatch Ionic events as DOM events (`ionChange`, `ionInput`); Ionic web components do not upgrade in jsdom, so behaviour that needs them (e.g. input focus) is covered in Cypress.
 - Shell pages render with `provideShellTesting()` (in-memory storage, manual clock, chosen locale).
@@ -115,6 +130,10 @@ Read `docs/architecture/microfrontends.md` before touching federation. Key point
 - Nx 23 has no Angular Module Federation support; everything federation-related is `@angular-architects/native-federation` 22.x, set up by hand. TypeScript 6 rejects `baseUrl`; only `paths` is used.
 - In Ionic's standalone build, `<ion-input>` has no `componentOnReady`; wait for `customElements.whenDefined('ion-input')` before `setFocus()`.
 
+- **A `pg.Pool` must have an `error` listener** (`createPool` in `db/database.ts`): a dropped idle connection otherwise emits an unhandled `error` and kills the API process.
+- **Only commit migrations generated by `db-generate`.** Hand-edited SQL drifts from `drizzle/meta` snapshots and the next generation will be wrong. Change `schema.ts`, generate, review the SQL.
+- The zod contract for `SubmitSessionRequest` must stay assignable to the domain's `SessionRecord` (a compile-time check in `sessions.spec.ts`); array schemas that mirror domain `readonly` arrays need `.readonly()`.
+
 ## Where to read more
 
-`README.md` (overview) · `docs/architecture/` (overview, nx, frontend, microfrontends, design-system, i18n, state-management) · `docs/decisions/` (ADRs) · `docs/domain/` (quiz rules) · `docs/testing/strategy.md` · `docs/development/{setup,troubleshooting}.md` · `docs/deployment/ci-cd.md`.
+`README.md` (overview) · `docs/architecture/` (overview, nx, frontend, backend, microfrontends, design-system, i18n, state-management) · `docs/decisions/` (ADRs) · `docs/domain/` (quiz rules) · `docs/testing/strategy.md` · `docs/development/{setup,troubleshooting}.md` · `docs/deployment/ci-cd.md`.
