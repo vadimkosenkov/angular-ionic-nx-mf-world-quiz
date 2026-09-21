@@ -88,19 +88,36 @@ export class GoogleSignInButton {
   private readonly errorHandler = inject(ErrorHandler);
   private readonly container =
     viewChild.required<ElementRef<HTMLElement>>('button');
-  /** Google Identity Services, once loaded and initialised. */
+  /** Google Identity Services, once loaded. */
   private readonly accounts = signal<GoogleAccountsId | null>(null);
+  /** The nonce of the next sign-in; replaced after every attempt. */
+  private readonly nonce = signal(createNonce());
   protected readonly failed = signal(false);
 
   constructor() {
     afterNextRender(() => void this.load());
 
-    // Google renders its button once and cannot change it, so it is drawn
-    // again whenever the app's language changes.
+    // Google's button carries the nonce given to `initialize` and cannot be
+    // changed once rendered. So after every sign-in attempt (the API may
+    // refuse it, and the player tries again) it is set up again with a new
+    // nonce, and it is drawn again whenever the app's language changes.
     afterRenderEffect(() => {
       const accounts = this.accounts();
       const locale = this.locale();
-      if (!accounts) return;
+      const nonce = this.nonce();
+      const clientId = this.config.googleClientId;
+      if (!accounts || !clientId) return;
+
+      accounts.initialize({
+        client_id: clientId,
+        nonce,
+        callback: ({ credential }) => {
+          this.credential.emit({ idToken: credential, nonce });
+          this.nonce.set(createNonce());
+        },
+        use_fedcm_for_button: true,
+        itp_support: true,
+      });
 
       const element = this.container().nativeElement;
       element.replaceChildren();
@@ -113,7 +130,8 @@ export class GoogleSignInButton {
         text: 'signin_with',
         shape: 'rectangular',
         logo_alignment: 'center',
-        width: Math.min(element.clientWidth || 320, 400),
+        // Google accepts 200 to 400 pixels.
+        width: Math.max(200, Math.min(element.clientWidth || 320, 400)),
         locale,
       });
     });
@@ -126,17 +144,7 @@ export class GoogleSignInButton {
       return;
     }
     try {
-      const accounts = await this.google.load();
-      const nonce = createNonce();
-      accounts.initialize({
-        client_id: clientId,
-        nonce,
-        callback: ({ credential }) =>
-          this.credential.emit({ idToken: credential, nonce }),
-        use_fedcm_for_button: true,
-        itp_support: true,
-      });
-      this.accounts.set(accounts);
+      this.accounts.set(await this.google.load());
     } catch (error) {
       this.errorHandler.handleError(error);
       this.failed.set(true);

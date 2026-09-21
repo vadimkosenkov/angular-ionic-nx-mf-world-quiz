@@ -203,6 +203,9 @@ export const en = {
     account: {
       title: 'Account',
       checking: 'Checking your sign-in…',
+      unverified:
+        'The World Quiz server cannot be reached, so your sign-in cannot be checked. It is checked again when you are back online.',
+      retry: 'Try again',
       intro:
         'Sign in to create your World Quiz account. Keeping your progress in sync across devices comes in a later update.',
       googleUnavailable:

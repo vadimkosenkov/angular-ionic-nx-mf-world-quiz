@@ -35,6 +35,10 @@ export class AccountSection {
     void this.auth.signIn('google', idToken, nonce);
   }
 
+  protected retry(): void {
+    void this.auth.restore();
+  }
+
   protected signOut(): void {
     void this.auth.signOut();
   }

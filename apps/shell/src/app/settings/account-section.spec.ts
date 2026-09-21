@@ -44,7 +44,7 @@ function fakeGoogle() {
 }
 
 async function renderSection(
-  state: 'signed-out' | AuthResponse,
+  state: 'signed-out' | 'offline' | AuthResponse,
   extraProviders: unknown[] = [],
 ) {
   const view = await render(AccountSection, {
@@ -55,10 +55,12 @@ async function renderSection(
   const refresh = http.expectOne(`${TEST_API_URL}/v1/auth/refresh`);
   if (state === 'signed-out')
     refresh.flush(null, { status: 401, statusText: 'Unauthorized' });
+  else if (state === 'offline') refresh.error(new ProgressEvent('error'));
   else refresh.flush(state);
   await restoring;
   view.fixture.detectChanges();
   await settle();
+  await view.fixture.whenStable();
   return { ...view, http };
 }
 
@@ -70,6 +72,21 @@ describe('AccountSection', () => {
       'Checking your sign-in',
     );
     TestBed.inject(HttpTestingController).match(() => true);
+  });
+
+  it('neither signs out nor offers sign-in while the server is unreachable', async () => {
+    const { http } = await renderSection('offline');
+
+    expect(screen.getByTestId('account-unverified').textContent).toContain(
+      'cannot be reached',
+    );
+    expect(screen.queryByTestId('google-button')).toBeNull();
+
+    fireEvent.click(screen.getByTestId('retry-restore'));
+    http.expectOne(`${TEST_API_URL}/v1/auth/refresh`).flush(signedIn());
+    await settle();
+
+    expect(TestBed.inject(AuthStore).status()).toBe('signed-in');
   });
 
   it('offers Google sign-in, and says honestly when Apple arrives', async () => {

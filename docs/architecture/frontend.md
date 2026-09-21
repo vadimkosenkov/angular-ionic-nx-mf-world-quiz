@@ -75,7 +75,9 @@ may know about each other, is described in
 
 - **Start-up**: `provideAuth()` restores a previous sign-in with the httpOnly
   refresh cookie, without blocking the first render (status `restoring` →
-  `signed-in` or `signed-out`).
+  `signed-in` or `signed-out`; `unverified` when the API cannot be reached —
+  the section says so, offers "Try again" and checks again when the browser
+  is back online).
 - **Google**: Google's button from Google Identity Services; its ID token and
   our nonce go to `POST /v1/auth/google`. **Apple** is shown as coming with the
   iPhone app — web Sign in with Apple needs a registered HTTPS domain.
@@ -88,7 +90,8 @@ may know about each other, is described in
   popup would give full control.
 - **Tokens**: the access token only in memory, the refresh token only in the
   httpOnly cookie; nothing in `localStorage`. `authInterceptor` adds the
-  bearer token to API requests and renews it once, shared, on 401.
+  bearer token to API requests and renews it once, shared, on 401; tabs take
+  turns through a Web Lock. Only a refusal by the API signs the player out.
 - **Account deletion** asks for confirmation inline, with the consequence
   spelled out, before `DELETE /v1/me`.
 - The API URL and the Google client id are in `apps/shell/src/app/api-config.ts`

@@ -19,7 +19,8 @@ function fakeGoogle() {
     nonce?: string;
     rendered?: HTMLElement;
     renders: { theme: string; locale?: string }[];
-  } = { renders: [] };
+    widths: (number | undefined)[];
+  } = { renders: [], widths: [] };
   const accounts: GoogleAccountsId = {
     initialize: (config) => {
       calls.clientId = config.client_id;
@@ -29,6 +30,7 @@ function fakeGoogle() {
     renderButton: (parent, options) => {
       calls.rendered = parent;
       calls.renders.push({ theme: options.theme, locale: options.locale });
+      calls.widths.push(options.width);
     },
   };
   return {
@@ -60,7 +62,7 @@ async function renderButton(
     ],
   });
   await new Promise((resolve) => setTimeout(resolve));
-  view.fixture.detectChanges();
+  await view.fixture.whenStable();
   return { emitted, errors, view };
 }
 
@@ -84,6 +86,38 @@ describe('GoogleSignInButton', () => {
     expect(emitted).toEqual([
       { idToken: 'header.payload.signature', nonce: google.calls.nonce },
     ]);
+  });
+
+  it('uses a new nonce for every sign-in attempt', async () => {
+    const google = fakeGoogle();
+    const { emitted, view } = await renderButton(google.service);
+
+    google.signIn('first.id.token');
+    await view.fixture.whenStable();
+    google.signIn('second.id.token');
+    await view.fixture.whenStable();
+
+    expect(emitted).toHaveLength(2);
+    expect(emitted[1]?.nonce).toMatch(/^[\w-]{43}$/);
+    expect(emitted[1]?.nonce).not.toBe(emitted[0]?.nonce);
+    expect(google.calls.nonce).not.toBe(emitted[1]?.nonce);
+  });
+
+  it("keeps the button within Google's 200 to 400 pixels", async () => {
+    const google = fakeGoogle();
+    const { view } = await renderButton(google.service);
+    const container = screen.getByTestId('google-button');
+
+    for (const width of [120, 1000]) {
+      Object.defineProperty(container, 'clientWidth', {
+        configurable: true,
+        value: width,
+      });
+      view.fixture.componentRef.setInput('locale', `l${width}`);
+      view.fixture.detectChanges();
+    }
+
+    expect(google.calls.widths.slice(-2)).toEqual([200, 400]);
   });
 
   it('draws the button again in the language of the app', async () => {

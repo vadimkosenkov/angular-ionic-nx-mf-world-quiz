@@ -10,6 +10,18 @@
   >
     @switch (auth.status()) { @case ('restoring') {
     <p class="muted">{{ 'settings.account.checking' | transloco }}</p>
+    } @case ('unverified') {
+    <p class="muted" data-testid="account-unverified">
+      {{ 'settings.account.unverified' | transloco }}
+    </p>
+    <ion-button
+      class="wq-glass-button secondary"
+      expand="block"
+      data-testid="retry-restore"
+      (click)="retry()"
+    >
+      {{ 'settings.account.retry' | transloco }}
+    </ion-button>
     } @case ('signed-in') { @let user = auth.user();
     <div class="identity">
       <ion-icon name="person-circle" aria-hidden="true" />

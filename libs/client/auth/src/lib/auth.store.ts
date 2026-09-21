@@ -7,7 +7,16 @@ import type {
 } from '@world-quiz/shared/contracts';
 import { AuthApi } from './auth-api';
 
-export type AuthStatus = 'restoring' | 'signed-out' | 'signed-in';
+/**
+ * `unverified`: a previous sign-in could not be checked because the API was
+ * unreachable. The refresh cookie may well be valid, so the app neither
+ * claims to be signed in nor shows the sign-in offer; it checks again later.
+ */
+export type AuthStatus =
+  'restoring' | 'unverified' | 'signed-out' | 'signed-in';
+
+/** Held while refreshing, so that tabs of the app take turns (see below). */
+export const REFRESH_LOCK = 'world-quiz-auth-refresh';
 
 /** What went wrong in the last sign-in action, for the UI to explain. */
 export type AuthError = 'sign-in-failed' | 'unreachable' | 'delete-failed';
@@ -45,29 +54,39 @@ export class AuthStore {
 
   /**
    * Signs in again after a reload, silently: a valid refresh cookie means the
-   * player is still signed in. Any failure leaves the app signed out.
+   * player is still signed in. When the API refuses the cookie the app is
+   * signed out; when the API cannot be reached the sign-in stays `unverified`
+   * and `restore()` is called again once the browser is back online.
    */
   async restore(): Promise<void> {
-    const refreshed = await this.refreshAccessToken();
-    if (!refreshed && this.statusState() === 'restoring') {
-      this.statusState.set('signed-out');
-    }
+    if (this.statusState() === 'signed-in') return;
+    this.statusState.set('restoring');
+    await this.refreshAccessToken();
   }
 
   /**
-   * Gets a new access token with the refresh cookie. Concurrent callers share
-   * one request: the API retires a refresh token on first use, and a second
-   * request with the same token would look like theft and sign everyone out.
+   * Gets a new access token with the refresh cookie.
+   *
+   * The API retires a refresh token on first use, and a second request with
+   * the same token looks like theft and signs the player out everywhere. So
+   * concurrent callers in this tab share one request, and tabs take turns
+   * through a Web Lock: a tab that waited sends the cookie its predecessor
+   * just received (cookies are shared between tabs).
+   *
+   * Only the API's refusal signs the player out. Without an answer (offline,
+   * API down) a signed-in player stays signed in; the next request retries.
    */
   refreshAccessToken(): Promise<boolean> {
-    this.refreshing ??= this.api
-      .refresh()
+    this.refreshing ??= this.exclusively(() => this.api.refresh())
       .then((response) => {
         this.accept(response);
         return true;
       })
-      .catch(() => {
-        this.clear();
+      .catch((error: unknown) => {
+        if (!isUnreachable(error)) this.clear();
+        else if (this.statusState() === 'restoring') {
+          this.statusState.set('unverified');
+        }
         return false;
       })
       .finally(() => {
@@ -125,6 +144,11 @@ export class AuthStore {
     } finally {
       this.busyState.set(false);
     }
+  }
+
+  private exclusively<T>(task: () => Promise<T>): Promise<T> {
+    const locks = globalThis.navigator?.locks;
+    return locks ? locks.request(REFRESH_LOCK, task) : task();
   }
 
   private accept(response: AuthResponse): void {
