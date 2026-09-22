@@ -381,7 +381,9 @@ describe('leaderboards', () => {
       );
 
       expect(response.status).toBe(200);
-      expect(response.headers['cache-control']).toBe('no-cache');
+      expect(response.headers['cache-control']).toBe(
+        'public, max-age=0, must-revalidate',
+      );
       expect(response.headers['etag']).toBeDefined();
       expect(response.body.players).toBe(2);
       expect(response.body.entries).toHaveLength(1);

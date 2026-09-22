@@ -73,6 +73,10 @@ describe('leaderboard', () => {
         expect(entries.map((entry) => entry.nickname)).to.include('Speedy E2E');
         expect(JSON.stringify(entries)).not.to.match(/userId|email/);
       });
+    // …and on the public site, rendered on its server.
+    cy.request('http://localhost:4300/en/leaderboard/capitals-easy')
+      .its('body')
+      .should('contain', 'Speedy E2E');
 
     cy.get(
       '[data-testid="leaderboard-view"] ion-segment-button[value="mine"]',

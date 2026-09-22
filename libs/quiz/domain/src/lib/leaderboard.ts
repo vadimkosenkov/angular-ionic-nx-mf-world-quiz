@@ -125,3 +125,14 @@ export function isNewPersonalRecord(
 ): boolean {
   return previousBestMs === null || completionTimeMs < previousBestMs;
 }
+
+/**
+ * A leaderboard time as players read it: minutes, seconds and tenths, e.g.
+ * `4:07.3` (rounded down, like a stopwatch). Shared by the app and the site.
+ */
+export function formatRunTime(ms: number): string {
+  const tenths = Math.floor(ms / 100);
+  const minutes = Math.floor(tenths / 600);
+  const seconds = `${Math.floor((tenths % 600) / 10)}`.padStart(2, '0');
+  return `${minutes}:${seconds}.${tenths % 10}`;
+}

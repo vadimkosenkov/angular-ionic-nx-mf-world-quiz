@@ -1,0 +1,101 @@
+{
+  "name": "site",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "prefix": "wq",
+  "sourceRoot": "apps/site/src",
+  "tags": ["scope:site", "type:app"],
+  "targets": {
+    "build": {
+      "executor": "@angular/build:application",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": "dist/apps/site",
+        "browser": "apps/site/src/main.ts",
+        "server": "apps/site/src/main.server.ts",
+        "ssr": {
+          "entry": "apps/site/src/server.ts"
+        },
+        "outputMode": "server",
+        "tsConfig": "apps/site/tsconfig.app.json",
+        "inlineStyleLanguage": "scss",
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/site/public"
+          }
+        ],
+        "styles": ["apps/site/src/styles.scss"]
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "300kb",
+              "maximumError": "500kb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "4kb",
+              "maximumError": "8kb"
+            }
+          ],
+          "outputHashing": "all"
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
+        }
+      }
+    },
+    "serve": {
+      "continuous": true,
+      "executor": "@angular/build:dev-server",
+      "options": {
+        "buildTarget": "site:build:development",
+        "port": 4300
+      }
+    },
+    "serve-ssr": {
+      "continuous": true,
+      "executor": "nx:run-commands",
+      "dependsOn": ["build"],
+      "options": {
+        "command": "node dist/apps/site/server/server.mjs",
+        "env": {
+          "PORT": "4300",
+          "API_URL": "http://localhost:3333",
+          "SITE_URL": "http://localhost:4300",
+          "APP_URL": "http://localhost:4200",
+          "NG_ALLOWED_HOSTS": "localhost"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "buildTarget": "site:build:development",
+        "tsConfig": "apps/site/tsconfig.spec.json",
+        "watch": false,
+        "setupFiles": ["tools/testing/jsdom-setup.ts"]
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{projectRoot}",
+        "commands": [
+          "ngc -p tsconfig.app.json --noEmit",
+          "tsc -p tsconfig.spec.json --noEmit"
+        ],
+        "parallel": false
+      }
+    }
+  }
+}

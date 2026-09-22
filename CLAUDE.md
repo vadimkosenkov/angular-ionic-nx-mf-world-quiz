@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 World Quiz — a mobile-first quiz app (country → capital, flag → country, 195 countries, English/Russian) and a **learning/portfolio project**. Nx 23 monorepo with Angular 22 (standalone, zoneless, signals), Ionic 9, Native Federation microfrontends, Capacitor 8, Express 5. Planned: PostgreSQL + Drizzle, Apple/Google sign-in, offline sync, SSR `site`, iOS.
 
-Delivery is in numbered phases, one `feat/<phase>` branch and PR each (table in `docs/architecture/overview.md`). Merged so far: foundation, domain model, shell + design system, Capitals and Flags microfrontends (Phases 4–5). Merged: Phase 6 (API + PostgreSQL). Merged: Phase 7 (7a `feat/auth-server`, 7b `feat/auth-client`: sign-in on the API and in the app) and 8a `feat/sync-server` (a player's history on the API). Merged: 8b `feat/sync-client` (sign-in required before playing, IndexedDB/Dexie, outbox, sync). Phase 9 is split in three: merged 9a `feat/leaderboard-server` (challenges, ranked runs, boards, records, nicknames on the API); in progress 9b `feat/leaderboard-client` (challenges, rankings, records and the nickname in the app); next 9c `feat/site-ssr` (`apps/site`, legal pages, public leaderboard, SSR-in-shell spike → ADR-003).
+Delivery is in numbered phases, one `feat/<phase>` branch and PR each (table in `docs/architecture/overview.md`). Merged so far: foundation, domain model, shell + design system, Capitals and Flags microfrontends (Phases 4–5). Merged: Phase 6 (API + PostgreSQL). Merged: Phase 7 (7a `feat/auth-server`, 7b `feat/auth-client`: sign-in on the API and in the app) and 8a `feat/sync-server` (a player's history on the API). Merged: 8b `feat/sync-client` (sign-in required before playing, IndexedDB/Dexie, outbox, sync). Phase 9 is split in three: merged 9a `feat/leaderboard-server` (API) and 9b `feat/leaderboard-client` (app); in progress 9c `feat/site-ssr` (`apps/site`: SSR public site with legal pages and leaderboards, shared design tokens, ADR-003). Next: Phase 10, `feat/achievements-mistakes`.
 
 Project rules that override defaults:
 
@@ -25,6 +25,8 @@ cp apps/api/.env.example apps/api/.env  # once: API config (Google client id, de
 npm run start:quiz        # shell :4200 + capitals :4201 + flags :4202 + api :3333 (first start ~1 min)
 npm run start:shell       # shell only — /quiz/* then shows "Quiz unavailable" (expected)
 npm run start:capitals    # a remote standalone (:4201; start:flags → :4202), with in-memory ports
+npm run start:site        # public SSR site :4300 (dev server) + api :3333
+npx nx run site:serve-ssr # the site's production build on its Node server (:4300, NG_ALLOWED_HOSTS=localhost)
 npm run start:api         # http://localhost:3333/health — embedded PGlite in .data/pglite unless DATABASE_URL is set
 npx nx run api:db-generate  # after editing apps/api/src/db/schema.ts: writes a SQL migration into apps/api/drizzle/
 TEST_DATABASE_URL=postgres://localhost:5432/world_quiz npx nx test api  # API tests on a real PostgreSQL (temporary DB per test file)
@@ -44,7 +46,7 @@ Full verification before any commit (this is what CI runs, plus E2E):
 npm run check:control-chars
 npx nx format:check                                           # fix with: npx nx format:write
 npx nx run-many -t lint typecheck test build --skip-nx-cache
-npx nx e2e shell-e2e --configuration=production               # starts shell, capitals, flags (static) and api:serve-e2e (fresh PGlite, dev sign-in)
+npx nx e2e shell-e2e --configuration=production               # starts shell, capitals, flags (static), api:serve-e2e (fresh PGlite, dev sign-in) and site:serve-ssr
 ```
 
 `typecheck` runs `ngc --noEmit` for Angular projects, so template errors fail it.
@@ -60,11 +62,13 @@ Tags in each `project.json` + `@nx/enforce-module-boundaries` in the root `eslin
 | `apps/shell`                  | `scope:shell`, `type:app`                    | Ionic host: tabs, Home, quiz setup, Leaderboard, Achievements, Settings; Native Federation **dynamic host**                                                          |
 | `apps/capitals`, `apps/flags` | `scope:capitals` / `scope:flags`, `type:app` | Federation **remotes** (:4201, :4202); each exposes only `./routes` = `quizRemoteRoutes(category)`                                                                   |
 | `apps/api`                    | `scope:api`, `type:app`                      | Express 5 + Drizzle: `/v1/auth`, `/v1/me` (+ records, nickname), `/v1/sessions` (server-graded; `GET` = history), `/v1/challenges`, public `/v1/leaderboards/:board` |
+| `apps/site`                   | `scope:site`, `type:app`                     | Public Angular SSR site (:4300): home, Privacy, Terms prerendered; leaderboards server-rendered; en/ru                                                               |
 | `apps/shell-e2e`              | `scope:shell`, `type:e2e`                    | Cypress 15                                                                                                                                                           |
 | `libs/quiz/domain`            | `scope:shared`, `type:domain`                | Pure TS quiz rules: engine, answer matching, scoring, mastery, progress, achievements, leaderboard                                                                   |
 | `libs/quiz/countries`         | `scope:shared`, `type:domain`                | The 195-country dataset + flag asset paths                                                                                                                           |
 | `libs/shared/contracts`       | `scope:shared`, `type:contracts`             | Zod schemas of the API: sessions, auth, leaderboard, problem details                                                                                                 |
 | `libs/shared/util`            | `scope:shared`, `type:util`                  | `Clock`, `Result`, `assertNever`                                                                                                                                     |
+| `libs/shared/design-tokens`   | `scope:shared`, `type:ui`                    | Sass mixins `light-theme` / `dark-theme` with every `--wq-*` value; used by `client/ui` and `apps/site`                                                              |
 | `libs/client/ui`              | `scope:client`, `type:ui`                    | Design system: SCSS tokens/themes/glass + small components                                                                                                           |
 | `libs/client/auth`            | `scope:client`, `type:data-access`           | `AuthStore`, sign-in API calls, `authInterceptor`, Google (GIS) button                                                                                               |
 | `libs/client/progress`        | `scope:client`, `type:data-access`           | `ProgressStore` (sessions on the device via `LocalStore` → Dexie/IndexedDB), outbox, `SyncService`                                                                   |
@@ -77,6 +81,7 @@ Rules that bite:
 
 - `scope:shared` libraries (`type:domain`/`util`/`contracts`) must stay **platform-free**: ESLint bans Angular, Ionic, Capacitor, RxJS, Express, Dexie, Drizzle and Node built-ins there, and their tsconfig has `lib: ["es2022"]`, `types: []` (no DOM, no Node globals). The same domain code is meant to run on the server to re-grade results.
 - Remotes (`scope:capitals`, `scope:flags`) may use `scope:client` and `scope:shared`, never the shell or each other.
+- The site (`scope:site`) may use only `scope:shared` (contracts, quiz domain, design tokens): no Ionic, no `client/*` — it has its own typed texts (`apps/site/src/app/i18n`).
 - Imports use tsconfig path aliases `@world-quiz/<group>/<lib>` (`tsconfig.base.json`); no npm workspaces. Test-only entry points: `@world-quiz/quiz/domain/testing` (fixture dataset), `@world-quiz/client/quiz-feature/testing` (`provideQuizTesting()`) and `@world-quiz/client/progress/testing` (`finishedSession()`, `historyEntry()`, test users); never import them from production code.
 - `@typescript-eslint/consistent-type-imports` is on: type-only imports use `import type` / `type X`.
 
@@ -112,6 +117,16 @@ Read `docs/architecture/backend.md` and ADR-005 first. Key points:
 - **Leaderboards** (`src/leaderboard/`, docs/domain/leaderboard.md): `POST /v1/challenges` issues a challenge (server seed, 3 h, played once); a session with `mode: 'challenge'` must carry its `challengeId` (seed and board must match, else 422). `challenge-rules.ts` decides ranking: domain eligibility, then the run's own time (client-measured) checked against the server window issued → received (≤ window + 2 s, ≥ window − 60 s, ≤ 3 h). The verdict is attached in the session's transaction with `UPDATE … WHERE session_id IS NULL` (one run per challenge). Rankings are queries: `selectDistinctOn` (best per player) + `row_number()` in `compareLeaderboardEntries` order, over a partial index on ranked runs; a test compares them with `rankLeaderboard`. Boards are public and show **nicknames** only (`users.nickname`, default `defaultNickname(id)` = "Player NNNN"; never the provider's name).
 - `/v1/auth` is rate-limited per client address (`AUTH_RATE_LIMIT`, default 30 per 15 min); `api:serve-e2e` raises it because every E2E test signs in.
 - Not yet: native Apple sign-in, Keychain storage and Apple token revocation (Phase 13).
+
+### Public site (`apps/site`)
+
+Read `docs/architecture/site.md` and ADR-003. Key points:
+
+- Every page is under `/en` or `/ru` (`canMatch`); `server.ts` redirects `/` by `Accept-Language`. `app.routes.server.ts`: home and legal pages `RenderMode.Prerender` (`getPrerenderParams` per language), everything else `RenderMode.Server`.
+- The leaderboard page uses `httpResource` with `leaderboardSchema`; the response travels to the browser in the HTML (transfer cache). It sets `RESPONSE_INIT`: `public, max-age=30`, or `503` + `no-store` when the API is down; unknown pages are real `404`s.
+- `SiteLayout` sets the language (`SiteI18n`), `<html lang>`, canonical and `hreflang` links. Texts: `i18n/en.ts` + `ru.ts: SiteText`.
+- Server configuration from the environment in `app.config.server.ts` (`API_URL`, `SITE_URL`, `APP_URL`, `SITE_OPERATOR_NAME/EMAIL`); without an operator the legal pages show a **draft** notice (nothing personal in the repo). The legal texts describe the service as built — change them with the code.
+- SSR in the shell was spiked and rejected (ADR-003): IndexedDB, Capacitor Preferences, sign-in and Ionic all break on the server, and it would render only `/welcome`.
 
 ### Frontend conventions
 
@@ -151,8 +166,11 @@ Read `docs/architecture/backend.md` and ADR-005 first. Key points:
 - **Angular strips whitespace between elements**: `<strong>195</strong> <span>Countries</span>` renders as "195Countries" (also for screen readers). Insert `{{ ' ' }}` where the words must stay apart (welcome stats).
 - **API tests talk to a server on 127.0.0.1** (`testing/loopback.ts`, `onLoopback(app)`; `TestApi.app` is that server). Plain `request(expressApp)` listens on `::` and connects to 127.0.0.1; on macOS the port can belong to another program listening on 127.0.0.1 only (WebStorm, DBeaver…) and tests randomly got its 403/404/`{}`. Use `request(api.app)` or `onLoopback()`, never `request(createApp(...))`.
 - **CORS must list every HTTP method the API uses** (`http/cors.ts`: `GET, POST, PATCH, DELETE`). Supertest sends no preflight, so a missing method passes the API tests and fails only in the browser (status 0, "server unreachable"); a test checks the preflight.
-- **Don't let browsers cache data the player just changed**: `Cache-Control: public, max-age=…` on the leaderboard hid a run the player had just finished. The board is `no-cache` (revalidated, ETag → 304).
+- **Don't let browsers cache data the player just changed**: `Cache-Control: public, max-age=…` on the leaderboard hid a run the player had just finished. The board is `public, max-age=0, must-revalidate` (revalidated every time, ETag → 304) — not `no-cache`, which Angular's SSR transfer cache refuses to carry (the site would fetch twice).
 - **Ionic may show a cached tab page without `ionViewWillEnter`** — e.g. `navigateRoot('/leaderboard')` from a remote's results reuses the tabs and the Leaderboard page. Refresh from data signals (here `SyncService.lastSyncedAt`), not only from lifecycle hooks.
+- **Adding an Angular package fails with `ERESOLVE`** when the lockfile pins another patch: raise all framework packages to the same `~22.1.x`, delete their `node_modules/@angular/<name>` entries from `package-lock.json` and `node_modules`, then `npm install` twice and **confirm with `npm ci`** (the first pass can drop nested deps from the lockfile). Never `--legacy-peer-deps`. See troubleshooting.
+- **Angular SSR answers only allowed hosts**: the site's production server returns `400 Header "host" … is not allowed` unless `NG_ALLOWED_HOSTS` lists the host (`site:serve-ssr` sets `localhost`).
+- **Design tokens live in `libs/shared/design-tokens`** as mixins; `client/ui/src/styles/_tokens.scss` only applies them. Add a token there, for both themes.
 - **A tool that runs `start:quiz` with `PORT` set** (e.g. a preview launcher) makes every dev server take that port, like a root `.env`; unset it (`env -u PORT npm run start:quiz`).
 
 - **Adding a NOT NULL column or FK to a table with data needs a data migration first**: `npx drizzle-kit generate --config apps/api/drizzle.config.ts --custom --name <name>` creates an empty, tracked SQL file (write the `UPDATE`/`DELETE` there), then run `db-generate` for the schema change — see `0001_drop_anonymous_sessions.sql`.
@@ -162,4 +180,4 @@ Read `docs/architecture/backend.md` and ADR-005 first. Key points:
 
 ## Where to read more
 
-`README.md` (overview) · `docs/architecture/` (overview, nx, frontend, backend, microfrontends, design-system, i18n, state-management) · `docs/decisions/` (ADRs) · `docs/domain/` (quiz rules) · `docs/testing/strategy.md` · `docs/development/{setup,troubleshooting}.md` · `docs/deployment/ci-cd.md`.
+`README.md` (overview) · `docs/architecture/` (overview, nx, frontend, backend, site, microfrontends, design-system, i18n, state-management) · `docs/decisions/` (ADRs) · `docs/domain/` (quiz rules) · `docs/testing/strategy.md` · `docs/development/{setup,troubleshooting}.md` · `docs/deployment/ci-cd.md`.

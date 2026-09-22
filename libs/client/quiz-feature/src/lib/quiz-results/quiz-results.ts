@@ -7,6 +7,7 @@ import { COUNTRY_DATASET } from '@world-quiz/client/quiz-ports';
 import { SettingsStore } from '@world-quiz/client/settings';
 import {
   displayAnswer,
+  formatRunTime,
   indexCountriesByCode,
   type QuizConfig,
   type SessionSummary,
@@ -20,14 +21,6 @@ export type ChallengeResult =
   | { readonly status: 'checking' }
   | { readonly status: 'done'; readonly outcome: ChallengeOutcome }
   | { readonly status: 'unsent' };
-
-/** A leaderboard time: minutes, seconds and tenths, e.g. `4:07.3`. */
-export function formatRunTime(ms: number): string {
-  const tenths = Math.floor(ms / 100);
-  const minutes = Math.floor(tenths / 600);
-  const seconds = `${Math.floor((tenths % 600) / 10)}`.padStart(2, '0');
-  return `${minutes}:${seconds}.${tenths % 10}`;
-}
 
 /** Result screen of a finished session: score, accuracy, time and what to review. */
 @Component({

@@ -209,3 +209,36 @@ It shows more often under load (the full `run-many` verification).
 **Fix:** serve the app on `127.0.0.1` itself: `onLoopback(app)` in
 `apps/api/src/testing/loopback.ts`, which `createTestApi()` already uses
 (`request(api.app)`). A port taken on `127.0.0.1` can then never be handed out.
+
+## `npm install @angular/ssr` fails with `ERESOLVE could not resolve`
+
+**Cause:** Angular's packages require exactly the same patch version of each
+other (`@angular/forms@22.1.6` needs `@angular/common@22.1.6`). Adding a new
+Angular package pulls the newest patch (`22.1.7`) while the lockfile pins the
+old one for the others, and npm will not move them together.
+
+**Fix:** raise every framework package to the same `~22.1.x` in
+`package.json`, delete their entries (`node_modules/@angular/<name>`) from
+`package-lock.json` and from `node_modules`, and run `npm install`: npm
+resolves just those packages again and leaves everything else untouched.
+Then run `npm install` once more and check with `npm ci` — the first pass can
+leave the packages' own nested dependencies out of the lockfile (`npm ci`:
+"Missing: @babel/… from lock file"), which only CI would notice. Do not reach
+for `--legacy-peer-deps` or `--force`.
+
+## Site: `Header "host" with value "localhost:4300" is not allowed`
+
+**Cause:** Angular SSR's server refuses requests for host names it was not
+told about (protection against host-header attacks), with `400 Bad Request`.
+
+**Fix:** list the site's host names in `NG_ALLOWED_HOSTS` (comma-separated);
+`site:serve-ssr` sets `localhost`. The dev server allows `localhost` itself.
+
+## Site: the leaderboard is fetched again in the browser after SSR
+
+**Cause:** Angular's HTTP transfer cache does not carry responses marked
+`Cache-Control: no-store`, `private` or `no-cache`, so hydration asks the API
+again (and, from another origin, needs CORS).
+
+**Fix:** the API sends boards as `public, max-age=0, must-revalidate` — always
+revalidated by browsers, but carried by the transfer cache.

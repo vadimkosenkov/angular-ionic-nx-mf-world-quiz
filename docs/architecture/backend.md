@@ -160,13 +160,13 @@ GET /v1/sessions?after=<cursor>&limit=50
 
 Rules and the trust model: [leaderboard.md](../domain/leaderboard.md).
 
-| Endpoint                            | Auth   | Does                                                                                                                          |
-| ----------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| `POST /v1/challenges {board}`       | Bearer | Issues a challenge: id, server seed (128 bits), `issuedAt`, `expiresAt` (3 h)                                                 |
-| `POST /v1/sessions` + `challengeId` | Bearer | Records the challenge run; the result's `challenge` says ranked or why not, rank, record                                      |
-| `GET /v1/leaderboards/:board`       | public | The fastest players (`limit` 1–100, default 50) and how many are ranked; `Cache-Control: no-cache` (always revalidated, ETag) |
-| `GET /v1/me/records`                | Bearer | The player's best ranked run per board, with rank and number of players                                                       |
-| `PATCH /v1/me {nickname}`           | Bearer | Sets the public name                                                                                                          |
+| Endpoint                            | Auth   | Does                                                                                                                                                    |
+| ----------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /v1/challenges {board}`       | Bearer | Issues a challenge: id, server seed (128 bits), `issuedAt`, `expiresAt` (3 h)                                                                           |
+| `POST /v1/sessions` + `challengeId` | Bearer | Records the challenge run; the result's `challenge` says ranked or why not, rank, record                                                                |
+| `GET /v1/leaderboards/:board`       | public | The fastest players (`limit` 1–100, default 50) and how many are ranked; `Cache-Control: public, max-age=0, must-revalidate` (always revalidated, ETag) |
+| `GET /v1/me/records`                | Bearer | The player's best ranked run per board, with rank and number of players                                                                                 |
+| `PATCH /v1/me {nickname}`           | Bearer | Sets the public name                                                                                                                                    |
 
 ```mermaid
 sequenceDiagram

@@ -106,8 +106,11 @@ export class InvalidConfigError extends Error {
   }
 }
 
-/** The shell's dev server, allowed by default outside production. */
-export const DEFAULT_DEV_ORIGINS = ['http://localhost:4200'] as const;
+/** The shell's and the site's dev servers, allowed outside production. */
+export const DEFAULT_DEV_ORIGINS = [
+  'http://localhost:4200',
+  'http://localhost:4300',
+] as const;
 
 export function loadConfig(
   environment: Readonly<Record<string, string | undefined>>,
