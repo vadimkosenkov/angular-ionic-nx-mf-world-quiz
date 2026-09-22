@@ -16,7 +16,7 @@ flowchart LR
 | Job      | What fails it                                                                                                                                                                                                               |
 | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `checks` | Raw control characters in tracked text files, unformatted files, lint errors (including module-boundary violations), type errors (including Angular templates), failing unit/component/API tests, failing production builds |
-| `e2e`    | Failing Cypress specs against production-configuration builds of **both** the shell and the Capitals remote. Screenshots are uploaded as an artifact on failure.                                                            |
+| `e2e`    | Failing Cypress specs against production-configuration builds of the shell, both remotes, the API (`serve-e2e`) and the site (`serve-ssr`). Screenshots are uploaded as an artifact on failure.                             |
 
 Every step exits non-zero on failure. No step uses `continue-on-error`.
 
