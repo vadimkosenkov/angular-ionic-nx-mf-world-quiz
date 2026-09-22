@@ -1,12 +1,29 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
-import { IonContent, NavController, type ViewDidLeave } from '@ionic/angular';
+import {
+  Component,
+  computed,
+  inject,
+  input,
+  linkedSignal,
+  signal,
+  untracked,
+} from '@angular/core';
+import {
+  IonButton,
+  IonContent,
+  NavController,
+  type ViewDidLeave,
+} from '@ionic/angular';
+import { TranslocoPipe } from '@jsverse/transloco';
 import {
   COUNTRY_DATASET,
+  QUIZ_PROGRESS_READER,
   QUIZ_RESULT_SINK,
   type QuizSessionOutcome,
 } from '@world-quiz/client/quiz-ports';
 import {
   CHALLENGE_MODE,
+  countriesInScope,
+  type CountryCode,
   createQuizEngine,
   DEFAULT_FIXED_QUESTION_COUNT,
   isDifficulty,
@@ -23,6 +40,11 @@ import {
   type ChallengeResult,
   QuizResults,
 } from '../quiz-results/quiz-results';
+
+/** The query value that starts Practice Mistakes. */
+export const PRACTICE_MODE = 'practice';
+/** Countries in one Practice Mistakes round, most recently missed first. */
+export const PRACTICE_ROUND_SIZE = 20;
 
 interface FinishedQuiz {
   readonly summary: SessionSummary;
@@ -44,14 +66,31 @@ interface FinishedQuiz {
  * and the `seed` the server issued for it: the whole World set, played with
  * exactly that seed, and handed to the host with the challenge id. Without
  * both, `mode=challenge` falls back to a training quiz.
+ *
+ * Practice Mistakes is `mode=practice`: a Quick round over the countries the
+ * player still has to review in this category (and scope), read from the
+ * host through `QUIZ_PROGRESS_READER` when the round starts — the list does
+ * not change while the round is played.
  */
 @Component({
   selector: 'wq-quiz-page',
-  imports: [IonContent, QuizPlay, QuizResults],
+  imports: [IonButton, IonContent, QuizPlay, QuizResults, TranslocoPipe],
   template: `
     <ion-content [fullscreen]="true" class="wq-aurora">
       <div class="wq-page quiz-page">
-        @if (finished(); as result) {
+        @if (practiceIsEmpty()) {
+          <div class="wq-card nothing" data-testid="practice-empty">
+            <h1>{{ 'practice.emptyTitle' | transloco }}</h1>
+            <p>{{ 'practice.empty' | transloco }}</p>
+            <ion-button
+              class="wq-glass-button secondary"
+              expand="block"
+              (click)="exit()"
+            >
+              {{ 'results.backHome' | transloco }}
+            </ion-button>
+          </div>
+        } @else if (finished(); as result) {
           <wq-quiz-results
             [config]="config()"
             [summary]="result.summary"
@@ -80,12 +119,28 @@ interface FinishedQuiz {
       gap: var(--wq-space-5);
       padding-top: calc(var(--wq-space-4) + var(--ion-safe-area-top, 0px));
     }
+    .nothing {
+      display: flex;
+      flex-direction: column;
+      gap: var(--wq-space-3);
+      padding: var(--wq-space-6) var(--wq-space-5);
+      text-align: center;
+    }
+    .nothing h1 {
+      margin: 0;
+      font-size: 1.375rem;
+    }
+    .nothing p {
+      margin: 0;
+    }
   `,
 })
 export class QuizPage implements ViewDidLeave {
   private readonly nav = inject(NavController);
   private readonly results = inject(QUIZ_RESULT_SINK);
-  private readonly engine = createQuizEngine(inject(COUNTRY_DATASET));
+  private readonly progress = inject(QUIZ_PROGRESS_READER);
+  private readonly dataset = inject(COUNTRY_DATASET);
+  private readonly engine = createQuizEngine(this.dataset);
 
   /**
    * Bound from the query string by `withComponentInputBinding()`; query
@@ -109,8 +164,38 @@ export class QuizPage implements ViewDidLeave {
     return this.mode() === CHALLENGE_MODE && id && seed ? { id, seed } : null;
   });
 
+  /**
+   * Practice Mistakes: the countries to review, taken when the round starts
+   * (and again for "Play again"), not live — recording this round changes
+   * them, and the running quiz must keep its questions.
+   */
+  private readonly practiceCodes = linkedSignal<readonly CountryCode[] | null>(
+    () => {
+      if (this.mode() !== PRACTICE_MODE) return null;
+      const category = this.category();
+      const scope = this.scope();
+      return untracked(() => this.mistakesToPractice(category, scope));
+    },
+  );
+  protected readonly practiceIsEmpty = computed(
+    () => this.practiceCodes()?.length === 0,
+  );
+
   protected readonly config = computed<QuizConfig>(() => {
     const category = this.category();
+    const practice = this.practiceCodes();
+    if (practice && practice.length > 0) {
+      const scope = this.scope();
+      const difficulty = this.difficulty();
+      return {
+        category,
+        scope: isQuizScope(scope) ? scope : 'world',
+        difficulty: isDifficulty(difficulty) ? difficulty : 'easy',
+        mode: 'fixed',
+        questionCount: practice.length,
+        countryCodes: practice,
+      };
+    }
     if (this.challengeRun()) {
       const difficulty = this.difficulty();
       return {
@@ -209,6 +294,27 @@ export class QuizPage implements ViewDidLeave {
     this.finished.set(null);
     this.challengeResult.set(null);
     this.trainingSeed.set(crypto.randomUUID());
+    if (this.mode() === PRACTICE_MODE) {
+      this.practiceCodes.set(
+        this.mistakesToPractice(this.category(), this.scope()),
+      );
+    }
+  }
+
+  /** Up to a round of the category's mistakes within the scope. */
+  private mistakesToPractice(
+    category: QuizCategory,
+    scope: string,
+  ): readonly CountryCode[] {
+    const inScope = new Set(
+      countriesInScope(this.dataset, isQuizScope(scope) ? scope : 'world').map(
+        (country) => country.code,
+      ),
+    );
+    return this.progress
+      .mistakes(category)
+      .filter((code) => inScope.has(code))
+      .slice(0, PRACTICE_ROUND_SIZE);
   }
 
   /**

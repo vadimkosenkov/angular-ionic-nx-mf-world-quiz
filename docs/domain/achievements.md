@@ -1,6 +1,8 @@
 # Achievements
 
-> Status: **implemented** (Phase 2, domain rules). UI in later phases. Code:
+> Status: **implemented** — domain rules (Phase 2), the Achievements tab and
+> the Home preview (Phase 3), "Achievements unlocked" on the results (Phase 4).
+> Code:
 > [`achievements.ts`](../../libs/quiz/domain/src/lib/achievements.ts).
 
 ## Principle
@@ -38,9 +40,11 @@ inflate the list without adding meaning.
 hard-coded number. An achievement for an empty scope can never unlock.
 
 Mastery can be lost (a wrong answer resets points), so an achievement's
-**current state** can go back from unlocked to in-progress. Whether the app
-keeps a permanent "unlocked once" badge is a presentation decision for the
-achievements phase. If it does, the unlock time will be stored at that point.
+**current state** can go back from unlocked to in-progress. A permanent
+"unlocked once" badge was left open until the achievements phase and
+**decided in Phase 10: no.** Achievements show current mastery, like the rest
+of the app; a lost achievement is simply in progress again, and its countries
+appear in Practice Mistakes.
 
 ## Unlock feedback
 

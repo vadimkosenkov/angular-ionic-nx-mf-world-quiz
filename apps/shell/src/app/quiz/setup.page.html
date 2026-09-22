@@ -87,9 +87,10 @@
           <button
             type="button"
             class="option mode"
-            [class.selected]="mode() === item"
-            [attr.aria-pressed]="mode() === item"
+            [class.selected]="selectedMode() === item"
+            [attr.aria-pressed]="selectedMode() === item"
             [attr.data-testid]="'setup-mode-' + item"
+            [disabled]="item === 'practice' && mistakes() === 0"
             (click)="selectMode(item)"
           >
             <span class="mode-icon" aria-hidden="true">
@@ -117,6 +118,7 @@
     class="wq-glass-button"
     expand="block"
     data-testid="setup-start"
+    [disabled]="!canStart()"
     (click)="start()"
   >
     {{ 'setup.start' | transloco }}

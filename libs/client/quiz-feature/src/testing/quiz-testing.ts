@@ -6,7 +6,12 @@ import {
 import { provideRouter } from '@angular/router';
 import { provideIonicAngular } from '@ionic/angular';
 import { provideAppI18n } from '@world-quiz/client/i18n';
-import { CLOCK, COUNTRY_DATASET } from '@world-quiz/client/quiz-ports';
+import {
+  CLOCK,
+  COUNTRY_DATASET,
+  QUIZ_PROGRESS_READER,
+  type QuizProgressReader,
+} from '@world-quiz/client/quiz-ports';
 import {
   createMemoryStorage,
   DEVICE_LANGUAGES,
@@ -15,7 +20,11 @@ import {
   SETTINGS_STORAGE_KEY,
   SYSTEM_PREFERS_DARK,
 } from '@world-quiz/client/settings';
-import type { Locale } from '@world-quiz/quiz/domain';
+import type {
+  CountryCode,
+  Locale,
+  QuizCategory,
+} from '@world-quiz/quiz/domain';
 import { FIXTURE_DATASET } from '@world-quiz/quiz/domain/testing';
 import { createManualClock, type ManualClock } from '@world-quiz/shared/util';
 import { registerQuizIcons } from '../lib/quiz-icons';
@@ -28,8 +37,19 @@ registerQuizIcons();
  * tokens with the full dataset and the device's storage.
  */
 export function provideQuizTesting(
-  options: { readonly locale?: Locale; readonly clock?: ManualClock } = {},
+  options: {
+    readonly locale?: Locale;
+    readonly clock?: ManualClock;
+    /** The host's countries to review, per category (none by default). */
+    readonly mistakes?: Partial<Record<QuizCategory, readonly CountryCode[]>>;
+  } = {},
 ): (Provider | EnvironmentProviders)[] {
+  const reader: QuizProgressReader = {
+    mistakes: (category) => options.mistakes?.[category] ?? [],
+    scopeProgress: (
+      ...[, scope]: Parameters<QuizProgressReader['scopeProgress']>
+    ) => ({ scope, mastered: 0, total: 0 }),
+  };
   return [
     provideIonicAngular({ mode: 'ios' }),
     provideRouter([]),
@@ -48,5 +68,6 @@ export function provideQuizTesting(
     { provide: SYSTEM_PREFERS_DARK, useValue: signal(false).asReadonly() },
     { provide: COUNTRY_DATASET, useValue: FIXTURE_DATASET },
     { provide: CLOCK, useValue: options.clock ?? createManualClock(1_000) },
+    { provide: QUIZ_PROGRESS_READER, useValue: reader },
   ];
 }

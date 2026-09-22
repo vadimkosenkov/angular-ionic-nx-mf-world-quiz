@@ -12,7 +12,11 @@ import {
 import { TranslocoPipe } from '@jsverse/transloco';
 import { PluralPipe } from '@world-quiz/client/i18n';
 import { EmptyState, ProgressBar, ProgressCard } from '@world-quiz/client/ui';
-import { type QuizCategory } from '@world-quiz/quiz/domain';
+import {
+  practiceCandidates,
+  QUIZ_CATEGORIES,
+  type QuizCategory,
+} from '@world-quiz/quiz/domain';
 import { greetingFor } from '../core/greeting';
 import { ProgressStore } from '@world-quiz/client/progress';
 import { CLOCK } from '../core/tokens';
@@ -66,6 +70,18 @@ export class HomePage implements ViewWillEnter {
   }
 
   /** Most advanced achievements first, so the preview shows what is closest. */
+  /** Categories with countries to review, for the "Practise" buttons. */
+  protected readonly practice = computed(() =>
+    QUIZ_CATEGORIES.map((category) => ({
+      category,
+      count: practiceCandidates(
+        this.progress.dataset,
+        this.progress.snapshot(),
+        category,
+      ).length,
+    })).filter((entry) => entry.count > 0),
+  );
+
   protected readonly achievementPreview = computed(() =>
     [...this.progress.achievements()]
       .sort((a, b) => b.mastered / (b.total || 1) - a.mastered / (a.total || 1))

@@ -109,4 +109,34 @@ describe('capitals quiz', () => {
 
     cy.location('pathname').should('eq', '/home');
   });
+
+  it('practises the countries answered wrongly, from Home', () => {
+    cy.visit('/quiz/capitals?scope=europe&difficulty=easy&mode=fixed&count=1');
+    cy.get('[data-testid="quiz-prompt"]', { timeout: 20_000 })
+      .invoke('attr', 'data-country-code')
+      .as('missed');
+    answerCurrentQuestion(false);
+    cy.get('[data-testid="quiz-continue"]').click();
+    cy.get('[data-testid="results-exit"]').click();
+
+    cy.get('[data-testid="practice-capitals"]')
+      .should('contain.text', '1 country to review')
+      .click({ scrollBehavior: 'center' });
+    cy.location('search').should('contain', 'mode=practice');
+    cy.get('[data-testid="setup-mode-practice"]').should(
+      'contain.text',
+      'Countries to review: 1',
+    );
+    cy.get('[data-testid="setup-start"]').click();
+
+    cy.get('[data-testid="quiz-position"]', { timeout: 20_000 }).should(
+      'contain.text',
+      'Question 1 of 1',
+    );
+    cy.get('@missed').then((code) =>
+      cy
+        .get('[data-testid="quiz-prompt"]')
+        .should('have.attr', 'data-country-code', code),
+    );
+  });
 });

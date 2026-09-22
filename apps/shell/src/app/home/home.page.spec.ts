@@ -63,8 +63,14 @@ describe('HomePage', () => {
     );
     fixture.detectChanges();
 
-    expect(screen.getByTestId('practice').textContent).toContain(
-      '2 countries to review',
+    expect(
+      screen
+        .getByTestId('practice-capitals')
+        .textContent?.replace(/\s+/g, ' ')
+        .trim(),
+    ).toBe('Capitals 1 country to review Practise');
+    expect(screen.getByTestId('practice-flags').getAttribute('href')).toBe(
+      '/quiz/setup?category=flags&mode=practice',
     );
   });
 

@@ -37,6 +37,7 @@ export const en = {
     fixed: 'Quick round',
     endless: 'Endless',
     timed: 'Time attack',
+    practice: 'Practice mistakes',
   },
   regions: {
     world: 'World',
@@ -190,6 +191,7 @@ export const en = {
       fixed: '{{count}} questions',
       endless: 'Play until you stop',
       timed: '60 seconds',
+      practice: 'Countries to review: {{mistakes}}',
     },
     start: 'Start quiz',
     play: 'Start',
@@ -225,6 +227,12 @@ export const en = {
         'This quiz could not be loaded. Check your connection and try again.',
       back: 'Back to home',
     },
+  },
+  practice: {
+    emptyTitle: 'Nothing to review',
+    empty:
+      'No mistakes left here — every country you missed is mastered again.',
+    start: 'Practise',
   },
   results: {
     title: 'Results',

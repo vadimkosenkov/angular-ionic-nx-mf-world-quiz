@@ -57,11 +57,12 @@ async function renderPage(
   sink: RecordingSink,
   query: Record<string, string>,
   category: QuizCategory = 'capitals',
+  mistakes: Record<string, readonly string[]> = {},
 ) {
   return render(QuizPage, {
     inputs: { category, ...query },
     providers: [
-      ...provideQuizTesting(),
+      ...provideQuizTesting({ mistakes }),
       { provide: QUIZ_RESULT_SINK, useValue: sink },
     ],
   });
@@ -302,6 +303,50 @@ describe('QuizPage', () => {
 
       expect(sink.submissions[0]?.session.config.mode).toBe('fixed');
       expect(sink.submissions[0]?.context).toBeUndefined();
+    });
+  });
+
+  describe('Practice Mistakes', () => {
+    const europe = FIXTURE_DATASET.filter((c) => c.region === 'europe').map(
+      (c) => c.code,
+    );
+    const asia = FIXTURE_DATASET.filter((c) => c.region === 'asia').map(
+      (c) => c.code,
+    );
+
+    it('plays a Quick round over the mistakes of the chosen region only', async () => {
+      const sink = new RecordingSink();
+      const mistakes = [asia[0] ?? '', europe[0] ?? '', europe[1] ?? ''];
+      await renderPage(
+        sink,
+        { mode: 'practice', scope: 'europe' },
+        'capitals',
+        {
+          capitals: mistakes,
+        },
+      );
+
+      expect(
+        (await screen.findByTestId('quiz-position')).textContent,
+      ).toContain('Question 1 of 2');
+      answerCorrectly();
+      answerCorrectly();
+
+      expect(sink.submissions[0]?.session.config).toMatchObject({
+        mode: 'fixed',
+        scope: 'europe',
+        questionCount: 2,
+        countryCodes: [europe[0], europe[1]],
+      });
+    });
+
+    it('says there is nothing to review instead of starting an empty quiz', async () => {
+      await renderPage(new RecordingSink(), { mode: 'practice' });
+
+      expect(screen.getByTestId('practice-empty').textContent).toContain(
+        'Nothing to review',
+      );
+      expect(screen.queryByTestId('quiz-prompt')).toBeNull();
     });
   });
 });

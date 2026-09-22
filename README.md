@@ -5,7 +5,7 @@ built as a full-stack portfolio project on a modern Angular ecosystem: **Nx,
 Angular 22 (signals, zoneless), Native Federation microfrontends, Ionic,
 Capacitor (iOS), Express 5, PostgreSQL** and a multi-level test strategy.
 
-> **Project status: Phase 9c, the public SSR site.**
+> **Project status: Phase 10, Practice Mistakes.**
 > The workspace, CI, the 195-country dataset, the platform-independent quiz
 > domain and the Ionic shell (welcome screen, tabs, Home, Achievements,
 > Leaderboard with an honest "not available yet" state, Settings, light/dark
@@ -23,7 +23,8 @@ Capacitor (iOS), Express 5, PostgreSQL** and a multi-level test strategy.
 > the results, browse the boards and their records, and choose their public
 > nickname. A separate **server-rendered site** (`apps/site`, English and
 > Russian) publishes the Privacy Policy, the Terms and the public
-> leaderboards. This README only describes what exists; planned items are
+> leaderboards. Countries answered wrongly can be practised from Home or the
+> quiz setup. This README only describes what exists; planned items are
 > marked as such.
 
 ## Product in one minute

@@ -75,3 +75,12 @@ on in the synchronization phase.
 `practiceCandidates(dataset, progress, category)` returns every country with
 `everWrong && !mastered`, **most recently answered first**, ties in dataset
 order. An empty list drives the "No mistakes — great job!" empty state.
+
+**Playing it** (Phase 10): Home shows a "Practise" button per category with
+mistakes; the setup's fourth mode, _Practice mistakes_, counts them for the
+chosen region. The quiz (`?mode=practice`) takes up to **20** of them — the
+most recently missed first — when the round starts, and plays a Quick round
+over exactly those countries (`countryCodes`), in the chosen difficulty. The
+list is taken once per round, so answering does not change the questions.
+A correct answer adds points as usual; a country leaves the list when it is
+mastered again.
