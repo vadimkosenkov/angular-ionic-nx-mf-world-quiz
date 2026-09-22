@@ -13,23 +13,25 @@ import {
   type QuizScope,
   type QuizSession,
   type SessionSummary,
-  sessionProgressEvents,
 } from '@world-quiz/quiz/domain';
-import { ProgressStore } from '../core/progress.store';
+import { ProgressStore, SyncService } from '@world-quiz/client/progress';
 
 /**
  * The shell's side of the microfrontend contract: it records finished
- * sessions and reports what changed. Remotes never touch the progress store
- * (and, later, persistence and sync) directly.
+ * sessions — on the device and in the outbox — and reports what changed.
+ * Remotes never touch the progress store, persistence or sync directly.
  */
 @Injectable({ providedIn: 'root' })
 export class ShellQuizResultSink implements QuizResultSink {
   private readonly progress = inject(ProgressStore);
+  private readonly sync = inject(SyncService);
 
   submit(session: QuizSession, summary: SessionSummary): QuizSessionOutcome {
     const before = this.progress.achievements();
-    this.progress.record(sessionProgressEvents(session, crypto.randomUUID()));
+    this.progress.recordSession(session);
     const after = this.progress.achievements();
+    // Sent now when online; otherwise it waits in the outbox.
+    void this.sync.sync();
 
     return {
       newlyUnlocked: newlyUnlockedAchievements(before, after),

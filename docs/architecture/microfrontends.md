@@ -88,9 +88,10 @@ answered, Timed run out, or Endless ended with "Finish". Leaving with the exit
 button abandons the session and records nothing, so progress, mistakes and
 achievements only ever come from completed quizzes.
 
-So the remote cannot reach the shell's `ProgressStore`, and later phases can
-add persistence, sync and server validation behind the same two interfaces
-without touching the remote.
+So the remote cannot reach the shell's `ProgressStore`. Persistence
+(IndexedDB), the outbox and sync with server validation (Phase 8) were added
+behind the same two interfaces without touching the remotes: the shell's sink
+records the session on the device and asks `SyncService` to send it.
 
 There is deliberately **no shared mutable global state**, no event bus and no
 cross-remote imports: `scope:capitals` may only depend on `scope:client` and

@@ -35,6 +35,7 @@
 | `AUTH_DEV_LOGIN`    | `false`                                                      | `true` enables `POST /v1/auth/dev` (any subject). **Refused in production**       |
 | `CORS_ORIGINS`      | `http://localhost:4200` (not production), none in production | Browser origins allowed to call the API with credentials                          |
 | `COOKIE_SECURE`     | `true` in production, `false` otherwise                      | `Secure` attribute of the refresh cookie                                          |
+| `AUTH_RATE_LIMIT`   | `30`                                                         | Requests per client address per 15 minutes on `/v1/auth`; E2E raises it           |
 
 The Google client id of the project ("World Quiz Web", Google Auth Platform,
 authorized JavaScript origins `http://localhost:4200` and `http://localhost`)

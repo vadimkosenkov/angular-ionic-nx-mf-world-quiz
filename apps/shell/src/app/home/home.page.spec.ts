@@ -2,7 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { render, screen } from '@testing-library/angular';
 import { provideShellTesting } from '../../testing/shell-testing';
 import type { ManualClock } from '@world-quiz/shared/util';
-import { ProgressStore } from '../core/progress.store';
+import { ProgressStore } from '@world-quiz/client/progress';
+import { finishedSession } from '@world-quiz/client/progress/testing';
 import { CLOCK } from '../core/tokens';
 import { HomePage } from './home.page';
 
@@ -55,26 +56,11 @@ describe('HomePage', () => {
       'All clear',
     );
 
-    TestBed.inject(ProgressStore).record([
-      {
-        category: 'capitals',
-        countryCode: 'fr',
-        difficulty: 'easy',
-        correct: false,
-        answeredAt: 1,
-        sessionId: 's',
-        sequence: 0,
-      },
-      {
-        category: 'flags',
-        countryCode: 'jp',
-        difficulty: 'easy',
-        correct: false,
-        answeredAt: 2,
-        sessionId: 's',
-        sequence: 1,
-      },
-    ]);
+    const progress = TestBed.inject(ProgressStore);
+    progress.recordSession(finishedSession([{ code: 'fr', correct: false }]));
+    progress.recordSession(
+      finishedSession([{ code: 'jp', correct: false }], { category: 'flags' }),
+    );
     fixture.detectChanges();
 
     expect(screen.getByTestId('practice').textContent).toContain(

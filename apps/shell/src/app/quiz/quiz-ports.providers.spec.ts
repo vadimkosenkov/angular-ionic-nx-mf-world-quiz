@@ -11,7 +11,12 @@ import {
 } from '@world-quiz/quiz/domain';
 import { FIXTURE_DATASET } from '@world-quiz/quiz/domain/testing';
 import { COUNTRY_DATASET } from '../core/tokens';
-import { ProgressStore } from '../core/progress.store';
+import {
+  createMemoryLocalStore,
+  LOCAL_STORE,
+  ProgressStore,
+  SyncService,
+} from '@world-quiz/client/progress';
 import { provideQuizPorts } from './quiz-ports.providers';
 
 /** A finished Capitals session with one answer per entry. */
@@ -44,14 +49,21 @@ function session(
 }
 
 function setup() {
+  const syncs = { count: 0 };
   TestBed.resetTestingModule();
   TestBed.configureTestingModule({
     providers: [
       { provide: COUNTRY_DATASET, useValue: FIXTURE_DATASET },
+      { provide: LOCAL_STORE, useValue: createMemoryLocalStore() },
+      {
+        provide: SyncService,
+        useValue: { sync: () => (syncs.count++, Promise.resolve()) },
+      },
       provideQuizPorts(),
     ],
   });
   return {
+    syncs,
     sink: TestBed.inject(QUIZ_RESULT_SINK),
     reader: TestBed.inject(QUIZ_PROGRESS_READER),
     progress: TestBed.inject(ProgressStore),
@@ -64,8 +76,8 @@ function master(codes: readonly string[]) {
 }
 
 describe('shell quiz ports', () => {
-  it('records a finished session in the progress store', () => {
-    const { sink, progress } = setup();
+  it('records a finished session on the device, in the outbox, and asks for a sync', () => {
+    const { sink, progress, syncs } = setup();
     const finished = session([
       { code: 'fr', correct: true },
       { code: 'fr', correct: true },
@@ -76,6 +88,8 @@ describe('shell quiz ports', () => {
 
     expect(progress.scope('capitals', 'world').mastered).toBe(1);
     expect(progress.mistakeCount()).toBe(1);
+    expect(progress.pendingCount()).toBe(1);
+    expect(syncs.count).toBe(1);
   });
 
   it('reports the countries that still need practice', () => {

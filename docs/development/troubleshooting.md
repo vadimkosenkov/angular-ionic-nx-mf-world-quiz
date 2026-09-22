@@ -167,7 +167,7 @@ test and by the Flags E2E journey.
 
 ## "Google sign-in is unavailable" / `403 Forbidden` from `accounts.google.com/gsi/*`
 
-**Symptom:** the Google button does not load in Settings → Account;
+**Symptom:** the Google button does not load on the welcome screen;
 `gsi/client` or `gsi/button` answers 403, while an incognito window, or the
 same window without device emulation, gets 200.
 

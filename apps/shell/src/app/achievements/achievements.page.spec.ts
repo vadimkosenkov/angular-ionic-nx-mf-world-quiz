@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { render, screen } from '@testing-library/angular';
 import { provideShellTesting } from '../../testing/shell-testing';
-import { ProgressStore } from '../core/progress.store';
+import { ProgressStore } from '@world-quiz/client/progress';
+import { finishedSession } from '@world-quiz/client/progress/testing';
 import { AchievementsPage } from './achievements.page';
 
 describe('AchievementsPage', () => {
@@ -29,17 +30,14 @@ describe('AchievementsPage', () => {
     const southAmerica = store.dataset.filter(
       (c) => c.region === 'south-america',
     );
-    store.record(
-      southAmerica.flatMap((country, i) =>
-        [0, 1].map((n) => ({
-          category: 'flags' as const,
-          countryCode: country.code,
-          difficulty: 'hard' as const,
-          correct: true,
-          answeredAt: i * 2 + n,
-          sessionId: 's',
-          sequence: i * 2 + n,
-        })),
+    // Two correct Hard answers (2 points each) master a country.
+    store.recordSession(
+      finishedSession(
+        southAmerica.flatMap((country) => [
+          { code: country.code, correct: true },
+          { code: country.code, correct: true },
+        ]),
+        { category: 'flags', difficulty: 'hard' },
       ),
     );
     fixture.detectChanges();

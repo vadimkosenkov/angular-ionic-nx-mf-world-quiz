@@ -1,4 +1,9 @@
 describe('main navigation', () => {
+  // Playing needs an account: every test starts as a new signed-in player.
+  beforeEach(() => {
+    cy.signIn();
+  });
+
   it('opens on Home with real dataset totals', () => {
     cy.visit('/');
 

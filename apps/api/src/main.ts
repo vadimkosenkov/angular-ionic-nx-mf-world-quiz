@@ -66,6 +66,7 @@ const app = createApp({
     corsOrigins: config.corsOrigins,
     devLogin: config.auth.devLogin,
     secureCookies: config.auth.secureCookies,
+    authRateLimit: config.auth.rateLimit,
   },
 });
 

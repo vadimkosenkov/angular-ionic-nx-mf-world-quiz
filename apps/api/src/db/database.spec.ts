@@ -23,13 +23,21 @@ describe('createPool', () => {
 });
 
 describe('openPglite', () => {
-  it('creates missing parent directories, as on a fresh checkout', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'world-quiz-'));
-    try {
-      const handle = await openPglite(join(root, '.data', 'pglite'));
-      await handle.close();
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
-  });
+  // Initialising a PGlite database on disk takes about a second alone, and
+  // well over the default 5 s when every project's tests run in parallel.
+  it(
+    'creates missing parent directories, as on a fresh checkout',
+    {
+      timeout: 30_000,
+    },
+    async () => {
+      const root = mkdtempSync(join(tmpdir(), 'world-quiz-'));
+      try {
+        const handle = await openPglite(join(root, '.data', 'pglite'));
+        await handle.close();
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+      }
+    },
+  );
 });

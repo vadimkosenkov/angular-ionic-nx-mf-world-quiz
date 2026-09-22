@@ -1,4 +1,5 @@
 import type { Route } from '@angular/router';
+import { signedInGuard, signedOutGuard } from './auth/sign-in.guards';
 import { loadQuizRemoteRoutes } from './quiz/remote-routes';
 import { provideQuizPorts } from './quiz/quiz-ports.providers';
 import { TabsPage } from './tabs/tabs.page';
@@ -14,12 +15,20 @@ import { TabsPage } from './tabs/tabs.page';
  * attached to each of these routes, so the remote resolves the shell's
  * implementations of the quiz ports.
  *
- * Sign-in is added in a later phase.
+ * Playing needs an account (ADR-011): `/welcome` signs the player in, and
+ * everything else is behind `signedInGuard`.
  */
 export const appRoutes: Route[] = [
   {
+    path: 'welcome',
+    canActivate: [signedOutGuard],
+    loadComponent: () =>
+      import('./welcome/welcome.page').then((m) => m.WelcomePage),
+  },
+  {
     path: '',
     component: TabsPage,
+    canActivate: [signedInGuard],
     children: [
       {
         path: 'home',
@@ -49,16 +58,19 @@ export const appRoutes: Route[] = [
   },
   {
     path: 'quiz/setup',
+    canActivate: [signedInGuard],
     loadComponent: () =>
       import('./quiz/setup.page').then((m) => m.QuizSetupPage),
   },
   {
     path: 'quiz/capitals',
+    canActivate: [signedInGuard],
     providers: [provideQuizPorts()],
     loadChildren: () => loadQuizRemoteRoutes('capitals'),
   },
   {
     path: 'quiz/flags',
+    canActivate: [signedInGuard],
     providers: [provideQuizPorts()],
     loadChildren: () => loadQuizRemoteRoutes('flags'),
   },

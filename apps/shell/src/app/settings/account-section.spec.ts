@@ -1,11 +1,12 @@
-import { HttpTestingController } from '@angular/common/http/testing';
+import {
+  HttpTestingController,
+  type TestRequest,
+} from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { fireEvent, render, screen } from '@testing-library/angular';
-import {
-  AuthStore,
-  type GoogleAccountsId,
-  GoogleIdentityServices,
-} from '@world-quiz/client/auth';
+import { AuthStore } from '@world-quiz/client/auth';
+import { ProgressStore } from '@world-quiz/client/progress';
+import { finishedSession } from '@world-quiz/client/progress/testing';
 import type { AuthResponse } from '@world-quiz/shared/contracts';
 import { provideShellTesting, TEST_API_URL } from '../../testing/shell-testing';
 import { AccountSection } from './account-section';
@@ -27,41 +28,47 @@ const signedIn = (
 
 const settle = () => new Promise((resolve) => setTimeout(resolve));
 
-/** A Google Identity Services fake whose button "signs in" on demand. */
-function fakeGoogle() {
-  let signIn: ((response: { credential: string }) => void) | undefined;
-  const accounts: GoogleAccountsId = {
-    initialize: (config) => (signIn = config.callback),
-    renderButton: () => undefined,
-  };
-  return {
-    provider: {
-      provide: GoogleIdentityServices,
-      useValue: { load: () => Promise.resolve(accounts) },
-    },
-    signIn: (credential: string) => signIn?.({ credential }),
-  };
-}
-
-async function renderSection(
-  state: 'signed-out' | 'offline' | AuthResponse,
-  extraProviders: unknown[] = [],
-) {
+async function renderSection(state: 'offline' | AuthResponse) {
   const view = await render(AccountSection, {
-    providers: [...provideShellTesting(), ...(extraProviders as never[])],
+    providers: provideShellTesting(),
   });
   const http = TestBed.inject(HttpTestingController);
   const restoring = TestBed.inject(AuthStore).restore();
   const refresh = http.expectOne(`${TEST_API_URL}/v1/auth/refresh`);
-  if (state === 'signed-out')
-    refresh.flush(null, { status: 401, statusText: 'Unauthorized' });
-  else if (state === 'offline') refresh.error(new ProgressEvent('error'));
+  if (state === 'offline') refresh.error(new ProgressEvent('error'));
   else refresh.flush(state);
   await restoring;
-  view.fixture.detectChanges();
-  await settle();
   await view.fixture.whenStable();
-  return { ...view, http };
+
+  /** Answers the next request matching `url` once it has been sent. */
+  const answer = async (
+    method: string,
+    url: string,
+    respond: (request: TestRequest) => void,
+  ) => {
+    for (let i = 0; i < 20; i++) {
+      const [found] = http.match({ method, url: `${TEST_API_URL}${url}` });
+      if (found) {
+        respond(found);
+        await settle();
+        await view.fixture.whenStable();
+        return;
+      }
+      await settle();
+    }
+    throw new Error(`${method} ${url} was not sent`);
+  };
+  const emptyHistory = (request: TestRequest) =>
+    request.flush({ sessions: [], cursor: null, hasMore: false });
+
+  return {
+    ...view,
+    http,
+    answer,
+    emptyHistory,
+    progress: TestBed.inject(ProgressStore),
+    auth: TestBed.inject(AuthStore),
+  };
 }
 
 describe('AccountSection', () => {
@@ -74,86 +81,114 @@ describe('AccountSection', () => {
     TestBed.inject(HttpTestingController).match(() => true);
   });
 
-  it('neither signs out nor offers sign-in while the server is unreachable', async () => {
-    const { http } = await renderSection('offline');
+  it('keeps an unreachable sign-in, says so, counts unsent results and retries', async () => {
+    const { http, progress, fixture, auth } = await renderSection('offline');
+    progress.recordSession(finishedSession([{ code: 'fr', correct: true }]));
+    fixture.detectChanges();
 
     expect(screen.getByTestId('account-unverified').textContent).toContain(
       'cannot be reached',
     );
-    expect(screen.queryByTestId('google-button')).toBeNull();
+    expect(screen.getByTestId('sync-status').textContent).toContain(
+      '1 result is waiting to be saved',
+    );
 
     fireEvent.click(screen.getByTestId('retry-restore'));
     http.expectOne(`${TEST_API_URL}/v1/auth/refresh`).flush(signedIn());
     await settle();
 
-    expect(TestBed.inject(AuthStore).status()).toBe('signed-in');
+    expect(auth.status()).toBe('signed-in');
   });
 
-  it('offers Google sign-in, and says honestly when Apple arrives', async () => {
-    await renderSection('signed-out');
-
-    expect(screen.getByTestId('google-button')).toBeTruthy();
-    expect(screen.getByTestId('apple-unavailable').textContent).toContain(
-      'Sign in with Apple arrives with the iPhone app.',
-    );
-  });
-
-  it('signs in with the token Google returns', async () => {
-    const google = fakeGoogle();
-    const { http, fixture } = await renderSection('signed-out', [
-      google.provider,
-    ]);
-
-    google.signIn('header.payload.signature');
-    const request = http.expectOne(`${TEST_API_URL}/v1/auth/google`);
-    expect(request.request.body).toMatchObject({
-      idToken: 'header.payload.signature',
-    });
-    request.flush(signedIn());
-    await settle();
-    fixture.detectChanges();
+  it('shows the signed-in player and whether their results are saved', async () => {
+    const { progress, fixture } = await renderSection(signedIn());
 
     expect(screen.getByTestId('account-name').textContent).toContain('Ann');
     expect(screen.getByTestId('account').textContent).toContain(
       'Signed in with Google',
     );
-  });
+    expect(screen.getByTestId('sync-status').textContent).toContain(
+      'All your results are saved to your account.',
+    );
 
-  it('explains a failed sign-in', async () => {
-    const google = fakeGoogle();
-    const { http, fixture } = await renderSection('signed-out', [
-      google.provider,
-    ]);
-
-    google.signIn('header.payload.signature');
-    http
-      .expectOne(`${TEST_API_URL}/v1/auth/google`)
-      .flush(null, { status: 401, statusText: 'Unauthorized' });
-    await settle();
+    progress.recordSession(finishedSession([{ code: 'fr', correct: true }]));
+    progress.recordSession(finishedSession([{ code: 'de', correct: true }]));
     fixture.detectChanges();
 
-    expect(screen.getByTestId('account-error').textContent).toContain(
-      'Sign-in did not work.',
+    expect(screen.getByTestId('sync-status').textContent).toContain(
+      '2 results are waiting to be saved',
     );
   });
 
-  it('shows the signed-in player and signs out', async () => {
-    const { http, fixture } = await renderSection(signedIn());
+  it('says honestly when the server refused a result', async () => {
+    const { progress, fixture } = await renderSection(signedIn());
+    const played = progress.recordSession(
+      finishedSession([{ code: 'fr', correct: true }]),
+    );
 
-    expect(screen.getByTestId('account-name').textContent).toContain('Ann');
-
-    fireEvent.click(screen.getByTestId('sign-out'));
-    http
-      .expectOne(`${TEST_API_URL}/v1/auth/logout`)
-      .flush(null, { status: 204, statusText: 'No Content' });
-    await settle();
+    progress.markRejected([played.id]);
     fixture.detectChanges();
 
-    expect(screen.getByTestId('google-button')).toBeTruthy();
+    expect(screen.getByTestId('sync-rejected').textContent).toContain(
+      '1 result could not be verified by the server',
+    );
+    expect(screen.getByTestId('account').textContent).not.toContain(
+      'All your results are saved',
+    );
   });
 
-  it('deletes the account only after an explicit confirmation', async () => {
-    const { http, fixture } = await renderSection(signedIn());
+  it('saves what is left, signs out and deletes the data on this device', async () => {
+    const { answer, emptyHistory, progress, auth } =
+      await renderSection(signedIn());
+    progress.recordSession(finishedSession([{ code: 'fr', correct: true }]));
+
+    fireEvent.click(screen.getByTestId('sign-out'));
+    await answer('POST', '/v1/sessions', (request) =>
+      request.flush({}, { status: 201, statusText: 'Created' }),
+    );
+    await answer('GET', '/v1/sessions', emptyHistory);
+    await answer('POST', '/v1/auth/logout', (request) =>
+      request.flush(null, { status: 204, statusText: 'No Content' }),
+    );
+
+    expect(auth.status()).toBe('signed-out');
+    expect(progress.owner()).toBeNull();
+    expect(progress.pendingCount()).toBe(0);
+  });
+
+  it('asks before signing out when results could not be saved, and deletes them only then', async () => {
+    const { answer, progress, auth } = await renderSection(signedIn());
+    progress.recordSession(finishedSession([{ code: 'fr', correct: false }]));
+
+    fireEvent.click(screen.getByTestId('sign-out'));
+    await answer('POST', '/v1/sessions', (request) =>
+      request.error(new ProgressEvent('error')),
+    );
+
+    const confirmation = screen.getByRole('alertdialog');
+    expect(confirmation.textContent).toContain(
+      '1 result played on this device has not been saved to your account yet.',
+    );
+    fireEvent.click(screen.getByTestId('cancel-sign-out'));
+    expect(auth.status()).toBe('signed-in');
+    expect(progress.mistakeCount()).toBe(1);
+
+    fireEvent.click(screen.getByTestId('sign-out'));
+    await answer('POST', '/v1/sessions', (request) =>
+      request.error(new ProgressEvent('error')),
+    );
+    fireEvent.click(screen.getByTestId('confirm-sign-out'));
+    await answer('POST', '/v1/auth/logout', (request) =>
+      request.flush(null, { status: 204, statusText: 'No Content' }),
+    );
+
+    expect(auth.status()).toBe('signed-out');
+    expect(progress.mistakeCount()).toBe(0);
+  });
+
+  it('deletes the account only after an explicit confirmation, then the data on this device', async () => {
+    const { http, answer, fixture, progress } = await renderSection(signedIn());
+    await progress.claim(signedIn().user);
 
     fireEvent.click(screen.getByTestId('delete-account'));
     fixture.detectChanges();
@@ -168,14 +203,11 @@ describe('AccountSection', () => {
     fireEvent.click(screen.getByTestId('delete-account'));
     fixture.detectChanges();
     fireEvent.click(screen.getByTestId('confirm-delete'));
-    await settle();
-    const request = http.expectOne(`${TEST_API_URL}/v1/me`);
-    expect(request.request.method).toBe('DELETE');
-    request.flush(null, { status: 204, statusText: 'No Content' });
-    await settle();
-    fixture.detectChanges();
+    await answer('DELETE', '/v1/me', (request) =>
+      request.flush(null, { status: 204, statusText: 'No Content' }),
+    );
 
-    expect(screen.getByTestId('google-button')).toBeTruthy();
+    expect(progress.owner()).toBeNull();
   });
 
   it('names a development account as such', async () => {

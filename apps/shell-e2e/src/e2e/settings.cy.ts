@@ -1,6 +1,11 @@
 const html = () => cy.get('html');
 
 describe('settings', () => {
+  // Playing needs an account: every test starts as a new signed-in player.
+  beforeEach(() => {
+    cy.signIn();
+  });
+
   it('follows the system appearance by default', () => {
     cy.visitWithScheme('/settings', 'dark');
     html().should('have.class', 'ion-palette-dark');

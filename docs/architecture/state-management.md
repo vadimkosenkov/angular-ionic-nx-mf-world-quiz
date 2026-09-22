@@ -12,17 +12,21 @@
 3. **Effects only for synchronization with the outside world** (DOM classes,
    `<html lang>`, the Transloco language), never for deriving state.
 4. **RxJS where streams are the natural model:** HTTP composition, retries and
-   cancellation in the sync engine (Phase 8), and Transloco's loader API.
+   `firstValueFrom` around `HttpClient` in the sync, and Transloco's loader
+   API. The sync itself is a plain async loop with explicit retry scheduling,
+   which reads (and tests) more simply than an operator chain here.
    RxJS is not used for simple synchronous state.
 5. **No global mutable object shared by every app.** Microfrontends talk to the
    shell through routes and injected ports (Phase 4).
 
 ## Current stores
 
-| Store           | Library                                        | State               | Derived signals                                                                             | Persistence                                    |
-| --------------- | ---------------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| `SettingsStore` | `client-settings`                              | `{ theme, locale }` | `theme`, `locale`, `colorScheme` (resolves `system` with the live OS preference)            | `KeyValueStorage` port → Capacitor Preferences |
-| `ProgressStore` | `apps/shell` (moves to data-access in Phase 8) | `ProgressMap`       | `achievements`, `unlockedAchievements`, `worldProgress`, `combinedProgress`, `mistakeCount` | in memory until Phase 8                        |
+| Store           | Library           | State                                              | Derived signals                                                                                                                                              | Persistence                                                                                  |
+| --------------- | ----------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `SettingsStore` | `client-settings` | `{ theme, locale }`                                | `theme`, `locale`, `colorScheme` (resolves `system` with the live OS preference)                                                                             | `KeyValueStorage` port → Capacitor Preferences                                               |
+| `ProgressStore` | `client-progress` | finished sessions (`LocalSession` by id), owner    | progress rebuilt from their events; `achievements`, `worldProgress`, `combinedProgress`, `mistakeCount`, `pending` (outbox), `pendingCount`, `rejectedCount` | `LocalStore` port → IndexedDB (Dexie) ([ADR-006](../decisions/ADR-006-local-persistence.md)) |
+| `AuthStore`     | `client-auth`     | status, user, busy, error                          | `signedIn`                                                                                                                                                   | none: access token in memory, refresh token in an httpOnly cookie                            |
+| `SyncService`   | `client-progress` | status (`idle` / `syncing` / `offline`), last sync | —                                                                                                                                                            | none (drives `ProgressStore`)                                                                |
 
 ### Anatomy of a store
 

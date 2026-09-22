@@ -47,6 +47,24 @@ sign-in and the dev sign-in, create the API's local configuration once:
 cp apps/api/.env.example apps/api/.env
 ```
 
+Playing needs an account, so the app opens on the welcome screen. Sign in
+with Google there, or — without a Google account, e.g. to try another player
+— with the API's development sign-in from the browser console on
+`http://localhost:4200`, then reload:
+
+```js
+await fetch('http://localhost:3333/v1/auth/dev', {
+  method: 'POST',
+  credentials: 'include',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ subject: 'me', displayName: 'Me' }),
+});
+```
+
+Progress lives in the browser's IndexedDB (`world-quiz`, DevTools →
+Application) and in the API's PGlite database (`.data/pglite`); signing out
+clears the browser's copy.
+
 The Capitals quiz is a Native Federation remote: with the shell alone,
 `/quiz/capitals` shows a "Quiz unavailable" page, because nothing is serving
 `http://localhost:4201/remoteEntry.json`. Served on its own, the Capitals app

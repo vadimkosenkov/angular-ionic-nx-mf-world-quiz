@@ -1,0 +1,33 @@
+{
+  "name": "client-progress",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/progress/src",
+  "prefix": "wq",
+  "projectType": "library",
+  "tags": ["scope:client", "type:data-access"],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "buildTarget": "shell:esbuild:development",
+        "tsConfig": "libs/client/progress/tsconfig.spec.json",
+        "watch": false,
+        "setupFiles": ["tools/testing/jsdom-setup.ts"]
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{projectRoot}",
+        "commands": [
+          "ngc -p tsconfig.lib.json --noEmit",
+          "tsc -p tsconfig.spec.json --noEmit"
+        ],
+        "parallel": false
+      }
+    }
+  }
+}

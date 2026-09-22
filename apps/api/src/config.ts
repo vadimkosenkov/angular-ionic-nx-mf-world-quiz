@@ -43,6 +43,8 @@ const environmentSchema = z
     AUTH_DEV_LOGIN: booleanFlag,
     CORS_ORIGINS: commaList,
     COOKIE_SECURE: z.enum(['true', 'false']).optional(),
+    /** Requests per client address per 15 minutes on `/v1/auth`. */
+    AUTH_RATE_LIMIT: z.coerce.number().int().min(1).default(30),
   })
   // A production server must use a real PostgreSQL server; the embedded
   // PGlite fallback is for development only.
@@ -83,6 +85,8 @@ export interface AuthConfig {
   readonly devLogin: boolean;
   /** Whether cookies are marked `Secure` (HTTPS only). */
   readonly secureCookies: boolean;
+  /** Requests per client address per window on `/v1/auth`. */
+  readonly rateLimit: number;
 }
 
 export interface ApiConfig {
@@ -134,6 +138,7 @@ export function loadConfig(
       secureCookies: env.COOKIE_SECURE
         ? env.COOKIE_SECURE === 'true'
         : production,
+      rateLimit: env.AUTH_RATE_LIMIT,
     },
     corsOrigins:
       env.CORS_ORIGINS.length > 0 || production

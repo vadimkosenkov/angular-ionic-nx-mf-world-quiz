@@ -5,21 +5,18 @@ built as a full-stack portfolio project on a modern Angular ecosystem: **Nx,
 Angular 22 (signals, zoneless), Native Federation microfrontends, Ionic,
 Capacitor (iOS), Express 5, PostgreSQL** and a multi-level test strategy.
 
-> **Project status: Phase 8a, history for sync on the API.** The workspace, CI,
-> the 195-country dataset, the platform-independent quiz domain and the Ionic
-> shell (tabs, Home, Achievements, Leaderboard with an honest "not available
-> yet" state, Settings, light/dark design system, English/Russian UI) are in
-> place. **Capitals and Flags quizzes are playable**: quiz setup lives in the
-> shell, and each quiz is loaded at runtime from its own application over
-> Native Federation. Progress, mistakes and achievements update from finished
-> sessions, but are kept in memory until the persistence phase. The API signs
-> players in with **Google and Apple ID tokens** (short access tokens, rotating
-> refresh tokens, account deletion) and records their finished sessions in
-> PostgreSQL after **re-grading them on the server**, and serves a player's
-> history so another device can rebuild the same progress. In the app, players sign
-> in with Google (Settings → Account), sign out and delete their account;
-> Apple sign-in comes with the iPhone app. Sending results to the account
-> (offline sync) and leaderboards come next. This README only describes what
+> **Project status: Phase 8b, offline progress synced with the account.**
+> The workspace, CI, the 195-country dataset, the platform-independent quiz
+> domain and the Ionic shell (welcome screen, tabs, Home, Achievements,
+> Leaderboard with an honest "not available yet" state, Settings, light/dark
+> design system, English/Russian UI) are in place. **Capitals and Flags
+> quizzes are playable**: quiz setup lives in the shell, and each quiz is
+> loaded at runtime from its own application over Native Federation. Players
+> **sign in with Google before playing** (Apple sign-in comes with the iPhone
+> app). Every finished quiz is **stored on the device** (IndexedDB) and sent
+> to the account through an outbox; the API **re-grades it on the server**,
+> and every device of the player rebuilds the same progress from the
+> account's history. Leaderboards come next. This README only describes what
 > exists; planned items are marked as such.
 
 ## Product in one minute
@@ -67,7 +64,7 @@ The same quiz rules run in the browser (offline play) and on the server
 | Backend                  | Node 24, Express 5, Zod, esbuild (ESM)                            | ✅ skeleton                      |
 | Database                 | PostgreSQL + Drizzle ORM (PGlite for tests and development)       | ✅                               |
 | Auth                     | Sign in with Apple, Google; server-verified tokens                | ✅ web: Google · 📐 Apple on iOS |
-| Offline                  | IndexedDB (Dexie) + outbox sync                                   | 📐 Phase 8                       |
+| Offline                  | IndexedDB (Dexie) + outbox sync                                   | ✅                               |
 | SSR                      | Separate Angular SSR `site` app                                   | 📐 Phase 9                       |
 | Quiz domain              | Pure TS engine, seeded questions, typo-tolerant matching, mastery | ✅                               |
 | Country data             | 195 countries (en/ru), UN M49 regions, `flag-icons` SVGs          | ✅                               |
@@ -93,6 +90,7 @@ libs/
   client/i18n/     Transloco setup and English/Russian translations
   client/settings/ Theme and language settings, storage, document sync
   client/auth/     Sign-in state, API calls, bearer interceptor, Google button
+  client/progress/ Progress on the device (IndexedDB), outbox, sync with the account
   client/quiz-ports/   Tokens and interfaces shared by the shell and the remotes
   client/quiz-feature/ Quiz play and results screens used by the remotes
   shared/util/ Pure TypeScript helpers

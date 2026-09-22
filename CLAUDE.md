@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 World Quiz — a mobile-first quiz app (country → capital, flag → country, 195 countries, English/Russian) and a **learning/portfolio project**. Nx 23 monorepo with Angular 22 (standalone, zoneless, signals), Ionic 9, Native Federation microfrontends, Capacitor 8, Express 5. Planned: PostgreSQL + Drizzle, Apple/Google sign-in, offline sync, SSR `site`, iOS.
 
-Delivery is in numbered phases, one `feat/<phase>` branch and PR each (table in `docs/architecture/overview.md`). Merged so far: foundation, domain model, shell + design system, Capitals and Flags microfrontends (Phases 4–5). Merged: Phase 6 (API + PostgreSQL). Merged: Phase 7 (7a `feat/auth-server`, 7b `feat/auth-client`: sign-in on the API and in the app). Phase 8 is split likewise: in progress 8a `feat/sync-server` (a player's history on the API); next 8b `feat/sync-client` (sign-in required before playing, IndexedDB/Dexie, outbox, sync; sign-out wipes the account's local data).
+Delivery is in numbered phases, one `feat/<phase>` branch and PR each (table in `docs/architecture/overview.md`). Merged so far: foundation, domain model, shell + design system, Capitals and Flags microfrontends (Phases 4–5). Merged: Phase 6 (API + PostgreSQL). Merged: Phase 7 (7a `feat/auth-server`, 7b `feat/auth-client`: sign-in on the API and in the app) and 8a `feat/sync-server` (a player's history on the API). In progress: 8b `feat/sync-client` (sign-in required before playing, IndexedDB/Dexie, outbox, sync; sign-out wipes the account's local data). Next: Phase 9, `feat/leaderboard-records`.
 
 Project rules that override defaults:
 
@@ -67,6 +67,7 @@ Tags in each `project.json` + `@nx/enforce-module-boundaries` in the root `eslin
 | `libs/shared/util`            | `scope:shared`, `type:util`                  | `Clock`, `Result`, `assertNever`                                                                                                         |
 | `libs/client/ui`              | `scope:client`, `type:ui`                    | Design system: SCSS tokens/themes/glass + small components                                                                               |
 | `libs/client/auth`            | `scope:client`, `type:data-access`           | `AuthStore`, sign-in API calls, `authInterceptor`, Google (GIS) button                                                                   |
+| `libs/client/progress`        | `scope:client`, `type:data-access`           | `ProgressStore` (sessions on the device via `LocalStore` → Dexie/IndexedDB), outbox, `SyncService`                                       |
 | `libs/client/i18n`            | `scope:client`, `type:data-access`           | Transloco with bundled, typed translations                                                                                               |
 | `libs/client/settings`        | `scope:client`, `type:data-access`           | Theme/language store, storage port, document sync                                                                                        |
 | `libs/client/quiz-ports`      | `scope:client`, `type:ports`                 | The shell ↔ remote contract (+ in-memory ports for standalone remotes)                                                                   |
@@ -76,7 +77,7 @@ Rules that bite:
 
 - `scope:shared` libraries (`type:domain`/`util`/`contracts`) must stay **platform-free**: ESLint bans Angular, Ionic, Capacitor, RxJS, Express, Dexie, Drizzle and Node built-ins there, and their tsconfig has `lib: ["es2022"]`, `types: []` (no DOM, no Node globals). The same domain code is meant to run on the server to re-grade results.
 - Remotes (`scope:capitals`, `scope:flags`) may use `scope:client` and `scope:shared`, never the shell or each other.
-- Imports use tsconfig path aliases `@world-quiz/<group>/<lib>` (`tsconfig.base.json`); no npm workspaces. Test-only entry points: `@world-quiz/quiz/domain/testing` (fixture dataset) and `@world-quiz/client/quiz-feature/testing` (`provideQuizTesting()`); never import them from production code.
+- Imports use tsconfig path aliases `@world-quiz/<group>/<lib>` (`tsconfig.base.json`); no npm workspaces. Test-only entry points: `@world-quiz/quiz/domain/testing` (fixture dataset), `@world-quiz/client/quiz-feature/testing` (`provideQuizTesting()`) and `@world-quiz/client/progress/testing` (`finishedSession()`, `historyEntry()`, test users); never import them from production code.
 - `@typescript-eslint/consistent-type-imports` is on: type-only imports use `import type` / `type X`.
 
 ### Domain model (`libs/quiz/domain`)
@@ -108,11 +109,14 @@ Read `docs/architecture/backend.md` and ADR-005 first. Key points:
 - `POST /v1/auth/dev` exists only with `AUTH_DEV_LOGIN=true` and is refused in production (config). Tests never need real Google/Apple: `testing/fake-identity-provider.ts` signs ID tokens with its own RSA key served as a local JWKS; `testing/test-api.ts` wires the whole app (`signIn()` returns a bearer header).
 - Deleting a user cascades to identities, refresh tokens and sessions. A still-valid access token of a deleted user gets 401 where it matters (`owner-missing` on session insert).
 - **History** (`GET /v1/sessions?after=&limit=`): the player's sessions with graded answers, keyset-paged on `(recorded_at, id)` with an opaque base64url cursor (`history-cursor.ts`) that a client keeps for later pulls. Sessions appear only after `HISTORY_SETTLE_MS` (5 s), so an insert still committing cannot land behind a cursor. Row comparison in SQL: `(recorded_at, id) > (…)`.
-- Not yet: client calls to `/v1/sessions` (Phase 8b), native Apple sign-in, Keychain storage and Apple token revocation (Phase 13).
+- `/v1/auth` is rate-limited per client address (`AUTH_RATE_LIMIT`, default 30 per 15 min); `api:serve-e2e` raises it because every E2E test signs in.
+- Not yet: native Apple sign-in, Keychain storage and Apple token revocation (Phase 13).
 
 ### Frontend conventions
 
-- Stores are signal-based `@Injectable` classes (`ProgressStore` in the shell, `SettingsStore`, `AuthStore`, per-page `QuizSessionStore`). Progress is **in memory** until Phase 8.
+- Stores are signal-based `@Injectable` classes (`ProgressStore` and `SyncService` in `client/progress`, `SettingsStore`, `AuthStore`, per-page `QuizSessionStore`).
+- **Progress and sync** (ADR-006, `client/progress`): the device keeps finished sessions (`LocalSession`: `pending` / `synced` / `rejected`) in IndexedDB via Dexie behind the `LocalStore` port; progress is **rebuilt** from their events (`rebuildProgress`, canonical order), never stored. The shell's sink calls `ProgressStore.recordSession()` then `SyncService.sync()`. The sync sends the outbox oldest first (`POST /v1/sessions`, idempotent by id), then pulls `GET /v1/sessions` pages from the stored cursor. 400/409/422 → `rejected` (not counted, reported, shown in Settings); offline/5xx/429 → retry after 5 s, 30 s, 2 min, 10 min. Triggers: signed in, finished quiz, `online`, back to foreground. The device's data has one `owner`: `claim(user)` deletes another account's data first; sign-out and account deletion call `forget()`.
+- **Sign-in is required before playing** (ADR-011): `/welcome` is the only public route; `signedInGuard` waits for `AuthStore.whenRestored()`, claims the device for a signed-in player, and lets an `unverified` (offline) player in only if they own the device's data. `provideSignInFlow()` returns to `/welcome` (new navigation root) when a sign-in ends.
 - Sign-in on the web (`client/auth`, Settings → Account): Google's button via Google Identity Services (not the Capacitor social-login plugin — its web code stores tokens in `localStorage`); the access token only in `AuthStore` memory, the refresh token only in the httpOnly cookie; `provideAuth()` restores at start-up; `authInterceptor` adds `Bearer` to `API_URL` requests only and renews **once, shared** on 401, and across tabs under a Web Lock (parallel refreshes would trip reuse detection). Only a 401 from `/v1/auth/refresh` signs out; offline, 5xx, 429 or a contract error keep the player signed in, or `unverified` at start-up. Google's button gets a fresh nonce after every attempt. API URL and Google client id: `apps/shell/src/app/api-config.ts`.
 - `provideAppSettings()` loads settings and the translation file in an app initializer, so theme and language apply before first render. Dark mode is Ionic's class-based palette (`ion-palette-dark` on `<html>`).
 - Translations are TypeScript objects in `libs/client/i18n/src/lib/translations/{en,ru}.ts`; `ru` must match the `TranslationShape` of `en` (compile-time + unit test). Plurals use `wqPlural` (`Intl.PluralRules`). Country names never go into translations — they come from the dataset.
@@ -125,7 +129,8 @@ Read `docs/architecture/backend.md` and ADR-005 first. Key points:
 - Vitest everywhere; Angular projects run through `@angular/build:unit-test` with `buildTarget: shell:esbuild:development` (AnalogJS does not install with Angular 22) and `setupFiles: tools/testing/jsdom-setup.ts` (jsdom lacks `matchMedia` and `scrollTo`).
 - Component tests use Testing Library and dispatch Ionic events as DOM events (`ionChange`, `ionInput`); Ionic web components do not upgrade in jsdom, so behaviour that needs them (e.g. input focus) is covered in Cypress.
 - Shell pages render with `provideShellTesting()` (in-memory storage, manual clock, chosen locale).
-- E2E selectors use `data-testid` or roles.
+- E2E selectors use `data-testid` or roles. Every journey starts with `cy.signIn()` (dev sign-in via `cy.request`, a new player per call, so tests never share an account or the device's data); `API` is exported from `support/commands.ts`.
+- `client/progress` tests use an in-memory `LocalStore`; the Dexie implementation is tested on `fake-indexeddb` (`import 'fake-indexeddb/auto'`, a new database name per test). `SyncService` tests inject `SYNC_SCHEDULER` to run retries by hand.
 
 ## Gotchas (each cost real debugging time)
 
@@ -139,6 +144,9 @@ Read `docs/architecture/backend.md` and ADR-005 first. Key points:
 - **Never write control-character escape sequences in tool input** (a backslash, the letter `u` and four hex digits such as `0000`): they are decoded into raw bytes, and a NUL byte makes git treat the file as binary. `npm run check:control-chars` (also in CI) catches control characters and the U+FFFD replacement character left by such corruption; describe these sequences in words, as here.
 - Nx 23 has no Angular Module Federation support; everything federation-related is `@angular-architects/native-federation` 22.x, set up by hand. TypeScript 6 rejects `baseUrl`; only `paths` is used.
 - In Ionic's standalone build, `<ion-input>` has no `componentOnReady`; wait for `customElements.whenDefined('ion-input')` before `setFocus()`.
+- **Timestamps sent to the API are whole milliseconds.** `performance.now()` has fractions; the `CLOCK` in `client/quiz-ports` floors them. A fractional `answeredAt` fails the contract (400) and the session is marked `rejected` — unit tests with a manual clock do not catch it.
+- **Angular strips whitespace between elements**: `<strong>195</strong> <span>Countries</span>` renders as "195Countries" (also for screen readers). Insert `{{ ' ' }}` where the words must stay apart (welcome stats).
+- **A tool that runs `start:quiz` with `PORT` set** (e.g. a preview launcher) makes every dev server take that port, like a root `.env`; unset it (`env -u PORT npm run start:quiz`).
 
 - **Adding a NOT NULL column or FK to a table with data needs a data migration first**: `npx drizzle-kit generate --config apps/api/drizzle.config.ts --custom --name <name>` creates an empty, tracked SQL file (write the `UPDATE`/`DELETE` there), then run `db-generate` for the schema change — see `0001_drop_anonymous_sessions.sql`.
 - **A `pg.Pool` must have an `error` listener** (`createPool` in `db/database.ts`): a dropped idle connection otherwise emits an unhandled `error` and kills the API process.

@@ -66,15 +66,6 @@ ion-button.danger {
   --background-activated: var(--wq-color-error);
 }
 
-.apple {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--wq-space-2);
-  font-size: var(--wq-font-size-caption);
-  color: var(--wq-color-text-secondary);
-}
-
 .error {
   font-size: var(--wq-font-size-caption);
   color: var(--wq-color-error);

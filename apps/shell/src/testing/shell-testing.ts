@@ -10,6 +10,10 @@ import {
 } from '@world-quiz/client/auth';
 import { provideAppI18n } from '@world-quiz/client/i18n';
 import {
+  createMemoryLocalStore,
+  LOCAL_STORE,
+} from '@world-quiz/client/progress';
+import {
   createMemoryStorage,
   DEVICE_LANGUAGES,
   KEY_VALUE_STORAGE,
@@ -61,6 +65,7 @@ export function provideShellTesting(
       useValue: { apiUrl: TEST_API_URL, googleClientId: 'test-client-id' },
     },
     { provide: GoogleIdentityServices, useValue: googleNeverLoads },
+    { provide: LOCAL_STORE, useValue: createMemoryLocalStore() },
     { provide: KEY_VALUE_STORAGE, useValue: storage },
     { provide: DEVICE_LANGUAGES, useValue: ['en'] },
     { provide: SYSTEM_PREFERS_DARK, useValue: signal(false).asReadonly() },

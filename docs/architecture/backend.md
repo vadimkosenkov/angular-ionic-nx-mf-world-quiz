@@ -5,8 +5,9 @@
 > Google and Apple ID tokens, access/refresh tokens, account deletion; every
 > session belongs to a signed-in player.
 > ✅ Phase 7b — the app signs in. ✅ Phase 8a — a player's history for
-> syncing progress between devices (`GET /v1/sessions`).
-> 📐 The app sending and pulling sessions (Phase 8b), leaderboards (Phase 9).
+> syncing progress between devices (`GET /v1/sessions`). ✅ Phase 8b — the
+> app sends its outbox and pulls the history ([ADR-006](../decisions/ADR-006-local-persistence.md)).
+> 📐 Leaderboards (Phase 9).
 
 Why PostgreSQL, Drizzle and PGlite: [ADR-005](../decisions/ADR-005-database.md).
 Why this sign-in design: [ADR-010](../decisions/ADR-010-authentication.md).
@@ -139,9 +140,9 @@ GET /v1/sessions?after=<cursor>&limit=50
 - **Health is liveness only.** `/health` answers without touching the
   database. A readiness check that also runs `SELECT 1` (what an orchestrator
   needs before sending traffic) comes with deployment in Phase 12.
-- Only `/v1/auth` is rate-limited; general request limits come with
-  deployment (Phase 12).
-- The shell does not send or pull sessions yet (Phase 8b adds the outbox and sync).
+- Only `/v1/auth` is rate-limited (`AUTH_RATE_LIMIT` per client address per
+  15 minutes, default 30); general request limits come with deployment
+  (Phase 12).
 - A page holds up to 100 sessions whatever their length; Endless sessions are
   capped at 1,000 answers each, so the worst page is large but bounded.
 

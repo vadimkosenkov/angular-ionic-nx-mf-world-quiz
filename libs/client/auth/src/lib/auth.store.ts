@@ -47,6 +47,8 @@ export class AuthStore {
   private accessToken: string | null = null;
   /** The refresh in flight, shared by everyone who needs a new token. */
   private refreshing: Promise<boolean> | null = null;
+  /** The last `restore()`, for callers that must wait for its outcome. */
+  private restoring: Promise<void> = Promise.resolve();
 
   readonly status = this.statusState.asReadonly();
   readonly user = this.userState.asReadonly();
@@ -65,10 +67,16 @@ export class AuthStore {
    * signed out; when the API cannot be reached the sign-in stays `unverified`
    * and `restore()` is called again once the browser is back online.
    */
-  async restore(): Promise<void> {
-    if (this.statusState() === 'signed-in') return;
+  restore(): Promise<void> {
+    if (this.statusState() === 'signed-in') return Promise.resolve();
     this.statusState.set('restoring');
-    await this.refreshAccessToken();
+    this.restoring = this.refreshAccessToken().then(() => undefined);
+    return this.restoring;
+  }
+
+  /** Resolves once the last `restore()` has an outcome (route guards). */
+  whenRestored(): Promise<void> {
+    return this.restoring;
   }
 
   /**
