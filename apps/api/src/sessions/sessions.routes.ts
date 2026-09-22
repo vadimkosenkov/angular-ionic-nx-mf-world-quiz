@@ -1,10 +1,12 @@
 import {
+  sessionHistoryQuerySchema,
   submitSessionRequestSchema,
   uuidSchema,
 } from '@world-quiz/shared/contracts';
 import { Router } from 'express';
 import { currentUserId } from '../auth/require-auth';
 import { sendProblem, validationErrors } from '../http/problem';
+import { decodeHistoryCursor } from './history-cursor';
 import type { SessionService } from './session-service';
 
 /**
@@ -62,6 +64,31 @@ export function sessionsRouter(sessions: SessionService): Router {
         });
         return;
     }
+  });
+
+  router.get('/', async (request, response) => {
+    const parsed = sessionHistoryQuerySchema.safeParse(request.query);
+    const after = parsed.data?.after
+      ? decodeHistoryCursor(parsed.data.after)
+      : null;
+    if (!parsed.success || (parsed.data.after && !after)) {
+      sendProblem(response, {
+        status: 400,
+        title: 'Invalid history query',
+        detail:
+          '`after` must be a cursor from a previous page; `limit` 1 to 100.',
+        ...(parsed.success ? {} : { errors: validationErrors(parsed.error) }),
+      });
+      return;
+    }
+
+    response.json(
+      await sessions.history(currentUserId(response), {
+        after,
+        afterCursor: parsed.data.after ?? null,
+        limit: parsed.data.limit,
+      }),
+    );
   });
 
   router.get('/:id', async (request, response) => {

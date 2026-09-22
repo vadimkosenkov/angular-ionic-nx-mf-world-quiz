@@ -86,3 +86,65 @@ export const sessionResultSchema = z.object({
 });
 
 export type SessionResult = z.infer<typeof sessionResultSchema>;
+
+/** Largest page of `GET /v1/sessions`; the default is `DEFAULT_HISTORY_PAGE_SIZE`. */
+export const MAX_HISTORY_PAGE_SIZE = 100;
+export const DEFAULT_HISTORY_PAGE_SIZE = 50;
+
+/**
+ * `GET /v1/sessions?after=&limit=`: the query of the player's history.
+ *
+ * `after` is the `cursor` of a previous page, opaque to clients. Unknown
+ * parameters are rejected, like unknown body fields.
+ */
+export const sessionHistoryQuerySchema = z.strictObject({
+  after: z
+    .string()
+    .regex(/^[\w-]{1,200}$/)
+    .optional(),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(MAX_HISTORY_PAGE_SIZE)
+    .default(DEFAULT_HISTORY_PAGE_SIZE),
+});
+
+export type SessionHistoryQuery = z.infer<typeof sessionHistoryQuerySchema>;
+
+/**
+ * One recorded session with the server's grading of every answer, in the
+ * order they were given. Enough to rebuild learning progress on another
+ * device: each answer becomes a progress event (category and difficulty come
+ * from `config`, the position in `answers` is the sequence).
+ */
+export const sessionHistoryEntrySchema = sessionResultSchema.extend({
+  startedAt: epochMillisSchema,
+  finishedAt: epochMillisSchema,
+  answers: z
+    .array(
+      z.object({
+        countryCode: countryCodeSchema,
+        correct: z.boolean(),
+        answeredAt: epochMillisSchema,
+      }),
+    )
+    .readonly(),
+});
+
+export type SessionHistoryEntry = z.infer<typeof sessionHistoryEntrySchema>;
+
+/**
+ * A page of history, oldest recorded first.
+ *
+ * `cursor` marks the end of this page: pass it as `after` for the next page
+ * now (`hasMore`) or for sessions recorded later (a sync keeps the last one).
+ * It is `null` only when there has never been a session to return.
+ */
+export const sessionHistoryPageSchema = z.object({
+  sessions: z.array(sessionHistoryEntrySchema),
+  cursor: z.string().nullable(),
+  hasMore: z.boolean(),
+});
+
+export type SessionHistoryPage = z.infer<typeof sessionHistoryPageSchema>;

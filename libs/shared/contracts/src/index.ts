@@ -6,14 +6,25 @@ export {
 } from './lib/common';
 export type { ProblemDetails } from './lib/common';
 export {
+  DEFAULT_HISTORY_PAGE_SIZE,
+  MAX_HISTORY_PAGE_SIZE,
   MAX_SUBMISSIONS_PER_SESSION,
   MAX_TYPED_ANSWER_LENGTH,
   quizConfigSchema,
+  sessionHistoryEntrySchema,
+  sessionHistoryPageSchema,
+  sessionHistoryQuerySchema,
   sessionResultSchema,
   submitSessionRequestSchema,
   submittedAnswerSchema,
 } from './lib/sessions';
-export type { SessionResult, SubmitSessionRequest } from './lib/sessions';
+export type {
+  SessionHistoryEntry,
+  SessionHistoryPage,
+  SessionHistoryQuery,
+  SessionResult,
+  SubmitSessionRequest,
+} from './lib/sessions';
 export {
   authResponseSchema,
   devSignInRequestSchema,

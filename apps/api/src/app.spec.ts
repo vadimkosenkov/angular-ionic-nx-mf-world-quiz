@@ -8,7 +8,11 @@ import type { SessionService } from './sessions/session-service';
 const notUsed = () => Promise.reject(new Error('not used'));
 
 /** The health, fallback and error routes need no real services. */
-const unusedSessions: SessionService = { submit: notUsed, find: notUsed };
+const unusedSessions: SessionService = {
+  submit: notUsed,
+  find: notUsed,
+  history: notUsed,
+};
 const unusedAuth: AuthService = {
   signIn: notUsed,
   devSignIn: notUsed,

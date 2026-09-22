@@ -5,7 +5,7 @@ built as a full-stack portfolio project on a modern Angular ecosystem: **Nx,
 Angular 22 (signals, zoneless), Native Federation microfrontends, Ionic,
 Capacitor (iOS), Express 5, PostgreSQL** and a multi-level test strategy.
 
-> **Project status: Phase 7b, sign-in in the app.** The workspace, CI,
+> **Project status: Phase 8a, history for sync on the API.** The workspace, CI,
 > the 195-country dataset, the platform-independent quiz domain and the Ionic
 > shell (tabs, Home, Achievements, Leaderboard with an honest "not available
 > yet" state, Settings, light/dark design system, English/Russian UI) are in
@@ -15,7 +15,8 @@ Capacitor (iOS), Express 5, PostgreSQL** and a multi-level test strategy.
 > sessions, but are kept in memory until the persistence phase. The API signs
 > players in with **Google and Apple ID tokens** (short access tokens, rotating
 > refresh tokens, account deletion) and records their finished sessions in
-> PostgreSQL after **re-grading them on the server**. In the app, players sign
+> PostgreSQL after **re-grading them on the server**, and serves a player's
+> history so another device can rebuild the same progress. In the app, players sign
 > in with Google (Settings → Account), sign out and delete their account;
 > Apple sign-in comes with the iPhone app. Sending results to the account
 > (offline sync) and leaderboards come next. This README only describes what

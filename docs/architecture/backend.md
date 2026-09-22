@@ -4,8 +4,9 @@
 > finished quiz sessions graded by the server. ✅ Phase 7a — sign-in with
 > Google and Apple ID tokens, access/refresh tokens, account deletion; every
 > session belongs to a signed-in player.
-> 📐 Client sign-in (Phase 7b), progress sync (Phase 8), leaderboards (Phase 9).
-> The app does not call the API yet.
+> ✅ Phase 7b — the app signs in. ✅ Phase 8a — a player's history for
+> syncing progress between devices (`GET /v1/sessions`).
+> 📐 The app sending and pulling sessions (Phase 8b), leaderboards (Phase 9).
 
 Why PostgreSQL, Drizzle and PGlite: [ADR-005](../decisions/ADR-005-database.md).
 Why this sign-in design: [ADR-010](../decisions/ADR-010-authentication.md).
@@ -99,6 +100,40 @@ sequenceDiagram
 `GET /v1/sessions/:id` returns the stored result (404 when unknown, 400 when
 the id is not a UUID).
 
+## A player's history: `GET /v1/sessions`
+
+What another device needs to rebuild the same progress: every recorded
+session of the signed-in player with the **server's** grading of each answer
+(country, correct, answer time), oldest recorded first, in pages.
+
+```
+GET /v1/sessions?after=<cursor>&limit=50
+
+{ "sessions": [ { id, config, summary, recordedAt, startedAt, finishedAt,
+                  answers: [ { countryCode, correct, answeredAt }, … ] }, … ],
+  "cursor": "MTcwMDAwMDA2MDAwMDo…", "hasMore": false }
+```
+
+- **Why this is enough for progress.** Progress is a deterministic fold over
+  answer events ([mastery.md](../domain/mastery.md)); each answer becomes an
+  event (category and difficulty from `config`, position in `answers` as the
+  sequence). A test plays sessions on "device A", reads them back as
+  "device B" and checks that `rebuildProgress` gives the same result.
+- **Keyset pagination** on `(recorded_at, id)`, not `OFFSET`: two sessions
+  recorded in the same millisecond are neither skipped nor repeated, and
+  pages stay cheap as history grows (index `(user_id, recorded_at)`). The
+  cursor is opaque base64url; `limit` is 1–100 (default 50); unknown query
+  parameters are a 400 like unknown body fields.
+- **A cursor is kept, not only followed.** It marks the end of the returned
+  page; an empty page returns it unchanged, and sessions recorded later come
+  after it. A syncing client stores the last cursor and asks only for what is
+  new. `cursor` is `null` only before the first session.
+- **Settle window (5 s).** `recordedAt` is taken before the insert commits, so
+  a slow insert could land _behind_ a cursor a client already holds. History
+  lists only sessions recorded at least 5 seconds ago; by then earlier
+  inserts have committed. The device that played a session does not wait —
+  it already has it.
+
 ### Honest limits
 
 - **Health is liveness only.** `/health` answers without touching the
@@ -106,7 +141,9 @@ the id is not a UUID).
   needs before sending traffic) comes with deployment in Phase 12.
 - Only `/v1/auth` is rate-limited; general request limits come with
   deployment (Phase 12).
-- The shell does not send sessions yet (Phase 8 adds the outbox and sync).
+- The shell does not send or pull sessions yet (Phase 8b adds the outbox and sync).
+- A page holds up to 100 sessions whatever their length; Endless sessions are
+  capped at 1,000 answers each, so the worst page is large but bounded.
 
 ## Signing in: `/v1/auth` and `/v1/me`
 

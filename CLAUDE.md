@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 World Quiz — a mobile-first quiz app (country → capital, flag → country, 195 countries, English/Russian) and a **learning/portfolio project**. Nx 23 monorepo with Angular 22 (standalone, zoneless, signals), Ionic 9, Native Federation microfrontends, Capacitor 8, Express 5. Planned: PostgreSQL + Drizzle, Apple/Google sign-in, offline sync, SSR `site`, iOS.
 
-Delivery is in numbered phases, one `feat/<phase>` branch and PR each (table in `docs/architecture/overview.md`). Merged so far: foundation, domain model, shell + design system, Capitals and Flags microfrontends (Phases 4–5). Merged: Phase 6 (API + PostgreSQL). Phase 7 is split in two PRs: 7a `feat/auth-server` (sign-in on the API) is merged; in progress 7b `feat/auth-client` (sign-in in the app). Next: Phase 8, `feat/offline-sync`.
+Delivery is in numbered phases, one `feat/<phase>` branch and PR each (table in `docs/architecture/overview.md`). Merged so far: foundation, domain model, shell + design system, Capitals and Flags microfrontends (Phases 4–5). Merged: Phase 6 (API + PostgreSQL). Merged: Phase 7 (7a `feat/auth-server`, 7b `feat/auth-client`: sign-in on the API and in the app). Phase 8 is split likewise: in progress 8a `feat/sync-server` (a player's history on the API); next 8b `feat/sync-client` (sign-in required before playing, IndexedDB/Dexie, outbox, sync; sign-out wipes the account's local data).
 
 Project rules that override defaults:
 
@@ -55,22 +55,22 @@ npx nx e2e shell-e2e --configuration=production               # starts shell, ca
 
 Tags in each `project.json` + `@nx/enforce-module-boundaries` in the root `eslint.config.mjs` (details: `docs/architecture/nx.md`).
 
-| Project                       | Tags                                         | Role                                                                                                           |
-| ----------------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `apps/shell`                  | `scope:shell`, `type:app`                    | Ionic host: tabs, Home, quiz setup, Leaderboard, Achievements, Settings; Native Federation **dynamic host**    |
-| `apps/capitals`, `apps/flags` | `scope:capitals` / `scope:flags`, `type:app` | Federation **remotes** (:4201, :4202); each exposes only `./routes` = `quizRemoteRoutes(category)`             |
-| `apps/api`                    | `scope:api`, `type:app`                      | Express 5 + Drizzle: `/v1/auth` (Google/Apple ID tokens), `/v1/me`, `/v1/sessions` (per player, server-graded) |
-| `apps/shell-e2e`              | `scope:shell`, `type:e2e`                    | Cypress 15                                                                                                     |
-| `libs/quiz/domain`            | `scope:shared`, `type:domain`                | Pure TS quiz rules: engine, answer matching, scoring, mastery, progress, achievements, leaderboard             |
-| `libs/quiz/countries`         | `scope:shared`, `type:domain`                | The 195-country dataset + flag asset paths                                                                     |
-| `libs/shared/contracts`       | `scope:shared`, `type:contracts`             | Zod schemas of the API: sessions, auth, problem details                                                        |
-| `libs/shared/util`            | `scope:shared`, `type:util`                  | `Clock`, `Result`, `assertNever`                                                                               |
-| `libs/client/ui`              | `scope:client`, `type:ui`                    | Design system: SCSS tokens/themes/glass + small components                                                     |
-| `libs/client/auth`            | `scope:client`, `type:data-access`           | `AuthStore`, sign-in API calls, `authInterceptor`, Google (GIS) button                                         |
-| `libs/client/i18n`            | `scope:client`, `type:data-access`           | Transloco with bundled, typed translations                                                                     |
-| `libs/client/settings`        | `scope:client`, `type:data-access`           | Theme/language store, storage port, document sync                                                              |
-| `libs/client/quiz-ports`      | `scope:client`, `type:ports`                 | The shell ↔ remote contract (+ in-memory ports for standalone remotes)                                         |
-| `libs/client/quiz-feature`    | `scope:client`, `type:feature`               | Everything a quiz remote shows: `QuizPage`, play, results, answer feedback, `quizRemoteRoutes()`               |
+| Project                       | Tags                                         | Role                                                                                                                                     |
+| ----------------------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/shell`                  | `scope:shell`, `type:app`                    | Ionic host: tabs, Home, quiz setup, Leaderboard, Achievements, Settings; Native Federation **dynamic host**                              |
+| `apps/capitals`, `apps/flags` | `scope:capitals` / `scope:flags`, `type:app` | Federation **remotes** (:4201, :4202); each exposes only `./routes` = `quizRemoteRoutes(category)`                                       |
+| `apps/api`                    | `scope:api`, `type:app`                      | Express 5 + Drizzle: `/v1/auth` (Google/Apple ID tokens), `/v1/me`, `/v1/sessions` (per player, server-graded; `GET` = history for sync) |
+| `apps/shell-e2e`              | `scope:shell`, `type:e2e`                    | Cypress 15                                                                                                                               |
+| `libs/quiz/domain`            | `scope:shared`, `type:domain`                | Pure TS quiz rules: engine, answer matching, scoring, mastery, progress, achievements, leaderboard                                       |
+| `libs/quiz/countries`         | `scope:shared`, `type:domain`                | The 195-country dataset + flag asset paths                                                                                               |
+| `libs/shared/contracts`       | `scope:shared`, `type:contracts`             | Zod schemas of the API: sessions, auth, problem details                                                                                  |
+| `libs/shared/util`            | `scope:shared`, `type:util`                  | `Clock`, `Result`, `assertNever`                                                                                                         |
+| `libs/client/ui`              | `scope:client`, `type:ui`                    | Design system: SCSS tokens/themes/glass + small components                                                                               |
+| `libs/client/auth`            | `scope:client`, `type:data-access`           | `AuthStore`, sign-in API calls, `authInterceptor`, Google (GIS) button                                                                   |
+| `libs/client/i18n`            | `scope:client`, `type:data-access`           | Transloco with bundled, typed translations                                                                                               |
+| `libs/client/settings`        | `scope:client`, `type:data-access`           | Theme/language store, storage port, document sync                                                                                        |
+| `libs/client/quiz-ports`      | `scope:client`, `type:ports`                 | The shell ↔ remote contract (+ in-memory ports for standalone remotes)                                                                   |
+| `libs/client/quiz-feature`    | `scope:client`, `type:feature`               | Everything a quiz remote shows: `QuizPage`, play, results, answer feedback, `quizRemoteRoutes()`                                         |
 
 Rules that bite:
 
@@ -107,7 +107,8 @@ Read `docs/architecture/backend.md` and ADR-005 first. Key points:
 - **Auth** (ADR-010, `src/auth/`): the client sends a provider ID token; `identity-verifier.ts` checks it against the provider's JWKS (`jose`), `user-repository.ts` maps `(provider, sub)` to a user. The API issues a 15-min HS256 access token (`Authorization: Bearer`) and an opaque refresh token (SHA-256 stored) that **rotates with reuse detection** (reused → whole family revoked). Refresh token delivery: httpOnly `SameSite=Strict` cookie `wq_refresh` scoped to `/v1/auth` (web) or the response body (native, `refreshTokenIn: 'body'`). `requireAuth` guards `/v1/me` and `/v1/sessions`; `currentUserId(response)` reads the user.
 - `POST /v1/auth/dev` exists only with `AUTH_DEV_LOGIN=true` and is refused in production (config). Tests never need real Google/Apple: `testing/fake-identity-provider.ts` signs ID tokens with its own RSA key served as a local JWKS; `testing/test-api.ts` wires the whole app (`signIn()` returns a bearer header).
 - Deleting a user cascades to identities, refresh tokens and sessions. A still-valid access token of a deleted user gets 401 where it matters (`owner-missing` on session insert).
-- Not yet: client calls to `/v1/sessions` (Phase 8), native Apple sign-in, Keychain storage and Apple token revocation (Phase 13).
+- **History** (`GET /v1/sessions?after=&limit=`): the player's sessions with graded answers, keyset-paged on `(recorded_at, id)` with an opaque base64url cursor (`history-cursor.ts`) that a client keeps for later pulls. Sessions appear only after `HISTORY_SETTLE_MS` (5 s), so an insert still committing cannot land behind a cursor. Row comparison in SQL: `(recorded_at, id) > (…)`.
+- Not yet: client calls to `/v1/sessions` (Phase 8b), native Apple sign-in, Keychain storage and Apple token revocation (Phase 13).
 
 ### Frontend conventions
 

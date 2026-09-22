@@ -1,5 +1,15 @@
-import type { SubmitSessionRequest } from '@world-quiz/shared/contracts';
-import { createQuizEngine, type QuizConfig } from '@world-quiz/quiz/domain';
+import {
+  type SessionHistoryEntry,
+  sessionHistoryPageSchema,
+  type SubmitSessionRequest,
+} from '@world-quiz/shared/contracts';
+import {
+  createQuizEngine,
+  type ProgressEvent,
+  type QuizConfig,
+  rebuildProgress,
+  sessionProgressEvents,
+} from '@world-quiz/quiz/domain';
 import { FIXTURE_DATASET } from '@world-quiz/quiz/domain/testing';
 import { count, sql } from 'drizzle-orm';
 import request from 'supertest';
@@ -9,7 +19,7 @@ import { readAnswers } from '../testing/read-answers';
 import { createTestApi, TEST_START, type TestApi } from '../testing/test-api';
 import { createTestDatabase } from '../testing/test-database';
 import { playSession } from '../testing/play-session';
-import { MAX_CLOCK_SKEW_MS } from './session-service';
+import { HISTORY_SETTLE_MS, MAX_CLOCK_SKEW_MS } from './session-service';
 
 const engine = createQuizEngine(FIXTURE_DATASET);
 const START = TEST_START;
@@ -360,6 +370,187 @@ describe('/v1/sessions', () => {
         404,
       );
       expect((await get('/v1/sessions/42')).status).toBe(400);
+    });
+  });
+
+  describe('GET / (history)', () => {
+    const history = (query = '', authorization = player) =>
+      get(`/v1/sessions${query}`, authorization);
+
+    /** Lets recorded sessions out of the settle window. */
+    const settle = () => api.clock.advance(HISTORY_SETTLE_MS);
+
+    /** What the device that played a session derives from it. */
+    const playedEvents = (session: SubmitSessionRequest): ProgressEvent[] => {
+      const replayed = engine.replay(session);
+      if (!replayed.ok) throw new Error('The test session must replay');
+      return sessionProgressEvents(replayed.value, session.id);
+    };
+
+    /** What another device derives from the history. */
+    const historyEvents = (entry: SessionHistoryEntry): ProgressEvent[] =>
+      entry.answers.map((answer, sequence) => ({
+        category: entry.config.category,
+        difficulty: entry.config.difficulty,
+        countryCode: answer.countryCode,
+        correct: answer.correct,
+        answeredAt: answer.answeredAt,
+        sessionId: entry.id,
+        sequence,
+      }));
+
+    it('requires a signed-in player', async () => {
+      const response = await request(api.app).get('/v1/sessions');
+
+      expect(response.status).toBe(401);
+    });
+
+    it("lists only the player's sessions, oldest first, graded by the server", async () => {
+      const first = playSession(engine, easyFixed, { wrong: new Set([1]) });
+      await post(first);
+      api.clock.advance(1_000);
+      const second = playSession(
+        engine,
+        { ...easyFixed, category: 'flags' },
+        { seed: 'second' },
+      );
+      await post(second);
+      const { authorization: other } = await api.signIn('player-2');
+      await post(playSession(engine, easyFixed, { seed: 'theirs' }), other);
+      settle();
+
+      const response = await history();
+
+      expect(response.status).toBe(200);
+      expect(sessionHistoryPageSchema.safeParse(response.body).success).toBe(
+        true,
+      );
+      const page = sessionHistoryPageSchema.parse(response.body);
+      expect(page.sessions.map((entry) => entry.id)).toEqual([
+        first.id,
+        second.id,
+      ]);
+      expect(page.hasMore).toBe(false);
+      const [entry] = page.sessions;
+      expect(entry).toMatchObject({
+        startedAt: first.startedAt,
+        finishedAt: first.finishedAt,
+        summary: { answered: 3, correct: 2 },
+      });
+      expect(entry?.answers.map((answer) => answer.correct)).toEqual([
+        true,
+        false,
+        true,
+      ]);
+      expect(entry?.answers.map((answer) => answer.answeredAt)).toEqual(
+        first.submissions.map((submission) => submission.answeredAt),
+      );
+    });
+
+    it('rebuilds on another device exactly the progress of the device that played', async () => {
+      const sessions = [
+        playSession(engine, easyFixed, { wrong: new Set([0]) }),
+        playSession(engine, easyFixed, {
+          seed: 'later',
+          startedAt: START + 10_000,
+        }),
+        playSession(
+          engine,
+          {
+            category: 'flags',
+            difficulty: 'easy',
+            mode: 'endless',
+            scope: 'europe',
+          },
+          { seed: 'endless', startedAt: START + 20_000, answers: 4 },
+        ),
+      ];
+      for (const session of sessions) await post(session);
+      settle();
+
+      const page = sessionHistoryPageSchema.parse((await history()).body);
+
+      expect(rebuildProgress(page.sessions.flatMap(historyEvents))).toEqual(
+        rebuildProgress(sessions.flatMap(playedEvents)),
+      );
+    });
+
+    it('pages with a cursor, never skipping or repeating sessions recorded in the same millisecond', async () => {
+      const sessions = ['a', 'b', 'c'].map((seed) =>
+        playSession(engine, easyFixed, { seed }),
+      );
+      for (const session of sessions) await post(session);
+      settle();
+
+      const first = sessionHistoryPageSchema.parse(
+        (await history('?limit=2')).body,
+      );
+      const second = sessionHistoryPageSchema.parse(
+        (await history(`?limit=2&after=${first.cursor}`)).body,
+      );
+
+      expect(first.sessions).toHaveLength(2);
+      expect(first.hasMore).toBe(true);
+      expect(second.sessions).toHaveLength(1);
+      expect(second.hasMore).toBe(false);
+      expect(
+        [...first.sessions, ...second.sessions].map((entry) => entry.id).sort(),
+      ).toEqual(sessions.map((session) => session.id).sort());
+    });
+
+    it('keeps a cursor for later: an empty page returns it, new sessions follow it', async () => {
+      await post(playSession(engine, easyFixed));
+      settle();
+      const { cursor } = sessionHistoryPageSchema.parse((await history()).body);
+
+      const empty = sessionHistoryPageSchema.parse(
+        (await history(`?after=${cursor}`)).body,
+      );
+      const later = playSession(engine, easyFixed, { seed: 'later' });
+      await post(later);
+      settle();
+      const next = sessionHistoryPageSchema.parse(
+        (await history(`?after=${cursor}`)).body,
+      );
+
+      expect(empty).toEqual({ sessions: [], cursor, hasMore: false });
+      expect(next.sessions.map((entry) => entry.id)).toEqual([later.id]);
+    });
+
+    it('answers a null cursor when there has never been a session', async () => {
+      expect((await history()).body).toEqual({
+        sessions: [],
+        cursor: null,
+        hasMore: false,
+      });
+    });
+
+    it('lists a session only once the settle window has passed', async () => {
+      const session = playSession(engine, easyFixed);
+      await post(session);
+
+      api.clock.advance(HISTORY_SETTLE_MS - 1);
+      const early = sessionHistoryPageSchema.parse((await history()).body);
+      api.clock.advance(1);
+      const settled = sessionHistoryPageSchema.parse((await history()).body);
+
+      expect(early.sessions).toEqual([]);
+      expect(settled.sessions.map((entry) => entry.id)).toEqual([session.id]);
+    });
+
+    it.each([
+      ['?limit=0'],
+      ['?limit=101'],
+      ['?after=bm90LWEtY3Vyc29y'],
+      [`?after=${Buffer.from('1:not-a-uuid').toString('base64url')}`],
+      ['?since=0'],
+    ])('answers 400 for %s', async (query) => {
+      const response = await history(query);
+
+      expect(response.status).toBe(400);
+      expect(response.headers['content-type']).toContain(
+        'application/problem+json',
+      );
     });
   });
 });
