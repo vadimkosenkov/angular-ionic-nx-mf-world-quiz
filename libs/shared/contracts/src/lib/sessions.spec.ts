@@ -1,6 +1,9 @@
 import type { QuizConfig, SessionRecord } from '@world-quiz/quiz/domain';
 import {
+  DEFAULT_HISTORY_PAGE_SIZE,
+  MAX_HISTORY_PAGE_SIZE,
   MAX_SUBMISSIONS_PER_SESSION,
+  sessionHistoryQuerySchema,
   type SubmitSessionRequest,
   submitSessionRequestSchema,
 } from './sessions';
@@ -110,5 +113,27 @@ describe('submitSessionRequestSchema', () => {
     expect(issuePaths({ ...validRequest(), submissions })).toEqual([
       'submissions',
     ]);
+  });
+});
+
+describe('sessionHistoryQuerySchema', () => {
+  it('reads query strings, with a default page size', () => {
+    expect(sessionHistoryQuerySchema.parse({})).toEqual({
+      limit: DEFAULT_HISTORY_PAGE_SIZE,
+    });
+    expect(
+      sessionHistoryQuerySchema.parse({ after: 'MTcwMDA6YWJj', limit: '10' }),
+    ).toEqual({ after: 'MTcwMDA6YWJj', limit: 10 });
+  });
+
+  it.each([
+    [{ limit: '0' }],
+    [{ limit: String(MAX_HISTORY_PAGE_SIZE + 1) }],
+    [{ limit: '2.5' }],
+    [{ after: 'not a cursor!' }],
+    [{ after: '' }],
+    [{ since: '0' }],
+  ])('rejects %j', (query) => {
+    expect(sessionHistoryQuerySchema.safeParse(query).success).toBe(false);
   });
 });

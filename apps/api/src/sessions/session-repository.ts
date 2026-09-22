@@ -1,13 +1,17 @@
-import type { SessionResult } from '@world-quiz/shared/contracts';
+import type {
+  SessionHistoryEntry,
+  SessionResult,
+} from '@world-quiz/shared/contracts';
 import type {
   AnswerJudgement,
   QuizConfig,
   SessionEndReason,
   SubmittedAnswer,
 } from '@world-quiz/quiz/domain';
-import { eq } from 'drizzle-orm';
+import { and, asc, eq, inArray, lte, sql } from 'drizzle-orm';
 import type { Database } from '../db/database';
 import { quizAnswers, quizSessions } from '../db/schema';
+import type { HistoryPosition } from './history-cursor';
 
 /** A graded session, ready to be stored. All numbers come from the replay. */
 export interface NewSession {
@@ -42,6 +46,21 @@ export interface StoredSession {
   readonly userId: string;
 }
 
+/** A history entry with the position it has in the player's history. */
+export interface HistoryRow {
+  readonly entry: SessionHistoryEntry;
+  readonly position: HistoryPosition;
+}
+
+export interface HistoryQuery {
+  readonly userId: string;
+  /** Only sessions after this position; from the beginning when `null`. */
+  readonly after: HistoryPosition | null;
+  /** Only sessions recorded at or before this time (epoch milliseconds). */
+  readonly recordedUntil: number;
+  readonly limit: number;
+}
+
 /** Persistence of graded sessions. Knows SQL, not quiz rules. */
 export interface SessionRepository {
   findById(id: string): Promise<StoredSession | null>;
@@ -52,6 +71,11 @@ export interface SessionRepository {
    * account was deleted while an access token was still valid).
    */
   insert(session: NewSession): Promise<'inserted' | 'exists' | 'owner-missing'>;
+  /**
+   * The player's sessions in `(recordedAt, id)` order, each with its graded
+   * answers in the order they were given.
+   */
+  history(query: HistoryQuery): Promise<HistoryRow[]>;
 }
 
 export function createSessionRepository(db: Database): SessionRepository {
@@ -67,22 +91,62 @@ export function createSessionRepository(db: Database): SessionRepository {
       return {
         requestHash: row.requestHash,
         userId: row.userId,
-        result: {
-          id: row.id,
-          config: row.config,
-          summary: {
-            answered: row.answered,
-            correct: row.correct,
-            incorrect: row.answered - row.correct,
-            accuracy: row.answered === 0 ? 0 : row.correct / row.answered,
-            durationMs: row.durationMs,
-            endReason: row.endReason as SessionEndReason,
-            completed: row.completed,
-            perfect: row.perfect,
-          },
-          recordedAt: row.recordedAt.toISOString(),
-        },
+        result: toResult(row),
       };
+    },
+
+    async history({ userId, after, recordedUntil, limit }) {
+      const rows = await db
+        .select()
+        .from(quizSessions)
+        .where(
+          and(
+            eq(quizSessions.userId, userId),
+            lte(quizSessions.recordedAt, new Date(recordedUntil)),
+            after
+              ? sql`(${quizSessions.recordedAt}, ${quizSessions.id}) > (${new Date(after.recordedAt).toISOString()}::timestamptz, ${after.id}::uuid)`
+              : undefined,
+          ),
+        )
+        .orderBy(asc(quizSessions.recordedAt), asc(quizSessions.id))
+        .limit(limit);
+      if (rows.length === 0) return [];
+
+      const answers = await db
+        .select({
+          sessionId: quizAnswers.sessionId,
+          countryCode: quizAnswers.countryCode,
+          correct: quizAnswers.correct,
+          answeredAt: quizAnswers.answeredAt,
+        })
+        .from(quizAnswers)
+        .where(
+          inArray(
+            quizAnswers.sessionId,
+            rows.map((row) => row.id),
+          ),
+        )
+        .orderBy(asc(quizAnswers.sessionId), asc(quizAnswers.sequence));
+
+      const answersBySession = new Map<string, typeof answers>();
+      for (const answer of answers) {
+        const list = answersBySession.get(answer.sessionId) ?? [];
+        list.push(answer);
+        answersBySession.set(answer.sessionId, list);
+      }
+      return rows.map((row) => ({
+        position: { recordedAt: row.recordedAt.getTime(), id: row.id },
+        entry: {
+          ...toResult(row),
+          startedAt: row.startedAt.getTime(),
+          finishedAt: row.finishedAt.getTime(),
+          answers: (answersBySession.get(row.id) ?? []).map((answer) => ({
+            countryCode: answer.countryCode,
+            correct: answer.correct,
+            answeredAt: answer.answeredAt.getTime(),
+          })),
+        },
+      }));
     },
 
     async insert(session) {
@@ -141,6 +205,24 @@ export function createSessionRepository(db: Database): SessionRepository {
       return 'inserted' as const;
     });
   }
+}
+
+function toResult(row: typeof quizSessions.$inferSelect): SessionResult {
+  return {
+    id: row.id,
+    config: row.config,
+    summary: {
+      answered: row.answered,
+      correct: row.correct,
+      incorrect: row.answered - row.correct,
+      accuracy: row.answered === 0 ? 0 : row.correct / row.answered,
+      durationMs: row.durationMs,
+      endReason: row.endReason as SessionEndReason,
+      completed: row.completed,
+      perfect: row.perfect,
+    },
+    recordedAt: row.recordedAt.toISOString(),
+  };
 }
 
 /** PostgreSQL `foreign_key_violation`, possibly wrapped by Drizzle. */

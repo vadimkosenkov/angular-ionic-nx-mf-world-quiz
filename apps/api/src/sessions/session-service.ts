@@ -1,9 +1,11 @@
 import type {
+  SessionHistoryPage,
   SessionResult,
   SubmitSessionRequest,
 } from '@world-quiz/shared/contracts';
 import type { QuizEngine, ReplayError } from '@world-quiz/quiz/domain';
 import type { Clock } from '@world-quiz/shared/util';
+import { encodeHistoryCursor, type HistoryPosition } from './history-cursor';
 import { requestHash } from './request-hash';
 import type { NewSession, SessionRepository } from './session-repository';
 
@@ -11,6 +13,17 @@ import type { NewSession, SessionRepository } from './session-repository';
 export const MAX_CLOCK_SKEW_MS = 5 * 60 * 1000;
 /** No session is played for longer than a day; older data is not a session. */
 export const MAX_SESSION_DURATION_MS = 24 * 60 * 60 * 1000;
+/**
+ * How long a recorded session waits before it appears in the history.
+ *
+ * `recordedAt` is taken before the session is written, so a session that is
+ * still being committed can have an earlier `recordedAt` than one a client
+ * has already paged past. History only lists sessions older than this
+ * window; by then every earlier insert has committed, and a client that keeps
+ * its cursor misses nothing. The player's own device does not wait: it has
+ * its sessions already.
+ */
+export const HISTORY_SETTLE_MS = 5_000;
 
 /** Why a well-formed session was refused. */
 export type SessionRejection =
@@ -37,6 +50,16 @@ export interface SessionService {
   ): Promise<SubmitSessionOutcome>;
   /** The player's own session; other players' sessions do not exist for them. */
   find(id: string, userId: string): Promise<SessionResult | null>;
+  /** A page of the player's history, oldest recorded first. */
+  history(
+    userId: string,
+    page: {
+      readonly after: HistoryPosition | null;
+      /** The cursor `after` came from, returned again for an empty page. */
+      readonly afterCursor: string | null;
+      readonly limit: number;
+    },
+  ): Promise<SessionHistoryPage>;
 }
 
 export interface SessionServiceDependencies {
@@ -157,6 +180,23 @@ export function createSessionService({
     async find(id, userId) {
       const stored = await repository.findById(id);
       return stored?.userId === userId ? stored.result : null;
+    },
+
+    async history(userId, { after, afterCursor, limit }) {
+      // One row more than asked tells whether another page follows.
+      const rows = await repository.history({
+        userId,
+        after,
+        recordedUntil: clock.now() - HISTORY_SETTLE_MS,
+        limit: limit + 1,
+      });
+      const page = rows.slice(0, limit);
+      const last = page.at(-1);
+      return {
+        sessions: page.map((row) => row.entry),
+        cursor: last ? encodeHistoryCursor(last.position) : afterCursor,
+        hasMore: rows.length > limit,
+      };
     },
   };
 }
