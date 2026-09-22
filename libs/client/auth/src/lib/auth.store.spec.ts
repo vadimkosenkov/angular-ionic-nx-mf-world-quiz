@@ -3,6 +3,7 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
+import { ErrorHandler } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { AUTH_CONFIG } from './auth.config';
 import { authInterceptor } from './auth.interceptor';
@@ -11,16 +12,22 @@ import { AuthStore, REFRESH_LOCK } from './auth.store';
 import { API, session, USER } from './testing';
 
 function setup() {
+  const reported: unknown[] = [];
   TestBed.configureTestingModule({
     providers: [
       provideHttpClient(withInterceptors([authInterceptor])),
       provideHttpClientTesting(),
       { provide: AUTH_CONFIG, useValue: { apiUrl: API, googleClientId: 'g' } },
+      {
+        provide: ErrorHandler,
+        useValue: { handleError: (error: unknown) => reported.push(error) },
+      },
     ],
   });
   return {
     store: TestBed.inject(AuthStore),
     http: TestBed.inject(HttpTestingController),
+    reported,
   };
 }
 
@@ -91,6 +98,46 @@ describe('AuthStore', () => {
       .flush(null, { status: 401, statusText: 'Unauthorized' });
     expect(await refused).toBe(false);
     expect(store.status()).toBe('signed-out');
+  });
+
+  it.each([
+    [503, 'Service Unavailable'],
+    [429, 'Too Many Requests'],
+  ])(
+    'does not take a %i for a refusal: restoring stays unverified, a session stays signed in',
+    async (status, statusText) => {
+      const { store, http, reported } = setup();
+
+      const restoring = store.restore();
+      http
+        .expectOne(`${API}/v1/auth/refresh`)
+        .flush(null, { status, statusText });
+      await restoring;
+      expect(store.status()).toBe('unverified');
+
+      const retried = store.restore();
+      http.expectOne(`${API}/v1/auth/refresh`).flush(session());
+      await retried;
+
+      const refreshing = store.refreshAccessToken();
+      http
+        .expectOne(`${API}/v1/auth/refresh`)
+        .flush(null, { status, statusText });
+      expect(await refreshing).toBe(false);
+      expect(store.status()).toBe('signed-in');
+      expect(reported).toEqual([]);
+    },
+  );
+
+  it('reports a response that breaks the contract instead of signing out', async () => {
+    const { store, http, reported } = setup();
+
+    const restoring = store.restore();
+    http.expectOne(`${API}/v1/auth/refresh`).flush({ unexpected: true });
+    await restoring;
+
+    expect(store.status()).toBe('unverified');
+    expect(reported).toHaveLength(1);
   });
 
   it('checks an unverified sign-in again when the browser comes back online', async () => {

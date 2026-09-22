@@ -91,7 +91,8 @@ may know about each other, is described in
 - **Tokens**: the access token only in memory, the refresh token only in the
   httpOnly cookie; nothing in `localStorage`. `authInterceptor` adds the
   bearer token to API requests and renews it once, shared, on 401; tabs take
-  turns through a Web Lock. Only a refusal by the API signs the player out.
+  turns through a Web Lock. Only the API's refusal (401 from
+  `/v1/auth/refresh`) signs the player out; offline, 5xx or 429 do not.
 - **Account deletion** asks for confirmation inline, with the consequence
   spelled out, before `DELETE /v1/me`.
 - The API URL and the Google client id are in `apps/shell/src/app/api-config.ts`

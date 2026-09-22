@@ -1,5 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { computed, inject, Injectable, signal } from '@angular/core';
+import {
+  computed,
+  ErrorHandler,
+  inject,
+  Injectable,
+  signal,
+} from '@angular/core';
 import type {
   AuthResponse,
   IdentityProvider,
@@ -31,6 +37,7 @@ export type AuthError = 'sign-in-failed' | 'unreachable' | 'delete-failed';
 @Injectable({ providedIn: 'root' })
 export class AuthStore {
   private readonly api = inject(AuthApi);
+  private readonly errorHandler = inject(ErrorHandler);
 
   private readonly statusState = signal<AuthStatus>('restoring');
   private readonly userState = signal<User | null>(null);
@@ -73,8 +80,12 @@ export class AuthStore {
    * through a Web Lock: a tab that waited sends the cookie its predecessor
    * just received (cookies are shared between tabs).
    *
-   * Only the API's refusal signs the player out. Without an answer (offline,
-   * API down) a signed-in player stays signed in; the next request retries.
+   * Only the API's refusal of the refresh token (401) signs the player out.
+   * Anything else proves nothing about the sign-in: no answer (offline), a
+   * server error or rate limit (5xx, 429), a response that breaks the
+   * contract, a failed Web Lock. Then a signed-in player stays signed in (the
+   * next request retries), and a restore becomes `unverified`. Failures that
+   * are not HTTP answers are bugs, so they are also reported.
    */
   refreshAccessToken(): Promise<boolean> {
     this.refreshing ??= this.exclusively(() => this.api.refresh())
@@ -83,8 +94,14 @@ export class AuthStore {
         return true;
       })
       .catch((error: unknown) => {
-        if (!isUnreachable(error)) this.clear();
-        else if (this.statusState() === 'restoring') {
+        if (isRefusal(error)) {
+          this.clear();
+          return false;
+        }
+        if (!(error instanceof HttpErrorResponse)) {
+          this.errorHandler.handleError(error);
+        }
+        if (this.statusState() === 'restoring') {
           this.statusState.set('unverified');
         }
         return false;
@@ -162,6 +179,11 @@ export class AuthStore {
     this.userState.set(null);
     this.statusState.set('signed-out');
   }
+}
+
+/** The API refused the refresh token: missing, expired, revoked or reused. */
+function isRefusal(error: unknown): boolean {
+  return error instanceof HttpErrorResponse && error.status === 401;
 }
 
 /** No response at all: offline, the API is down, or CORS refused it. */

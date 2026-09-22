@@ -66,10 +66,14 @@ storage in Phase 13.
   refresh runs under a **Web Lock** (`navigator.locks`, `world-quiz-auth-refresh`):
   two tabs opened together take turns, and the second sends the cookie the
   first just received.
-- **Only the API's refusal signs the player out.** A refresh without an
-  answer (offline, API down) keeps a signed-in player signed in; at start-up
-  it leaves the sign-in `unverified` — neither signed in nor offering sign-in
-  — and checks again on the browser's `online` event or "Try again".
+- **Only the API's refusal signs the player out**: a 401 from
+  `/v1/auth/refresh` (token missing, expired, revoked or reused). Any other
+  failure proves nothing about the sign-in — no answer (offline, API down), a
+  5xx or 429, a response that breaks the contract (also reported to
+  `ErrorHandler`), a failed Web Lock. It keeps a signed-in player signed in;
+  at start-up it leaves the sign-in `unverified` — neither signed in nor
+  offering sign-in — and checks again on the browser's `online` event or
+  "Try again".
 
 ## Alternatives
 
