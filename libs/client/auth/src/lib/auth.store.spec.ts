@@ -52,6 +52,20 @@ describe('AuthStore', () => {
     expect(store.currentAccessToken()).toBe('access-1');
   });
 
+  it('lets callers wait for the outcome of the restore', async () => {
+    const { store, http } = setup();
+    void store.restore();
+    let settled = false;
+    void store.whenRestored().then(() => (settled = true));
+
+    await flush();
+    expect(settled).toBe(false);
+    http.expectOne(`${API}/v1/auth/refresh`).flush(session());
+    await store.whenRestored();
+
+    expect(store.status()).toBe('signed-in');
+  });
+
   it('starts signed out when there is no valid refresh cookie', async () => {
     const { store, http } = setup();
 

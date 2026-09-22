@@ -3,7 +3,8 @@
 > Status: **implemented**: Ionic shell, navigation, Home, Leaderboard,
 > Achievements, Settings (Phase 3); quiz setup and the Capitals (Phase 4)
 > and Flags (Phase 5) quizzes, each loaded from its own microfrontend;
-> sign-in with Google in Settings (Phase 7b).
+> sign-in with Google (Phase 7b), required before playing, with progress kept
+> on the device and synced with the account (Phase 8b).
 
 ## Stack
 
@@ -18,8 +19,10 @@
 
 ```
 apps/shell/src/app/
-  app.config.ts        providers: Ionic, router, i18n, settings, icons
-  app.routes.ts        tabs + lazy pages
+  app.config.ts        providers: Ionic, router, i18n, settings, auth, progress, icons
+  app.routes.ts        welcome, tabs + lazy pages, guards
+  welcome/             first screen: what the app is, sign in
+  auth/                signedInGuard / signedOutGuard, back to welcome when a sign-in ends
   app.ts               <ion-app><ion-router-outlet/></ion-app>
   tabs/                ion-tabs with a translucent tab bar
   home/                greeting, overall progress, categories, practice, achievement preview
@@ -32,7 +35,6 @@ apps/shell/src/app/
     remote-routes.ts   loads a remote's routes, with a fallback when it fails
     remote-unavailable.page.ts
   core/
-    progress.store.ts  learning progress as signals (in memory until Phase 8)
     tokens.ts          COUNTRY_DATASET, CLOCK
     greeting.ts        time-of-day greeting rule
   icons.ts             explicit ionicons registration
@@ -48,6 +50,7 @@ Libraries used by the shell:
 | `client-quiz-ports`              | Tokens and interfaces the shell and the remotes share                          |
 | `client-quiz-feature`            | The quiz screens themselves (`wq-quiz-play`, `wq-quiz-results`)                |
 | `client-auth`                    | `AuthStore`, API calls for sign-in, bearer interceptor, Google button (GIS)    |
+| `client-progress`                | `ProgressStore` (IndexedDB via Dexie), outbox, `SyncService`                   |
 | `client-i18n`                    | Transloco setup, bundled translations, `wqPlural`, locale detection            |
 | `client-settings`                | `SettingsStore`, storage port, system colour-scheme signal, document sync      |
 | `quiz-domain` / `quiz-countries` | Progress, achievements and all counts come from the domain and the dataset     |
@@ -56,6 +59,7 @@ Libraries used by the shell:
 
 | URL                                                   | Page                                                  | Loading                               |
 | ----------------------------------------------------- | ----------------------------------------------------- | ------------------------------------- |
+| `/welcome`                                            | welcome + sign-in (`signedOutGuard`: players go home) | lazy (`loadComponent`)                |
 | `/`                                                   | redirect to `/home`                                   | —                                     |
 | `/home`, `/leaderboard`, `/achievements`, `/settings` | tab pages inside `TabsPage`                           | lazy (`loadComponent`)                |
 | `/quiz/setup`                                         | quiz setup (shell)                                    | lazy (`loadComponent`)                |
@@ -64,12 +68,16 @@ Libraries used by the shell:
 | `/quiz/flags?scope=&difficulty=&mode=&count=`         | Flags microfrontend                                   | `loadChildren` over Native Federation |
 | anything else                                         | redirect to `/home`                                   | —                                     |
 
-All URLs are deep-linkable, including a quiz with its options (tested in
-Cypress). How the federated route is wired, and what the shell and the remote
+Everything except `/welcome` is behind `signedInGuard`
+([ADR-011](../decisions/ADR-011-sign-in-required.md)): it waits for the
+start-up restore, lets in a signed-in player (claiming the device's data for
+them) or, offline, the player who owns the device's data, and sends anyone
+else to `/welcome`. All URLs are deep-linkable, including a quiz with its
+options (tested in Cypress). How the federated route is wired, and what the shell and the remote
 may know about each other, is described in
 [microfrontends.md](microfrontends.md).
 
-## Sign-in (Settings → Account)
+## Sign-in (welcome screen, Settings → Account)
 
 `libs/client/auth` (design: [ADR-010](../decisions/ADR-010-authentication.md)):
 
@@ -78,9 +86,13 @@ may know about each other, is described in
   `signed-in` or `signed-out`; `unverified` when the API cannot be reached —
   the section says so, offers "Try again" and checks again when the browser
   is back online).
-- **Google**: Google's button from Google Identity Services; its ID token and
-  our nonce go to `POST /v1/auth/google`. **Apple** is shown as coming with the
-  iPhone app — web Sign in with Apple needs a registered HTTPS domain.
+- **Welcome screen** (`/welcome`): app name, real counts from the dataset
+  (countries, regions, training modes) and Google's button; its ID token and
+  our nonce go to `POST /v1/auth/google`, then the device's data is claimed
+  for the player and the app opens on Home. **Apple** is shown as coming with
+  the iPhone app — web Sign in with Apple needs a registered HTTPS domain.
+- **When a sign-in ends** (sign-out, deletion, refresh refused),
+  `provideSignInFlow()` returns to `/welcome` with a new navigation root.
 - **Google's button is Google's page** (an iframe): a white "Sign in with
   Google" in both themes (black is left to Apple), drawn again when the
   language changes. Its shape, font and padding
@@ -93,11 +105,17 @@ may know about each other, is described in
   bearer token to API requests and renews it once, shared, on 401; tabs take
   turns through a Web Lock. Only the API's refusal (401 from
   `/v1/auth/refresh`) signs the player out; offline, 5xx or 429 do not.
-- **Account deletion** asks for confirmation inline, with the consequence
-  spelled out, before `DELETE /v1/me`.
+- **Settings → Account** shows the player, whether their results are saved
+  (all saved / N waiting / offline, retried automatically / N refused by the
+  server), sign-out and account deletion.
+- **Sign-out** tries to send pending results first; if some are still
+  unsent, it asks — with the number — before deleting them with the rest of
+  the device's data. **Account deletion** asks inline, with the consequence
+  spelled out, before `DELETE /v1/me`, then clears the device too.
 - The API URL and the Google client id are in `apps/shell/src/app/api-config.ts`
   (public values; per-environment configuration comes with Phase 12).
-- Progress is not sent to the account yet (Phase 8); the section says so.
+- Progress and sync: [state-management.md](state-management.md) and
+  [ADR-006](../decisions/ADR-006-local-persistence.md).
 
 ## Start-up sequence
 
@@ -121,9 +139,10 @@ Everything is derived; nothing is copied from the Figma mock-ups:
 - **Leaderboard** shows the four real boards and rules, and an honest
   "not available yet" state until sign-in and the API exist.
 
-`ProgressStore` holds progress in memory. A fresh start therefore shows zero
-progress; persistence and sync arrive in Phase 8. The quiz phases call
-`ProgressStore.record(events)` after each session.
+`ProgressStore` (`client-progress`) keeps the finished sessions on the device
+(IndexedDB) and rebuilds progress from their answers. The shell's quiz result
+sink calls `ProgressStore.recordSession(session)` after each finished
+session and asks `SyncService` to send it.
 
 ## Bundle size
 

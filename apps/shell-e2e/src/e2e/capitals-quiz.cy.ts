@@ -4,6 +4,11 @@
  * at runtime, and the finished session is recorded by the shell.
  */
 describe('capitals quiz', () => {
+  // Playing needs an account: every test starts as a new signed-in player.
+  beforeEach(() => {
+    cy.signIn();
+  });
+
   /**
    * Answers the visible question. The prompt carries the country code, so the
    * test can pick the matching choice without knowing the dataset.

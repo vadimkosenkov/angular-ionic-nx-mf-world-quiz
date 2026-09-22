@@ -3,6 +3,11 @@
  * fetched at runtime from the `flags` remote (http://localhost:4202).
  */
 describe('flags quiz', () => {
+  // Playing needs an account: every test starts as a new signed-in player.
+  beforeEach(() => {
+    cy.signIn();
+  });
+
   /** Answers the visible question; the prompt carries the country code. */
   const answerCurrentQuestion = (correctly: boolean) =>
     cy

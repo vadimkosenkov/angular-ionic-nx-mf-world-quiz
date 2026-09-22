@@ -68,6 +68,8 @@ libs/
   client/ui/       Design system (Angular)                scope:client    type:ui
   client/i18n/     Transloco + en/ru translations         scope:client    type:data-access
   client/settings/ Settings store, storage, theme sync    scope:client    type:data-access
+  client/auth/     Sign-in state, API calls, interceptor  scope:client    type:data-access
+  client/progress/ Progress on the device, outbox, sync   scope:client    type:data-access
   shared/util/  Pure TS helpers                           scope:shared    type:util
 ```
 
@@ -75,12 +77,13 @@ Planned libraries (created in the phase that needs them, never as empty placehol
 Platform services (haptics, audio, network status) will join `client/settings`
 or a `client/platform` library when the features that need them arrive:
 
-| Library                                                    | Tags                               | Phase |
-| ---------------------------------------------------------- | ---------------------------------- | ----- |
-| `shared/contracts` – Zod API schemas/types                 | `scope:shared`, `type:contracts`   | ✅ 6  |
-| `client/quiz-ports` – shell ↔ remote injection tokens      | `scope:client`, `type:ports`       | ✅ 4  |
-| `client/quiz-feature` – shared quiz play UI                | `scope:client`, `type:feature`     | ✅ 4  |
-| `client/data-access` – API client, auth, local store, sync | `scope:client`, `type:data-access` | 6–8   |
+| Library                                               | Tags                               | Phase |
+| ----------------------------------------------------- | ---------------------------------- | ----- |
+| `shared/contracts` – Zod API schemas/types            | `scope:shared`, `type:contracts`   | ✅ 6  |
+| `client/quiz-ports` – shell ↔ remote injection tokens | `scope:client`, `type:ports`       | ✅ 4  |
+| `client/quiz-feature` – shared quiz play UI           | `scope:client`, `type:feature`     | ✅ 4  |
+| `client/auth` – sign-in state, API calls, interceptor | `scope:client`, `type:data-access` | ✅ 7b |
+| `client/progress` – local store (Dexie), outbox, sync | `scope:client`, `type:data-access` | ✅ 8b |
 
 ## Module boundaries
 

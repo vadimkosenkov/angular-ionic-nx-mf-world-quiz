@@ -11,9 +11,11 @@ import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideIonicAngular } from '@ionic/angular';
 import { authInterceptor, provideAuth } from '@world-quiz/client/auth';
 import { provideAppI18n } from '@world-quiz/client/i18n';
+import { provideProgress } from '@world-quiz/client/progress';
 import { provideAppSettings } from '@world-quiz/client/settings';
 import { API_URL, GOOGLE_WEB_CLIENT_ID } from './api-config';
 import { appRoutes } from './app.routes';
+import { provideSignInFlow } from './auth/sign-in.providers';
 import { registerIcons } from './icons';
 
 registerIcons();
@@ -29,5 +31,7 @@ export const appConfig: ApplicationConfig = {
     provideAppSettings(),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
     provideAuth({ apiUrl: API_URL, googleClientId: GOOGLE_WEB_CLIENT_ID }),
+    provideProgress(),
+    provideSignInFlow(),
   ],
 };

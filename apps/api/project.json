@@ -99,6 +99,7 @@
           "PORT": "3333",
           "PGLITE_DIR": "tmp/e2e-api",
           "AUTH_DEV_LOGIN": "true",
+          "AUTH_RATE_LIMIT": "10000",
           "CORS_ORIGINS": "http://localhost:4200"
         }
       }

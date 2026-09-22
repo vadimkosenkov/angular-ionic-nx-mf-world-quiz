@@ -48,7 +48,9 @@ should be avoided.
 
 - No built-in devtools or time travel.
 - Conventions (one private signal, intent methods) are enforced by review, not by a framework.
-- Cross-store orchestration (e.g. sync) must be designed explicitly in Phase 8.
+- Cross-store orchestration (e.g. sync) must be designed explicitly in Phase 8
+  — done in [ADR-006](ADR-006-local-persistence.md): `SyncService` coordinates
+  `AuthStore` and `ProgressStore`, which do not know about each other.
 
 ## Rationale
 

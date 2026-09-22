@@ -14,7 +14,7 @@ import { PluralPipe } from '@world-quiz/client/i18n';
 import { EmptyState, ProgressBar, ProgressCard } from '@world-quiz/client/ui';
 import { type QuizCategory } from '@world-quiz/quiz/domain';
 import { greetingFor } from '../core/greeting';
-import { ProgressStore } from '../core/progress.store';
+import { ProgressStore } from '@world-quiz/client/progress';
 import { CLOCK } from '../core/tokens';
 
 interface CategoryCard {

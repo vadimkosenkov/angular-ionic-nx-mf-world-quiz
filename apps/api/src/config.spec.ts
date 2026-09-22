@@ -13,6 +13,7 @@ describe('loadConfig', () => {
         appleClientIds: [],
         devLogin: false,
         secureCookies: false,
+        rateLimit: 30,
       },
       corsOrigins: ['http://localhost:4200'],
     });
@@ -48,6 +49,7 @@ describe('loadConfig', () => {
         appleClientIds: ['dev.worldquiz.app'],
         devLogin: false,
         secureCookies: true,
+        rateLimit: 30,
       },
       corsOrigins: ['https://worldquiz.example'],
     });
@@ -110,6 +112,14 @@ describe('loadConfig', () => {
 
   it('allows no browser origin in production unless configured', () => {
     expect(loadConfig(production).corsOrigins).toEqual([]);
+  });
+
+  it('limits /v1/auth to 30 requests per window unless AUTH_RATE_LIMIT says otherwise', () => {
+    expect(loadConfig({}).auth.rateLimit).toBe(30);
+    expect(loadConfig({ AUTH_RATE_LIMIT: '1000' }).auth.rateLimit).toBe(1000);
+    expect(() => loadConfig({ AUTH_RATE_LIMIT: '0' })).toThrow(
+      'AUTH_RATE_LIMIT',
+    );
   });
 
   it('lets COOKIE_SECURE override the default', () => {

@@ -9,7 +9,7 @@ import {
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ProgressBar } from '@world-quiz/client/ui';
 import type { AchievementStatus } from '@world-quiz/quiz/domain';
-import { ProgressStore } from '../core/progress.store';
+import { ProgressStore } from '@world-quiz/client/progress';
 
 /** Status is shown with an icon and a text label, never with colour alone. */
 const STATUS_ICONS: Readonly<Record<AchievementStatus, string>> = {

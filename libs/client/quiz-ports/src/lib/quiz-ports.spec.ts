@@ -12,12 +12,14 @@ describe('quiz ports', () => {
     expect(TestBed.inject(COUNTRY_DATASET)).toBe(COUNTRIES);
   });
 
-  it('defaults the clock to a monotonic source near wall-clock time', () => {
+  it('defaults the clock to a monotonic source near wall-clock time, in whole milliseconds', () => {
     const clock = TestBed.inject(CLOCK);
     const before = clock.now();
     const after = clock.now();
 
     expect(after).toBeGreaterThanOrEqual(before);
+    // The API accepts only whole epoch milliseconds.
+    expect(Number.isInteger(before)).toBe(true);
     // performance.timeOrigin + performance.now() tracks Date.now() closely.
     expect(Math.abs(before - Date.now())).toBeLessThan(1_000);
   });

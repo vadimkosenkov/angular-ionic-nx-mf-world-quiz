@@ -67,6 +67,26 @@ export const en = {
       other: '{{count}} regions',
     },
   },
+  welcome: {
+    tagline: 'Master every capital and flag',
+    intro:
+      'Sign in to play. Your progress is saved to your account and follows you to every device.',
+    stats: {
+      countries: {
+        one: 'Country',
+        few: 'Countries',
+        many: 'Countries',
+        other: 'Countries',
+      },
+      regions: {
+        one: 'Region',
+        few: 'Regions',
+        many: 'Regions',
+        other: 'Regions',
+      },
+      modes: { one: 'Mode', few: 'Modes', many: 'Modes', other: 'Modes' },
+    },
+  },
   home: {
     greeting: {
       morning: 'Good morning',
@@ -206,8 +226,6 @@ export const en = {
       unverified:
         'The World Quiz server cannot be reached, so your sign-in cannot be checked. It is checked again when you are back online.',
       retry: 'Try again',
-      intro:
-        'Sign in to create your World Quiz account. Keeping your progress in sync across devices comes in a later update.',
       googleUnavailable:
         'Google sign-in is unavailable right now. Check your connection or content blocker, then reload.',
       appleOnIos: 'Sign in with Apple arrives with the iPhone app.',
@@ -218,8 +236,25 @@ export const en = {
         apple: 'Apple',
         dev: 'a development account',
       },
-      syncLater:
-        'Your results stay on this device for now; syncing them to your account comes in a later update.',
+      sync: {
+        saved: 'All your results are saved to your account.',
+        saving: 'Saving your results…',
+        pending: {
+          one: '{{count}} result is waiting to be saved to your account.',
+          few: '{{count}} results are waiting to be saved to your account.',
+          many: '{{count}} results are waiting to be saved to your account.',
+          other: '{{count}} results are waiting to be saved to your account.',
+        },
+        rejected: {
+          one: '{{count}} result could not be verified by the server and was not saved to your account.',
+          few: '{{count}} results could not be verified by the server and were not saved to your account.',
+          many: '{{count}} results could not be verified by the server and were not saved to your account.',
+          other:
+            '{{count}} results could not be verified by the server and were not saved to your account.',
+        },
+        offline:
+          'No connection to the World Quiz server; saving is retried automatically.',
+      },
       signOut: 'Sign out',
       delete: 'Delete account',
       deleteTitle: 'Delete your account?',
@@ -227,6 +262,16 @@ export const en = {
         'Your account and everything stored with it on our server are deleted permanently. This cannot be undone.',
       deleteConfirm: 'Delete permanently',
       cancel: 'Cancel',
+      signOutPendingTitle: 'Sign out without saving?',
+      signOutPendingText: {
+        one: '{{count}} result played on this device has not been saved to your account yet. Signing out deletes it from this device.',
+        few: '{{count}} results played on this device have not been saved to your account yet. Signing out deletes them from this device.',
+        many: '{{count}} results played on this device have not been saved to your account yet. Signing out deletes them from this device.',
+        other:
+          '{{count}} results played on this device have not been saved to your account yet. Signing out deletes them from this device.',
+      },
+      signOutAnyway: 'Sign out anyway',
+      staySignedIn: 'Stay signed in',
       errors: {
         'sign-in-failed': 'Sign-in did not work. Please try again.',
         unreachable:

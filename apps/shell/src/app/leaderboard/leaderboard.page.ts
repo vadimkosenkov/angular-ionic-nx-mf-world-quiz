@@ -16,7 +16,7 @@ import {
   LEADERBOARD_BOARDS,
   type LeaderboardBoardId,
 } from '@world-quiz/quiz/domain';
-import { ProgressStore } from '../core/progress.store';
+import { ProgressStore } from '@world-quiz/client/progress';
 
 const LEADERBOARD_VIEWS = ['global', 'mine'] as const;
 type LeaderboardView = (typeof LEADERBOARD_VIEWS)[number];

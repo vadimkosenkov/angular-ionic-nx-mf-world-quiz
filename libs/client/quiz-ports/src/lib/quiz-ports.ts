@@ -29,10 +29,12 @@ export const COUNTRY_DATASET = new InjectionToken<CountryDataset>(
 );
 
 /**
- * Wall clock for quiz timing.
+ * Wall clock for quiz timing, in whole epoch milliseconds.
  *
  * Browsers get a monotonic clock so a device clock change cannot move quiz
- * time backwards; tests inject a manual clock.
+ * time backwards; tests inject a manual clock. `performance.now()` has
+ * fractions of a millisecond, which the API contract (and the database)
+ * does not accept, so it is rounded down: still never decreasing.
  */
 export const CLOCK = new InjectionToken<Clock>('CLOCK', {
   providedIn: 'root',
@@ -41,7 +43,7 @@ export const CLOCK = new InjectionToken<Clock>('CLOCK', {
 
 const monotonicClock: Clock | null =
   typeof performance !== 'undefined' && typeof performance.now === 'function'
-    ? { now: () => performance.timeOrigin + performance.now() }
+    ? { now: () => Math.floor(performance.timeOrigin + performance.now()) }
     : null;
 
 /**

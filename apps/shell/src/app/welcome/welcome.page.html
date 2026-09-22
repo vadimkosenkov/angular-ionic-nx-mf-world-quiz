@@ -1,0 +1,69 @@
+<ion-content [fullscreen]="true" class="wq-aurora">
+  <main class="welcome" data-testid="welcome">
+    <div class="hero">
+      <div class="logo" aria-hidden="true">
+        <ion-icon name="globe-outline" />
+      </div>
+      <h1>{{ 'app.name' | transloco }}</h1>
+      <p class="wq-text-secondary tagline">
+        {{ 'welcome.tagline' | transloco }}
+      </p>
+
+      <ul class="stats" data-testid="welcome-stats">
+        <li>
+          <strong>{{ progress.countryCount }}</strong>
+          <!-- Keeps "195 Countries" one phrase for screen readers. -->
+          {{ ' ' }}
+          <span
+            >{{ 'welcome.stats.countries' | wqPlural: progress.countryCount
+            }}</span
+          >
+        </li>
+        <li>
+          <strong>{{ progress.regionCount }}</strong>
+          {{ ' ' }}
+          <span
+            >{{ 'welcome.stats.regions' | wqPlural: progress.regionCount
+            }}</span
+          >
+        </li>
+        <li>
+          <strong>{{ modeCount }}</strong>
+          {{ ' ' }}
+          <span>{{ 'welcome.stats.modes' | wqPlural: modeCount }}</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="sign-in" [attr.aria-busy]="auth.busy()">
+      @if (auth.status() === 'unverified') {
+      <p class="wq-text-secondary note" data-testid="welcome-unverified">
+        {{ 'settings.account.unverified' | transloco }}
+      </p>
+      <ion-button
+        class="wq-glass-button secondary"
+        expand="block"
+        data-testid="welcome-retry"
+        (click)="retry()"
+      >
+        {{ 'settings.account.retry' | transloco }}
+      </ion-button>
+      } @else {
+      <p class="wq-text-secondary note">{{ 'welcome.intro' | transloco }}</p>
+      <wq-google-sign-in-button
+        [unavailableText]="'settings.account.googleUnavailable' | transloco"
+        [locale]="settings.locale()"
+        (credential)="signInWithGoogle($event)"
+      />
+      <p class="apple wq-text-secondary" data-testid="apple-unavailable">
+        <ion-icon name="logo-apple" aria-hidden="true" />
+        {{ 'settings.account.appleOnIos' | transloco }}
+      </p>
+      } @if (auth.error(); as error) {
+      <p class="error" role="alert" data-testid="welcome-error">
+        {{ 'settings.account.errors.' + error | transloco }}
+      </p>
+      }
+    </div>
+  </main>
+</ion-content>

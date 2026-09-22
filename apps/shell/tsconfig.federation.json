@@ -3,6 +3,7 @@
   "files": [
     "../../libs/client/auth/src/index.ts",
     "../../libs/client/i18n/src/index.ts",
+    "../../libs/client/progress/src/index.ts",
     "../../libs/client/settings/src/index.ts",
     "../../libs/shared/contracts/src/index.ts",
     "../../libs/quiz/domain/src/index.ts",

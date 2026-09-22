@@ -6,7 +6,7 @@
   <div
     class="wq-card account"
     data-testid="account"
-    [attr.aria-busy]="auth.busy()"
+    [attr.aria-busy]="auth.busy() || signingOut()"
   >
     @switch (auth.status()) { @case ('restoring') {
     <p class="muted">{{ 'settings.account.checking' | transloco }}</p>
@@ -14,6 +14,11 @@
     <p class="muted" data-testid="account-unverified">
       {{ 'settings.account.unverified' | transloco }}
     </p>
+    @if (progress.pendingCount() > 0) {
+    <p class="muted" data-testid="sync-status">
+      {{ 'settings.account.sync.pending' | wqPlural: progress.pendingCount() }}
+    </p>
+    }
     <ion-button
       class="wq-glass-button secondary"
       expand="block"
@@ -36,31 +41,59 @@
         </p>
       </div>
     </div>
-    <p class="muted">{{ 'settings.account.syncLater' | transloco }}</p>
 
-    @if (!confirmingDelete()) {
-    <div class="actions">
+    <p
+      class="muted sync"
+      role="status"
+      data-testid="sync-status"
+      [attr.data-state]="syncState()"
+    >
+      @switch (syncState()) { @case ('saving') { {{
+      'settings.account.sync.saving' | transloco }} } @case ('pending') { {{
+      'settings.account.sync.pending' | wqPlural: progress.pendingCount() }} @if
+      (sync.status() === 'offline') { {{ 'settings.account.sync.offline' |
+      transloco }} } } @case ('saved') { {{ 'settings.account.sync.saved' |
+      transloco }} } }
+    </p>
+    @if (progress.rejectedCount() > 0) {
+    <p class="muted" data-testid="sync-rejected">
+      {{ 'settings.account.sync.rejected' | wqPlural: progress.rejectedCount()
+      }}
+    </p>
+    } @switch (confirming()) { @case ('sign-out') {
+    <div
+      class="confirm"
+      role="alertdialog"
+      aria-labelledby="sign-out-title"
+      aria-describedby="sign-out-text"
+      data-testid="sign-out-confirmation"
+    >
+      <p id="sign-out-title" class="confirm-title">
+        {{ 'settings.account.signOutPendingTitle' | transloco }}
+      </p>
+      <p id="sign-out-text">
+        {{ 'settings.account.signOutPendingText' | wqPlural:
+        progress.pendingCount() }}
+      </p>
       <ion-button
-        class="wq-glass-button secondary"
+        class="wq-glass-button danger"
         expand="block"
-        data-testid="sign-out"
+        data-testid="confirm-sign-out"
         [disabled]="auth.busy()"
-        (click)="signOut()"
+        (click)="signOutAndForget()"
       >
-        {{ 'settings.account.signOut' | transloco }}
+        {{ 'settings.account.signOutAnyway' | transloco }}
       </ion-button>
       <ion-button
-        class="delete"
         fill="clear"
         expand="block"
-        data-testid="delete-account"
-        [disabled]="auth.busy()"
-        (click)="confirmingDelete.set(true)"
+        data-testid="cancel-sign-out"
+        (click)="confirming.set(null)"
       >
-        {{ 'settings.account.delete' | transloco }}
+        {{ 'settings.account.staySignedIn' | transloco }}
       </ion-button>
     </div>
-    } @else {
+    } @case ('delete') {
     <div
       class="confirm"
       role="alertdialog"
@@ -86,23 +119,34 @@
         expand="block"
         data-testid="cancel-delete"
         [disabled]="auth.busy()"
-        (click)="confirmingDelete.set(false)"
+        (click)="confirming.set(null)"
       >
         {{ 'settings.account.cancel' | transloco }}
       </ion-button>
     </div>
-    } } @case ('signed-out') {
-    <p class="muted">{{ 'settings.account.intro' | transloco }}</p>
-    <wq-google-sign-in-button
-      [unavailableText]="'settings.account.googleUnavailable' | transloco"
-      [locale]="settings.locale()"
-      (credential)="signInWithGoogle($event)"
-    />
-    <p class="apple" data-testid="apple-unavailable">
-      <ion-icon name="logo-apple" aria-hidden="true" />
-      {{ 'settings.account.appleOnIos' | transloco }}
-    </p>
-    } } @if (auth.error(); as error) {
+    } @default {
+    <div class="actions">
+      <ion-button
+        class="wq-glass-button secondary"
+        expand="block"
+        data-testid="sign-out"
+        [disabled]="auth.busy() || signingOut()"
+        (click)="signOut()"
+      >
+        {{ 'settings.account.signOut' | transloco }}
+      </ion-button>
+      <ion-button
+        class="delete"
+        fill="clear"
+        expand="block"
+        data-testid="delete-account"
+        [disabled]="auth.busy() || signingOut()"
+        (click)="confirming.set('delete')"
+      >
+        {{ 'settings.account.delete' | transloco }}
+      </ion-button>
+    </div>
+    } } } } @if (auth.error(); as error) {
     <p class="error" role="alert" data-testid="account-error">
       {{ 'settings.account.errors.' + error | transloco }}
     </p>
