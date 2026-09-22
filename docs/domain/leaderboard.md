@@ -4,8 +4,11 @@
 > [`leaderboard.ts`](../../libs/quiz/domain/src/lib/leaderboard.ts) —
 > `evaluateChallengeRun`, `compareLeaderboardEntries`, `rankLeaderboard`,
 > `personalBests`, `isNewPersonalRecord`; challenge mode in the
-> [quiz engine](quiz-engine.md). Seed issuance, persistence, plausibility
-> checks and the ranking SQL follow in Phase 9 (`feat/leaderboard-records`).
+> [quiz engine](quiz-engine.md). **Server implemented** (Phase 9a): issued
+> challenges with a server seed, the timing check, ranked runs, public
+> boards and personal records ([backend.md](../architecture/backend.md#leaderboards-challenges-and-records)).
+> 📐 Playing challenges and the leaderboard screen in the app (Phase 9b), the
+> public leaderboard on the SSR site (Phase 9c).
 
 ## Concept
 
@@ -57,12 +60,40 @@ Each user appears **once per board** with their best eligible run (their
 personal record, `personalBests`). A new personal record must be **strictly**
 faster than the previous best (`isNewPersonalRecord`). The UI separates **Global Leaderboard** from **My Records**.
 
-## Comparability
+## Comparability: server-issued challenges
 
-Runs on the same board must be comparable, so the challenge uses the same
-deterministic rules for question set, order and (for Easy) choice generation.
-Phase 9 decides how the server issues and later verifies this (for example a
-server-issued challenge id and seed) and how it measures duration.
+Runs on the same board are comparable because every challenge uses the same
+deterministic rules for question set, order and (for Easy) choice generation
+— with a seed **the server issues**:
+
+1. `POST /v1/challenges {board}` creates a challenge: an id, 128 random bits
+   of seed, the server's issue time; it expires after **3 hours**.
+2. The app plays the World set with exactly that seed and sends the session
+   with `challengeId`.
+3. The server checks that the challenge is the player's, unplayed, for this
+   board and this seed, replays the session, and decides whether it is
+   ranked. A challenge is played once; another session for it is refused.
+
+A player may start as many challenges as they like; only their best ranked
+run per board counts.
+
+## Timing
+
+The time that ranks is the run's **own**: from the first question to the last
+answer, measured on the device. It is precise and does not depend on the
+network. The server checks it against what it saw itself — the **window**
+from issuing the challenge to receiving the result:
+
+| Check                                          | If it fails        |
+| ---------------------------------------------- | ------------------ |
+| window ≤ 3 hours                               | `expired`          |
+| run time ≤ window + 2 s (clock drift)          | `implausible-time` |
+| window − run time ≤ 60 s (loading and sending) | `late`             |
+
+So a client cannot claim to be faster by more than 60 seconds, and a result
+that was not sent right after the run (played offline, kept in the outbox) is
+recorded for progress but **not ranked**: challenges are played online.
+Implemented in `apps/api/src/leaderboard/challenge-rules.ts`.
 
 ## Trust model
 
@@ -70,12 +101,25 @@ server-issued challenge id and seed) and how it measures duration.
   provides rank, score or user id as facts.
 - The server re-checks every answer with the shared `quiz-domain` matching rules.
 - Honest limitation: a scripted client that knows the answers can still submit
-  a perfect run. Plausibility checks (per-answer timing bounds, ordering,
-  challenge lifetime) raise the bar but do not make the system cheat-proof. This
-  is documented, not hidden.
+  a perfect run, and can shave up to the 60-second tolerance off its time.
+  The server-issued seed, one run per challenge, the lifetime and the timing
+  window raise the bar but do not make the system cheat-proof; per-answer
+  timing bounds are not checked yet. This is documented, not hidden.
+
+## Public names
+
+Boards are public (also on the SSR site), so a player appears under a
+**nickname** they choose in the app (`PATCH /v1/me`: 3–24 letters, digits,
+spaces, `_`, `-`, `.`). Until then it is a stable default derived from the
+account id, such as "Player 4821". The name and e-mail from Google or Apple
+are never shown. Nicknames are not unique; players are told apart by their
+account, which the public API never reveals.
 
 ## Performance
 
-Start with a **query-based** approach: best eligible run per user per board,
-using an index that matches the ranking order. Introduce a dedicated
-records/leaderboard projection **only** if measurements show the query is too slow.
+**Query-based** (Phase 9a): each player's best ranked run (`DISTINCT ON`),
+numbered with `row_number()` in the order of `compareLeaderboardEntries`,
+over a partial index on ranked runs `(board, completion_ms, recorded_at,
+session_id)`. A test checks the SQL ranking against `rankLeaderboard` on
+generated runs with ties. Introduce a dedicated projection **only** if
+measurements show the query is too slow.

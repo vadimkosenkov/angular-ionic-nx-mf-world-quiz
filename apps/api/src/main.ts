@@ -14,6 +14,8 @@ import { createRefreshTokenStore } from './auth/refresh-tokens';
 import { createUserRepository } from './auth/user-repository';
 import { loadConfig } from './config';
 import { openPglite, openPostgres } from './db/database';
+import { createLeaderboardRepository } from './leaderboard/leaderboard-repository';
+import { createLeaderboardService } from './leaderboard/leaderboard-service';
 import { createSessionRepository } from './sessions/session-repository';
 import { createSessionService } from './sessions/session-service';
 
@@ -38,12 +40,21 @@ const accessTokens = createAccessTokens(
   config.auth.jwtSecret ?? randomBytes(32).toString('base64url'),
 );
 
+const challenges = createLeaderboardRepository(database.db);
+const leaderboard = createLeaderboardService({
+  repository: challenges,
+  clock: systemClock,
+});
+
 const app = createApp({
   clock: systemClock,
+  leaderboard,
   sessions: createSessionService({
     repository: createSessionRepository(database.db),
     engine: createQuizEngine(COUNTRIES),
     clock: systemClock,
+    challenges,
+    leaderboard,
   }),
   auth: createAuthService({
     users: createUserRepository(database.db),

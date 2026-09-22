@@ -78,7 +78,8 @@ Why it matters:
    was never offered, an answer after the timer, a "completed" session with
    missing answers) is rejected.
 3. **Comparable challenge runs:** runs with the same seed get the same questions
-   and choices. How the server issues seeds is designed in Phase 9.
+   and choices. The server issues a fresh seed for every leaderboard challenge
+   ([leaderboard.md](leaderboard.md#comparability-server-issued-challenges)).
 
 The generator is not cryptographically secure. Seeds are not secrets; see
 the trust model in [leaderboard.md](leaderboard.md).
@@ -106,11 +107,14 @@ capital or name in the current language, so switching language mid-quiz is safe.
   was in the background and resumes minutes later. Answers at or after the
   deadline are rejected.
 - **Clock requirement:** clients should pass a monotonic time
-  (`performance.timeOrigin + performance.now()`) so a device clock change cannot
-  move time backwards; the engine rejects out-of-order timestamps.
+  (`performance.timeOrigin + performance.now()`, floored to whole
+  milliseconds as the API requires) so a device clock change cannot move time
+  backwards; the engine rejects out-of-order timestamps.
 - The server replays with the client's timestamps and applies plausibility
-  checks (Phase 9). It cannot see real time on an offline device; this is a
-  documented limitation.
+  checks: a session must not finish in the future or last over a day, and a
+  leaderboard run's time must fit the server's own window
+  ([leaderboard.md](leaderboard.md#timing)). It cannot see real time on an
+  offline device; this is a documented limitation.
 
 ## What the engine does not do
 

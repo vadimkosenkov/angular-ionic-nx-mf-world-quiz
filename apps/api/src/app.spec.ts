@@ -3,6 +3,7 @@ import request from 'supertest';
 import { createApp } from './app';
 import { createAccessTokens } from './auth/access-tokens';
 import type { AuthService } from './auth/auth-service';
+import type { LeaderboardService } from './leaderboard/leaderboard-service';
 import type { SessionService } from './sessions/session-service';
 
 const notUsed = () => Promise.reject(new Error('not used'));
@@ -13,12 +14,19 @@ const unusedSessions: SessionService = {
   find: notUsed,
   history: notUsed,
 };
+const unusedLeaderboard: LeaderboardService = {
+  startChallenge: notUsed,
+  board: notUsed,
+  records: notUsed,
+  outcome: notUsed,
+};
 const unusedAuth: AuthService = {
   signIn: notUsed,
   devSignIn: notUsed,
   refresh: notUsed,
   signOut: notUsed,
   currentUser: notUsed,
+  setNickname: notUsed,
   deleteAccount: notUsed,
 };
 const accessTokens = createAccessTokens(
@@ -31,6 +39,7 @@ describe('API app', () => {
     clock: createManualClock(fixedTime),
     sessions: unusedSessions,
     auth: unusedAuth,
+    leaderboard: unusedLeaderboard,
     accessTokens,
   });
 
@@ -80,6 +89,7 @@ describe('API app', () => {
           find: () => Promise.reject(new Error('connection to db-7 refused')),
         },
         auth: unusedAuth,
+        leaderboard: unusedLeaderboard,
         accessTokens,
         logError: (error) => logged.push(error),
       });

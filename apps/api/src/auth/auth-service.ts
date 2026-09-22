@@ -28,6 +28,8 @@ export interface AuthService {
   ): Promise<Result<IssuedSession, RefreshError | 'user-gone'>>;
   signOut(refreshToken: string): Promise<void>;
   currentUser(userId: string): Promise<User | null>;
+  /** Sets the player's public name; `null` when the account is gone. */
+  setNickname(userId: string, nickname: string): Promise<User | null>;
   /** Deletes the account and all its data (sessions, tokens, identities). */
   deleteAccount(userId: string): Promise<boolean>;
 }
@@ -102,6 +104,7 @@ export function createAuthService({
     signOut: (refreshToken) =>
       refreshTokens.revokeFamily(refreshToken, clock.now()),
     currentUser: (userId) => users.findById(userId),
+    setNickname: (userId, nickname) => users.setNickname(userId, nickname),
     deleteAccount: (userId) => users.delete(userId),
   };
 }
