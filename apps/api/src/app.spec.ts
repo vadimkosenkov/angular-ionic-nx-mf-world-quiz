@@ -1,10 +1,12 @@
 import { createManualClock } from '@world-quiz/shared/util';
+import type { Server } from 'node:http';
 import request from 'supertest';
 import { createApp } from './app';
 import { createAccessTokens } from './auth/access-tokens';
 import type { AuthService } from './auth/auth-service';
 import type { LeaderboardService } from './leaderboard/leaderboard-service';
 import type { SessionService } from './sessions/session-service';
+import { onLoopback } from './testing/loopback';
 
 const notUsed = () => Promise.reject(new Error('not used'));
 
@@ -42,10 +44,14 @@ describe('API app', () => {
     leaderboard: unusedLeaderboard,
     accessTokens,
   });
+  let server: Server;
+  beforeAll(async () => {
+    server = await onLoopback(app);
+  });
 
   describe('GET /health', () => {
     it('reports status and the injected clock time', async () => {
-      const response = await request(app).get('/health');
+      const response = await request(server).get('/health');
 
       expect(response.status).toBe(200);
       expect(response.headers['content-type']).toMatch(/^application\/json/);
@@ -56,7 +62,7 @@ describe('API app', () => {
     });
 
     it('does not expose the framework in response headers', async () => {
-      const response = await request(app).get('/health');
+      const response = await request(server).get('/health');
 
       expect(response.headers['x-powered-by']).toBeUndefined();
     });
@@ -64,7 +70,7 @@ describe('API app', () => {
 
   describe('unknown routes', () => {
     it('respond with a 404 problem-details body', async () => {
-      const response = await request(app).post('/does-not-exist');
+      const response = await request(server).post('/does-not-exist');
 
       expect(response.status).toBe(404);
       expect(response.headers['content-type']).toMatch(
@@ -98,7 +104,7 @@ describe('API app', () => {
         fixedTime,
       );
 
-      const response = await request(failing)
+      const response = await request(await onLoopback(failing))
         .get('/v1/sessions/0b8f1f6e-6f0e-4c1a-9a55-6a1f2f3e4d5c')
         .set('Authorization', `Bearer ${token}`);
 

@@ -25,7 +25,7 @@ describe('main navigation', () => {
     cy.visit('/home');
 
     const tabs = [
-      ['leaderboard', 'Leaderboards are on their way'],
+      ['leaderboard', 'The fastest perfect run wins'],
       ['achievements', '0/14 unlocked'],
       ['settings', 'Appearance'],
       ['home', 'Choose a category'],

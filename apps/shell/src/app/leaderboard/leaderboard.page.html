@@ -1,0 +1,150 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>{{ 'leaderboard.title' | transloco }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="wq-aurora">
+  <div class="wq-page leaderboard">
+    <ion-segment
+      class="wq-segment-pill"
+      data-testid="leaderboard-view"
+      [value]="view()"
+      (ionChange)="onViewChange($event)"
+    >
+      <ion-segment-button value="global">
+        <ion-label>{{ 'leaderboard.views.global' | transloco }}</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="mine">
+        <ion-label>{{ 'leaderboard.views.mine' | transloco }}</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+
+    @if (view() === 'global') {
+    <ion-segment
+      class="boards wq-segment-pill"
+      data-testid="leaderboard-board"
+      [scrollable]="true"
+      [value]="board()"
+      [attr.aria-label]="'leaderboard.boardsLabel' | transloco"
+      (ionChange)="onBoardChange($event)"
+    >
+      @for (item of boards; track item.id) {
+      <ion-segment-button [value]="item.id">
+        <ion-label>{{ 'leaderboard.boards.' + item.id | transloco }}</ion-label>
+      </ion-segment-button>
+      }
+    </ion-segment>
+    } @if (view() === 'global') {
+    <section class="wq-card challenge" data-testid="leaderboard-challenge">
+      <p class="rules" data-testid="leaderboard-rules">
+        {{ 'leaderboard.rules' | transloco: { count: progress.countryCount } }}
+      </p>
+      <p class="wq-text-secondary online">
+        {{ 'leaderboard.online' | transloco }}
+      </p>
+      @if (startFailed()) {
+      <p class="start-failed" role="alert" data-testid="challenge-start-failed">
+        {{ 'leaderboard.startFailed' | transloco }}
+      </p>
+      }
+      <ion-button
+        class="wq-glass-button"
+        expand="block"
+        data-testid="challenge-start"
+        [disabled]="starting()"
+        (click)="startChallenge()"
+      >
+        {{ 'leaderboard.start' | transloco: { board: 'leaderboard.boards.' +
+        board() | transloco } }}
+      </ion-button>
+    </section>
+
+    <section class="wq-card ranking" data-testid="leaderboard-ranking">
+      @if (ranking.isLoading() && !ranking.hasValue()) {
+      <p class="wq-text-secondary status" role="status">
+        {{ 'leaderboard.loading' | transloco }}
+      </p>
+      } @else if (ranking.error()) {
+      <wq-empty-state
+        data-testid="leaderboard-error"
+        icon="cloud-offline-outline"
+        [heading]="'leaderboard.loadFailed.title' | transloco"
+        [message]="'leaderboard.loadFailed.message' | transloco"
+      >
+        <ion-button fill="clear" (click)="ranking.reload()">
+          {{ 'leaderboard.retry' | transloco }}
+        </ion-button>
+      </wq-empty-state>
+      } @else if (ranking.hasValue()) { @let data = ranking.value(); @if
+      (data.entries.length === 0) {
+      <wq-empty-state
+        data-testid="leaderboard-empty"
+        icon="podium-outline"
+        [heading]="'leaderboard.empty.title' | transloco"
+        [message]="'leaderboard.empty.message' | transloco"
+      />
+      } @else {
+      <ol class="entries" data-testid="leaderboard-entries">
+        @for (entry of data.entries; track entry.rank) {
+        <li
+          [class.me]="entry.rank === myRank()"
+          [attr.aria-current]="entry.rank === myRank() ? 'true' : null"
+        >
+          <span class="rank">{{ entry.rank }}</span>
+          {{ ' ' }}
+          <span class="name">
+            {{ entry.nickname }} @if (entry.rank === myRank()) {
+            <span class="you">{{ 'leaderboard.you' | transloco }}</span>
+            }
+          </span>
+          {{ ' ' }}
+          <span class="time">{{ formatRunTime(entry.completionTimeMs) }}</span>
+        </li>
+        }
+      </ol>
+      <p class="wq-text-secondary players">
+        {{ 'leaderboard.players' | wqPlural: data.players }}
+      </p>
+      } }
+    </section>
+    } @else {
+    <section class="wq-card records" data-testid="leaderboard-records">
+      @if (records.error()) {
+      <wq-empty-state
+        data-testid="leaderboard-error"
+        icon="cloud-offline-outline"
+        [heading]="'leaderboard.loadFailed.title' | transloco"
+        [message]="'leaderboard.loadFailed.message' | transloco"
+      >
+        <ion-button fill="clear" (click)="records.reload()">
+          {{ 'leaderboard.retry' | transloco }}
+        </ion-button>
+      </wq-empty-state>
+      } @else {
+      <ul>
+        @for (entry of myRecords(); track entry.board) {
+        <li [attr.data-testid]="'record-' + entry.board">
+          <span class="board"
+            >{{ 'leaderboard.boards.' + entry.board | transloco }}</span
+          >
+          {{ ' ' }} @if (entry.record; as record) {
+          <span class="time">{{ formatRunTime(record.completionTimeMs) }}</span>
+          {{ ' ' }}
+          <span class="wq-text-secondary place">
+            {{ 'leaderboard.place' | transloco: { rank: record.rank, players:
+            record.players } }}
+          </span>
+          } @else {
+          <span class="wq-text-secondary place">
+            {{ 'leaderboard.noRecord' | transloco }}
+          </span>
+          }
+        </li>
+        }
+      </ul>
+      }
+    </section>
+    }
+  </div>
+</ion-content>

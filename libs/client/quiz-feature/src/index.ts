@@ -1,6 +1,7 @@
 export { quizRemoteRoutes } from './lib/quiz-remote-routes';
 export { registerQuizIcons } from './lib/quiz-icons';
 export { QuizPlay } from './lib/quiz-play/quiz-play';
-export { QuizResults } from './lib/quiz-results/quiz-results';
+export { formatRunTime, QuizResults } from './lib/quiz-results/quiz-results';
+export type { ChallengeResult } from './lib/quiz-results/quiz-results';
 export { QuizSessionStore } from './lib/quiz-session.store';
 export type { AnswerFeedback } from './lib/quiz-session.store';

@@ -65,6 +65,15 @@ export class AuthApi {
     );
   }
 
+  /** Sets the public nickname; answers the updated user. */
+  async updateNickname(nickname: string): Promise<User> {
+    return userSchema.parse(
+      await firstValueFrom(
+        this.http.patch(`${this.apiUrl}/v1/me`, { nickname }),
+      ),
+    );
+  }
+
   /** Deletes the account; the API also clears the refresh cookie. */
   async deleteAccount(): Promise<void> {
     await firstValueFrom(

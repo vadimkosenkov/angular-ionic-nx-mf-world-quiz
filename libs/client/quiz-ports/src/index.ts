@@ -8,6 +8,7 @@ export type {
   QuizProgressReader,
   QuizRemoteRoutesModule,
   QuizResultSink,
+  QuizSessionContext,
   QuizSessionOutcome,
 } from './lib/quiz-ports';
 export {

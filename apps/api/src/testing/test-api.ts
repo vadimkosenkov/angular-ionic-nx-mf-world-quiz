@@ -1,7 +1,7 @@
 import { createQuizEngine, type QuizEngine } from '@world-quiz/quiz/domain';
 import { FIXTURE_DATASET } from '@world-quiz/quiz/domain/testing';
 import { createManualClock, type ManualClock } from '@world-quiz/shared/util';
-import type { Express } from 'express';
+import type { Server } from 'node:http';
 import request from 'supertest';
 import { type AppOptions, createApp } from '../app';
 import { createAccessTokens } from '../auth/access-tokens';
@@ -23,12 +23,14 @@ import {
   type FakeIdentityProvider,
   GOOGLE_CLIENT_ID,
 } from './fake-identity-provider';
+import { onLoopback } from './loopback';
 
 export const TEST_START = 1_700_000_000_000;
 export const TEST_JWT_SECRET = 'test-secret-that-is-at-least-32-characters';
 
 export interface TestApi {
-  readonly app: Express;
+  /** The app, served on 127.0.0.1 (see `onLoopback`): `request(api.app)`. */
+  readonly app: Server;
   readonly clock: ManualClock;
   readonly engine: QuizEngine;
   readonly provider: FakeIdentityProvider;
@@ -61,7 +63,7 @@ export async function createTestApi(
     clock,
   });
 
-  const app = createApp({
+  const express = createApp({
     clock,
     accessTokens,
     leaderboard,
@@ -102,14 +104,16 @@ export async function createTestApi(
     logError: () => undefined,
   });
 
+  const server = await onLoopback(express);
+
   return {
-    app,
+    app: server,
     clock,
     engine,
     provider,
     leaderboard,
     async signIn(subject = 'player-1', displayName?: string) {
-      const response = await request(app)
+      const response = await request(server)
         .post('/v1/auth/dev')
         .send({ subject, displayName, refreshTokenIn: 'body' });
       if (response.status !== 200) {

@@ -10,6 +10,7 @@ import {
   summarizeSession,
 } from '@world-quiz/quiz/domain';
 import { FIXTURE_DATASET } from '@world-quiz/quiz/domain/testing';
+import type { SessionResult } from '@world-quiz/shared/contracts';
 import { COUNTRY_DATASET } from '../core/tokens';
 import {
   createMemoryLocalStore,
@@ -49,7 +50,7 @@ function session(
 }
 
 function setup() {
-  const syncs = { count: 0 };
+  const syncs = { count: 0, answer: null as SessionResult | null };
   TestBed.resetTestingModule();
   TestBed.configureTestingModule({
     providers: [
@@ -57,7 +58,12 @@ function setup() {
       { provide: LOCAL_STORE, useValue: createMemoryLocalStore() },
       {
         provide: SyncService,
-        useValue: { sync: () => (syncs.count++, Promise.resolve()) },
+        useValue: {
+          resultOf: () => {
+            syncs.count++;
+            return Promise.resolve(syncs.answer);
+          },
+        },
       },
       provideQuizPorts(),
     ],
@@ -137,5 +143,47 @@ describe('shell quiz ports', () => {
     expect(reader.scopeProgress('capitals', 'europe').mastered).toBe(1);
     expect(reader.scopeProgress('flags', 'europe').mastered).toBe(0);
     expect(reader.mistakes('capitals')).toEqual([]);
+  });
+
+  it("sends a challenge run with its challenge id and hands over the server's verdict", async () => {
+    const { sink, progress, syncs } = setup();
+    const verdict = {
+      board: 'capitals-hard' as const,
+      ranked: true,
+      completionTimeMs: 2_000,
+      personalRecord: false,
+      rank: 4,
+    };
+    const finished = session([{ code: 'fr', correct: true }]);
+    const training = sink.submit(
+      finished,
+      summarizeSession(finished, finished.answers.length),
+    );
+    syncs.answer = {
+      id: 'x',
+      config: finished.config,
+      summary: {
+        answered: 1,
+        correct: 1,
+        incorrect: 0,
+        accuracy: 1,
+        durationMs: 1,
+        endReason: 'completed',
+        completed: true,
+        perfect: true,
+      },
+      recordedAt: '2026-09-22T10:00:00.000Z',
+      challenge: verdict,
+    };
+
+    const outcome = sink.submit(
+      finished,
+      summarizeSession(finished, finished.answers.length),
+      { challengeId: 'challenge-1' },
+    );
+
+    expect(training.challenge).toBeUndefined();
+    expect(progress.pending().at(-1)?.request?.challengeId).toBe('challenge-1');
+    expect(await outcome.challenge).toEqual(verdict);
   });
 });

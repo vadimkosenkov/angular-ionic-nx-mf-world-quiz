@@ -15,7 +15,6 @@ import {
   type ProgressMap,
   type QuizCategory,
   type QuizScope,
-  type QuizSession,
   scopeProgress,
   sessionProgressEvents,
 } from '@world-quiz/quiz/domain';
@@ -24,14 +23,17 @@ import {
  * In-memory implementation of the quiz ports, for a remote served on its own
  * (`nx serve capitals`, `nx serve flags`) so the quiz can be developed without
  * the shell. Progress is lost on reload; the real implementation lives in the
- * shell (apps/shell/src/app/quiz).
+ * shell (apps/shell/src/app/quiz). There is no server here, so a challenge
+ * run gets no verdict (`challenge: null`).
  */
 @Injectable({ providedIn: 'root' })
 export class InMemoryQuizPorts implements QuizResultSink, QuizProgressReader {
   private readonly dataset = inject(COUNTRY_DATASET);
   private readonly progress = signal<ProgressMap>(new Map());
 
-  submit(session: QuizSession): QuizSessionOutcome {
+  submit(
+    ...[session, , context]: Parameters<QuizResultSink['submit']>
+  ): QuizSessionOutcome {
     const before = evaluateAchievements(this.dataset, this.progress());
     this.progress.update((current) =>
       applyProgressEvents(
@@ -44,6 +46,7 @@ export class InMemoryQuizPorts implements QuizResultSink, QuizProgressReader {
     return {
       newlyUnlocked: newlyUnlockedAchievements(before, after),
       mistakes: this.mistakes(session.config.category),
+      ...(context?.challengeId ? { challenge: Promise.resolve(null) } : {}),
     };
   }
 

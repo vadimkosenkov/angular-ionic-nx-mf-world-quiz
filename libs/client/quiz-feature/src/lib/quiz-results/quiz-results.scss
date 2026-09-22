@@ -63,6 +63,7 @@
   }
 }
 
+.challenge,
 .unlocked,
 .review {
   padding: var(--wq-space-5);
@@ -97,4 +98,22 @@
 .unlocked li {
   justify-content: flex-start;
   color: var(--wq-color-success);
+}
+
+.challenge {
+  p {
+    margin: 0 0 var(--wq-space-1);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .rank {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--wq-color-primary);
+  }
+
+  .record {
+    font-weight: 700;
+    color: var(--wq-color-success);
+  }
 }

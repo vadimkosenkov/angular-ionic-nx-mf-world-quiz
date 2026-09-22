@@ -25,7 +25,13 @@ export type AuthStatus =
 export const REFRESH_LOCK = 'world-quiz-auth-refresh';
 
 /** What went wrong in the last sign-in action, for the UI to explain. */
-export type AuthError = 'sign-in-failed' | 'unreachable' | 'delete-failed';
+export type AuthError =
+  | 'sign-in-failed'
+  | 'unreachable'
+  | 'delete-failed'
+  /** The API refused the nickname (its rules: `nicknameSchema`). */
+  | 'nickname-invalid'
+  | 'nickname-failed';
 
 /**
  * The signed-in state of the app, as signals.
@@ -143,6 +149,25 @@ export class AuthStore {
       // Signing out locally must work even when the API cannot be reached.
       await this.api.signOut().catch(() => undefined);
       this.clear();
+    });
+  }
+
+  /** Changes the public nickname shown on leaderboards. */
+  async setNickname(nickname: string): Promise<boolean> {
+    return this.run(async () => {
+      try {
+        this.userState.set(await this.api.updateNickname(nickname));
+        return true;
+      } catch (error) {
+        this.errorState.set(
+          isUnreachable(error)
+            ? 'unreachable'
+            : error instanceof HttpErrorResponse && error.status === 400
+              ? 'nickname-invalid'
+              : 'nickname-failed',
+        );
+        return false;
+      }
     });
   }
 

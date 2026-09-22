@@ -5,7 +5,7 @@ built as a full-stack portfolio project on a modern Angular ecosystem: **Nx,
 Angular 22 (signals, zoneless), Native Federation microfrontends, Ionic,
 Capacitor (iOS), Express 5, PostgreSQL** and a multi-level test strategy.
 
-> **Project status: Phase 9a, leaderboard challenges on the API.**
+> **Project status: Phase 9b, leaderboard challenges in the app.**
 > The workspace, CI, the 195-country dataset, the platform-independent quiz
 > domain and the Ionic shell (welcome screen, tabs, Home, Achievements,
 > Leaderboard with an honest "not available yet" state, Settings, light/dark
@@ -18,9 +18,11 @@ Capacitor (iOS), Express 5, PostgreSQL** and a multi-level test strategy.
 > and every device of the player rebuilds the same progress from the
 > account's history. The API issues **perfect-run challenges** with its own
 > seed, ranks eligible runs by their checked time, and serves public boards
-> (nicknames only) and personal records; the leaderboard screen in the app
-> comes next. This README only describes what exists; planned items are
-> marked as such.
+> (nicknames only) and personal records. In the app, players start a
+> challenge from the Leaderboard tab, see their rank and personal record on
+> the results, browse the boards and their records, and choose their public
+> nickname. The SSR site with the public leaderboard comes next. This README
+> only describes what exists; planned items are marked as such.
 
 ## Product in one minute
 

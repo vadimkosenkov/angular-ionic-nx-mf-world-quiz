@@ -24,7 +24,38 @@
   </dl>
 </section>
 
-@if (outcome(); as outcome) { @if (outcome.newlyUnlocked.length > 0) {
+@if (challenge(); as challenge) {
+<section
+  class="wq-card challenge"
+  role="status"
+  data-testid="results-challenge"
+  [attr.data-status]="challenge.status"
+>
+  <h2>{{ 'results.challenge.title' | transloco }}</h2>
+  @switch (challenge.status) { @case ('checking') {
+  <p>{{ 'results.challenge.checking' | transloco }}</p>
+  } @case ('unsent') {
+  <p>{{ 'results.challenge.unsent' | transloco }}</p>
+  } @case ('done') { @let verdict = challenge.outcome; @if (verdict.ranked) {
+  <p class="rank" data-testid="results-rank">
+    {{ 'results.challenge.ranked' | transloco: { rank: verdict.rank } }}
+  </p>
+  @if (verdict.completionTimeMs !== null) {
+  <p>
+    {{ 'results.challenge.time' | transloco: { time:
+    formatRunTime(verdict.completionTimeMs) } }}
+  </p>
+  } @if (verdict.personalRecord) {
+  <p class="record" data-testid="results-record">
+    {{ 'results.challenge.record' | transloco }}
+  </p>
+  } } @else {
+  <p data-testid="results-unranked">
+    {{ 'results.challenge.reasons.' + verdict.reason | transloco }}
+  </p>
+  } } }
+</section>
+} @if (outcome(); as outcome) { @if (outcome.newlyUnlocked.length > 0) {
 <section class="wq-card unlocked" data-testid="results-unlocked">
   <h2>{{ 'results.unlocked' | transloco }}</h2>
   <ul>
@@ -66,6 +97,7 @@
     data-testid="results-play-again"
     (click)="playAgain.emit()"
   >
-    {{ 'results.playAgain' | transloco }}
+    {{ (isChallenge() ? 'results.newChallenge' : 'results.playAgain') |
+    transloco }}
   </ion-button>
 </div>

@@ -7,8 +7,10 @@
 > [quiz engine](quiz-engine.md). **Server implemented** (Phase 9a): issued
 > challenges with a server seed, the timing check, ranked runs, public
 > boards and personal records ([backend.md](../architecture/backend.md#leaderboards-challenges-and-records)).
-> 📐 Playing challenges and the leaderboard screen in the app (Phase 9b), the
-> public leaderboard on the SSR site (Phase 9c).
+> **App implemented** (Phase 9b): starting and playing challenges, the verdict
+> on the results screen, rankings, records and the nickname
+> ([frontend.md](../architecture/frontend.md#leaderboard-challenges-rankings-records)).
+> 📐 The public leaderboard on the SSR site (Phase 9c).
 
 ## Concept
 

@@ -21,7 +21,12 @@ export function cors(allowedOrigins: readonly string[]): RequestHandler {
     response.setHeader('Access-Control-Allow-Origin', origin);
     response.setHeader('Access-Control-Allow-Credentials', 'true');
     if (request.method === 'OPTIONS') {
-      response.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE');
+      // Every method a route uses: a browser refuses the request otherwise,
+      // and server-side tests (no preflight) would not notice.
+      response.setHeader(
+        'Access-Control-Allow-Methods',
+        'GET, POST, PATCH, DELETE',
+      );
       response.setHeader(
         'Access-Control-Allow-Headers',
         'Content-Type, Authorization',

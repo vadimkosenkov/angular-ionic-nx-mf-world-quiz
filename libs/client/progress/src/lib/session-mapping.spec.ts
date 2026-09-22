@@ -23,6 +23,15 @@ describe('playedSession', () => {
     ]);
   });
 
+  it('names the challenge a leaderboard run played, and only then', () => {
+    expect(playedSession(played, 'id-1', 'challenge-1').request).toMatchObject({
+      challengeId: 'challenge-1',
+    });
+    expect(playedSession(played, 'id-2').request).not.toHaveProperty(
+      'challengeId',
+    );
+  });
+
   it('starts in the outbox, with the progress events the domain derives', () => {
     const local = playedSession(played, 'id-1');
 

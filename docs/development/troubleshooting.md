@@ -193,3 +193,19 @@ in `libs/client/auth/src/lib/google-sign-in-button.ts`).
 
 **Fix:** none needed; an incognito window shows the plain button in the app's
 language.
+
+## API tests fail at random with 403, 404, 401 or an empty body
+
+**Symptom:** a different API test fails now and then with a status or body
+the API never sends (403 from `/v1/auth/dev`, 404 for a route that exists,
+`{}`); the same test passes when run again.
+
+**Cause:** `request(app)` from supertest starts the app on a random port on
+all addresses (`::`) and then connects to `127.0.0.1`. On macOS that port may
+already be taken on `127.0.0.1` only by another program — an IDE's built-in
+web server, a database tool — and the request reaches that program instead.
+It shows more often under load (the full `run-many` verification).
+
+**Fix:** serve the app on `127.0.0.1` itself: `onLoopback(app)` in
+`apps/api/src/testing/loopback.ts`, which `createTestApi()` already uses
+(`request(api.app)`). A port taken on `127.0.0.1` can then never be handed out.

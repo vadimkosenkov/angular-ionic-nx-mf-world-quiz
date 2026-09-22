@@ -6,7 +6,10 @@ import { TestBed } from '@angular/core/testing';
 import { fireEvent, render, screen } from '@testing-library/angular';
 import { AuthStore } from '@world-quiz/client/auth';
 import { ProgressStore } from '@world-quiz/client/progress';
-import { finishedSession } from '@world-quiz/client/progress/testing';
+import {
+  finishedSession,
+  sessionResult,
+} from '@world-quiz/client/progress/testing';
 import type { AuthResponse } from '@world-quiz/shared/contracts';
 import { provideShellTesting, TEST_API_URL } from '../../testing/shell-testing';
 import { AccountSection } from './account-section';
@@ -145,7 +148,10 @@ describe('AccountSection', () => {
 
     fireEvent.click(screen.getByTestId('sign-out'));
     await answer('POST', '/v1/sessions', (request) =>
-      request.flush({}, { status: 201, statusText: 'Created' }),
+      request.flush(sessionResult(request.request.body.id), {
+        status: 201,
+        statusText: 'Created',
+      }),
     );
     await answer('GET', '/v1/sessions', emptyHistory);
     await answer('POST', '/v1/auth/logout', (request) =>
@@ -220,5 +226,62 @@ describe('AccountSection', () => {
     expect(screen.getByTestId('account').textContent).toContain(
       'a development account',
     );
+  });
+
+  it('shows the public name and changes it within the rules', async () => {
+    const { answer, fixture, auth } = await renderSection(signedIn());
+    expect(screen.getByTestId('account-nickname').textContent).toContain(
+      'Ann the Explorer',
+    );
+
+    fireEvent.click(screen.getByTestId('nickname-edit'));
+    fixture.detectChanges();
+    const type = (value: string) => {
+      screen
+        .getByTestId('nickname-input')
+        .dispatchEvent(new CustomEvent('ionInput', { detail: { value } }));
+      fixture.detectChanges();
+    };
+    const save = () =>
+      screen.getByTestId('nickname-save') as HTMLElement & {
+        disabled: boolean;
+      };
+
+    type('<b>');
+    expect(save().disabled).toBe(true);
+    type('Globe Trotter');
+    expect(save().disabled).toBe(false);
+    fireEvent.submit(screen.getByTestId('nickname-input').closest('form')!);
+    await answer('PATCH', '/v1/me', (request) => {
+      expect(request.request.body).toEqual({ nickname: 'Globe Trotter' });
+      request.flush({ ...signedIn().user, nickname: 'Globe Trotter' });
+    });
+
+    expect(auth.user()?.nickname).toBe('Globe Trotter');
+    expect(screen.getByTestId('account-nickname').textContent).toContain(
+      'Globe Trotter',
+    );
+  });
+
+  it('explains when the server refuses a name', async () => {
+    const { answer, fixture } = await renderSection(signedIn());
+    fireEvent.click(screen.getByTestId('nickname-edit'));
+    fixture.detectChanges();
+    screen
+      .getByTestId('nickname-input')
+      .dispatchEvent(
+        new CustomEvent('ionInput', { detail: { value: 'Valid Name' } }),
+      );
+    fixture.detectChanges();
+
+    fireEvent.submit(screen.getByTestId('nickname-input').closest('form')!);
+    await answer('PATCH', '/v1/me', (request) =>
+      request.flush(null, { status: 400, statusText: 'Bad Request' }),
+    );
+
+    expect(screen.getByTestId('account-error').textContent).toContain(
+      'This name is not allowed',
+    );
+    expect(screen.getByTestId('nickname-input')).toBeTruthy();
   });
 });
