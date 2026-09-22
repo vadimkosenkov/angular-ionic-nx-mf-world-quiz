@@ -3,7 +3,11 @@
  * (`@world-quiz/client/progress/testing`): never import it from production code.
  */
 
-import type { SessionHistoryEntry, User } from '@world-quiz/shared/contracts';
+import type {
+  SessionHistoryEntry,
+  SessionResult,
+  User,
+} from '@world-quiz/shared/contracts';
 import type {
   Difficulty,
   QuizCategory,
@@ -99,5 +103,34 @@ export function historyEntry(
       correct: answer.correct,
       answeredAt: startedAt + (index + 1) * 1_000,
     })),
+  };
+}
+
+/** What `POST /v1/sessions` answers, for a session with this id. */
+export function sessionResult(
+  id: string,
+  extra: Partial<SessionResult> = {},
+): SessionResult {
+  return {
+    id,
+    config: {
+      category: 'capitals',
+      difficulty: 'easy',
+      mode: 'fixed',
+      scope: 'world',
+      questionCount: 1,
+    },
+    summary: {
+      answered: 1,
+      correct: 1,
+      incorrect: 0,
+      accuracy: 1,
+      durationMs: 1_000,
+      endReason: 'completed',
+      completed: true,
+      perfect: true,
+    },
+    recordedAt: '2026-09-22T10:00:00.000Z',
+    ...extra,
   };
 }

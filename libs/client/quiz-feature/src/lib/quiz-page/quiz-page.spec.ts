@@ -4,8 +4,11 @@ import { provideQuizTesting } from '../../testing/quiz-testing';
 import {
   QUIZ_RESULT_SINK,
   type QuizResultSink,
+  type QuizSessionContext,
   type QuizSessionOutcome,
 } from '@world-quiz/client/quiz-ports';
+import { FIXTURE_DATASET } from '@world-quiz/quiz/domain/testing';
+import type { ChallengeOutcome } from '@world-quiz/shared/contracts';
 import type {
   QuizCategory,
   QuizSession,
@@ -15,14 +18,40 @@ import { QuizPage } from './quiz-page';
 
 /** Records what the remote hands to the host. */
 class RecordingSink implements QuizResultSink {
-  readonly submissions: { session: QuizSession; summary: SessionSummary }[] =
-    [];
+  readonly submissions: {
+    session: QuizSession;
+    summary: SessionSummary;
+    context?: QuizSessionContext;
+  }[] = [];
+  /** What the host answers for a challenge run. */
+  verdict: Promise<ChallengeOutcome | null> = Promise.resolve(null);
 
-  submit(session: QuizSession, summary: SessionSummary): QuizSessionOutcome {
-    this.submissions.push({ session, summary });
-    return { newlyUnlocked: [], mistakes: [] };
+  submit(
+    session: QuizSession,
+    summary: SessionSummary,
+    context?: QuizSessionContext,
+  ): QuizSessionOutcome {
+    this.submissions.push({ session, summary, context });
+    return {
+      newlyUnlocked: [],
+      mistakes: [],
+      ...(context?.challengeId ? { challenge: this.verdict } : {}),
+    };
   }
 }
+
+/** Lets the host's answer arrive and the page render it. */
+async function settle(fixture: { detectChanges(): void }) {
+  await new Promise((resolve) => setTimeout(resolve));
+  fixture.detectChanges();
+}
+
+const CHALLENGE = {
+  mode: 'challenge',
+  difficulty: 'easy',
+  challenge: 'b0e5c0de-0000-4000-8000-000000000001',
+  seed: 'server-seed',
+};
 
 async function renderPage(
   sink: RecordingSink,
@@ -163,5 +192,116 @@ describe('QuizPage', () => {
       'Question 1 of 1',
     );
     expect(sink.submissions).toHaveLength(1);
+  });
+
+  describe('leaderboard challenge', () => {
+    const playAll = () => {
+      for (let i = 0; i < FIXTURE_DATASET.length; i++) answerCorrectly();
+    };
+
+    it('plays the whole world with the server seed and hands over the challenge id', async () => {
+      const sink = new RecordingSink();
+      await renderPage(sink, CHALLENGE);
+
+      expect(
+        (await screen.findByTestId('quiz-position')).textContent,
+      ).toContain(`Question 1 of ${FIXTURE_DATASET.length}`);
+      playAll();
+
+      const [submission] = sink.submissions;
+      expect(submission?.session.seed).toBe('server-seed');
+      expect(submission?.session.config).toEqual({
+        category: 'capitals',
+        difficulty: 'easy',
+        mode: 'challenge',
+        scope: 'world',
+      });
+      expect(submission?.context).toEqual({ challengeId: CHALLENGE.challenge });
+    });
+
+    it('shows the server checking the run, then rank and record', async () => {
+      const sink = new RecordingSink();
+      let answer: (outcome: ChallengeOutcome) => void = () => undefined;
+      sink.verdict = new Promise((resolve) => (answer = resolve));
+      const { fixture } = await renderPage(sink, CHALLENGE);
+      await screen.findByTestId('quiz-prompt');
+      playAll();
+
+      expect(screen.getByTestId('results-challenge').textContent).toContain(
+        'Checking your run',
+      );
+      answer({
+        board: 'capitals-easy',
+        ranked: true,
+        completionTimeMs: 247_300,
+        personalRecord: true,
+        rank: 3,
+      });
+      await settle(fixture);
+
+      const card = screen.getByTestId('results-challenge').textContent;
+      expect(card).toContain('Ranked #3');
+      expect(card).toContain('Time: 4:07.3');
+      expect(card).toContain('New personal record!');
+    });
+
+    it('says why a run is not ranked', async () => {
+      const refused = new RecordingSink();
+      refused.verdict = Promise.resolve({
+        board: 'capitals-easy',
+        ranked: false,
+        reason: 'late',
+        completionTimeMs: 90_000,
+        personalRecord: false,
+        rank: null,
+      });
+      const { fixture } = await renderPage(refused, CHALLENGE);
+      await screen.findByTestId('quiz-prompt');
+      playAll();
+      await settle(fixture);
+
+      expect(screen.getByTestId('results-unranked').textContent).toContain(
+        'too long after the run',
+      );
+    });
+
+    it('says so when the run could not be sent', async () => {
+      const { fixture } = await renderPage(new RecordingSink(), CHALLENGE);
+      await screen.findByTestId('quiz-prompt');
+      playAll();
+      await settle(fixture);
+
+      expect(screen.getByTestId('results-challenge').textContent).toContain(
+        'you are offline',
+      );
+    });
+
+    it('offers a new challenge from the leaderboard instead of replaying this one', async () => {
+      const { fixture } = await renderPage(new RecordingSink(), CHALLENGE);
+      await screen.findByTestId('quiz-prompt');
+      playAll();
+      const navigateRoot = vi
+        .spyOn(fixture.debugElement.injector.get(NavController), 'navigateRoot')
+        .mockResolvedValue(true);
+
+      const again = screen.getByTestId('results-play-again');
+      expect(again.textContent).toContain('New challenge');
+      fireEvent.click(again);
+
+      expect(navigateRoot).toHaveBeenCalledWith('/leaderboard', {
+        animationDirection: 'back',
+      });
+    });
+
+    it('is a training quiz without a challenge id and seed', async () => {
+      const sink = new RecordingSink();
+      await renderPage(sink, { mode: 'challenge', count: '1' });
+      await screen.findByTestId('quiz-prompt');
+
+      answerCorrectly();
+
+      expect(sink.submissions[0]?.session.config.mode).toBe('fixed');
+      expect(sink.submissions[0]?.context).toBeUndefined();
+    });
   });
 });

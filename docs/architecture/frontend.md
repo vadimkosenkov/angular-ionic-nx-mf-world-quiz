@@ -4,7 +4,8 @@
 > Achievements, Settings (Phase 3); quiz setup and the Capitals (Phase 4)
 > and Flags (Phase 5) quizzes, each loaded from its own microfrontend;
 > sign-in with Google (Phase 7b), required before playing, with progress kept
-> on the device and synced with the account (Phase 8b).
+> on the device and synced with the account (Phase 8b); leaderboard
+> challenges, rankings, records and the public nickname (Phase 9b).
 
 ## Stack
 
@@ -26,7 +27,7 @@ apps/shell/src/app/
   app.ts               <ion-app><ion-router-outlet/></ion-app>
   tabs/                ion-tabs with a translucent tab bar
   home/                greeting, overall progress, categories, practice, achievement preview
-  leaderboard/         view and board selectors, rules, "not available yet" state
+  leaderboard/         challenge start, global ranking per board, my records
   achievements/        summary, legend, all 14 achievements
   settings/            account (sign-in), theme, language, about
   quiz/
@@ -57,16 +58,17 @@ Libraries used by the shell:
 
 ## Routing
 
-| URL                                                   | Page                                                  | Loading                               |
-| ----------------------------------------------------- | ----------------------------------------------------- | ------------------------------------- |
-| `/welcome`                                            | welcome + sign-in (`signedOutGuard`: players go home) | lazy (`loadComponent`)                |
-| `/`                                                   | redirect to `/home`                                   | —                                     |
-| `/home`, `/leaderboard`, `/achievements`, `/settings` | tab pages inside `TabsPage`                           | lazy (`loadComponent`)                |
-| `/quiz/setup`                                         | quiz setup (shell)                                    | lazy (`loadComponent`)                |
-| `/quiz/setup?category=`                               | preselects Capitals or Flags (Home's cards link here) | —                                     |
-| `/quiz/capitals?scope=&difficulty=&mode=&count=`      | Capitals microfrontend                                | `loadChildren` over Native Federation |
-| `/quiz/flags?scope=&difficulty=&mode=&count=`         | Flags microfrontend                                   | `loadChildren` over Native Federation |
-| anything else                                         | redirect to `/home`                                   | —                                     |
+| URL                                                                        | Page                                                  | Loading                               |
+| -------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------- |
+| `/welcome`                                                                 | welcome + sign-in (`signedOutGuard`: players go home) | lazy (`loadComponent`)                |
+| `/`                                                                        | redirect to `/home`                                   | —                                     |
+| `/home`, `/leaderboard`, `/achievements`, `/settings`                      | tab pages inside `TabsPage`                           | lazy (`loadComponent`)                |
+| `/quiz/setup`                                                              | quiz setup (shell)                                    | lazy (`loadComponent`)                |
+| `/quiz/setup?category=`                                                    | preselects Capitals or Flags (Home's cards link here) | —                                     |
+| `/quiz/capitals?scope=&difficulty=&mode=&count=`                           | Capitals microfrontend                                | `loadChildren` over Native Federation |
+| `/quiz/flags?scope=&difficulty=&mode=&count=`                              | Flags microfrontend                                   | `loadChildren` over Native Federation |
+| `/quiz/<category>?mode=challenge&difficulty=&scope=world&challenge=&seed=` | a leaderboard challenge (started from Leaderboard)    | same remotes                          |
+| anything else                                                              | redirect to `/home`                                   | —                                     |
 
 Everything except `/welcome` is behind `signedInGuard`
 ([ADR-011](../decisions/ADR-011-sign-in-required.md)): it waits for the
@@ -117,6 +119,30 @@ may know about each other, is described in
 - Progress and sync: [state-management.md](state-management.md) and
   [ADR-006](../decisions/ADR-006-local-persistence.md).
 
+## Leaderboard (challenges, rankings, records)
+
+Rules: [leaderboard.md](../domain/leaderboard.md).
+
+- **Global**: the board chosen (four boards), with a card that starts a
+  challenge on it: `POST /v1/challenges`, then the board's quiz opens with
+  the challenge id and the server's seed in the URL. Below, the ranking
+  (`httpResource` on `GET /v1/leaderboards/:board`): rank, nickname, time
+  (`m:ss.t`), the player's own row marked (`aria-current`, from their
+  records), and the number of players. Loading, error with retry and empty
+  states are explicit.
+- **My records**: every board with the player's best time and place
+  (`GET /v1/me/records`), or "No perfect run yet".
+- Both are loaded again when the tab is shown and **after every sync**
+  (`SyncService.lastSyncedAt`): Ionic can show this cached page again without
+  `ionViewWillEnter`, e.g. after "New challenge" on the results.
+- **Results of a challenge** (in the remote): "Checking your run…", then
+  "Ranked #N", the time and "New personal record!", or why the run is not
+  ranked, or that it could not be sent (offline). "Play again" becomes "New
+  challenge" and returns to the leaderboard: a challenge is played once.
+- **Public name**: Settings → Account shows the nickname and edits it inline,
+  validated with the API's own `nicknameSchema` before sending (`PATCH
+/v1/me` through `AuthStore.setNickname`).
+
 ## Start-up sequence
 
 1. `provideAppSettings()` registers an **app initializer**:
@@ -136,8 +162,7 @@ Everything is derived; nothing is copied from the Figma mock-ups:
 - **Overall progress** is Capitals + Flags mastered, out of 2 × 195.
 - **Achievements** (14) come from `evaluateAchievements`, with per-scope totals from the dataset.
 - **Practice Mistakes** comes from `practiceCandidates`.
-- **Leaderboard** shows the four real boards and rules, and an honest
-  "not available yet" state until sign-in and the API exist.
+- **Leaderboard** shows real rankings and records from the API.
 
 `ProgressStore` (`client-progress`) keeps the finished sessions on the device
 (IndexedDB) and rebuilds progress from their answers. The shell's quiz result

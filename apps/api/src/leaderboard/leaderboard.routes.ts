@@ -63,8 +63,10 @@ export function leaderboardsRouter(leaderboard: LeaderboardService): Router {
       });
       return;
     }
-    // Public and the same for everyone: shared caches may keep it briefly.
-    response.setHeader('Cache-Control', 'public, max-age=30');
+    // The same for everyone, but it must be fresh: a player who has just
+    // finished a run expects to see it. Caches revalidate every time; the
+    // ETag Express sets makes an unchanged board a short 304.
+    response.setHeader('Cache-Control', 'no-cache');
     response.json(await leaderboard.board(board.data, query.data.limit));
   });
 

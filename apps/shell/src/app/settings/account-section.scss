@@ -70,3 +70,16 @@ ion-button.danger {
   font-size: var(--wq-font-size-caption);
   color: var(--wq-color-error);
 }
+
+.nickname {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wq-space-3);
+}
+
+.nickname-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wq-space-2);
+}

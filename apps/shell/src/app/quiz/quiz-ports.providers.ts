@@ -4,6 +4,7 @@ import {
   QUIZ_RESULT_SINK,
   type QuizProgressReader,
   type QuizResultSink,
+  type QuizSessionContext,
   type QuizSessionOutcome,
 } from '@world-quiz/client/quiz-ports';
 import {
@@ -26,16 +27,24 @@ export class ShellQuizResultSink implements QuizResultSink {
   private readonly progress = inject(ProgressStore);
   private readonly sync = inject(SyncService);
 
-  submit(session: QuizSession, summary: SessionSummary): QuizSessionOutcome {
+  submit(
+    session: QuizSession,
+    summary: SessionSummary,
+    context: QuizSessionContext = {},
+  ): QuizSessionOutcome {
     const before = this.progress.achievements();
-    this.progress.recordSession(session);
+    const recorded = this.progress.recordSession(session, context);
     const after = this.progress.achievements();
-    // Sent now when online; otherwise it waits in the outbox.
-    void this.sync.sync();
+    // Sent now when online; otherwise it waits in the outbox. A challenge's
+    // verdict is what the results screen waits for.
+    const sent = this.sync.resultOf(recorded.id);
 
     return {
       newlyUnlocked: newlyUnlockedAchievements(before, after),
       mistakes: this.mistakesFor(session.config.category),
+      ...(context.challengeId
+        ? { challenge: sent.then((result) => result?.challenge ?? null) }
+        : {}),
     };
   }
 

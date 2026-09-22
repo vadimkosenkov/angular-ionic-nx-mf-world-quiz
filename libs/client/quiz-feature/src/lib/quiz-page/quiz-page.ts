@@ -6,6 +6,7 @@ import {
   type QuizSessionOutcome,
 } from '@world-quiz/client/quiz-ports';
 import {
+  CHALLENGE_MODE,
   createQuizEngine,
   DEFAULT_FIXED_QUESTION_COUNT,
   isDifficulty,
@@ -18,7 +19,10 @@ import {
 } from '@world-quiz/quiz/domain';
 
 import { QuizPlay } from '../quiz-play/quiz-play';
-import { QuizResults } from '../quiz-results/quiz-results';
+import {
+  type ChallengeResult,
+  QuizResults,
+} from '../quiz-results/quiz-results';
 
 interface FinishedQuiz {
   readonly summary: SessionSummary;
@@ -35,6 +39,11 @@ interface FinishedQuiz {
  * string. Both are bound as inputs by `withComponentInputBinding()`, so a quiz
  * is deep-linkable and reloading replays the same configuration. The remote
  * owns the quiz; it does not know how progress is stored.
+ *
+ * A leaderboard challenge comes as `mode=challenge` with the `challenge` id
+ * and the `seed` the server issued for it: the whole World set, played with
+ * exactly that seed, and handed to the host with the challenge id. Without
+ * both, `mode=challenge` falls back to a training quiz.
  */
 @Component({
   selector: 'wq-quiz-page',
@@ -47,13 +56,14 @@ interface FinishedQuiz {
             [config]="config()"
             [summary]="result.summary"
             [outcome]="result.outcome"
+            [challenge]="challengeResult()"
             (playAgain)="playAgain()"
             (exited)="exit()"
           />
         } @else {
           <wq-quiz-play
             [config]="config()"
-            [seed]="seed()"
+            [seed]="playSeed()"
             (finished)="onFinished($event)"
             (exited)="exit()"
           />
@@ -88,9 +98,28 @@ export class QuizPage implements ViewDidLeave {
   readonly difficulty = input('easy');
   readonly mode = input('fixed');
   readonly count = input<string | undefined>(undefined);
+  /** Leaderboard challenges: the server's challenge id and seed. */
+  readonly challenge = input<string | undefined>(undefined);
+  readonly seed = input<string | undefined>(undefined);
+
+  /** The challenge this page plays, if the URL describes a complete one. */
+  private readonly challengeRun = computed(() => {
+    const id = this.challenge();
+    const seed = this.seed();
+    return this.mode() === CHALLENGE_MODE && id && seed ? { id, seed } : null;
+  });
 
   protected readonly config = computed<QuizConfig>(() => {
     const category = this.category();
+    if (this.challengeRun()) {
+      const difficulty = this.difficulty();
+      return {
+        category,
+        difficulty: isDifficulty(difficulty) ? difficulty : 'easy',
+        mode: CHALLENGE_MODE,
+        scope: 'world',
+      };
+    }
     const scope = this.scope();
     const difficulty = this.difficulty();
     const mode = this.mode();
@@ -115,16 +144,37 @@ export class QuizPage implements ViewDidLeave {
     };
   });
 
-  /** A new seed per session: the questions are random, but reproducible. */
-  protected readonly seed = signal(crypto.randomUUID());
+  /** A new seed per training session: random questions, but reproducible. */
+  private readonly trainingSeed = signal(crypto.randomUUID());
+  protected readonly playSeed = computed(
+    () => this.challengeRun()?.seed ?? this.trainingSeed(),
+  );
   protected readonly finished = signal<FinishedQuiz | null>(null);
+  /** The server's verdict on a challenge run, as it arrives. */
+  protected readonly challengeResult = signal<ChallengeResult | null>(null);
 
   protected onFinished(session: QuizSession): void {
     const summary = this.engine.summarize(session);
-    this.finished.set({
+    const challenge = this.challengeRun();
+    const outcome = this.results.submit(
+      session,
       summary,
-      outcome: this.results.submit(session, summary),
-    });
+      challenge ? { challengeId: challenge.id } : undefined,
+    );
+    this.finished.set({ summary, outcome });
+
+    if (outcome.challenge) {
+      this.challengeResult.set({ status: 'checking' });
+      outcome.challenge
+        .then((verdict) =>
+          this.challengeResult.set(
+            verdict
+              ? { status: 'done', outcome: verdict }
+              : { status: 'unsent' },
+          ),
+        )
+        .catch(() => this.challengeResult.set({ status: 'unsent' }));
+    }
   }
 
   /**
@@ -138,12 +188,27 @@ export class QuizPage implements ViewDidLeave {
    * iOS swipe-back gesture is started and then cancelled.
    */
   ionViewDidLeave(): void {
-    this.playAgain();
+    this.reset();
   }
 
+  /**
+   * A training quiz starts again with new questions. A challenge is played
+   * once: "again" means a new challenge, which the leaderboard starts.
+   */
   protected playAgain(): void {
+    if (this.challengeRun()) {
+      void this.nav.navigateRoot('/leaderboard', {
+        animationDirection: 'back',
+      });
+      return;
+    }
+    this.reset();
+  }
+
+  private reset(): void {
     this.finished.set(null);
-    this.seed.set(crypto.randomUUID());
+    this.challengeResult.set(null);
+    this.trainingSeed.set(crypto.randomUUID());
   }
 
   /**

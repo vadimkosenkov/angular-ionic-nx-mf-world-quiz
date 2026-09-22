@@ -2,6 +2,7 @@ import { Component, computed, inject, input, output } from '@angular/core';
 import { IonButton, IonIcon } from '@ionic/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
 import type { QuizSessionOutcome } from '@world-quiz/client/quiz-ports';
+import type { ChallengeOutcome } from '@world-quiz/shared/contracts';
 import { COUNTRY_DATASET } from '@world-quiz/client/quiz-ports';
 import { SettingsStore } from '@world-quiz/client/settings';
 import {
@@ -10,6 +11,23 @@ import {
   type QuizConfig,
   type SessionSummary,
 } from '@world-quiz/quiz/domain';
+
+/**
+ * A challenge run's verdict as it arrives: being checked by the server, the
+ * server's answer, or not sent (offline: it waits in the outbox).
+ */
+export type ChallengeResult =
+  | { readonly status: 'checking' }
+  | { readonly status: 'done'; readonly outcome: ChallengeOutcome }
+  | { readonly status: 'unsent' };
+
+/** A leaderboard time: minutes, seconds and tenths, e.g. `4:07.3`. */
+export function formatRunTime(ms: number): string {
+  const tenths = Math.floor(ms / 100);
+  const minutes = Math.floor(tenths / 600);
+  const seconds = `${Math.floor((tenths % 600) / 10)}`.padStart(2, '0');
+  return `${minutes}:${seconds}.${tenths % 10}`;
+}
 
 /** Result screen of a finished session: score, accuracy, time and what to review. */
 @Component({
@@ -22,12 +40,19 @@ export class QuizResults {
   readonly config = input.required<QuizConfig>();
   readonly summary = input.required<SessionSummary>();
   readonly outcome = input<QuizSessionOutcome | null>(null);
+  /** Leaderboard challenges only. */
+  readonly challenge = input<ChallengeResult | null>(null);
 
   readonly playAgain = output<void>();
   readonly exited = output<void>();
 
   private readonly settings = inject(SettingsStore);
   private readonly countries = indexCountriesByCode(inject(COUNTRY_DATASET));
+
+  protected readonly formatRunTime = formatRunTime;
+  protected readonly isChallenge = computed(
+    () => this.config().mode === 'challenge',
+  );
 
   protected readonly accuracyPercent = computed(() =>
     Math.round(this.summary().accuracy * 100),

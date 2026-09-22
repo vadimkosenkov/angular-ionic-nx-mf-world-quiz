@@ -42,6 +42,55 @@
       </div>
     </div>
 
+    @if (editingNickname()) {
+    <form class="nickname-form" (submit)="saveNickname($event)">
+      <ion-input
+        data-testid="nickname-input"
+        labelPlacement="stacked"
+        maxlength="24"
+        autocomplete="nickname"
+        [label]="'settings.account.nickname.label' | transloco"
+        [value]="nicknameDraft()"
+        (ionInput)="onNicknameInput($event)"
+      />
+      <p class="muted">{{ 'settings.account.nickname.rules' | transloco }}</p>
+      <div class="actions">
+        <ion-button
+          class="wq-glass-button"
+          expand="block"
+          type="submit"
+          data-testid="nickname-save"
+          [disabled]="auth.busy() || !nicknameValid()"
+        >
+          {{ 'settings.account.nickname.save' | transloco }}
+        </ion-button>
+        <ion-button
+          fill="clear"
+          expand="block"
+          data-testid="nickname-cancel"
+          (click)="editingNickname.set(false)"
+        >
+          {{ 'settings.account.cancel' | transloco }}
+        </ion-button>
+      </div>
+    </form>
+    } @else {
+    <div class="nickname">
+      <div>
+        <p class="muted">{{ 'settings.account.nickname.label' | transloco }}</p>
+        <p class="name" data-testid="account-nickname">{{ user?.nickname }}</p>
+      </div>
+      <ion-button
+        fill="clear"
+        data-testid="nickname-edit"
+        [disabled]="auth.busy()"
+        (click)="editNickname()"
+      >
+        {{ 'settings.account.nickname.edit' | transloco }}
+      </ion-button>
+    </div>
+    }
+
     <p
       class="muted sync"
       role="status"

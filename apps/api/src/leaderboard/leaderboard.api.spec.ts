@@ -371,7 +371,7 @@ describe('leaderboards', () => {
       );
     });
 
-    it('is public, cacheable briefly, and limited on request', async () => {
+    it('is public, always revalidated, and limited on request', async () => {
       await playChallenge(await startChallenge());
       const { authorization: bob } = await signIn('player-2');
       await playChallenge(await startChallenge(bob), { authorization: bob });
@@ -381,7 +381,8 @@ describe('leaderboards', () => {
       );
 
       expect(response.status).toBe(200);
-      expect(response.headers['cache-control']).toBe('public, max-age=30');
+      expect(response.headers['cache-control']).toBe('no-cache');
+      expect(response.headers['etag']).toBeDefined();
       expect(response.body.players).toBe(2);
       expect(response.body.entries).toHaveLength(1);
       expect(JSON.stringify(response.body)).not.toContain(playerId);

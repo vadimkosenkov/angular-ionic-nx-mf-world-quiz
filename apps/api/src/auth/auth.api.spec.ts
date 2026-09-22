@@ -310,5 +310,18 @@ describe('/v1/auth and /v1/me', () => {
         .set('Origin', 'https://evil.example');
       expect(foreign.headers['access-control-allow-origin']).toBeUndefined();
     });
+
+    it('allows every method the API uses from the web app', async () => {
+      // Browsers check the method in a preflight; supertest never sends one.
+      const preflight = await request(api.app)
+        .options('/v1/me')
+        .set('Origin', 'http://localhost:4200')
+        .set('Access-Control-Request-Method', 'PATCH');
+
+      const methods = preflight.headers['access-control-allow-methods'];
+      for (const method of ['GET', 'POST', 'PATCH', 'DELETE']) {
+        expect(methods).toContain(method);
+      }
+    });
   });
 });

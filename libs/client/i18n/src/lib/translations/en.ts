@@ -136,11 +136,30 @@ export const en = {
     },
     rules:
       'Answer all {{count}} countries correctly. The fastest perfect run wins.',
-    unavailable: {
-      title: 'Leaderboards are on their way',
-      message:
-        'Global rankings and personal records will appear here once sign-in and syncing are available.',
+    online:
+      'Play it online: the time counts from the first question to the last answer, and the result must reach the server right away.',
+    start: 'Start challenge · {{board}}',
+    startFailed:
+      'The challenge could not be started. Check your connection and try again.',
+    loading: 'Loading the leaderboard…',
+    loadFailed: {
+      title: 'The leaderboard cannot be loaded',
+      message: 'Rankings need a connection to the World Quiz server.',
     },
+    retry: 'Try again',
+    empty: {
+      title: 'No perfect runs yet',
+      message: 'Be the first on this board.',
+    },
+    you: '(you)',
+    players: {
+      one: '{{count}} player ranked',
+      few: '{{count}} players ranked',
+      many: '{{count}} players ranked',
+      other: '{{count}} players ranked',
+    },
+    place: '#{{rank}} of {{players}}',
+    noRecord: 'No perfect run yet',
   },
   achievements: {
     title: 'Achievements',
@@ -217,6 +236,27 @@ export const en = {
     review: 'To review',
     playAgain: 'Play again',
     backHome: 'Back to home',
+    newChallenge: 'New challenge',
+    challenge: {
+      title: 'Leaderboard',
+      checking: 'Checking your run with the server…',
+      unsent:
+        'Not sent: you are offline. The run is saved and will be sent later, but challenges sent late are not ranked.',
+      ranked: 'Ranked #{{rank}}',
+      time: 'Time: {{time}}',
+      record: 'New personal record!',
+      reasons: {
+        'not-finished': 'Not ranked: the run was not finished.',
+        incomplete: 'Not ranked: every country must be answered.',
+        'has-incorrect-answers': 'Not ranked: every answer must be correct.',
+        'invalid-question-set':
+          'Not ranked: the run did not cover the whole world.',
+        expired: 'Not ranked: the challenge expired before the result arrived.',
+        late: 'Not ranked: the result reached the server too long after the run.',
+        'implausible-time':
+          'Not ranked: the run took longer than the server allows for it.',
+      },
+    },
   },
   settings: {
     title: 'Settings',
@@ -255,6 +295,13 @@ export const en = {
         offline:
           'No connection to the World Quiz server; saving is retried automatically.',
       },
+      nickname: {
+        label: 'Public name',
+        edit: 'Change',
+        save: 'Save name',
+        rules:
+          'Shown on leaderboards instead of your name: 3 to 24 letters, digits, spaces, "_", "-" or ".".',
+      },
       signOut: 'Sign out',
       delete: 'Delete account',
       deleteTitle: 'Delete your account?',
@@ -277,6 +324,8 @@ export const en = {
         unreachable:
           'The World Quiz server cannot be reached. Check your connection.',
         'delete-failed': 'Your account could not be deleted. Please try again.',
+        'nickname-invalid': 'This name is not allowed. Check the rules below.',
+        'nickname-failed': 'The name could not be saved. Please try again.',
       },
     },
     appearance: {

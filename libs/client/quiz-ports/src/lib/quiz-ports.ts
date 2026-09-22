@@ -11,6 +11,7 @@ import type {
   ScopeProgress,
   SessionSummary,
 } from '@world-quiz/quiz/domain';
+import type { ChallengeOutcome } from '@world-quiz/shared/contracts';
 import { type Clock, systemClock } from '@world-quiz/shared/util';
 
 /**
@@ -63,11 +64,27 @@ export interface QuizSessionOutcome {
   readonly newlyUnlocked: readonly AchievementDefinition[];
   /** Countries that still need practice in this category after the session. */
   readonly mistakes: readonly CountryCode[];
+  /**
+   * Leaderboard challenges only: the server's verdict on the run, once it has
+   * been sent — or `null` when it could not be sent now (offline; it waits in
+   * the outbox and, sent late, will not be ranked).
+   */
+  readonly challenge?: Promise<ChallengeOutcome | null>;
+}
+
+/** What a remote knows about the session beyond the session itself. */
+export interface QuizSessionContext {
+  /** The leaderboard challenge the session plays (`mode: 'challenge'`). */
+  readonly challengeId?: string;
 }
 
 /** Where a remote sends a finished quiz session. */
 export interface QuizResultSink {
-  submit(session: QuizSession, summary: SessionSummary): QuizSessionOutcome;
+  submit(
+    session: QuizSession,
+    summary: SessionSummary,
+    context?: QuizSessionContext,
+  ): QuizSessionOutcome;
 }
 
 export const QUIZ_RESULT_SINK = new InjectionToken<QuizResultSink>(

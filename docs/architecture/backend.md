@@ -9,7 +9,8 @@
 > app sends its outbox and pulls the history ([ADR-006](../decisions/ADR-006-local-persistence.md)).
 > ✅ Phase 9a — leaderboard challenges with a server seed, ranked runs,
 > public boards, personal records and nicknames.
-> 📐 Challenges and boards in the app (Phase 9b), the SSR site (Phase 9c).
+> ✅ Phase 9b — the app plays challenges and shows boards and records.
+> 📐 The SSR site (Phase 9c).
 
 Why PostgreSQL, Drizzle and PGlite: [ADR-005](../decisions/ADR-005-database.md).
 Why this sign-in design: [ADR-010](../decisions/ADR-010-authentication.md).
@@ -159,13 +160,13 @@ GET /v1/sessions?after=<cursor>&limit=50
 
 Rules and the trust model: [leaderboard.md](../domain/leaderboard.md).
 
-| Endpoint                            | Auth   | Does                                                                                     |
-| ----------------------------------- | ------ | ---------------------------------------------------------------------------------------- |
-| `POST /v1/challenges {board}`       | Bearer | Issues a challenge: id, server seed (128 bits), `issuedAt`, `expiresAt` (3 h)            |
-| `POST /v1/sessions` + `challengeId` | Bearer | Records the challenge run; the result's `challenge` says ranked or why not, rank, record |
-| `GET /v1/leaderboards/:board`       | public | The fastest players (`limit` 1–100, default 50) and how many are ranked; cached 30 s     |
-| `GET /v1/me/records`                | Bearer | The player's best ranked run per board, with rank and number of players                  |
-| `PATCH /v1/me {nickname}`           | Bearer | Sets the public name                                                                     |
+| Endpoint                            | Auth   | Does                                                                                                                          |
+| ----------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `POST /v1/challenges {board}`       | Bearer | Issues a challenge: id, server seed (128 bits), `issuedAt`, `expiresAt` (3 h)                                                 |
+| `POST /v1/sessions` + `challengeId` | Bearer | Records the challenge run; the result's `challenge` says ranked or why not, rank, record                                      |
+| `GET /v1/leaderboards/:board`       | public | The fastest players (`limit` 1–100, default 50) and how many are ranked; `Cache-Control: no-cache` (always revalidated, ETag) |
+| `GET /v1/me/records`                | Bearer | The player's best ranked run per board, with rank and number of players                                                       |
+| `PATCH /v1/me {nickname}`           | Bearer | Sets the public name                                                                                                          |
 
 ```mermaid
 sequenceDiagram
@@ -234,7 +235,10 @@ sequenceDiagram
   `Path=/v1/auth`, `Secure` in production (`COOKIE_SECURE`). Scripts cannot
   read it, other sites cannot send it, other endpoints never receive it.
 - **CORS** allows credentials only for `CORS_ORIGINS` (by default
-  `http://localhost:4200` outside production, nothing in production).
+  `http://localhost:4200` outside production, nothing in production), and
+  the methods `GET, POST, PATCH, DELETE` — every method a route uses, or
+  browsers refuse it after the preflight (supertest sends none, so a test
+  checks the preflight itself).
 - **Sign-in failures are vague** (401 "could not be verified"): which check
   failed helps an attacker more than a client.
 - `/v1/sessions` and `/v1/me` require `Authorization: Bearer`. A player reads

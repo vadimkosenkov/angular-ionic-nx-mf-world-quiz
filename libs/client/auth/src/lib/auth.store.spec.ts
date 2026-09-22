@@ -277,4 +277,29 @@ describe('AuthStore', () => {
     expect(await deleting).toBe(true);
     expect(store.status()).toBe('signed-out');
   });
+
+  it('changes the nickname, and says why when the API refuses it', async () => {
+    const { store, http } = setup();
+    const restored = store.restore();
+    http.expectOne(`${API}/v1/auth/refresh`).flush(session());
+    await restored;
+
+    const saved = store.setNickname('Globe Trotter');
+    await flush();
+    const request = http.expectOne(`${API}/v1/me`);
+    expect(request.request.method).toBe('PATCH');
+    expect(request.request.body).toEqual({ nickname: 'Globe Trotter' });
+    request.flush({ ...USER, nickname: 'Globe Trotter' });
+    expect(await saved).toBe(true);
+    expect(store.user()?.nickname).toBe('Globe Trotter');
+
+    const refused = store.setNickname('<b>');
+    await flush();
+    http
+      .expectOne(`${API}/v1/me`)
+      .flush(null, { status: 400, statusText: 'Bad Request' });
+    expect(await refused).toBe(false);
+    expect(store.error()).toBe('nickname-invalid');
+    expect(store.user()?.nickname).toBe('Globe Trotter');
+  });
 });

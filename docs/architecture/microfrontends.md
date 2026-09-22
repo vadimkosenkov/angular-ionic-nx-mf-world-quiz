@@ -63,12 +63,15 @@ Two details worth remembering:
 The remote knows three things about the world, and nothing else:
 
 1. **Its route** — it is mounted at whatever path the host chooses, and reads
-   its options from the query string (`scope`, `difficulty`, `mode`, `count`),
-   bound to component inputs by `withComponentInputBinding()`. A quiz is
-   therefore a normal deep link.
+   its options from the query string (`scope`, `difficulty`, `mode`, `count`,
+   and for a leaderboard challenge `mode=challenge` with `challenge` and
+   `seed`), bound to component inputs by `withComponentInputBinding()`. A quiz
+   is therefore a normal deep link.
 2. **The ports it injects** (`libs/client/quiz-ports`):
-   - `QUIZ_RESULT_SINK` — hand over a finished session; get back what changed
-     (newly unlocked achievements, countries to practice).
+   - `QUIZ_RESULT_SINK` — hand over a finished session (and, for a challenge,
+     `{ challengeId }`); get back what changed (newly unlocked achievements,
+     countries to practice) and, for a challenge, a promise of the server's
+     verdict (`ChallengeOutcome`, or `null` when it could not be sent now).
    - `QUIZ_PROGRESS_READER` — read-only progress for setup and practice screens.
    - `COUNTRY_DATASET`, `CLOCK` — injected so tests can replace them.
 3. **The shared UI** in `libs/client/*` — design system, i18n, settings.
@@ -92,6 +95,9 @@ So the remote cannot reach the shell's `ProgressStore`. Persistence
 (IndexedDB), the outbox and sync with server validation (Phase 8) were added
 behind the same two interfaces without touching the remotes: the shell's sink
 records the session on the device and asks `SyncService` to send it.
+Leaderboard challenges (Phase 9b) extended the contract the same way: the
+remote learns the challenge from its URL, passes its id to the sink and shows
+the verdict the sink promises; it never calls the API itself.
 
 There is deliberately **no shared mutable global state**, no event bus and no
 cross-remote imports: `scope:capitals` may only depend on `scope:client` and

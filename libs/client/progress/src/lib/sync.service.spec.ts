@@ -20,7 +20,13 @@ import {
   SYNC_SCHEDULER,
   SyncService,
 } from './sync.service';
-import { ANN, API, finishedSession, historyEntry } from '../testing';
+import {
+  ANN,
+  API,
+  finishedSession,
+  historyEntry,
+  sessionResult,
+} from '../testing';
 
 const SESSIONS = `${API}/v1/sessions`;
 
@@ -109,7 +115,10 @@ describe('SyncService', () => {
     for (let i = 0; i < 2; i++) {
       await answer(http, isPost, (request) => {
         sent.push(request.request.body.id);
-        request.flush({}, { status: 201, statusText: 'Created' });
+        request.flush(sessionResult(request.request.body.id), {
+          status: 201,
+          statusText: 'Created',
+        });
       });
     }
     await answer(http, isHistory, (request) => {
@@ -163,7 +172,10 @@ describe('SyncService', () => {
     scheduled.at(-1)?.run();
     await answer(http, isPost, (request) => {
       expect(request.request.body).toEqual(played.request);
-      request.flush({}, { status: 200, statusText: 'OK' });
+      request.flush(sessionResult(request.request.body.id), {
+        status: 200,
+        statusText: 'OK',
+      });
     });
     await answer(http, isHistory, (request) => request.flush(page([], null)));
     await settle();
@@ -190,7 +202,10 @@ describe('SyncService', () => {
       request.flush(null, { status: 422, statusText: 'Unprocessable' }),
     );
     await answer(http, isPost, (request) =>
-      request.flush({}, { status: 201, statusText: 'Created' }),
+      request.flush(sessionResult(request.request.body.id), {
+        status: 201,
+        statusText: 'Created',
+      }),
     );
     await answer(http, isHistory, (request) => request.flush(page([], null)));
     await done;
@@ -237,12 +252,53 @@ describe('SyncService', () => {
       request.flush(page([], null));
     });
     await answer(http, isPost, (request) =>
-      request.flush({}, { status: 201, statusText: 'Created' }),
+      request.flush(sessionResult(request.request.body.id), {
+        status: 201,
+        statusText: 'Created',
+      }),
     );
     await answer(http, isHistory, (request) => request.flush(page([], null)));
     await Promise.all([done, queued]);
 
     expect(progress.pendingCount()).toBe(0);
     http.verify();
+  });
+
+  it("gives the API's answer to a session sent now, and null when it could not be sent", async () => {
+    const { sync, progress, http } = setup();
+    const played = progress.recordSession(
+      finishedSession([{ code: 'fr', correct: true }]),
+      { challengeId: 'b0e5c0de-0000-4000-8000-000000000009' },
+    );
+    const verdict = {
+      board: 'capitals-easy' as const,
+      ranked: true,
+      completionTimeMs: 1_000,
+      personalRecord: true,
+      rank: 1,
+    };
+
+    const answered = sync.resultOf(played.id);
+    await answer(http, isPost, (request) => {
+      expect(request.request.body.challengeId).toBe(
+        'b0e5c0de-0000-4000-8000-000000000009',
+      );
+      request.flush(sessionResult(played.id, { challenge: verdict }), {
+        status: 201,
+        statusText: 'Created',
+      });
+    });
+    await answer(http, isHistory, (request) => request.flush(page([], null)));
+
+    expect((await answered)?.challenge).toEqual(verdict);
+
+    const offline = progress.recordSession(
+      finishedSession([{ code: 'de', correct: true }]),
+    );
+    const unsent = sync.resultOf(offline.id);
+    await answer(http, isPost, (request) =>
+      request.error(new ProgressEvent('error')),
+    );
+    expect(await unsent).toBeNull();
   });
 });

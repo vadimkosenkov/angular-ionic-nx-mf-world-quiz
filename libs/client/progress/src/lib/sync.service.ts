@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { AuthStore } from '@world-quiz/client/auth';
 import { CLOCK } from '@world-quiz/client/quiz-ports';
+import type { SessionResult } from '@world-quiz/shared/contracts';
 import { ProgressStore } from './progress.store';
 import { pulledSession } from './session-mapping';
 import { SyncApi } from './sync-api';
@@ -67,6 +68,8 @@ export class SyncService {
   private runAgain = false;
   private failures = 0;
   private cancelRetry: (() => void) | null = null;
+  /** The API's answers to sessions sent in this run of the app. */
+  private readonly results = new Map<string, SessionResult>();
 
   readonly status = this.statusState.asReadonly();
   /** When the device last matched the account (epoch milliseconds). */
@@ -82,6 +85,16 @@ export class SyncService {
       this.running = null;
     });
     return this.running;
+  }
+
+  /**
+   * Syncs, then gives the API's answer to one session sent now — for a
+   * challenge, the verdict the player waits for. `null` when it could not be
+   * sent (offline, or signed out).
+   */
+  async resultOf(sessionId: string): Promise<SessionResult | null> {
+    await this.sync();
+    return this.results.get(sessionId) ?? null;
   }
 
   private async loop(): Promise<void> {
@@ -114,7 +127,7 @@ export class SyncService {
     for (const session of this.progress.pending()) {
       if (!session.request) continue;
       try {
-        await this.api.submit(session.request);
+        this.results.set(session.id, await this.api.submit(session.request));
         this.progress.markSynced([session.id]);
       } catch (error) {
         if (!isFinalRefusal(error)) throw error;
