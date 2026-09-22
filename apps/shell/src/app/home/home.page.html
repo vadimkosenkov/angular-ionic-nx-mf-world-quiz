@@ -111,7 +111,30 @@
           [message]="'home.practice.empty' | transloco"
         />
         } @else {
-        <p>{{ 'counts.mistakes' | wqPlural: progress.mistakeCount() }}</p>
+        <ul class="practice-list">
+          @for (entry of practice(); track entry.category) {
+          <li>
+            <a
+              class="practice-row"
+              [attr.data-testid]="'practice-' + entry.category"
+              routerLink="/quiz/setup"
+              [queryParams]="{ category: entry.category, mode: 'practice' }"
+            >
+              <span class="practice-name">
+                {{ 'categories.' + entry.category | transloco }}
+                <span class="wq-text-secondary practice-count">
+                  {{ 'counts.mistakes' | wqPlural: entry.count }}
+                </span>
+              </span>
+              {{ ' ' }}
+              <span class="practice-go">
+                {{ 'practice.start' | transloco }}
+                <ion-icon name="chevron-forward" aria-hidden="true" />
+              </span>
+            </a>
+          </li>
+          }
+        </ul>
         }
       </div>
     </section>

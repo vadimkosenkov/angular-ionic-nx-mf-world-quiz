@@ -65,14 +65,15 @@ The remote knows three things about the world, and nothing else:
 1. **Its route** — it is mounted at whatever path the host chooses, and reads
    its options from the query string (`scope`, `difficulty`, `mode`, `count`,
    and for a leaderboard challenge `mode=challenge` with `challenge` and
-   `seed`), bound to component inputs by `withComponentInputBinding()`. A quiz
-   is therefore a normal deep link.
+   `seed`; for Practice Mistakes `mode=practice`), bound to component inputs
+   by `withComponentInputBinding()`. A quiz is therefore a normal deep link.
 2. **The ports it injects** (`libs/client/quiz-ports`):
    - `QUIZ_RESULT_SINK` — hand over a finished session (and, for a challenge,
      `{ challengeId }`); get back what changed (newly unlocked achievements,
      countries to practice) and, for a challenge, a promise of the server's
      verdict (`ChallengeOutcome`, or `null` when it could not be sent now).
-   - `QUIZ_PROGRESS_READER` — read-only progress for setup and practice screens.
+   - `QUIZ_PROGRESS_READER` — read-only progress; Practice Mistakes reads the
+     countries to review from it when a round starts.
    - `COUNTRY_DATASET`, `CLOCK` — injected so tests can replace them.
 3. **The shared UI** in `libs/client/*` — design system, i18n, settings.
 

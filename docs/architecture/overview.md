@@ -108,8 +108,8 @@ typos). The app has no custom speech-recognition UI and no external AI/LLM judgi
 | 8b  | `feat/sync-client`           | Sign-in first, local store (IndexedDB), outbox, sync                                   | ✅ merged      |
 | 9a  | `feat/leaderboard-server`    | Challenges with a server seed, ranked runs, public boards, records, nicknames — API    | ✅ merged      |
 | 9b  | `feat/leaderboard-client`    | Challenges and the leaderboard screen in the app                                       | ✅ merged      |
-| 9c  | `feat/site-ssr`              | `apps/site` SSR: legal pages, public leaderboard; SSR-in-shell spike, ADR-003          | ✅ this branch |
-| 10  | `feat/achievements-mistakes` | Achievements, practice mistakes                                                        | 📐             |
+| 9c  | `feat/site-ssr`              | `apps/site` SSR: legal pages, public leaderboard; SSR-in-shell spike, ADR-003          | ✅ merged      |
+| 10  | `feat/achievements-mistakes` | Achievements, practice mistakes                                                        | ✅ this branch |
 | 11  | `feat/e2e`                   | Full Cypress journeys                                                                  | 📐             |
 | 12  | `feat/ci-cd`                 | Deployment pipelines                                                                   | 📐             |
 | 13  | `feat/ios`                   | Capacitor iOS, TestFlight docs                                                         | 📐             |

@@ -27,6 +27,7 @@ export const ru: TranslationShape = {
     fixed: 'Быстрый раунд',
     endless: 'Бесконечный',
     timed: 'На время',
+    practice: 'Работа над ошибками',
   },
   regions: {
     world: 'Весь мир',
@@ -185,6 +186,7 @@ export const ru: TranslationShape = {
       fixed: 'Вопросов: {{count}}',
       endless: 'Игра до остановки',
       timed: '60 секунд',
+      practice: 'Стран на повторение: {{mistakes}}',
     },
     start: 'Начать квиз',
     play: 'Играть',
@@ -220,6 +222,12 @@ export const ru: TranslationShape = {
         'Не удалось загрузить квиз. Проверьте соединение и попробуйте ещё раз.',
       back: 'На главную',
     },
+  },
+  practice: {
+    emptyTitle: 'Повторять нечего',
+    empty:
+      'Здесь ошибок больше нет — все страны, в которых вы ошибались, снова освоены.',
+    start: 'Повторить',
   },
   results: {
     title: 'Результаты',

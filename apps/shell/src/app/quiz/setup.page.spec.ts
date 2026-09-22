@@ -2,13 +2,15 @@ import { Router } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
 import { fireEvent, render, screen } from '@testing-library/angular';
 import { provideShellTesting } from '../../testing/shell-testing';
+import { ProgressStore } from '@world-quiz/client/progress';
+import { finishedSession } from '@world-quiz/client/progress/testing';
 import { QuizSetupPage } from './setup.page';
 
 function emitIonChange(element: Element, value: unknown) {
   element.dispatchEvent(new CustomEvent('ionChange', { detail: { value } }));
 }
 
-async function renderSetup(inputs: { category?: string } = {}) {
+async function renderSetup(inputs: { category?: string; mode?: string } = {}) {
   const view = await render(QuizSetupPage, {
     inputs,
     providers: provideShellTesting(),
@@ -99,5 +101,53 @@ describe('QuizSetupPage', () => {
       ['/quiz', 'flags'],
       expect.anything(),
     );
+  });
+
+  describe('Practice Mistakes', () => {
+    /** Mistakes: France (Europe) and Japan (Asia) in Capitals. */
+    const recordMistakes = () =>
+      TestBed.inject(ProgressStore).recordSession(
+        finishedSession([
+          { code: 'fr', correct: false },
+          { code: 'jp', correct: false },
+        ]),
+      );
+
+    it('is offered only when there is something to practise', async () => {
+      const { fixture } = await renderSetup({ mode: 'practice' });
+      const practice = (await screen.findByTestId(
+        'setup-mode-practice',
+      )) as HTMLButtonElement;
+      expect(practice.disabled).toBe(true);
+      expect(
+        (
+          screen.getByTestId('setup-start') as HTMLElement & {
+            disabled: boolean;
+          }
+        ).disabled,
+      ).toBe(true);
+
+      recordMistakes();
+      fixture.detectChanges();
+
+      expect(practice.disabled).toBe(false);
+      expect(practice.textContent).toContain('Countries to review: 2');
+    });
+
+    it('counts the mistakes of the chosen region, and starts the round', async () => {
+      const { navigate, fixture } = await renderSetup({ mode: 'practice' });
+      recordMistakes();
+
+      fireEvent.click(await screen.findByTestId('setup-scope-europe'));
+      fixture.detectChanges();
+      expect(screen.getByTestId('setup-mode-practice').textContent).toContain(
+        'Countries to review: 1',
+      );
+      fireEvent.click(screen.getByTestId('setup-start'));
+
+      expect(navigate).toHaveBeenCalledWith(['/quiz', 'capitals'], {
+        queryParams: { scope: 'europe', difficulty: 'easy', mode: 'practice' },
+      });
+    });
   });
 });
