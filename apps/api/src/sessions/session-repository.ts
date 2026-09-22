@@ -4,13 +4,23 @@ import type {
 } from '@world-quiz/shared/contracts';
 import type {
   AnswerJudgement,
+  LeaderboardBoardId,
   QuizConfig,
   SessionEndReason,
   SubmittedAnswer,
 } from '@world-quiz/quiz/domain';
-import { and, asc, eq, inArray, lte, sql } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  eq,
+  inArray,
+  isNull,
+  lte,
+  sql,
+  TransactionRollbackError,
+} from 'drizzle-orm';
 import type { Database } from '../db/database';
-import { quizAnswers, quizSessions } from '../db/schema';
+import { challenges, quizAnswers, quizSessions } from '../db/schema';
 import type { HistoryPosition } from './history-cursor';
 
 /** A graded session, ready to be stored. All numbers come from the replay. */
@@ -38,12 +48,25 @@ export interface NewSession {
     readonly judgement: AnswerJudgement;
     readonly answeredAt: number;
   }[];
+  /** Challenge sessions: the challenge they play and the server's verdict. */
+  readonly challenge?: ChallengeVerdict & { readonly id: string };
+}
+
+/** What the server decided about a challenge run. */
+export interface ChallengeVerdict {
+  readonly board: LeaderboardBoardId;
+  /** `ranked`, or why not (`ChallengeUnrankedReason`). */
+  readonly outcome: string;
+  readonly completionMs: number | null;
+  readonly personalRecord: boolean;
 }
 
 export interface StoredSession {
+  /** Without the challenge outcome, which depends on the current ranking. */
   readonly result: SessionResult;
   readonly requestHash: string;
   readonly userId: string;
+  readonly challenge: ChallengeVerdict | null;
 }
 
 /** A history entry with the position it has in the player's history. */
@@ -68,9 +91,12 @@ export interface SessionRepository {
    * Stores the session and its answers atomically. Nothing is written when a
    * session with this id already exists (`exists`: a retry or a concurrent
    * duplicate) or when the owner no longer exists (`owner-missing`: the
-   * account was deleted while an access token was still valid).
+   * account was deleted while an access token was still valid). A challenge
+   * is attached only if no other session has played it (`challenge-used`).
    */
-  insert(session: NewSession): Promise<'inserted' | 'exists' | 'owner-missing'>;
+  insert(
+    session: NewSession,
+  ): Promise<'inserted' | 'exists' | 'owner-missing' | 'challenge-used'>;
   /**
    * The player's sessions in `(recordedAt, id)` order, each with its graded
    * answers in the order they were given.
@@ -82,16 +108,26 @@ export function createSessionRepository(db: Database): SessionRepository {
   return {
     async findById(id) {
       const [row] = await db
-        .select()
+        .select({ session: quizSessions, challenge: challenges })
         .from(quizSessions)
+        .leftJoin(challenges, eq(challenges.sessionId, quizSessions.id))
         .where(eq(quizSessions.id, id))
         .limit(1);
       if (!row) return null;
 
+      const { session, challenge } = row;
       return {
-        requestHash: row.requestHash,
-        userId: row.userId,
-        result: toResult(row),
+        requestHash: session.requestHash,
+        userId: session.userId,
+        result: toResult(session),
+        challenge: challenge
+          ? {
+              board: challenge.board as LeaderboardBoardId,
+              outcome: challenge.outcome ?? 'ranked',
+              completionMs: challenge.completionMs,
+              personalRecord: challenge.personalRecord ?? false,
+            }
+          : null,
       };
     },
 
@@ -153,6 +189,7 @@ export function createSessionRepository(db: Database): SessionRepository {
       try {
         return await insertWithAnswers(session);
       } catch (error) {
+        if (error instanceof TransactionRollbackError) return 'challenge-used';
         if (isForeignKeyViolation(error)) return 'owner-missing';
         throw error;
       }
@@ -201,6 +238,29 @@ export function createSessionRepository(db: Database): SessionRepository {
             answeredAt: new Date(answer.answeredAt),
           })),
         );
+      }
+
+      if (session.challenge) {
+        // Only an unplayed challenge takes the session: two different
+        // sessions racing for one challenge cannot both be recorded.
+        const attached = await tx
+          .update(challenges)
+          .set({
+            sessionId: session.id,
+            outcome: session.challenge.outcome,
+            completionMs: session.challenge.completionMs,
+            recordedAt: new Date(session.recordedAt),
+            personalRecord: session.challenge.personalRecord,
+          })
+          .where(
+            and(
+              eq(challenges.id, session.challenge.id),
+              eq(challenges.userId, session.userId),
+              isNull(challenges.sessionId),
+            ),
+          )
+          .returning({ id: challenges.id });
+        if (attached.length === 0) tx.rollback();
       }
       return 'inserted' as const;
     });

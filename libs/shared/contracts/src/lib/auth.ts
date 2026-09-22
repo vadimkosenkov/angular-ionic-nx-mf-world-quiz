@@ -63,6 +63,8 @@ export type RefreshRequest = z.infer<typeof refreshRequestSchema>;
 export const userSchema = z.object({
   id: uuidSchema,
   displayName: z.string().nullable(),
+  /** The public name on leaderboards (a default until the player picks one). */
+  nickname: z.string(),
   /** From the provider, if it shared one. Never used to link accounts. */
   email: z.string().nullable(),
   providers: z.array(z.enum([...IDENTITY_PROVIDERS, 'dev'])),

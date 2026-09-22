@@ -7,7 +7,9 @@
 > ✅ Phase 7b — the app signs in. ✅ Phase 8a — a player's history for
 > syncing progress between devices (`GET /v1/sessions`). ✅ Phase 8b — the
 > app sends its outbox and pulls the history ([ADR-006](../decisions/ADR-006-local-persistence.md)).
-> 📐 Leaderboards (Phase 9).
+> ✅ Phase 9a — leaderboard challenges with a server seed, ranked runs,
+> public boards, personal records and nicknames.
+> 📐 Challenges and boards in the app (Phase 9b), the SSR site (Phase 9c).
 
 Why PostgreSQL, Drizzle and PGlite: [ADR-005](../decisions/ADR-005-database.md).
 Why this sign-in design: [ADR-010](../decisions/ADR-010-authentication.md).
@@ -27,7 +29,8 @@ apps/api/
     http/cookies.ts        the refresh-token cookie
     auth/
       auth.routes.ts       /v1/auth: google, apple, dev, refresh, logout
-      me.routes.ts         /v1/me: read, delete the account
+      me.routes.ts         /v1/me: read, nickname, records, delete the account
+      nickname.ts          the default public name ("Player 4821")
       require-auth.ts      Authorization: Bearer → the user id
       auth-service.ts      sign-in, refresh, sign-out, deletion
       identity-verifier.ts provider ID tokens against their JWKS
@@ -41,6 +44,12 @@ apps/api/
       session-service.ts   the rules: plausibility, replay, idempotency
       session-repository.ts  SQL only
       request-hash.ts      canonical JSON + SHA-256
+      history-cursor.ts    opaque keyset cursor of the history
+    leaderboard/
+      leaderboard.routes.ts  /v1/challenges, /v1/leaderboards/:board
+      leaderboard-service.ts issuing challenges, boards, records, a run's outcome
+      challenge-rules.ts     is a challenge run ranked (eligibility + timing)
+      leaderboard-repository.ts  challenges and the ranking queries
     testing/               test database, test API, fake identity provider, a helper that plays real sessions
 libs/shared/contracts/     Zod schemas of requests, responses and errors
 ```
@@ -146,6 +155,45 @@ GET /v1/sessions?after=<cursor>&limit=50
 - A page holds up to 100 sessions whatever their length; Endless sessions are
   capped at 1,000 answers each, so the worst page is large but bounded.
 
+## Leaderboards: challenges and records
+
+Rules and the trust model: [leaderboard.md](../domain/leaderboard.md).
+
+| Endpoint                            | Auth   | Does                                                                                     |
+| ----------------------------------- | ------ | ---------------------------------------------------------------------------------------- |
+| `POST /v1/challenges {board}`       | Bearer | Issues a challenge: id, server seed (128 bits), `issuedAt`, `expiresAt` (3 h)            |
+| `POST /v1/sessions` + `challengeId` | Bearer | Records the challenge run; the result's `challenge` says ranked or why not, rank, record |
+| `GET /v1/leaderboards/:board`       | public | The fastest players (`limit` 1–100, default 50) and how many are ranked; cached 30 s     |
+| `GET /v1/me/records`                | Bearer | The player's best ranked run per board, with rank and number of players                  |
+| `PATCH /v1/me {nickname}`           | Bearer | Sets the public name                                                                     |
+
+```mermaid
+sequenceDiagram
+  participant C as App
+  participant A as API
+  participant DB as PostgreSQL
+  C->>A: POST /v1/challenges {board}
+  A->>DB: challenge (id, seed, issued_at)
+  A-->>C: {id, seed, expiresAt}
+  Note over C: plays the World set with that seed
+  C->>A: POST /v1/sessions {…, seed, challengeId}
+  A->>A: challenge is theirs, unplayed, same board and seed
+  A->>A: replay; eligible? run time within the server window?
+  A->>DB: session + answers + challenge verdict, one transaction
+  A-->>C: 201 {…, challenge: {ranked, rank, personalRecord}}
+```
+
+- **One run per challenge.** The verdict is attached with
+  `UPDATE challenges … WHERE session_id IS NULL` inside the session's
+  transaction; a second session for the challenge rolls back and gets 422
+  `challenge-used`. A retry of the same session is idempotent and returns
+  the same outcome.
+- **Unranked runs are still sessions**: they count for progress and history.
+- **Public board, private identities.** Entries carry rank, nickname, time
+  and the server's recording time — no user id.
+- Starting a challenge deletes the player's unplayed challenges that have
+  expired.
+
 ## Signing in: `/v1/auth` and `/v1/me`
 
 ```mermaid
@@ -200,17 +248,17 @@ Every error is an [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) problem
 document (`application/problem+json`), described by `problemDetailsSchema` in
 `shared/contracts`:
 
-| Status | When                                                                                                                                           |
-| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| 400    | Body breaks the contract (with `errors: [{path, message}]`), malformed JSON, malformed id                                                      |
-| 401    | Missing, invalid or expired access token (`WWW-Authenticate: Bearer`); unverifiable ID token; invalid or reused refresh token; deleted account |
-| 404    | Unknown session or route                                                                                                                       |
-| 409    | Session id already used by a different session                                                                                                 |
-| 413    | Body larger than 256 kB                                                                                                                        |
-| 422    | Well-formed session the server cannot verify; `type` names the reason, e.g. `urn:world-quiz:session-rejected:inconsistent-ending`              |
-| 429    | Too many requests to `/v1/auth` from one client                                                                                                |
-| 503    | Sign-in with a provider that has no client id configured                                                                                       |
-| 500    | Anything unexpected: logged on the server, generic message to the client                                                                       |
+| Status | When                                                                                                                                                                                                                                                  |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 400    | Body breaks the contract (with `errors: [{path, message}]`), malformed JSON, malformed id                                                                                                                                                             |
+| 401    | Missing, invalid or expired access token (`WWW-Authenticate: Bearer`); unverifiable ID token; invalid or reused refresh token; deleted account                                                                                                        |
+| 404    | Unknown session, leaderboard or route                                                                                                                                                                                                                 |
+| 409    | Session id already used by a different session                                                                                                                                                                                                        |
+| 413    | Body larger than 256 kB                                                                                                                                                                                                                               |
+| 422    | Well-formed session the server cannot verify; `type` names the reason, e.g. `urn:world-quiz:session-rejected:inconsistent-ending`; for challenges `challenge-missing`, `not-a-challenge`, `unknown-challenge`, `challenge-mismatch`, `challenge-used` |
+| 429    | Too many requests to `/v1/auth` from one client                                                                                                                                                                                                       |
+| 503    | Sign-in with a provider that has no client id configured                                                                                                                                                                                              |
+| 500    | Anything unexpected: logged on the server, generic message to the client                                                                                                                                                                              |
 
 ## Database
 
@@ -219,12 +267,27 @@ erDiagram
   users ||--o{ user_identities : "signs in with"
   users ||--o{ refresh_tokens : has
   users ||--o{ quiz_sessions : plays
+  users ||--o{ challenges : starts
   quiz_sessions ||--o{ quiz_answers : has
+  quiz_sessions |o--o| challenges : "plays (once)"
   users {
     uuid id PK
-    text display_name
+    text display_name "from the provider; never public"
     text email "informational"
+    text nickname "public name; null = default"
     timestamptz created_at
+  }
+  challenges {
+    uuid id PK
+    uuid user_id FK
+    text board
+    text seed "issued by the server"
+    timestamptz issued_at
+    uuid session_id FK, UK "null until played"
+    text outcome "ranked | why not"
+    int completion_ms
+    timestamptz recorded_at
+    bool personal_record
   }
   user_identities {
     text provider PK "google | apple | dev"

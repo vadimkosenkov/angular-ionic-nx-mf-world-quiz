@@ -43,3 +43,28 @@ export type {
   SignInRequest,
   User,
 } from './lib/auth';
+export {
+  challengeOutcomeSchema,
+  challengeSchema,
+  CHALLENGE_UNRANKED_REASONS,
+  DEFAULT_LEADERBOARD_SIZE,
+  LEADERBOARD_BOARD_IDS,
+  leaderboardBoardIdSchema,
+  leaderboardEntrySchema,
+  leaderboardQuerySchema,
+  leaderboardSchema,
+  MAX_LEADERBOARD_SIZE,
+  myRecordsSchema,
+  nicknameSchema,
+  startChallengeRequestSchema,
+  updateProfileRequestSchema,
+} from './lib/leaderboard';
+export type {
+  Challenge,
+  ChallengeOutcome,
+  ChallengeUnrankedReason,
+  Leaderboard,
+  MyRecords,
+  StartChallengeRequest,
+  UpdateProfileRequest,
+} from './lib/leaderboard';

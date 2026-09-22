@@ -10,6 +10,11 @@ import { createIdentityVerifier } from '../auth/identity-verifier';
 import { createRefreshTokenStore } from '../auth/refresh-tokens';
 import { createUserRepository } from '../auth/user-repository';
 import type { DatabaseHandle } from '../db/database';
+import { createLeaderboardRepository } from '../leaderboard/leaderboard-repository';
+import {
+  createLeaderboardService,
+  type LeaderboardService,
+} from '../leaderboard/leaderboard-service';
 import { createSessionRepository } from '../sessions/session-repository';
 import { createSessionService } from '../sessions/session-service';
 import {
@@ -27,8 +32,12 @@ export interface TestApi {
   readonly clock: ManualClock;
   readonly engine: QuizEngine;
   readonly provider: FakeIdentityProvider;
+  readonly leaderboard: LeaderboardService;
   /** Signs in through the dev endpoint; returns a bearer header. */
-  signIn(subject?: string): Promise<{ userId: string; authorization: string }>;
+  signIn(
+    subject?: string,
+    displayName?: string,
+  ): Promise<{ userId: string; authorization: string }>;
 }
 
 /**
@@ -46,13 +55,22 @@ export async function createTestApi(
   const provider = await createFakeIdentityProvider(() => clock.now());
   const accessTokens = createAccessTokens(TEST_JWT_SECRET);
 
+  const challenges = createLeaderboardRepository(database.db);
+  const leaderboard = createLeaderboardService({
+    repository: challenges,
+    clock,
+  });
+
   const app = createApp({
     clock,
     accessTokens,
+    leaderboard,
     sessions: createSessionService({
       repository: createSessionRepository(database.db),
       engine,
       clock,
+      challenges,
+      leaderboard,
     }),
     auth: createAuthService({
       users: createUserRepository(database.db),
@@ -89,10 +107,11 @@ export async function createTestApi(
     clock,
     engine,
     provider,
-    async signIn(subject = 'player-1') {
+    leaderboard,
+    async signIn(subject = 'player-1', displayName?: string) {
       const response = await request(app)
         .post('/v1/auth/dev')
-        .send({ subject, refreshTokenIn: 'body' });
+        .send({ subject, displayName, refreshTokenIn: 'body' });
       if (response.status !== 200) {
         throw new Error(`Test sign-in failed: ${response.status}`);
       }

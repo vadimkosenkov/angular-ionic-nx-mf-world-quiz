@@ -2,6 +2,7 @@ import type { User } from '@world-quiz/shared/contracts';
 import { and, asc, eq, TransactionRollbackError } from 'drizzle-orm';
 import type { Database } from '../db/database';
 import { userIdentities, users } from '../db/schema';
+import { defaultNickname } from './nickname';
 
 /** A provider account, or the development pseudo-provider. */
 export interface IdentityKey {
@@ -21,6 +22,8 @@ export interface UserRepository {
     now: number,
   ): Promise<User>;
   findById(id: string): Promise<User | null>;
+  /** Sets the public name; `null` when the user no longer exists. */
+  setNickname(id: string, nickname: string): Promise<User | null>;
   /** Deletes the user and, by cascade, everything the user owns. */
   delete(id: string): Promise<boolean>;
 }
@@ -41,6 +44,7 @@ export function createUserRepository(db: Database): UserRepository {
     return {
       id: user.id,
       displayName: user.displayName,
+      nickname: user.nickname ?? defaultNickname(user.id),
       email: user.email,
       providers: identities.map(
         (identity) => identity.provider as User['providers'][number],
@@ -71,6 +75,15 @@ export function createUserRepository(db: Database): UserRepository {
 
   return {
     findById,
+
+    async setNickname(id, nickname) {
+      const updated = await db
+        .update(users)
+        .set({ nickname })
+        .where(eq(users.id, id))
+        .returning({ id: users.id });
+      return updated.length > 0 ? findById(id) : null;
+    },
 
     async findOrCreate(identity, displayName, now) {
       const existing = await ownerOf(identity);

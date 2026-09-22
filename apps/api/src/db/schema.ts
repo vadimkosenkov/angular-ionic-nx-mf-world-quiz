@@ -25,6 +25,12 @@ export const users = pgTable('users', {
   displayName: text('display_name'),
   /** As shared by the provider; informational, never used to link accounts. */
   email: text('email'),
+  /**
+   * The public name on leaderboards, chosen by the player. `null` until then:
+   * a default ("Player 4821") is derived from the id, so the provider's name
+   * is never published without the player choosing it.
+   */
+  nickname: text('nickname'),
   createdAt: timestampMs('created_at').notNull().defaultNow(),
 });
 
@@ -150,11 +156,53 @@ export const quizAnswers = pgTable(
   (table) => [primaryKey({ columns: [table.sessionId, table.sequence] })],
 );
 
+/**
+ * Leaderboard challenges: issued by the server with its own seed, played once.
+ *
+ * When the session that plays a challenge is recorded, the row gets that
+ * session and the server's verdict: `outcome` is `ranked` or the reason it is
+ * not, and `completion_ms` / `recorded_at` are the ranking keys. Rankings are
+ * queries over the ranked rows (docs/domain/leaderboard.md).
+ */
+export const challenges = pgTable(
+  'challenges',
+  {
+    id: uuid('id').primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /** `capitals-easy`, `capitals-hard`, `flags-easy` or `flags-hard`. */
+    board: text('board').notNull(),
+    seed: text('seed').notNull(),
+    issuedAt: timestampMs('issued_at').notNull(),
+    /** The session that played it; `null` while unplayed. */
+    sessionId: uuid('session_id')
+      .unique()
+      .references(() => quizSessions.id, { onDelete: 'cascade' }),
+    /** `ranked`, or why the run is not ranked. */
+    outcome: text('outcome'),
+    /** The run's completion time, as measured by the client and checked. */
+    completionMs: integer('completion_ms'),
+    /** When the server accepted the run: the first tie-break. */
+    recordedAt: timestampMs('recorded_at'),
+    /** Whether the run beat the player's previous best on the board. */
+    personalRecord: boolean('personal_record'),
+  },
+  (table) => [
+    index('challenges_user_idx').on(table.userId),
+    // The ranking order, over ranked runs only.
+    index('challenges_ranking_idx')
+      .on(table.board, table.completionMs, table.recordedAt, table.sessionId)
+      .where(sql`${table.outcome} = 'ranked'`),
+  ],
+);
+
 export const schema = {
   users,
   userIdentities,
   refreshTokens,
   quizSessions,
   quizAnswers,
+  challenges,
 };
 export type Schema = typeof schema;

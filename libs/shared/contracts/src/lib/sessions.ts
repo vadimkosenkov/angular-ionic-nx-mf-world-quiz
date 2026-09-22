@@ -6,6 +6,7 @@ import {
 } from '@world-quiz/quiz/domain';
 import { z } from 'zod';
 import { countryCodeSchema, epochMillisSchema, uuidSchema } from './common';
+import { challengeOutcomeSchema } from './leaderboard';
 
 /**
  * Upper bound for answers in one session. Fixed and challenge sessions are at
@@ -63,6 +64,12 @@ export const submitSessionRequestSchema = z.strictObject({
       }),
     )
     .max(MAX_SUBMISSIONS_PER_SESSION),
+  /**
+   * Challenge sessions only: the challenge issued by `POST /v1/challenges`
+   * whose seed this session was played with. Optional without a default, so
+   * the request hash of sessions that do not carry it is unchanged.
+   */
+  challengeId: uuidSchema.optional(),
 });
 
 export type SubmitSessionRequest = z.infer<typeof submitSessionRequestSchema>;
@@ -83,6 +90,8 @@ export const sessionResultSchema = z.object({
   }),
   /** When the server stored the session (ISO 8601). */
   recordedAt: z.iso.datetime(),
+  /** Challenge sessions only: whether the run is ranked, and where. */
+  challenge: challengeOutcomeSchema.optional(),
 });
 
 export type SessionResult = z.infer<typeof sessionResultSchema>;
