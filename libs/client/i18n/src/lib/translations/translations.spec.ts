@@ -62,6 +62,8 @@ describe('translations', () => {
       'app.name',
       'settings.about.dataValue',
       'settings.about.flagsValue',
+      'settings.account.providers.google',
+      'settings.account.providers.apple',
     ]);
     const latinOnly = [...languages.ru]
       .map(([key, text]) => [key, text.replace(/{{\s*\w+\s*}}/g, '')] as const)

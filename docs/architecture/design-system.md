@@ -17,14 +17,14 @@ properties in [`_tokens.scss`](../../libs/client/ui/src/styles/_tokens.scss).
 Components use semantic names only (`--wq-color-surface`, never `#ffffff`), so
 the palette can change in one place.
 
-| Group              | Tokens                                                                                                                                                         |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Brand              | `primary`, `primary-bright`, `primary-strong`, `on-primary`, `primary-container`, `on-primary-container`, `accent`, `lavender`                                 |
-| Surfaces           | `background`, `surface`, `surface-secondary`, `glass-surface`, `glass-border`, `glass-highlight`, `tab-bar-glass`, `border`, `overlay`                         |
-| Segmented controls | `segment-background`, `segment-indicator`, `segment-checked`                                                                                                   |
-| Text               | `text-primary`, `text-secondary`                                                                                                                               |
-| Feedback           | `success`, `error`, `warning` and their `-container` variants                                                                                                  |
-| Other              | `aurora-1..3` (background), `radius-*`, `shadow-card/raised/floating`, `space-*`, `duration-*`, `easing-standard`, `touch-target` (44 px), `tab-bar-clearance` |
+| Group              | Tokens                                                                                                                                                                                                                                               |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Brand              | `primary`, `primary-bright`, `primary-strong`, `on-primary`, `primary-container`, `on-primary-container`, `accent`, `lavender`                                                                                                                       |
+| Surfaces           | `background`, `surface`, `surface-secondary`, `glass-surface`, `glass-border`, `glass-highlight`, `tab-bar-glass`, `border`, `overlay`                                                                                                               |
+| Segmented controls | `segment-background`, `segment-indicator`, `segment-checked`                                                                                                                                                                                         |
+| Text               | `text-primary`, `text-secondary`                                                                                                                                                                                                                     |
+| Feedback           | `success`, `error`, `warning` and their `-container` variants                                                                                                                                                                                        |
+| Other              | `aurora-1..3` (background), `radius-*`, `shadow-card/raised/floating`, `drop-shadow-control` (a `filter` for shapes that are not their box, e.g. an iframe), `space-*`, `duration-*`, `easing-standard`, `touch-target` (44 px), `tab-bar-clearance` |
 
 ### Light and dark
 

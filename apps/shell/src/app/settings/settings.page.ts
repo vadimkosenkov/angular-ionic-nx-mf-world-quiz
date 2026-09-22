@@ -25,6 +25,7 @@ import {
 import { flagAssetPath } from '@world-quiz/quiz/countries';
 import { isLocale, type Locale } from '@world-quiz/quiz/domain';
 import { APP_VERSION } from '../app-info';
+import { AccountSection } from './account-section';
 
 interface ThemeOption {
   readonly value: ThemePreference;
@@ -55,6 +56,7 @@ interface LanguageOption {
     IonRadio,
     IonNote,
     TranslocoPipe,
+    AccountSection,
   ],
   templateUrl: './settings.page.html',
   styleUrl: './settings.page.scss',

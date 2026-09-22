@@ -2,8 +2,8 @@
 
 > Status: **implemented**: Ionic shell, navigation, Home, Leaderboard,
 > Achievements, Settings (Phase 3); quiz setup and the Capitals (Phase 4)
-> and Flags (Phase 5) quizzes, each loaded from its own microfrontend.
-> Sign-in follows in Phase 7.
+> and Flags (Phase 5) quizzes, each loaded from its own microfrontend;
+> sign-in with Google in Settings (Phase 7b).
 
 ## Stack
 
@@ -25,7 +25,7 @@ apps/shell/src/app/
   home/                greeting, overall progress, categories, practice, achievement preview
   leaderboard/         view and board selectors, rules, "not available yet" state
   achievements/        summary, legend, all 14 achievements
-  settings/            theme, language, about
+  settings/            account (sign-in), theme, language, about
   quiz/
     setup.page.*       category, region, difficulty and mode; starts the quiz
     quiz-ports.providers.ts  the shell's side of the microfrontend contract
@@ -47,6 +47,7 @@ Libraries used by the shell:
 | `client-ui`                      | Tokens, themes, glass, `wq-progress-bar`, `wq-progress-card`, `wq-empty-state` |
 | `client-quiz-ports`              | Tokens and interfaces the shell and the remotes share                          |
 | `client-quiz-feature`            | The quiz screens themselves (`wq-quiz-play`, `wq-quiz-results`)                |
+| `client-auth`                    | `AuthStore`, API calls for sign-in, bearer interceptor, Google button (GIS)    |
 | `client-i18n`                    | Transloco setup, bundled translations, `wqPlural`, locale detection            |
 | `client-settings`                | `SettingsStore`, storage port, system colour-scheme signal, document sync      |
 | `quiz-domain` / `quiz-countries` | Progress, achievements and all counts come from the domain and the dataset     |
@@ -67,6 +68,36 @@ All URLs are deep-linkable, including a quiz with its options (tested in
 Cypress). How the federated route is wired, and what the shell and the remote
 may know about each other, is described in
 [microfrontends.md](microfrontends.md).
+
+## Sign-in (Settings → Account)
+
+`libs/client/auth` (design: [ADR-010](../decisions/ADR-010-authentication.md)):
+
+- **Start-up**: `provideAuth()` restores a previous sign-in with the httpOnly
+  refresh cookie, without blocking the first render (status `restoring` →
+  `signed-in` or `signed-out`; `unverified` when the API cannot be reached —
+  the section says so, offers "Try again" and checks again when the browser
+  is back online).
+- **Google**: Google's button from Google Identity Services; its ID token and
+  our nonce go to `POST /v1/auth/google`. **Apple** is shown as coming with the
+  iPhone app — web Sign in with Apple needs a registered HTTPS domain.
+- **Google's button is Google's page** (an iframe): a white "Sign in with
+  Google" in both themes (black is left to Apple), drawn again when the
+  language changes. Its shape, font and padding
+  are Google's, and Google may show it in the language of the Google account
+  signed in to the browser instead of the app's `hl`. Known limitation, with
+  a TODO in `google-sign-in-button.ts`: a custom button with an OpenID Connect
+  popup would give full control.
+- **Tokens**: the access token only in memory, the refresh token only in the
+  httpOnly cookie; nothing in `localStorage`. `authInterceptor` adds the
+  bearer token to API requests and renews it once, shared, on 401; tabs take
+  turns through a Web Lock. Only the API's refusal (401 from
+  `/v1/auth/refresh`) signs the player out; offline, 5xx or 429 do not.
+- **Account deletion** asks for confirmation inline, with the consequence
+  spelled out, before `DELETE /v1/me`.
+- The API URL and the Google client id are in `apps/shell/src/app/api-config.ts`
+  (public values; per-environment configuration comes with Phase 12).
+- Progress is not sent to the account yet (Phase 8); the section says so.
 
 ## Start-up sequence
 

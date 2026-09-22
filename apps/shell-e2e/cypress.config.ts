@@ -8,14 +8,16 @@ module.exports = defineConfig({
     ...nxE2EPreset(__filename, {
       cypressDir: 'src',
       // The shell alone is not enough: each quiz is served by its own
-      // application, and the shell loads Capitals from http://localhost:4201
-      // and Flags from http://localhost:4202.
+      // application (Capitals on :4201, Flags on :4202), and sign-in needs the
+      // API on :3333, started with a fresh database and the dev sign-in.
       webServerCommands: {
-        default: 'npx nx run-many -t serve -p shell capitals flags',
-        production: 'npx nx run-many -t serve-static -p shell capitals flags',
+        default:
+          'npx nx run-many -t serve serve-e2e -p shell capitals flags api',
+        production:
+          'npx nx run-many -t serve-static serve-e2e -p shell capitals flags api',
       },
       ciWebServerCommand:
-        'npx nx run-many -t serve-static -p shell capitals flags',
+        'npx nx run-many -t serve-static serve-e2e -p shell capitals flags api',
       ciBaseUrl: 'http://localhost:4200',
     }),
     baseUrl: 'http://localhost:4200',

@@ -2,10 +2,17 @@ import {
   type ApplicationConfig,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
+import {
+  provideHttpClient,
+  withFetch,
+  withInterceptors,
+} from '@angular/common/http';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideIonicAngular } from '@ionic/angular';
+import { authInterceptor, provideAuth } from '@world-quiz/client/auth';
 import { provideAppI18n } from '@world-quiz/client/i18n';
 import { provideAppSettings } from '@world-quiz/client/settings';
+import { API_URL, GOOGLE_WEB_CLIENT_ID } from './api-config';
 import { appRoutes } from './app.routes';
 import { registerIcons } from './icons';
 
@@ -20,5 +27,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(appRoutes, withComponentInputBinding()),
     provideAppI18n(),
     provideAppSettings(),
+    provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
+    provideAuth({ apiUrl: API_URL, googleClientId: GOOGLE_WEB_CLIENT_ID }),
   ],
 };

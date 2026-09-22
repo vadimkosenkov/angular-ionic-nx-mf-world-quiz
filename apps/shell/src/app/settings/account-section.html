@@ -1,0 +1,111 @@
+<section class="wq-section" aria-labelledby="account-title">
+  <h2 id="account-title" class="wq-section-title">
+    {{ 'settings.account.title' | transloco }}
+  </h2>
+
+  <div
+    class="wq-card account"
+    data-testid="account"
+    [attr.aria-busy]="auth.busy()"
+  >
+    @switch (auth.status()) { @case ('restoring') {
+    <p class="muted">{{ 'settings.account.checking' | transloco }}</p>
+    } @case ('unverified') {
+    <p class="muted" data-testid="account-unverified">
+      {{ 'settings.account.unverified' | transloco }}
+    </p>
+    <ion-button
+      class="wq-glass-button secondary"
+      expand="block"
+      data-testid="retry-restore"
+      (click)="retry()"
+    >
+      {{ 'settings.account.retry' | transloco }}
+    </ion-button>
+    } @case ('signed-in') { @let user = auth.user();
+    <div class="identity">
+      <ion-icon name="person-circle" aria-hidden="true" />
+      <div>
+        <p class="name" data-testid="account-name">
+          {{ user?.displayName ?? user?.email ?? ('settings.account.player' |
+          transloco) }}
+        </p>
+        <p class="muted">
+          {{ 'settings.account.signedInWith' | transloco : { provider:
+          'settings.account.providers.' + provider() | transloco, } }}
+        </p>
+      </div>
+    </div>
+    <p class="muted">{{ 'settings.account.syncLater' | transloco }}</p>
+
+    @if (!confirmingDelete()) {
+    <div class="actions">
+      <ion-button
+        class="wq-glass-button secondary"
+        expand="block"
+        data-testid="sign-out"
+        [disabled]="auth.busy()"
+        (click)="signOut()"
+      >
+        {{ 'settings.account.signOut' | transloco }}
+      </ion-button>
+      <ion-button
+        class="delete"
+        fill="clear"
+        expand="block"
+        data-testid="delete-account"
+        [disabled]="auth.busy()"
+        (click)="confirmingDelete.set(true)"
+      >
+        {{ 'settings.account.delete' | transloco }}
+      </ion-button>
+    </div>
+    } @else {
+    <div
+      class="confirm"
+      role="alertdialog"
+      aria-labelledby="delete-title"
+      aria-describedby="delete-text"
+      data-testid="delete-confirmation"
+    >
+      <p id="delete-title" class="confirm-title">
+        {{ 'settings.account.deleteTitle' | transloco }}
+      </p>
+      <p id="delete-text">{{ 'settings.account.deleteText' | transloco }}</p>
+      <ion-button
+        class="wq-glass-button danger"
+        expand="block"
+        data-testid="confirm-delete"
+        [disabled]="auth.busy()"
+        (click)="deleteAccount()"
+      >
+        {{ 'settings.account.deleteConfirm' | transloco }}
+      </ion-button>
+      <ion-button
+        fill="clear"
+        expand="block"
+        data-testid="cancel-delete"
+        [disabled]="auth.busy()"
+        (click)="confirmingDelete.set(false)"
+      >
+        {{ 'settings.account.cancel' | transloco }}
+      </ion-button>
+    </div>
+    } } @case ('signed-out') {
+    <p class="muted">{{ 'settings.account.intro' | transloco }}</p>
+    <wq-google-sign-in-button
+      [unavailableText]="'settings.account.googleUnavailable' | transloco"
+      [locale]="settings.locale()"
+      (credential)="signInWithGoogle($event)"
+    />
+    <p class="apple" data-testid="apple-unavailable">
+      <ion-icon name="logo-apple" aria-hidden="true" />
+      {{ 'settings.account.appleOnIos' | transloco }}
+    </p>
+    } } @if (auth.error(); as error) {
+    <p class="error" role="alert" data-testid="account-error">
+      {{ 'settings.account.errors.' + error | transloco }}
+    </p>
+    }
+  </div>
+</section>

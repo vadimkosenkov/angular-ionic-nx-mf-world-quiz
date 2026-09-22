@@ -164,3 +164,32 @@ which replaces the whole stack, and `QuizPage` resets itself in
 swipe-back is started and cancelled, which would restart a quiz in progress.)
 Covered by a unit
 test and by the Flags E2E journey.
+
+## "Google sign-in is unavailable" / `403 Forbidden` from `accounts.google.com/gsi/*`
+
+**Symptom:** the Google button does not load in Settings → Account;
+`gsi/client` or `gsi/button` answers 403, while an incognito window, or the
+same window without device emulation, gets 200.
+
+**Cause:** Chrome DevTools' device presets (e.g. "iPhone 17") replace the
+User-Agent with Safari on iOS, but the other signals (`Sec-CH-UA` client
+hints, FedCM support) still say desktop Chrome on macOS. Google's protection
+against stolen sessions appears to refuse the browser's Google cookies from
+such an inconsistent "device". The width is irrelevant: the same requests
+without cookies succeed for any width and User-Agent.
+
+**Fix:** for a phone-sized layout with Google sign-in, use DevTools'
+**Responsive** mode with a phone width (e.g. 400) instead of a device preset,
+or an incognito window. Real phones are not affected; the iOS app uses the
+native Google SDK (Phase 13).
+
+## The Google button shows another language, or "Sign in as …"
+
+**Cause:** the button is Google's iframe. The app passes its language
+(`hl`), but Google may prefer the language of the Google account signed in
+to the browser; once an account has signed in to the app, Google shows a
+personalised button. Neither can be switched off from the app (see the TODO
+in `libs/client/auth/src/lib/google-sign-in-button.ts`).
+
+**Fix:** none needed; an incognito window shows the plain button in the app's
+language.

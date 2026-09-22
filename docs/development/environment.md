@@ -8,7 +8,12 @@
   start if a variable is invalid ("fail fast").
 - **Errors name variables, never values**, because later variables are secrets.
 - **Secrets are never committed.** `.env` files are git-ignored;
-  [`.env.example`](../../.env.example) documents every variable with safe defaults.
+  [`apps/api/.env.example`](../../apps/api/.env.example) documents every
+  variable with safe defaults.
+- **API variables live next to the API.** Nx loads a `.env` file from the
+  workspace root into _every_ task, and the frontend dev servers read `PORT`
+  too — a root `.env` with `PORT=3333` made the shell and the remotes try to
+  start on the API's port. `apps/api/.env` is loaded only for the API's tasks.
 
 ## API variables
 
@@ -33,9 +38,12 @@
 
 The Google client id of the project ("World Quiz Web", Google Auth Platform,
 authorized JavaScript origins `http://localhost:4200` and `http://localhost`)
-is in `.env.example`. Nx loads a `.env` file in the workspace root into
-`nx serve api`, so copying `.env.example` to `.env` is enough to run with
-Google and the dev sign-in enabled.
+is in `apps/api/.env.example`. Copy it to `apps/api/.env` to run the API with
+Google and the dev sign-in enabled:
+
+```bash
+cp apps/api/.env.example apps/api/.env
+```
 
 Design: [ADR-010](../decisions/ADR-010-authentication.md).
 
