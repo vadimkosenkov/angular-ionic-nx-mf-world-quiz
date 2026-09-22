@@ -61,10 +61,12 @@ apps/
   capitals/     Angular app (future remote)               scope:capitals  type:app
   flags/        Angular app (future remote)               scope:flags     type:app
   api/          Express 5 (esbuild, ESM)                  scope:api       type:app
+  site/         Angular SSR public site                   scope:site      type:app
   shell-e2e/    Cypress                                   scope:shell     type:e2e
 libs/
   quiz/domain/     Pure TS quiz rules                     scope:shared    type:domain
   quiz/countries/  Static 195-country dataset             scope:shared    type:domain
+  shared/design-tokens/ CSS custom properties (Sass)     scope:shared    type:ui
   client/ui/       Design system (Angular)                scope:client    type:ui
   client/i18n/     Transloco + en/ru translations         scope:client    type:data-access
   client/settings/ Settings store, storage, theme sync    scope:client    type:data-access

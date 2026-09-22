@@ -1,5 +1,6 @@
 import { FIXTURE_DATASET } from '../testing/fixture-dataset';
 import type { LeaderboardEntry } from './leaderboard';
+import { formatRunTime } from './leaderboard';
 import {
   compareLeaderboardEntries,
   evaluateChallengeRun,
@@ -210,5 +211,17 @@ describe('isNewPersonalRecord', () => {
     [100_000, 100_001, false],
   ])('previous %s, new %s → %s', (previous, candidate, expected) => {
     expect(isNewPersonalRecord(previous, candidate)).toBe(expected);
+  });
+});
+
+describe('formatRunTime', () => {
+  it.each([
+    [0, '0:00.0'],
+    [9_999, '0:09.9'],
+    [60_000, '1:00.0'],
+    [247_349, '4:07.3'],
+    [3_600_000, '60:00.0'],
+  ])('shows %i ms as %s, rounded down like a stopwatch', (ms, text) => {
+    expect(formatRunTime(ms)).toBe(text);
   });
 });

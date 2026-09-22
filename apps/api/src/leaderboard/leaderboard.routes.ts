@@ -64,9 +64,11 @@ export function leaderboardsRouter(leaderboard: LeaderboardService): Router {
       return;
     }
     // The same for everyone, but it must be fresh: a player who has just
-    // finished a run expects to see it. Caches revalidate every time; the
-    // ETag Express sets makes an unchanged board a short 304.
-    response.setHeader('Cache-Control', 'no-cache');
+    // finished a run expects to see it. Stale at once and revalidated every
+    // time (the ETag Express sets makes an unchanged board a short 304).
+    // Not `no-cache`: Angular's SSR transfer cache skips such responses, and
+    // the site would then fetch every board twice.
+    response.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
     response.json(await leaderboard.board(board.data, query.data.limit));
   });
 

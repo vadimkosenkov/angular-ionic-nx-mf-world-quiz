@@ -1,0 +1,52 @@
+@let t = text();
+<a class="skip" href="#main">{{ t.nav.home }}</a>
+<header class="header">
+  <a class="brand" [routerLink]="['/', language()]">
+    <svg class="logo" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18" />
+    </svg>
+    World Quiz
+  </a>
+  <nav [attr.aria-label]="t.nav.main">
+    <a
+      [routerLink]="['/', language(), 'leaderboard']"
+      routerLinkActive="active"
+      ariaCurrentWhenActive="page"
+      >{{ t.nav.leaderboard }}</a
+    >
+    <a
+      [routerLink]="['/', language(), 'privacy']"
+      routerLinkActive="active"
+      ariaCurrentWhenActive="page"
+      >{{ t.nav.privacy }}</a
+    >
+    <a
+      [routerLink]="['/', language(), 'terms']"
+      routerLinkActive="active"
+      ariaCurrentWhenActive="page"
+      >{{ t.nav.terms }}</a
+    >
+    <a
+      class="language"
+      data-testid="language-switch"
+      [attr.hreflang]="otherLanguage()"
+      [attr.lang]="otherLanguage()"
+      [routerLink]="otherLanguageLink()"
+      >{{ t.nav.otherLanguage }}</a
+    >
+    <a class="wq-button play" [href]="config.appUrl">{{ t.nav.play }}</a>
+  </nav>
+</header>
+
+<main id="main" class="main">
+  <router-outlet />
+</main>
+
+<footer class="footer wq-text-secondary">
+  <p>{{ t.footer.note }}</p>
+  <p>
+    <a [routerLink]="['/', language(), 'privacy']">{{ t.nav.privacy }}</a> ·
+    <a [routerLink]="['/', language(), 'terms']">{{ t.nav.terms }}</a>
+  </p>
+</footer>

@@ -1,0 +1,84 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+
+  &:focus {
+    left: var(--wq-space-4);
+    top: var(--wq-space-4);
+  }
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wq-space-3);
+  max-width: 960px;
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--wq-space-4);
+}
+
+.logo {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: var(--wq-color-primary);
+  stroke-width: 1.8;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--wq-space-2);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--wq-color-text-primary);
+  text-decoration: none;
+}
+
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wq-space-2) var(--wq-space-4);
+
+  a:not(.wq-button) {
+    color: var(--wq-color-text-secondary);
+    font-weight: 600;
+    text-decoration: none;
+
+    &.active {
+      color: var(--wq-color-primary-strong);
+    }
+  }
+}
+
+.play {
+  min-height: 40px;
+}
+
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--wq-space-4);
+}
+
+.footer {
+  padding: var(--wq-space-6) var(--wq-space-4);
+  text-align: center;
+  font-size: var(--wq-font-size-caption);
+
+  p {
+    margin: 0 0 var(--wq-space-1);
+  }
+}

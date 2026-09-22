@@ -13,7 +13,13 @@ numbers are **not** copied.
 ## Tokens
 
 All colours, radii, shadows, spacing and motion values are CSS custom
-properties in [`_tokens.scss`](../../libs/client/ui/src/styles/_tokens.scss).
+properties. Their values live in
+[`libs/shared/design-tokens`](../../libs/shared/design-tokens/src/_tokens.scss)
+as two Sass mixins (`light-theme`, `dark-theme`), so the app and the SSR site
+([site.md](site.md)) share them;
+[`client/ui`'s `_tokens.scss`](../../libs/client/ui/src/styles/_tokens.scss)
+applies them to `:root` and Ionic's `:root.ion-palette-dark`, the site to
+`:root` and `prefers-color-scheme: dark`.
 Components use semantic names only (`--wq-color-surface`, never `#ffffff`), so
 the palette can change in one place.
 

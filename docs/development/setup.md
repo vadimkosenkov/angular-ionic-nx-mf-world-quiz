@@ -35,6 +35,7 @@ npm ci
 | Capitals standalone (dev ports)         | `npm run start:capitals` | http://localhost:4201        |
 | Flags standalone (dev ports)            | `npm run start:flags`    | http://localhost:4202        |
 | API                                     | `npm run start:api`      | http://localhost:3333/health |
+| Public SSR site + API                   | `npm run start:site`     | http://localhost:4300        |
 
 `start:quiz` streams the four servers' logs with a `shell:` / `capitals:` / `flags:` / `api:` prefix
 (`--output-style=stream`); Nx's interactive task view would only show a

@@ -5,7 +5,7 @@ built as a full-stack portfolio project on a modern Angular ecosystem: **Nx,
 Angular 22 (signals, zoneless), Native Federation microfrontends, Ionic,
 Capacitor (iOS), Express 5, PostgreSQL** and a multi-level test strategy.
 
-> **Project status: Phase 9b, leaderboard challenges in the app.**
+> **Project status: Phase 9c, the public SSR site.**
 > The workspace, CI, the 195-country dataset, the platform-independent quiz
 > domain and the Ionic shell (welcome screen, tabs, Home, Achievements,
 > Leaderboard with an honest "not available yet" state, Settings, light/dark
@@ -21,8 +21,10 @@ Capacitor (iOS), Express 5, PostgreSQL** and a multi-level test strategy.
 > (nicknames only) and personal records. In the app, players start a
 > challenge from the Leaderboard tab, see their rank and personal record on
 > the results, browse the boards and their records, and choose their public
-> nickname. The SSR site with the public leaderboard comes next. This README
-> only describes what exists; planned items are marked as such.
+> nickname. A separate **server-rendered site** (`apps/site`, English and
+> Russian) publishes the Privacy Policy, the Terms and the public
+> leaderboards. This README only describes what exists; planned items are
+> marked as such.
 
 ## Product in one minute
 
@@ -70,7 +72,7 @@ The same quiz rules run in the browser (offline play) and on the server
 | Database                 | PostgreSQL + Drizzle ORM (PGlite for tests and development)       | ✅                               |
 | Auth                     | Sign in with Apple, Google; server-verified tokens                | ✅ web: Google · 📐 Apple on iOS |
 | Offline                  | IndexedDB (Dexie) + outbox sync                                   | ✅                               |
-| SSR                      | Separate Angular SSR `site` app                                   | 📐 Phase 9                       |
+| SSR                      | Separate Angular SSR `site` app (prerendered + server-rendered)   | ✅                               |
 | Quiz domain              | Pure TS engine, seeded questions, typo-tolerant matching, mastery | ✅                               |
 | Country data             | 195 countries (en/ru), UN M49 regions, `flag-icons` SVGs          | ✅                               |
 | Unit/component/API tests | Vitest 4, Angular TestBed, supertest, PGlite                      | ✅ foundation                    |
@@ -87,11 +89,13 @@ apps/
   capitals/    Capitals quiz, loaded by the shell as a federated remote
   flags/       Flags quiz, loaded by the shell as a federated remote
   api/         Express API: sessions graded on the server, Drizzle schema + migrations
+  site/        Public SSR site: legal pages (prerendered), leaderboards (server-rendered)
   shell-e2e/   Cypress tests
 libs/
   quiz/domain/    Pure TypeScript quiz rules (no Angular, DOM or Node)
   quiz/countries/ 195-country dataset (English/Russian) and flag paths
-  client/ui/       Design system: tokens, themes, glass, UI components
+  shared/design-tokens/ Design tokens (CSS custom properties) for the app and the site
+  client/ui/       Design system: themes, glass, UI components
   client/i18n/     Transloco setup and English/Russian translations
   client/settings/ Theme and language settings, storage, document sync
   client/auth/     Sign-in state, API calls, bearer interceptor, Google button
@@ -132,6 +136,7 @@ Details: [setup](docs/development/setup.md) · [environment](docs/development/en
 | Decisions (ADRs)                 | [docs/decisions](docs/decisions/README.md)                                     |
 | Frontend (shell)                 | [docs/architecture/frontend.md](docs/architecture/frontend.md)                 |
 | Backend (API, database)          | [docs/architecture/backend.md](docs/architecture/backend.md)                   |
+| Public SSR site                  | [docs/architecture/site.md](docs/architecture/site.md)                         |
 | Microfrontends (what runs today) | [docs/architecture/microfrontends.md](docs/architecture/microfrontends.md)     |
 | Design system and Liquid Glass   | [docs/architecture/design-system.md](docs/architecture/design-system.md)       |
 | Internationalization             | [docs/architecture/i18n.md](docs/architecture/i18n.md)                         |

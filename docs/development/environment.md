@@ -27,15 +27,15 @@
 
 ### Sign-in
 
-| Variable            | Default                                                      | Purpose                                                                           |
-| ------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------- |
-| `AUTH_JWT_SECRET`   | unset → random key per start (not production)                | HMAC key for access tokens, ≥ 32 characters. **Required in production.** Secret   |
-| `GOOGLE_CLIENT_IDS` | empty (Google sign-in disabled)                              | Comma-separated Google OAuth client ids accepted as ID-token audience. Not secret |
-| `APPLE_CLIENT_IDS`  | empty (Apple sign-in disabled)                               | Comma-separated Apple client ids (bundle id, Services ID). Not secret             |
-| `AUTH_DEV_LOGIN`    | `false`                                                      | `true` enables `POST /v1/auth/dev` (any subject). **Refused in production**       |
-| `CORS_ORIGINS`      | `http://localhost:4200` (not production), none in production | Browser origins allowed to call the API with credentials                          |
-| `COOKIE_SECURE`     | `true` in production, `false` otherwise                      | `Secure` attribute of the refresh cookie                                          |
-| `AUTH_RATE_LIMIT`   | `30`                                                         | Requests per client address per 15 minutes on `/v1/auth`; E2E raises it           |
+| Variable            | Default                                                                            | Purpose                                                                           |
+| ------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `AUTH_JWT_SECRET`   | unset → random key per start (not production)                                      | HMAC key for access tokens, ≥ 32 characters. **Required in production.** Secret   |
+| `GOOGLE_CLIENT_IDS` | empty (Google sign-in disabled)                                                    | Comma-separated Google OAuth client ids accepted as ID-token audience. Not secret |
+| `APPLE_CLIENT_IDS`  | empty (Apple sign-in disabled)                                                     | Comma-separated Apple client ids (bundle id, Services ID). Not secret             |
+| `AUTH_DEV_LOGIN`    | `false`                                                                            | `true` enables `POST /v1/auth/dev` (any subject). **Refused in production**       |
+| `CORS_ORIGINS`      | `http://localhost:4200,http://localhost:4300` (not production), none in production | Browser origins allowed to call the API (the app and the site)                    |
+| `COOKIE_SECURE`     | `true` in production, `false` otherwise                                            | `Secure` attribute of the refresh cookie                                          |
+| `AUTH_RATE_LIMIT`   | `30`                                                                               | Requests per client address per 15 minutes on `/v1/auth`; E2E raises it           |
 
 The Google client id of the project ("World Quiz Web", Google Auth Platform,
 authorized JavaScript origins `http://localhost:4200` and `http://localhost`)
@@ -53,6 +53,14 @@ databases) runs the API tests against PostgreSQL instead of PGlite; see
 [backend.md](../architecture/backend.md#tests-on-pglite-and-on-postgresql).
 
 Why PGlite: [ADR-005](../decisions/ADR-005-database.md).
+
+## Site variables (`apps/site` server)
+
+Read by the site's Node server at start-up; the full table is in
+[site.md](../architecture/site.md#configuration-server-environment):
+`PORT`, `API_URL`, `SITE_URL`, `APP_URL`, `SITE_OPERATOR_NAME`,
+`SITE_OPERATOR_EMAIL` (unset → the legal pages show a draft notice) and
+`NG_ALLOWED_HOSTS` (Angular SSR answers only these host names).
 
 ## Frontend configuration
 

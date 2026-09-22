@@ -24,7 +24,6 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { AUTH_CONFIG } from '@world-quiz/client/auth';
 import { PluralPipe } from '@world-quiz/client/i18n';
 import { ProgressStore, SyncService } from '@world-quiz/client/progress';
-import { formatRunTime } from '@world-quiz/client/quiz-feature';
 import { EmptyState } from '@world-quiz/client/ui';
 import {
   challengeSchema,
@@ -32,6 +31,7 @@ import {
   myRecordsSchema,
 } from '@world-quiz/shared/contracts';
 import {
+  formatRunTime,
   isLeaderboardBoardId,
   LEADERBOARD_BOARDS,
   type LeaderboardBoardId,

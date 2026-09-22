@@ -15,7 +15,7 @@ describe('loadConfig', () => {
         secureCookies: false,
         rateLimit: 30,
       },
-      corsOrigins: ['http://localhost:4200'],
+      corsOrigins: ['http://localhost:4200', 'http://localhost:4300'],
     });
   });
 

@@ -1,0 +1,79 @@
+// The site shares the app's design tokens (libs/shared/design-tokens) and
+// follows the system colour scheme; it has no Ionic.
+@use '../../../libs/shared/design-tokens/src/tokens';
+
+:root {
+  @include tokens.light-theme;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    @include tokens.dark-theme;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue',
+    'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  color: var(--wq-color-text-primary);
+  background:
+    radial-gradient(120% 60% at 0% 0%, var(--wq-aurora-1), transparent 60%),
+    radial-gradient(90% 50% at 100% 10%, var(--wq-aurora-2), transparent 65%),
+    radial-gradient(80% 60% at 50% 100%, var(--wq-aurora-3), transparent 70%),
+    var(--wq-color-background);
+  background-attachment: fixed;
+}
+
+a {
+  color: var(--wq-color-primary-strong);
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 3px solid var(--wq-color-primary);
+  outline-offset: 2px;
+}
+
+.wq-card {
+  padding: var(--wq-space-5);
+  border: 1px solid var(--wq-color-border);
+  border-radius: var(--wq-radius-lg);
+  background: var(--wq-color-surface);
+  box-shadow: var(--wq-shadow-card);
+}
+
+.wq-text-secondary {
+  color: var(--wq-color-text-secondary);
+}
+
+.wq-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 var(--wq-space-6);
+  border-radius: var(--wq-radius-pill);
+  background: var(--wq-color-primary);
+  color: var(--wq-color-on-primary);
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: var(--wq-shadow-raised);
+
+  &.secondary {
+    background: var(--wq-color-surface);
+    color: var(--wq-color-primary-strong);
+    border: 1px solid var(--wq-color-border);
+    box-shadow: none;
+  }
+}

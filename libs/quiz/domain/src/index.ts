@@ -148,6 +148,7 @@ export type {
 export {
   compareLeaderboardEntries,
   evaluateChallengeRun,
+  formatRunTime,
   isNewPersonalRecord,
   personalBests,
   rankLeaderboard,

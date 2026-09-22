@@ -1,0 +1,46 @@
+@let t = text().leaderboard;
+<h1>{{ t.title }}</h1>
+<p class="wq-text-secondary rules">{{ t.rules }}</p>
+
+<nav class="boards" [attr.aria-label]="t.boardsLabel">
+  @for (item of boards; track item.id) {
+  <a
+    [routerLink]="['/', i18n.language(), 'leaderboard', item.id]"
+    routerLinkActive="active"
+    ariaCurrentWhenActive="page"
+    >{{ t.boards[item.id] }}</a
+  >
+  }
+</nav>
+
+<section class="wq-card ranking" data-testid="site-ranking">
+  <h2>{{ t.boards[board()] }}</h2>
+  @if (ranking.error()) {
+  <p role="alert" data-testid="site-ranking-unavailable">{{ t.unavailable }}</p>
+  } @else if (ranking.hasValue()) { @let data = ranking.value(); @if
+  (data.entries.length === 0) {
+  <p data-testid="site-ranking-empty">{{ t.empty }}</p>
+  } @else {
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">{{ t.rank }}</th>
+        <th scope="col">{{ t.player }}</th>
+        <th scope="col" class="time">{{ t.time }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (entry of data.entries; track entry.rank) {
+      <tr>
+        <td class="rank">{{ entry.rank }}</td>
+        <td>{{ entry.nickname }}</td>
+        <td class="time">{{ formatRunTime(entry.completionTimeMs) }}</td>
+      </tr>
+      }
+    </tbody>
+  </table>
+  <p class="wq-text-secondary note">
+    {{ t.players(data.players) }} · {{ t.freshness }}
+  </p>
+  } }
+</section>
