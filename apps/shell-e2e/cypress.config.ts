@@ -28,6 +28,11 @@ module.exports = defineConfig({
       config: Cypress.PluginConfigOptions,
     ) {
       on('task', {
+        /** Prints a report from a spec in the terminal that runs Cypress. */
+        log(message: string) {
+          console.log(message);
+          return null;
+        },
         /**
          * The answer key for typed answers: the country dataset, read here
          * in Node (the spec bundler does not resolve workspace path aliases,

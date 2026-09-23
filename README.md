@@ -5,7 +5,7 @@ built as a full-stack portfolio project on a modern Angular ecosystem: **Nx,
 Angular 22 (signals, zoneless), Native Federation microfrontends, Ionic,
 Capacitor (iOS), Express 5, PostgreSQL** and a multi-level test strategy.
 
-> **Project status: Phase 13b, sign-in in the iPhone app.**
+> **Project status: Phase 14a, accessibility and security.**
 > The workspace, CI, the 195-country dataset, the platform-independent quiz
 > domain and the Ionic shell (welcome screen, tabs, Home, Achievements,
 > Leaderboard with an honest "not available yet" state, Settings, light/dark
@@ -82,6 +82,7 @@ The same quiz rules run in the browser (offline play) and on the server
 | Unit/component/API tests | Vitest 4, Angular TestBed, supertest, PGlite                      | ✅                               |
 | E2E                      | Cypress 15                                                        | ✅ every user journey            |
 | CI                       | GitHub Actions + `nx affected`                                    | ✅                               |
+| Accessibility            | axe (WCAG 2.2 A/AA) on every screen, in the E2E suite             | ✅                               |
 | Delivery                 | Container images (GHCR), static bundles, staging/production       | ✅ pipeline · 📐 not hosted yet  |
 | iOS                      | Capacitor 8, quizzes bundled in, native sign-in, Keychain         | ✅ simulator · 📐 TestFlight     |
 

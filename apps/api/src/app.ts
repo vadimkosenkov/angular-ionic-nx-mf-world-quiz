@@ -8,6 +8,7 @@ import { meRouter } from './auth/me.routes';
 import { requireAuth } from './auth/require-auth';
 import { cors } from './http/cors';
 import { sendProblem } from './http/problem';
+import { securityHeaders } from './http/security-headers';
 import {
   challengesRouter,
   leaderboardsRouter,
@@ -70,6 +71,7 @@ export function createApp({
 
   // Do not advertise the framework to clients.
   app.disable('x-powered-by');
+  app.use(securityHeaders());
   app.use(cors(options.corsOrigins));
   app.use(express.json({ limit: MAX_BODY_SIZE }));
 

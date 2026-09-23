@@ -60,11 +60,21 @@ export class LeaderboardPage {
     // so neither caches nor search engines keep the error page.
     effect(() => {
       if (!this.response) return;
+      // Assigning `headers` replaces the whole set, so the content type has
+      // to be repeated here: without it the browser does not know it is
+      // looking at a page and offers the HTML as a download.
+      const contentType = 'text/html; charset=utf-8';
       if (this.ranking.error()) {
         this.response.status = 503;
-        this.response.headers = { 'Cache-Control': 'no-store' };
+        this.response.headers = {
+          'Content-Type': contentType,
+          'Cache-Control': 'no-store',
+        };
       } else {
-        this.response.headers = { 'Cache-Control': 'public, max-age=30' };
+        this.response.headers = {
+          'Content-Type': contentType,
+          'Cache-Control': 'public, max-age=30',
+        };
       }
     });
   }

@@ -38,7 +38,10 @@
       <h2 id="language-title" class="wq-section-title">
         {{ 'settings.language.title' | transloco }}
       </h2>
-      <ion-list [inset]="true" class="list">
+      <!-- A radio group, not a list: `ion-list` gives its element
+           `role="list"`, whose children must be list items, and a
+           `radiogroup` is not one. The card's look is in `.list`. -->
+      <div class="list">
         <ion-radio-group
           data-testid="language-group"
           aria-labelledby="language-title"
@@ -59,7 +62,7 @@
           </ion-item>
           }
         </ion-radio-group>
-      </ion-list>
+      </div>
     </section>
 
     <section class="wq-section" aria-labelledby="about-title">

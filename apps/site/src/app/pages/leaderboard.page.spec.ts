@@ -77,7 +77,10 @@ describe('LeaderboardPage (site)', () => {
     expect(screen.getByTestId('site-ranking').textContent).toContain(
       '2 players ranked',
     );
+    // The content type is part of the set: assigning `headers` replaces
+    // everything Angular would have sent, including it.
     expect(response.headers).toEqual({
+      'Content-Type': 'text/html; charset=utf-8',
       'Cache-Control': 'public, max-age=30',
     });
   });
@@ -112,6 +115,9 @@ describe('LeaderboardPage (site)', () => {
 
     expect(screen.getByTestId('site-ranking-unavailable')).toBeTruthy();
     expect(response.status).toBe(503);
-    expect(response.headers).toEqual({ 'Cache-Control': 'no-store' });
+    expect(response.headers).toEqual({
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-store',
+    });
   });
 });
