@@ -277,8 +277,12 @@ export const en = {
       googleUnavailable:
         'Google sign-in is unavailable right now. Check your connection or content blocker, then reload.',
       appleOnIos: 'Sign in with Apple arrives with the iPhone app.',
-      signInOnIos:
-        'Signing in does not work in the iPhone app yet: it needs a native sign-in, which is the next step. Until then, play in the browser.',
+      signInWithGoogle: 'Sign in with Google',
+      signInNotConfigured:
+        'This build of the app has no Google sign-in configured, so it cannot sign you in.',
+      devSignIn: 'Development sign-in',
+      appleLater:
+        'Sign in with Apple needs an Apple Developer account and comes later.',
       player: 'Player',
       signedInWith: 'Signed in with {{provider}}',
       providers: {

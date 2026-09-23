@@ -11,7 +11,9 @@ import { ProgressStore } from '@world-quiz/client/progress';
 import { ANN } from '@world-quiz/client/progress/testing';
 import type { Locale } from '@world-quiz/quiz/domain';
 import { provideShellTesting, TEST_API_URL } from '../../testing/shell-testing';
+import { NATIVE_SIGN_IN, type NativeSignIn } from '@world-quiz/client/auth';
 import { NATIVE_PLATFORM } from '../core/platform';
+import { DEFAULT_RUNTIME_CONFIG, RUNTIME_CONFIG } from '../runtime-config';
 import { WelcomePage } from './welcome.page';
 
 const settle = () => new Promise((resolve) => setTimeout(resolve));
@@ -29,13 +31,32 @@ function fakeGoogle() {
   };
 }
 
-async function renderWelcome(locale: Locale = 'en', native = false) {
+interface NativeOptions {
+  /** The system's own sign-in, when this build has one. */
+  readonly signIn?: NativeSignIn;
+  /** A development build may offer the API's development sign-in. */
+  readonly devSignIn?: boolean;
+}
+
+async function renderWelcome(
+  locale: Locale = 'en',
+  native = false,
+  options: NativeOptions = {},
+) {
   const google = fakeGoogle();
   const roots: string[] = [];
   const view = await render(WelcomePage, {
     providers: [
       ...provideShellTesting({ locale }),
       { provide: NATIVE_PLATFORM, useValue: native },
+      { provide: NATIVE_SIGN_IN, useValue: options.signIn ?? null },
+      {
+        provide: RUNTIME_CONFIG,
+        useValue: {
+          ...DEFAULT_RUNTIME_CONFIG,
+          devSignIn: options.devSignIn ?? false,
+        },
+      },
       { provide: GoogleIdentityServices, useValue: google },
       {
         provide: NavController,
@@ -115,15 +136,45 @@ describe('WelcomePage', () => {
     expect(roots).toEqual([]);
   });
 
-  // The iPhone app cannot show Google's sign-in page inside its web view, so
-  // it says so instead of rendering a button that would not work (Phase 13b
-  // adds the native sign-in).
-  it('says that signing in is not available in the iPhone app yet', async () => {
+  // The iPhone app cannot show Google's sign-in page inside its web view: it
+  // asks the system instead, and says so when a build has no provider.
+  it('signs in through the system in the app', async () => {
+    const credential = {
+      provider: 'google' as const,
+      idToken: 'ios.id.token',
+      nonce: 'ios-nonce',
+    };
+    const view = await renderWelcome('en', true, {
+      signIn: { signIn: () => Promise.resolve(credential) },
+    });
+
+    // Google's web button is never rendered in the app.
+    expect(screen.queryByTestId('google-button')).toBeNull();
+    screen.getByTestId('native-google-sign-in').click();
+    await settle();
+
+    const request = view.http.expectOne(`${TEST_API_URL}/v1/auth/google`);
+    expect(request.request.body).toMatchObject({
+      idToken: credential.idToken,
+      nonce: credential.nonce,
+    });
+    request.flush({}, { status: 500, statusText: 'Server Error' });
+    await settle();
+  });
+
+  it('says so when the app build has no sign-in configured', async () => {
     await renderWelcome('en', true);
 
     expect(screen.getByTestId('native-sign-in-pending').textContent).toContain(
-      'needs a native sign-in',
+      'no Google sign-in configured',
     );
-    expect(screen.queryByTestId('google-button')).toBeNull();
+    expect(screen.queryByTestId('native-google-sign-in')).toBeNull();
+    expect(screen.queryByTestId('dev-sign-in')).toBeNull();
+  });
+
+  it('offers the development sign-in only when the build asks for it', async () => {
+    await renderWelcome('en', true, { devSignIn: true });
+
+    expect(screen.getByTestId('dev-sign-in')).toBeTruthy();
   });
 });

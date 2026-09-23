@@ -12,9 +12,13 @@
  *
  *   node tools/scripts/build-ios-bundle.mjs
  *
- * Environment (optional): API_URL, GOOGLE_CLIENT_ID for the app's
- * `config.json`. The defaults are the development ones; the simulator can
- * reach a `localhost` API, a real device cannot (docs/deployment/ios.md).
+ * Environment (all optional), written into the app's `config.json`:
+ * - `API_URL` — the API this build talks to. The simulator can reach a
+ *   `localhost` API, a real device cannot (docs/deployment/ios.md).
+ * - `GOOGLE_IOS_CLIENT_ID` — the iOS OAuth client for the native sign-in;
+ *   without it the app has no way to sign in and says so.
+ * - `DEV_SIGN_IN=true` — offer the API's development sign-in in this build.
+ *   For development only, against an API that enables it.
  */
 import { cp, mkdir, rm, writeFile, access } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -62,14 +66,25 @@ async function main() {
       /\/$/,
       '',
     ),
-    googleClientId: process.env['GOOGLE_CLIENT_ID'] ?? null,
+    // Google's web sign-in cannot run in a web view, so the app never has a
+    // web client; it signs in through the system with the iOS client.
+    googleClientId: null,
+    googleIosClientId: process.env['GOOGLE_IOS_CLIENT_ID'] ?? null,
+    devSignIn: process.env['DEV_SIGN_IN'] === 'true',
   };
   await writeFile(
     join(TARGET, 'config.json'),
     `${JSON.stringify(config, null, 2)}\n`,
   );
 
-  console.log(`iOS bundle ready in ${TARGET} (API: ${config.apiUrl})`);
+  const signIn = config.googleIosClientId
+    ? 'Google (native)'
+    : config.devSignIn
+      ? 'development sign-in only'
+      : 'no sign-in configured';
+  console.log(
+    `iOS bundle ready in ${TARGET} (API: ${config.apiUrl}, sign-in: ${signIn})`,
+  );
 }
 
 main().catch((error) => {

@@ -9,7 +9,9 @@ import { Capacitor } from '@capacitor/core';
  * stay testable and every place that behaves differently on the device is
  * visible in one list of dependencies.
  */
+export const isNativePlatform = (): boolean => Capacitor.isNativePlatform();
+
 export const NATIVE_PLATFORM = new InjectionToken<boolean>('NATIVE_PLATFORM', {
   providedIn: 'root',
-  factory: () => Capacitor.isNativePlatform(),
+  factory: isNativePlatform,
 });

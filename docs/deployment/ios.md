@@ -1,11 +1,14 @@
 # The iPhone app (Capacitor)
 
-> Status: ⚙️ Phase 13a — the app builds and runs in the **simulator** with
-> both quizzes inside its bundle. **Signing in does not work in the app
-> yet** (Phase 13b), and there is no signed build, no TestFlight and no App
-> Store entry: all three need a paid Apple Developer account, which this
-> project does not have. Why the quizzes ship inside the app:
-> [ADR-013](../decisions/ADR-013-ios-bundled-remotes.md).
+> Status: ⚙️ Phase 13b — the app builds and runs in the **simulator** with
+> both quizzes inside its bundle and a **native sign-in**: iOS shows
+> Google's own sheet, and the refresh token lives in the **Keychain**. A
+> build only offers Google sign-in when it is given an iOS OAuth client
+> (below). There is still no signed build, no TestFlight, no App Store entry
+> and no Sign in with Apple: all four need a paid Apple Developer account,
+> which this project does not have. Why the quizzes ship inside the app:
+> [ADR-013](../decisions/ADR-013-ios-bundled-remotes.md); how sign-in works:
+> [ADR-010](../decisions/ADR-010-authentication.md).
 
 ## What the app is
 
@@ -45,35 +48,82 @@ API_URL=http://192.168.1.10:3333 npx nx run shell:ios-sync
 `GOOGLE_CLIENT_ID` is deliberately unset for the app: the web sign-in cannot
 run in a web view (see below), so the bundle does not offer it.
 
+## Signing in
+
+Google's sign-in is Google's own page, and Google refuses to serve it inside
+an app's web view (`disallowed_useragent`) — an app could read what is typed
+there. So the app asks **iOS** instead
+(`@capgo/capacitor-social-login` wraps Google's iOS SDK): the account sheet
+belongs to the system, and the app only receives an ID token, which the API
+verifies exactly as it verifies the web one (same endpoint, same checks,
+same fresh nonce per attempt).
+
+The **refresh token** cannot be a cookie in an app, so the API returns it in
+the response body (`refreshTokenIn: 'body'`, already part of ADR-010) and
+the app keeps it in the **Keychain**
+(`@aparajita/capacitor-secure-storage`), not in `localStorage` or
+Preferences, which are plain files in the app's container. iCloud
+synchronisation is off, so the token never leaves the device. Every answer
+from the API carries a rotated token, which replaces the stored one; signing
+out deletes it.
+
+### Giving a build a Google sign-in
+
+1. In Google Cloud Console → Credentials, create an **OAuth client id of
+   type iOS** in the same project as the web client, with the bundle
+   identifier from `capacitor.config.ts` (`com.worldquiz.app` unless you
+   changed it). No Apple Developer account is needed for this.
+2. Add its **reversed** form as a URL scheme, so Google can return to the
+   app — in `apps/shell/ios/App/App/Info.plist`:
+
+   ```xml
+   <key>CFBundleURLTypes</key>
+   <array>
+     <dict>
+       <key>CFBundleURLSchemes</key>
+       <array>
+         <string>com.googleusercontent.apps.YOUR-CLIENT-ID</string>
+       </array>
+     </dict>
+   </array>
+   ```
+
+3. Build the bundle with the client id:
+
+   ```bash
+   GOOGLE_IOS_CLIENT_ID=YOUR-CLIENT-ID.apps.googleusercontent.com \
+   npx nx run shell:ios-sync
+   ```
+
+Without step 3 the app says plainly that this build has no sign-in.
+
+### The development sign-in
+
+For working on the app before that client exists, a build can offer the
+API's development sign-in (`POST /v1/auth/dev`, which only a development API
+serves and production refuses):
+
+```bash
+DEV_SIGN_IN=true npx nx run shell:ios-sync
+```
+
+The welcome screen then shows a "Development sign-in" button next to (or
+instead of) Google's. It is off in every other build.
+
 ## What works, and what does not
 
-Everything in the app is behind sign-in (ADR-011), and **signing in does not
-work in the app yet** — so the only screen the app can currently show is the
-welcome screen, which says exactly that. The rest is shipped and proven, but
-not reachable from the app until Phase 13b:
-
-| In the app                                          | State                                                                                                                   |
-| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Starts and reaches the API                          | ✅ checked in the simulator                                                                                             |
-| The welcome screen's honest "no sign-in yet" notice | ✅                                                                                                                      |
-| Both quizzes, offline, from the bundle              | ✅ the bundle is complete and passes the quiz journeys (see **Testing**), ⛔ unreachable in the app until sign-in works |
-| Signing in                                          | ❌ **not yet** — Phase 13b                                                                                              |
-| Sign in with Apple                                  | ❌ needs a paid Apple Developer account                                                                                 |
-| A signed build, TestFlight, the App Store           | ❌ needs a paid Apple Developer account                                                                                 |
-
-**Why signing in does not work yet.** Google's sign-in is Google's own page,
-and Google refuses to show it inside an app's web view
-(`disallowed_useragent`). A native sign-in is needed instead: the app asks
-iOS for the ID token and hands it to the same `POST /v1/auth/google`. That
-is Phase 13b, together with keeping the refresh token in the Keychain rather
-than in a cookie (the API already supports `refreshTokenIn: 'body'` for
-exactly this, ADR-010).
+| In the app                                                  | State                                                 |
+| ----------------------------------------------------------- | ----------------------------------------------------- |
+| Starts and reaches the API                                  | ✅                                                    |
+| Signing in through the system, session kept in the Keychain | ✅ with an iOS client id (or the development sign-in) |
+| Both quizzes, offline, from the bundle                      | ✅                                                    |
+| Progress, achievements, sync with the account               | ✅ the same code as the web                           |
+| Sign in with Apple                                          | ❌ needs a paid Apple Developer account               |
+| A signed build, TestFlight, the App Store                   | ❌ needs a paid Apple Developer account               |
 
 **One API change was needed for the app**: Capacitor serves the bundle from
 `capacitor://localhost`, and the web view sends that as `Origin`, so the API
-now always allows it in CORS (`NATIVE_APP_ORIGIN` in `apps/api/src/config.ts`).
-Without it every request from the app failed and the welcome screen said the
-server could not be reached.
+always allows it in CORS (`NATIVE_APP_ORIGIN` in `apps/api/src/config.ts`).
 
 ## What a paid Apple Developer account would add
 
@@ -124,7 +174,16 @@ the local manifest. (They did not at first: relative paths in the manifest
 produce import-map entries a browser cannot resolve — see the gotcha in
 CLAUDE.md.)
 
-What is left for the simulator — that the app starts, keeps its settings
-across a restart and shows the right screens — is checked by hand; there is
-no automated iOS UI test, and pretending otherwise would be worse than
-saying so.
+What is left for the simulator is checked by hand: the app starts, signs in
+(with the development sign-in), and **stays signed in after a restart** —
+which is the real test of the Keychain, and the one that caught the bug
+below. There is no automated iOS UI test, and pretending otherwise would be
+worse than saying so.
+
+> **The app bootstraps twice.** `main.ts` runs again under the federation's
+> import map, so two applications — and two `AuthStore`s — start in one web
+> view. Both read the stored refresh token, both presented it, and the API
+> (correctly) treated the second use as theft and revoked the family: the
+> app was signed out on every restart. The fix is to read the token inside
+> the lock that already serialises refreshes, so the second instance sends
+> the token the first one received.

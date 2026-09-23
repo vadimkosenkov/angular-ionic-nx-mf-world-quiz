@@ -5,7 +5,7 @@ built as a full-stack portfolio project on a modern Angular ecosystem: **Nx,
 Angular 22 (signals, zoneless), Native Federation microfrontends, Ionic,
 Capacitor (iOS), Express 5, PostgreSQL** and a multi-level test strategy.
 
-> **Project status: Phase 13a, the iPhone app.**
+> **Project status: Phase 13b, sign-in in the iPhone app.**
 > The workspace, CI, the 195-country dataset, the platform-independent quiz
 > domain and the Ionic shell (welcome screen, tabs, Home, Achievements,
 > Leaderboard with an honest "not available yet" state, Settings, light/dark
@@ -63,27 +63,27 @@ The same quiz rules run in the browser (offline play) and on the server
 
 ## Technology stack
 
-| Area                     | Choice                                                            | Status                                |
-| ------------------------ | ----------------------------------------------------------------- | ------------------------------------- |
-| Monorepo                 | Nx 23 (integrated, tag-enforced boundaries)                       | ✅                                    |
-| Frontend                 | Angular 22 (standalone, zoneless, signals), esbuild               | ✅ skeleton                           |
-| Microfrontends           | Native Federation 22 (shell host + capitals and flags remotes)    | ✅                                    |
-| Mobile UI                | Ionic 9 (iOS mode), design tokens, Liquid Glass                   | ✅                                    |
-| i18n                     | Transloco, English + Russian, `Intl.PluralRules`                  | ✅                                    |
-| State                    | Angular signal stores (no NgRx)                                   | ✅                                    |
-| Native (iOS)             | Capacitor 8 (Preferences plugin in use)                           | 📐 Phase 13                           |
-| Backend                  | Node 24, Express 5, Zod, esbuild (ESM)                            | ✅ skeleton                           |
-| Database                 | PostgreSQL + Drizzle ORM (PGlite for tests and development)       | ✅                                    |
-| Auth                     | Sign in with Apple, Google; server-verified tokens                | ✅ web: Google · 📐 Apple on iOS      |
-| Offline                  | IndexedDB (Dexie) + outbox sync                                   | ✅                                    |
-| SSR                      | Separate Angular SSR `site` app (prerendered + server-rendered)   | ✅                                    |
-| Quiz domain              | Pure TS engine, seeded questions, typo-tolerant matching, mastery | ✅                                    |
-| Country data             | 195 countries (en/ru), UN M49 regions, `flag-icons` SVGs          | ✅                                    |
-| Unit/component/API tests | Vitest 4, Angular TestBed, supertest, PGlite                      | ✅                                    |
-| E2E                      | Cypress 15                                                        | ✅ every user journey                 |
-| CI                       | GitHub Actions + `nx affected`                                    | ✅                                    |
-| Delivery                 | Container images (GHCR), static bundles, staging/production       | ✅ pipeline · 📐 not hosted yet       |
-| iOS                      | Capacitor 8, quizzes bundled into the app                         | ✅ simulator · 📐 sign-in, TestFlight |
+| Area                     | Choice                                                            | Status                           |
+| ------------------------ | ----------------------------------------------------------------- | -------------------------------- |
+| Monorepo                 | Nx 23 (integrated, tag-enforced boundaries)                       | ✅                               |
+| Frontend                 | Angular 22 (standalone, zoneless, signals), esbuild               | ✅ skeleton                      |
+| Microfrontends           | Native Federation 22 (shell host + capitals and flags remotes)    | ✅                               |
+| Mobile UI                | Ionic 9 (iOS mode), design tokens, Liquid Glass                   | ✅                               |
+| i18n                     | Transloco, English + Russian, `Intl.PluralRules`                  | ✅                               |
+| State                    | Angular signal stores (no NgRx)                                   | ✅                               |
+| Native (iOS)             | Capacitor 8 (Preferences plugin in use)                           | 📐 Phase 13                      |
+| Backend                  | Node 24, Express 5, Zod, esbuild (ESM)                            | ✅ skeleton                      |
+| Database                 | PostgreSQL + Drizzle ORM (PGlite for tests and development)       | ✅                               |
+| Auth                     | Sign in with Apple, Google; server-verified tokens                | ✅ web: Google · 📐 Apple on iOS |
+| Offline                  | IndexedDB (Dexie) + outbox sync                                   | ✅                               |
+| SSR                      | Separate Angular SSR `site` app (prerendered + server-rendered)   | ✅                               |
+| Quiz domain              | Pure TS engine, seeded questions, typo-tolerant matching, mastery | ✅                               |
+| Country data             | 195 countries (en/ru), UN M49 regions, `flag-icons` SVGs          | ✅                               |
+| Unit/component/API tests | Vitest 4, Angular TestBed, supertest, PGlite                      | ✅                               |
+| E2E                      | Cypress 15                                                        | ✅ every user journey            |
+| CI                       | GitHub Actions + `nx affected`                                    | ✅                               |
+| Delivery                 | Container images (GHCR), static bundles, staging/production       | ✅ pipeline · 📐 not hosted yet  |
+| iOS                      | Capacitor 8, quizzes bundled in, native sign-in, Keychain         | ✅ simulator · 📐 TestFlight     |
 
 ✅ implemented · 📐 designed and approved, not implemented yet
 
