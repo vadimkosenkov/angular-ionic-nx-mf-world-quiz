@@ -1,0 +1,18 @@
+# What never belongs in an image build context (apps/api/Dockerfile,
+# apps/site/Dockerfile run `npm ci` and build inside the image).
+node_modules
+dist
+tmp
+.nx
+.angular
+.data
+.git
+.github
+.idea
+.vscode
+**/.env
+**/.env.*
+!**/.env.example
+**/*.log
+apps/shell-e2e
+ios

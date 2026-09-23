@@ -100,3 +100,32 @@ jobs:
           name: cypress-screenshots
           path: dist/cypress/**/screenshots
           if-no-files-found: ignore
+
+  images:
+    name: Container images build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v3
+
+      # Built, not pushed: this only proves the Dockerfiles still work. The
+      # images that are deployed are built by release.yml.
+      - name: Build the API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: false
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+
+      - name: Build the site image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/site/Dockerfile
+          push: false
+          cache-from: type=gha,scope=site
+          cache-to: type=gha,mode=max,scope=site

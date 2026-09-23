@@ -82,9 +82,13 @@ pages carry a visible **draft** notice instead of an invented contact.
 | `SITE_OPERATOR_NAME`, `SITE_OPERATOR_EMAIL` | unset (draft notice)    | Operator and contact on the legal pages                                              |
 | `NG_ALLOWED_HOSTS`                          | none                    | Host names the server answers (Angular SSR's host check); `localhost` in `serve-ssr` |
 
-The browser build uses the development defaults of `SITE_CONFIG`; only the
-leaderboard's client-side navigation needs the API URL there, which Phase 12
-makes per-environment.
+The server puts its `SITE_CONFIG` into `TransferState`, so the browser
+continues with the deployed values instead of the bundle's development
+defaults (a link would otherwise point at localhost after hydration). Home
+and the legal pages are prerendered, so their content belongs to the build:
+the site's image is built per environment
+([ADR-012](../decisions/ADR-012-environments.md),
+[deploying.md](../deployment/deploying.md)).
 
 ## Running
 
