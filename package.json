@@ -36,6 +36,7 @@
     "@angular/ssr": "~22.1.8",
     "@aparajita/capacitor-secure-storage": "8.0.1",
     "@capacitor/core": "8.5.2",
+    "@capacitor/haptics": "8.0.2",
     "@capacitor/ios": "8.5.2",
     "@capacitor/preferences": "8.0.1",
     "@capgo/capacitor-social-login": "8.5.11",

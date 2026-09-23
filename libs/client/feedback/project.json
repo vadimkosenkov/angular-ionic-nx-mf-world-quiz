@@ -1,0 +1,32 @@
+{
+  "name": "client-feedback",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/feedback/src",
+  "prefix": "wq",
+  "projectType": "library",
+  "tags": ["scope:client", "type:data-access"],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "buildTarget": "shell:esbuild:development",
+        "tsConfig": "libs/client/feedback/tsconfig.spec.json",
+        "watch": false
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{projectRoot}",
+        "commands": [
+          "ngc -p tsconfig.lib.json --noEmit",
+          "tsc -p tsconfig.spec.json --noEmit"
+        ],
+        "parallel": false
+      }
+    }
+  }
+}

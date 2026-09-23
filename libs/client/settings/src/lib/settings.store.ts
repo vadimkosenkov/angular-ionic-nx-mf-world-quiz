@@ -35,11 +35,15 @@ export class SettingsStore {
   private readonly state = signal<AppSettings>({
     theme: 'system',
     locale: detectLocale(inject(DEVICE_LANGUAGES)),
+    sound: true,
+    haptics: true,
   });
   private pendingWrite: Promise<void> = Promise.resolve();
 
   readonly theme = computed(() => this.state().theme);
   readonly locale = computed(() => this.state().locale);
+  readonly sound = computed(() => this.state().sound);
+  readonly haptics = computed(() => this.state().haptics);
   /** What is actually rendered, after resolving `system`. */
   readonly colorScheme = computed(() =>
     resolveColorScheme(this.theme(), this.systemPrefersDark()),
@@ -66,6 +70,14 @@ export class SettingsStore {
 
   setLocale(locale: Locale): void {
     this.update({ locale });
+  }
+
+  setSound(sound: boolean): void {
+    this.update({ sound });
+  }
+
+  setHaptics(haptics: boolean): void {
+    this.update({ haptics });
   }
 
   /** Resolves when every change so far has been written (useful in tests). */

@@ -5,7 +5,12 @@ import {
   resolveColorScheme,
 } from './settings';
 
-const fallback: AppSettings = { theme: 'system', locale: 'en' };
+const fallback: AppSettings = {
+  theme: 'system',
+  locale: 'en',
+  sound: true,
+  haptics: true,
+};
 
 describe('resolveColorScheme', () => {
   it.each([
@@ -40,7 +45,7 @@ describe('parseStoredSettings', () => {
   it('reads valid settings', () => {
     expect(
       parseStoredSettings('{"theme":"dark","locale":"ru"}', fallback),
-    ).toEqual({ theme: 'dark', locale: 'ru' });
+    ).toEqual({ theme: 'dark', locale: 'ru', sound: true, haptics: true });
   });
 
   it.each(['not json', '[]', '"dark"', 'null', '42'])(
@@ -53,9 +58,26 @@ describe('parseStoredSettings', () => {
   it('keeps valid fields and replaces invalid ones individually', () => {
     expect(
       parseStoredSettings('{"theme":"sepia","locale":"ru"}', fallback),
-    ).toEqual({ theme: 'system', locale: 'ru' });
+    ).toEqual({ theme: 'system', locale: 'ru', sound: true, haptics: true });
     expect(
       parseStoredSettings('{"theme":"light","locale":"de"}', fallback),
-    ).toEqual({ theme: 'light', locale: 'en' });
+    ).toEqual({ theme: 'light', locale: 'en', sound: true, haptics: true });
+  });
+
+  // Settings stored before sound and haptics existed must still load; the
+  // missing fields take the defaults instead of turning into `undefined`.
+  it('fills in fields a previous version did not store', () => {
+    expect(
+      parseStoredSettings('{"theme":"dark","locale":"ru"}', fallback),
+    ).toEqual({ theme: 'dark', locale: 'ru', sound: true, haptics: true });
+  });
+
+  it('reads the sound and haptics choices', () => {
+    expect(
+      parseStoredSettings(
+        '{"theme":"dark","locale":"ru","sound":false,"haptics":false}',
+        fallback,
+      ),
+    ).toEqual({ theme: 'dark', locale: 'ru', sound: false, haptics: false });
   });
 });

@@ -1,9 +1,17 @@
-import { Component, computed, inject, input, output } from '@angular/core';
+import {
+  afterNextRender,
+  Component,
+  computed,
+  inject,
+  input,
+  output,
+} from '@angular/core';
 import { IonButton, IonIcon } from '@ionic/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
 import type { QuizSessionOutcome } from '@world-quiz/client/quiz-ports';
 import type { ChallengeOutcome } from '@world-quiz/shared/contracts';
 import { COUNTRY_DATASET } from '@world-quiz/client/quiz-ports';
+import { Feedback } from '@world-quiz/client/feedback';
 import { SettingsStore } from '@world-quiz/client/settings';
 import {
   displayAnswer,
@@ -30,6 +38,18 @@ export type ChallengeResult =
   styleUrl: './quiz-results.scss',
 })
 export class QuizResults {
+  constructor() {
+    // The screen announces itself once: a small fanfare for a perfect run,
+    // an achievement or a record, a plain note otherwise.
+    afterNextRender(() => {
+      const worthCelebrating =
+        this.summary().perfect ||
+        (this.outcome()?.newlyUnlocked.length ?? 0) > 0 ||
+        this.challenge()?.status === 'done';
+      this.feedback.play(worthCelebrating ? 'celebrate' : 'finished');
+    });
+  }
+
   readonly config = input.required<QuizConfig>();
   readonly summary = input.required<SessionSummary>();
   readonly outcome = input<QuizSessionOutcome | null>(null);
@@ -40,6 +60,7 @@ export class QuizResults {
   readonly exited = output<void>();
 
   private readonly settings = inject(SettingsStore);
+  private readonly feedback = inject(Feedback);
   private readonly countries = indexCountriesByCode(inject(COUNTRY_DATASET));
 
   protected readonly formatRunTime = formatRunTime;

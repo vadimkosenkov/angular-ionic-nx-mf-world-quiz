@@ -348,6 +348,12 @@ export const en = {
       dark: 'Dark',
       system: 'System',
     },
+    feel: {
+      title: 'Sound and feel',
+      sound: 'Sounds',
+      haptics: 'Vibration',
+      hint: 'Short tones when an answer lands and when a round ends.',
+    },
     language: {
       title: 'Language',
       en: 'English',

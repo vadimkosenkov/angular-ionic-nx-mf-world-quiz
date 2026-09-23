@@ -18,6 +18,7 @@ import {
   provideAuth,
   REFRESH_TOKEN_STORE,
 } from '@world-quiz/client/auth';
+import { provideFeedback } from '@world-quiz/client/feedback';
 import { provideAppI18n } from '@world-quiz/client/i18n';
 import { provideProgress } from '@world-quiz/client/progress';
 import { provideAppSettings } from '@world-quiz/client/settings';
@@ -50,6 +51,7 @@ export const appConfig = (runtime: RuntimeConfig): ApplicationConfig => ({
       googleClientId: runtime.googleClientId,
     }),
     provideProgress(),
+    provideFeedback({ native: isNativePlatform() }),
     provideSignInFlow(),
     ...nativeAuthProviders(runtime),
   ],

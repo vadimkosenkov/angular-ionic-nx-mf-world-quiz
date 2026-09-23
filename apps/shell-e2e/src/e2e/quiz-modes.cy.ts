@@ -103,7 +103,7 @@ describe('game modes', () => {
 
   it('plays in Russian: country names from the dataset, Russian answers', () => {
     cy.visit('/settings');
-    byTestId('language-ru').click();
+    byTestId('language-ru').click({ scrollBehavior: 'center' });
     cy.get('html').should('have.attr', 'lang', 'ru');
 
     cy.visit('/quiz/capitals?scope=europe&difficulty=hard&mode=fixed&count=1');

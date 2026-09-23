@@ -4,6 +4,39 @@
   gap: var(--wq-space-5);
   // Room for the floating action bar with Back to home / Play again.
   padding-bottom: var(--wq-action-bar-clearance);
+
+  // The blocks arrive one after another, top to bottom, so the eye reads
+  // the score before the details. Four is enough: the rest appear with the
+  // last delay. Reduced motion removes all of it (base styles).
+  > * {
+    animation: wq-result-in var(--wq-duration-base) var(--wq-easing-standard)
+      both;
+    animation-delay: 160ms;
+  }
+
+  > *:nth-child(1) {
+    animation-delay: 0ms;
+  }
+
+  > *:nth-child(2) {
+    animation-delay: 60ms;
+  }
+
+  > *:nth-child(3) {
+    animation-delay: 110ms;
+  }
+}
+
+@keyframes wq-result-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .hero {
