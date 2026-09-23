@@ -51,3 +51,14 @@ Thumbs.db
 
 # Local PGlite database of the API in development (apps/api)
 .data/
+
+# iOS (Capacitor). The Xcode project is committed; what `cap sync` or Xcode
+# regenerates is not: the copied web bundle, build output and user state.
+apps/shell/ios/App/App/public/
+apps/shell/ios/App/App/capacitor.config.json
+apps/shell/ios/App/build/
+apps/shell/ios/App/DerivedData/
+apps/shell/ios/App/Pods/
+apps/shell/ios/App/output/
+**/*.xcuserdatad/
+**/xcuserdata/

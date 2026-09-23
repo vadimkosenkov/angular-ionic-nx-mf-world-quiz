@@ -166,3 +166,15 @@ new app with a one-line `remote.routes.ts`, a manifest entry and a host route.
   a runtime import cannot check. `QuizRemoteRoutesModule` lives in a shared
   library so both sides fail at compile time, not in the browser, if the
   contract changes.
+
+## On iOS the remotes travel inside the app
+
+The iPhone app (Phase 13a) ships the shell **and both remotes** in one
+bundle, and its `federation.manifest.json` points at them with relative
+paths (`remotes/capitals/remoteEntry.json`). Nothing else changes: the same
+`initFederation` call, the same `loadQuizRemoteRoutes`, the same exposed
+`./routes`. Only the manifest differs, which is what the manifest is for.
+`tools/scripts/build-ios-bundle.mjs` assembles it; the reasons (offline play
+and the App Store's rule against downloaded code) are in
+[ADR-013](../decisions/ADR-013-ios-bundled-remotes.md) and the app's own
+document is [ios.md](../deployment/ios.md).

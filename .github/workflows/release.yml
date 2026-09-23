@@ -120,14 +120,22 @@ jobs:
         run: npx nx run-many -t build -p shell capitals flags --configuration=production
 
       # The same bundles run on every environment; these two files say which
-      # API and which remotes this deployment uses.
+      # API and which remotes this deployment uses. Without a configured
+      # environment there is nothing to write — the artefact then keeps the
+      # development values it was built with, and says so.
       - name: Write the environment's configuration
+        if: ${{ vars.API_URL != '' }}
         env:
           API_URL: ${{ vars.API_URL }}
           GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
           CAPITALS_URL: ${{ vars.CAPITALS_URL }}
           FLAGS_URL: ${{ vars.FLAGS_URL }}
         run: node tools/scripts/write-deploy-config.mjs dist/apps/shell/browser
+
+      - name: Say that this environment is not configured yet
+        if: ${{ vars.API_URL == '' }}
+        run: |
+          echo "::notice::No environment variables are set, so the bundle keeps its development config.json and federation.manifest.json. See docs/deployment/deploying.md."
 
       - name: Upload the static applications
         uses: actions/upload-artifact@v7

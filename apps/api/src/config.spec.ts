@@ -15,7 +15,11 @@ describe('loadConfig', () => {
         secureCookies: false,
         rateLimit: 30,
       },
-      corsOrigins: ['http://localhost:4200', 'http://localhost:4300'],
+      corsOrigins: [
+        'http://localhost:4200',
+        'http://localhost:4300',
+        'capacitor://localhost',
+      ],
     });
   });
 
@@ -51,7 +55,7 @@ describe('loadConfig', () => {
         secureCookies: true,
         rateLimit: 30,
       },
-      corsOrigins: ['https://worldquiz.example'],
+      corsOrigins: ['https://worldquiz.example', 'capacitor://localhost'],
     });
   });
 
@@ -110,8 +114,12 @@ describe('loadConfig', () => {
     }
   });
 
-  it('allows no browser origin in production unless configured', () => {
-    expect(loadConfig(production).corsOrigins).toEqual([]);
+  // The iPhone app's own origin is always allowed: it is the same in every
+  // environment, and CORS only restrains browsers anyway.
+  it('allows no browser origin in production, only the iPhone app', () => {
+    expect(loadConfig(production).corsOrigins).toEqual([
+      'capacitor://localhost',
+    ]);
   });
 
   it('limits /v1/auth to 30 requests per window unless AUTH_RATE_LIMIT says otherwise', () => {

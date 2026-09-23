@@ -142,6 +142,50 @@
           "buildTarget": "shell:esbuild:development"
         }
       }
+    },
+    "ios-bundle": {
+      "executor": "nx:run-commands",
+      "dependsOn": [
+        {
+          "projects": ["shell", "capitals", "flags"],
+          "target": "build",
+          "params": "forward"
+        }
+      ],
+      "options": {
+        "command": "node tools/scripts/build-ios-bundle.mjs"
+      },
+      "configurations": {
+        "production": {},
+        "development": {}
+      },
+      "defaultConfiguration": "production"
+    },
+    "ios-sync": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["ios-bundle"],
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "npx cap sync ios"
+      }
+    },
+    "ios-open": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "npx cap open ios"
+      }
+    },
+    "serve-ios": {
+      "continuous": true,
+      "executor": "@nx/web:file-server",
+      "options": {
+        "buildTarget": "shell:ios-bundle",
+        "port": 4200,
+        "staticFilePath": "dist/apps/shell/ios-www",
+        "spa": true,
+        "cors": true
+      }
     }
   }
 }

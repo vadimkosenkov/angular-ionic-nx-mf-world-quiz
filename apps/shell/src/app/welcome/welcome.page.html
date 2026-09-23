@@ -50,6 +50,11 @@
       </ion-button>
       } @else {
       <p class="wq-text-secondary note">{{ 'welcome.intro' | transloco }}</p>
+      @if (nativePlatform) {
+      <p class="wq-text-secondary note" data-testid="native-sign-in-pending">
+        {{ 'settings.account.signInOnIos' | transloco }}
+      </p>
+      } @else {
       <wq-google-sign-in-button
         [unavailableText]="'settings.account.googleUnavailable' | transloco"
         [locale]="settings.locale()"
@@ -59,7 +64,7 @@
         <ion-icon name="logo-apple" aria-hidden="true" />
         {{ 'settings.account.appleOnIos' | transloco }}
       </p>
-      } @if (auth.error(); as error) {
+      } } @if (auth.error(); as error) {
       <p class="error" role="alert" data-testid="welcome-error">
         {{ 'settings.account.errors.' + error | transloco }}
       </p>
