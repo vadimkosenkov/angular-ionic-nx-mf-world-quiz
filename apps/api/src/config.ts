@@ -112,6 +112,15 @@ export const DEFAULT_DEV_ORIGINS = [
   'http://localhost:4300',
 ] as const;
 
+/**
+ * The iPhone app's origin. Capacitor serves the bundle from
+ * `capacitor://localhost`, and its web view sends that as `Origin`, so the
+ * app cannot call the API without it — in every environment, which is why it
+ * is always allowed rather than configured per deployment. It grants nothing
+ * a native app could not do anyway: CORS only restrains browsers.
+ */
+export const NATIVE_APP_ORIGIN = 'capacitor://localhost';
+
 export function loadConfig(
   environment: Readonly<Record<string, string | undefined>>,
 ): ApiConfig {
@@ -143,9 +152,11 @@ export function loadConfig(
         : production,
       rateLimit: env.AUTH_RATE_LIMIT,
     },
-    corsOrigins:
-      env.CORS_ORIGINS.length > 0 || production
+    corsOrigins: [
+      ...(env.CORS_ORIGINS.length > 0 || production
         ? env.CORS_ORIGINS
-        : [...DEFAULT_DEV_ORIGINS],
+        : DEFAULT_DEV_ORIGINS),
+      NATIVE_APP_ORIGIN,
+    ],
   };
 }

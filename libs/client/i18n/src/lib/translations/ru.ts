@@ -272,6 +272,8 @@ export const ru: TranslationShape = {
       googleUnavailable:
         'Вход через Google сейчас недоступен. Проверьте соединение или блокировщик контента и обновите страницу.',
       appleOnIos: 'Вход через Apple появится в приложении для iPhone.',
+      signInOnIos:
+        'В приложении для iPhone вход пока не работает: нужен нативный вход, это следующий шаг. Пока играйте в браузере.',
       player: 'Игрок',
       signedInWith: 'Вход через {{provider}}',
       providers: {

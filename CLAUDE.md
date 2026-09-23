@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 World Quiz — a mobile-first quiz app (country → capital, flag → country, 195 countries, English/Russian) and a **learning/portfolio project**. Nx 23 monorepo with Angular 22 (standalone, zoneless, signals), Ionic 9, Native Federation microfrontends, Capacitor 8, Express 5. Planned: PostgreSQL + Drizzle, Apple/Google sign-in, offline sync, SSR `site`, iOS.
 
-Delivery is in numbered phases, one `feat/<phase>` branch and PR each (table in `docs/architecture/overview.md`). Merged so far: foundation, domain model, shell + design system, Capitals and Flags microfrontends (Phases 4–5). Merged: Phase 6 (API + PostgreSQL). Merged: Phase 7 (7a `feat/auth-server`, 7b `feat/auth-client`: sign-in on the API and in the app) and 8a `feat/sync-server` (a player's history on the API). Merged: 8b `feat/sync-client` (sign-in required before playing, IndexedDB/Dexie, outbox, sync). Phase 9 is split in three: merged 9a `feat/leaderboard-server` (API) and 9b `feat/leaderboard-client` (app); merged 9c `feat/site-ssr` (`apps/site`: SSR public site with legal pages and leaderboards, shared design tokens, ADR-003). Merged: Phase 10, `feat/achievements-mistakes` (playable Practice Mistakes) and Phase 11, `feat/e2e` (full Cypress journeys). In progress: Phase 12, `feat/ci-cd` (container images, release pipeline, per-environment configuration). Next: Phase 13, `feat/ios`.
+Delivery is in numbered phases, one `feat/<phase>` branch and PR each (table in `docs/architecture/overview.md`). Merged so far: foundation, domain model, shell + design system, Capitals and Flags microfrontends (Phases 4–5). Merged: Phase 6 (API + PostgreSQL). Merged: Phase 7 (7a `feat/auth-server`, 7b `feat/auth-client`: sign-in on the API and in the app) and 8a `feat/sync-server` (a player's history on the API). Merged: 8b `feat/sync-client` (sign-in required before playing, IndexedDB/Dexie, outbox, sync). Phase 9 is split in three: merged 9a `feat/leaderboard-server` (API) and 9b `feat/leaderboard-client` (app); merged 9c `feat/site-ssr` (`apps/site`: SSR public site with legal pages and leaderboards, shared design tokens, ADR-003). Merged: Phase 10, `feat/achievements-mistakes` (playable Practice Mistakes) and Phase 11, `feat/e2e` (full Cypress journeys). Merged: Phase 12, `feat/ci-cd` (container images, release pipeline, per-environment configuration). In progress: Phase 13a, `feat/ios-app` (Capacitor iOS with the remotes bundled in). Next: 13b `feat/ios-auth`, then Phase 14 `feat/polish`.
 
 Project rules that override defaults:
 
@@ -27,6 +27,8 @@ npm run start:shell       # shell only — /quiz/* then shows "Quiz unavailable"
 npm run start:capitals    # a remote standalone (:4201; start:flags → :4202), with in-memory ports
 npm run start:site        # public SSR site :4300 (dev server) + api :3333
 npx nx run site:serve-ssr # the site's production build on its Node server (:4300, NG_ALLOWED_HOSTS=localhost)
+npx nx run shell:ios-sync # builds shell + both remotes into dist/apps/shell/ios-www and runs `cap sync ios` (API_URL=… to point the app elsewhere)
+npx nx run shell:ios-open # opens apps/shell/ios in Xcode
 npm run start:api         # http://localhost:3333/health — embedded PGlite in .data/pglite unless DATABASE_URL is set
 npx nx run api:db-generate  # after editing apps/api/src/db/schema.ts: writes a SQL migration into apps/api/drizzle/
 TEST_DATABASE_URL=postgres://localhost:5432/world_quiz npx nx test api  # API tests on a real PostgreSQL (temporary DB per test file)
@@ -151,6 +153,13 @@ Read `docs/architecture/site.md` and ADR-003. Key points:
 - E2E quiz helpers live in `apps/shell-e2e/src/support/quiz.ts`: `answerChoice()`, `askedCountryKey()` (the dataset through the `country` task in `cypress.config.ts` — the spec bundler does not resolve `@world-quiz/*` aliases), and `controlQuizTime` + `advanceQuizTime()` to end a Time attack by shifting `performance.now()` (never `cy.clock()`: it freezes `setTimeout` and the zoneless change detection). `phone-layout.cy.ts` runs at `iphone-x` size; other specs use the default viewport.
 - `client/progress` tests use an in-memory `LocalStore`; the Dexie implementation is tested on `fake-indexeddb` (`import 'fake-indexeddb/auto'`, a new database name per test). `SyncService` tests inject `SYNC_SCHEDULER` to run retries by hand.
 
+### iOS (`docs/deployment/ios.md`, ADR-013)
+
+- The app is `apps/shell` in Capacitor 8 (`apps/shell/capacitor.config.ts`, Xcode project in `apps/shell/ios`, committed; what `cap sync` regenerates is git-ignored). Dependencies use Swift Package Manager, not CocoaPods.
+- **The remotes ship inside the bundle**: `tools/scripts/build-ios-bundle.mjs` copies the shell's and both remotes' production builds into `dist/apps/shell/ios-www` and writes a manifest with relative paths plus `config.json`. Application code is unchanged — only the manifest differs from the web.
+- **Signing in does not work in the app yet** (Google refuses its sign-in page inside a web view): the welcome screen says so through `NATIVE_PLATFORM` (`apps/shell/src/app/core/platform.ts`). Phase 13b adds the native sign-in and the Keychain.
+- No signed build, TestFlight or App Store: all need a paid Apple Developer account. The docs say which steps that would add.
+
 ### Deployment (`docs/deployment/`)
 
 - `release.yml` publishes `ghcr.io/<owner>/world-quiz-api` (one image for every environment) and `world-quiz-site` (per environment), plus the static `shell`/`capitals`/`flags` bundles as an artifact; `ci.yml` builds both images on every PR without pushing. The deploy job (Render for the two Node services, Netlify for the three bundles) runs only with the environment variable `DEPLOY_ENABLED=true` — **nothing is hosted yet**, and the docs say so.
@@ -179,6 +188,7 @@ Read `docs/architecture/site.md` and ADR-003. Key points:
 - **Angular SSR answers only allowed hosts**: the site's production server returns `400 Header "host" … is not allowed` unless `NG_ALLOWED_HOSTS` lists the host (`site:serve-ssr` sets `localhost`).
 - **Design tokens live in `libs/shared/design-tokens`** as mixins; `client/ui/src/styles/_tokens.scss` only applies them. Add a token there, for both themes.
 - **The app and the API must share one registrable domain** in a deployment: the refresh token is a `SameSite=Strict` cookie, so `app.example` + `api.example` work but a host's own free subdomains (`*.netlify.app`, `*.onrender.com`) do not — they are on the Public Suffix List, so the browser treats them as separate sites (ADR-010, deploying.md).
+- **The iOS federation manifest needs absolute paths** (`/remotes/capitals/remoteEntry.json`). With `remotes/…` Native Federation derives import-map entries that are neither URLs nor rooted paths, the browser logs `es-module-shims: Mapping … does not resolve`, and every quiz fails to load while the manifest and `remoteEntry.json` still return 200. Check it with `npx nx run shell:serve-ios` + the Cypress suite (docs/deployment/ios.md).
 - **A tool that runs `start:quiz` with `PORT` set** (e.g. a preview launcher) makes every dev server take that port, like a root `.env`; unset it (`env -u PORT npm run start:quiz`).
 
 - **Adding a NOT NULL column or FK to a table with data needs a data migration first**: `npx drizzle-kit generate --config apps/api/drizzle.config.ts --custom --name <name>` creates an empty, tracked SQL file (write the `UPDATE`/`DELETE` there), then run `db-generate` for the schema change — see `0001_drop_anonymous_sessions.sql`.

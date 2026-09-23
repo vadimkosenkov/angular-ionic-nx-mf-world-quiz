@@ -65,6 +65,10 @@ Secrets of the **API service itself** (set in Render, not in GitHub):
 same `API_URL`, `SITE_URL`, `APP_URL` and operator values its image was
 built with.
 
+Until an environment has these variables, the `static` job skips writing
+them and the artefact keeps the development values it was built with; the
+run says so in a notice instead of failing.
+
 **Why Render and Netlify:** both are already familiar, and the two halves fit
 what they do — Render runs the two Node services (the API and the site's SSR
 server) from the images and offers managed PostgreSQL; Netlify serves the

@@ -61,7 +61,13 @@ export default [
   ...nx.configs['flat/typescript'],
   ...nx.configs['flat/javascript'],
   {
-    ignores: ['**/dist', '**/out-tsc', '**/vitest.config.*.timestamp*'],
+    ignores: [
+      '**/dist',
+      '**/out-tsc',
+      '**/vitest.config.*.timestamp*',
+      // The Xcode project and the web bundle `cap sync` copies into it.
+      'apps/shell/ios',
+    ],
   },
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
