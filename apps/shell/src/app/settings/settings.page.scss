@@ -8,8 +8,10 @@
 
 .list {
   margin: 0;
+  overflow: hidden;
   border-radius: var(--wq-radius-lg);
   border: 1px solid var(--wq-color-border);
+  background: var(--wq-color-surface);
   box-shadow: var(--wq-shadow-card);
 }
 

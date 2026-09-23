@@ -42,7 +42,16 @@
       }
     </ul>
 
-    <ul class="list" data-testid="achievement-list">
+    <!-- Nothing else on this page can be focused, so the scroll area would
+         be out of reach for a keyboard: the list itself takes the focus and
+         can then be scrolled with the arrow keys (axe:
+         scrollable-region-focusable). -->
+    <ul
+      class="list"
+      data-testid="achievement-list"
+      tabindex="0"
+      [attr.aria-label]="'achievements.title' | transloco"
+    >
       @for (entry of progress.achievements(); track entry.achievement.id) { @let
       name = 'achievements.name.' + entry.achievement.category | transloco: {
       scope: 'regions.' + entry.achievement.scope | transloco };
