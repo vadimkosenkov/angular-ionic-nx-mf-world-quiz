@@ -3,8 +3,10 @@
 ## Status
 
 Accepted (2026-09-21). Server side implemented in Phase 7a (`feat/auth-server`),
-web client in Phase 7b (`feat/auth-client`); native iOS sign-in and Keychain
-storage in Phase 13.
+web client in Phase 7b (`feat/auth-client`), native iOS sign-in and Keychain
+storage in Phase 13b (`feat/ios-auth`; see
+[ios.md](../deployment/ios.md)). Sign in with Apple still needs a paid Apple
+Developer account.
 
 ## Context
 

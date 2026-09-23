@@ -26,7 +26,23 @@ describe('loadRuntimeConfig', () => {
     expect(config).toEqual({
       apiUrl: 'https://api.example.test',
       googleClientId: 'client-id',
+      googleIosClientId: null,
+      devSignIn: false,
     });
+  });
+
+  it('reads the app-only settings when a build provides them', async () => {
+    const config = await loadRuntimeConfig(
+      respondWith({
+        apiUrl: 'https://api.example.test',
+        googleClientId: null,
+        googleIosClientId: 'ios-client-id',
+        devSignIn: true,
+      }),
+    );
+
+    expect(config.googleIosClientId).toBe('ios-client-id');
+    expect(config.devSignIn).toBe(true);
   });
 
   it('accepts a configuration without a Google client', async () => {

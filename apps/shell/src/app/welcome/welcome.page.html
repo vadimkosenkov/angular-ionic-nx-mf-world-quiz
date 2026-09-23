@@ -50,9 +50,33 @@
       </ion-button>
       } @else {
       <p class="wq-text-secondary note">{{ 'welcome.intro' | transloco }}</p>
-      @if (nativePlatform) {
+      @if (nativePlatform) { @if (nativeSignIn) {
+      <ion-button
+        class="wq-glass-button google"
+        expand="block"
+        data-testid="native-google-sign-in"
+        (click)="signInNatively()"
+      >
+        <ion-icon name="logo-google" slot="start" aria-hidden="true" />
+        {{ 'settings.account.signInWithGoogle' | transloco }}
+      </ion-button>
+      } @else {
       <p class="wq-text-secondary note" data-testid="native-sign-in-pending">
-        {{ 'settings.account.signInOnIos' | transloco }}
+        {{ 'settings.account.signInNotConfigured' | transloco }}
+      </p>
+      } @if (devSignIn) {
+      <ion-button
+        class="wq-glass-button secondary"
+        expand="block"
+        data-testid="dev-sign-in"
+        (click)="signInForDevelopment()"
+      >
+        {{ 'settings.account.devSignIn' | transloco }}
+      </ion-button>
+      }
+      <p class="apple wq-text-secondary" data-testid="apple-unavailable">
+        <ion-icon name="logo-apple" aria-hidden="true" />
+        {{ 'settings.account.appleLater' | transloco }}
       </p>
       } @else {
       <wq-google-sign-in-button

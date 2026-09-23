@@ -120,6 +120,12 @@ may know about each other, is described in
   and a deployment replaces that file together with
   `federation.manifest.json`. `apps/shell/public/config.json` holds the
   development values.
+- **In the iPhone app** the same screens use two different implementations:
+  the sign-in comes from the system (`NATIVE_SIGN_IN`) instead of Google's
+  web button, and the refresh token lives in the Keychain
+  (`REFRESH_TOKEN_STORE`) instead of an httpOnly cookie. Both are ports with
+  a web default, chosen in `app.config.ts`; see
+  [ios.md](../deployment/ios.md).
 - Progress and sync: [state-management.md](state-management.md) and
   [ADR-006](../decisions/ADR-006-local-persistence.md).
 

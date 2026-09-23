@@ -9,9 +9,31 @@ import { AUTH_CONFIG } from './auth.config';
 import { authInterceptor } from './auth.interceptor';
 import { provideAuth } from './auth.providers';
 import { AuthStore, REFRESH_LOCK } from './auth.store';
+import {
+  REFRESH_TOKEN_STORE,
+  type RefreshTokenStore,
+} from './refresh-token-store';
 import { API, session, USER } from './testing';
 
-function setup() {
+/** The iPhone app's store: the token comes in the body and is kept here. */
+function memoryRefreshTokenStore(initial: string | null = null) {
+  let token = initial;
+  const store: RefreshTokenStore = {
+    delivery: 'body',
+    read: () => Promise.resolve(token),
+    save: (value) => {
+      token = value;
+      return Promise.resolve();
+    },
+    clear: () => {
+      token = null;
+      return Promise.resolve();
+    },
+  };
+  return { store, stored: () => token };
+}
+
+function setup(refreshTokens?: RefreshTokenStore) {
   const reported: unknown[] = [];
   TestBed.configureTestingModule({
     providers: [
@@ -22,6 +44,9 @@ function setup() {
         provide: ErrorHandler,
         useValue: { handleError: (error: unknown) => reported.push(error) },
       },
+      ...(refreshTokens
+        ? [{ provide: REFRESH_TOKEN_STORE, useValue: refreshTokens }]
+        : []),
     ],
   });
   return {
@@ -301,5 +326,87 @@ describe('AuthStore', () => {
     expect(await refused).toBe(false);
     expect(store.error()).toBe('nickname-invalid');
     expect(store.user()?.nickname).toBe('Globe Trotter');
+  });
+
+  // In the app there is no cookie: the API returns the refresh token in the
+  // body and the app keeps it in the Keychain (docs/deployment/ios.md).
+  describe('in the iPhone app', () => {
+    it('stores the rotated refresh token and sends it back', async () => {
+      const keychain = memoryRefreshTokenStore('stored-token');
+      const { store, http } = setup(keychain.store);
+
+      const restored = store.restore();
+      // Unlike the web, the app reads the Keychain first, so the request
+      // leaves one microtask later.
+      await flush();
+      const request = http.expectOne(`${API}/v1/auth/refresh`);
+      expect(request.request.body).toEqual({
+        refreshTokenIn: 'body',
+        refreshToken: 'stored-token',
+      });
+      request.flush({ ...session(), refreshToken: 'rotated-token' });
+      await restored;
+      await flush();
+
+      expect(store.status()).toBe('signed-in');
+      // The API retires a token when it is used; keeping the old one would
+      // sign the player out on the next start.
+      expect(keychain.stored()).toBe('rotated-token');
+    });
+
+    it('does not ask the API when no token is stored', async () => {
+      const keychain = memoryRefreshTokenStore();
+      const { store, http } = setup(keychain.store);
+
+      await store.restore();
+
+      http.expectNone(`${API}/v1/auth/refresh`);
+      expect(store.status()).toBe('signed-out');
+    });
+
+    // The token is read when the refresh runs, not before it: the app can
+    // bootstrap twice, and a second instance presenting the token the first
+    // one already used looks like theft to the API.
+    it('sends the token the previous refresh rotated, not the old one', async () => {
+      const keychain = memoryRefreshTokenStore('token-1');
+      const { store, http } = setup(keychain.store);
+      const first = store.restore();
+      await flush();
+      http
+        .expectOne(`${API}/v1/auth/refresh`)
+        .flush({ ...session(), refreshToken: 'token-2' });
+      await first;
+      await flush();
+
+      const again = store.refreshAccessToken();
+      await flush();
+      const second = http.expectOne(`${API}/v1/auth/refresh`);
+      expect(second.request.body).toEqual({
+        refreshTokenIn: 'body',
+        refreshToken: 'token-2',
+      });
+      second.flush({ ...session(), refreshToken: 'token-3' });
+      await again;
+      await flush();
+    });
+
+    it('forgets the token when the player signs out', async () => {
+      const keychain = memoryRefreshTokenStore('stored-token');
+      const { store, http } = setup(keychain.store);
+      const restored = store.restore();
+      await flush();
+      http
+        .expectOne(`${API}/v1/auth/refresh`)
+        .flush({ ...session(), refreshToken: 'rotated-token' });
+      await restored;
+
+      const signedOut = store.signOut();
+      await flush();
+      http.expectOne(`${API}/v1/auth/logout`).flush({});
+      await signedOut;
+      await flush();
+
+      expect(keychain.stored()).toBeNull();
+    });
   });
 });

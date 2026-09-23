@@ -12,6 +12,7 @@ import type {
   User,
 } from '@world-quiz/shared/contracts';
 import { AuthApi } from './auth-api';
+import { REFRESH_TOKEN_STORE } from './refresh-token-store';
 
 /**
  * `unverified`: a previous sign-in could not be checked because the API was
@@ -43,6 +44,7 @@ export type AuthError =
 @Injectable({ providedIn: 'root' })
 export class AuthStore {
   private readonly api = inject(AuthApi);
+  private readonly refreshTokens = inject(REFRESH_TOKEN_STORE);
   private readonly errorHandler = inject(ErrorHandler);
 
   private readonly statusState = signal<AuthStatus>('restoring');
@@ -76,8 +78,45 @@ export class AuthStore {
   restore(): Promise<void> {
     if (this.statusState() === 'signed-in') return Promise.resolve();
     this.statusState.set('restoring');
-    this.restoring = this.refreshAccessToken().then(() => undefined);
+    this.restoring = this.restoreSession();
     return this.restoring;
+  }
+
+  /**
+   * The refresh itself. On the web it starts immediately — the cookie needs
+   * no lookup — while the app first reads its stored token, which is why
+   * that read happens here, inside the lock.
+   */
+  private refreshRequest(): Promise<AuthResponse> {
+    if (this.refreshTokens.delivery !== 'body') return this.api.refresh();
+    return this.storedRefreshToken().then((token) => this.api.refresh(token));
+  }
+
+  /** The app's stored token; `undefined` on the web (the cookie travels). */
+  private async storedRefreshToken(): Promise<string | undefined> {
+    if (this.refreshTokens.delivery !== 'body') return undefined;
+    const stored = await this.refreshTokens.read().catch((error: unknown) => {
+      this.errorHandler.handleError(error);
+      return null;
+    });
+    return stored ?? undefined;
+  }
+
+  /**
+   * In the app the refresh token is in the Keychain: without one there is no
+   * session to restore, and asking the API would only earn a 401 that looks
+   * like a refused sign-in. On the web the cookie is invisible here, so the
+   * API is always asked.
+   */
+  private async restoreSession(): Promise<void> {
+    if (
+      this.refreshTokens.delivery === 'body' &&
+      !(await this.storedRefreshToken())
+    ) {
+      this.statusState.set('signed-out');
+      return;
+    }
+    await this.refreshAccessToken();
   }
 
   /** Resolves once the last `restore()` has an outcome (route guards). */
@@ -102,7 +141,12 @@ export class AuthStore {
    * are not HTTP answers are bugs, so they are also reported.
    */
   refreshAccessToken(): Promise<boolean> {
-    this.refreshing ??= this.exclusively(() => this.api.refresh())
+    // The stored token is read **inside** the lock: the app can run more
+    // than one instance of itself (a web view bootstraps the application
+    // twice), and two instances presenting the same token look like a
+    // stolen one to the API, which then revokes the whole family. Reading
+    // after the lock means the second instance sends the rotated token.
+    this.refreshing ??= this.exclusively(() => this.refreshRequest())
       .then((response) => {
         this.accept(response);
         return true;
@@ -134,6 +178,21 @@ export class AuthStore {
     return this.run(async () => {
       try {
         this.accept(await this.api.signIn(provider, idToken, nonce));
+        return true;
+      } catch (error) {
+        this.errorState.set(
+          isUnreachable(error) ? 'unreachable' : 'sign-in-failed',
+        );
+        return false;
+      }
+    });
+  }
+
+  /** The API's development sign-in (builds that enable it, never production). */
+  async signInForDevelopment(subject: string): Promise<boolean> {
+    return this.run(async () => {
+      try {
+        this.accept(await this.api.devSignIn(subject));
         return true;
       } catch (error) {
         this.errorState.set(
@@ -205,12 +264,22 @@ export class AuthStore {
     this.accessToken = response.accessToken;
     this.userState.set(response.user);
     this.statusState.set('signed-in');
+    // The app gets a new refresh token with every answer (the API rotates
+    // them); keeping the old one would sign the player out on the next use.
+    if (response.refreshToken) {
+      void this.refreshTokens
+        .save(response.refreshToken)
+        .catch((error: unknown) => this.errorHandler.handleError(error));
+    }
   }
 
   private clear(): void {
     this.accessToken = null;
     this.userState.set(null);
     this.statusState.set('signed-out');
+    void this.refreshTokens
+      .clear()
+      .catch((error: unknown) => this.errorHandler.handleError(error));
   }
 }
 

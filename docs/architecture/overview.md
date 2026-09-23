@@ -112,6 +112,6 @@ typos). The app has no custom speech-recognition UI and no external AI/LLM judgi
 | 10  | `feat/achievements-mistakes` | Achievements, practice mistakes                                                        | ✅ merged      |
 | 11  | `feat/e2e`                   | Full Cypress journeys                                                                  | ✅ merged      |
 | 12  | `feat/ci-cd`                 | Deployment pipelines                                                                   | ✅ merged      |
-| 13a | `feat/ios-app`               | Capacitor iOS app, remotes bundled in, simulator                                       | ✅ this branch |
-| 13b | `feat/ios-auth`              | Native sign-in on iOS, refresh token in the Keychain                                   | 📐             |
+| 13a | `feat/ios-app`               | Capacitor iOS app, remotes bundled in, simulator                                       | ✅ merged      |
+| 13b | `feat/ios-auth`              | Native sign-in on iOS, refresh token in the Keychain                                   | ✅ this branch |
 | 14  | `feat/polish`                | a11y, performance, animation, audio/haptics, security review                           | 📐             |

@@ -1,3 +1,4 @@
+import { InjectionToken } from '@angular/core';
 /**
  * Where the app finds the API and which Google client it signs in with.
  *
@@ -15,7 +16,24 @@ export interface RuntimeConfig {
   readonly apiUrl: string;
   /** Google Identity Services client id; `null` disables Google sign-in. */
   readonly googleClientId: string | null;
+  /**
+   * The **iOS** OAuth client of the same Google project, used by the app's
+   * native sign-in (`null`: the app cannot sign in). Ignored on the web.
+   */
+  readonly googleIosClientId: string | null;
+  /**
+   * A build that may use the API's development sign-in (`POST /v1/auth/dev`).
+   * Only for development builds of the app, against an API that enables it;
+   * it is `false` everywhere else, and production APIs refuse the endpoint.
+   */
+  readonly devSignIn: boolean;
 }
+
+/** For screens that need it; provided from the loaded `config.json`. */
+export const RUNTIME_CONFIG = new InjectionToken<RuntimeConfig>(
+  'RUNTIME_CONFIG',
+  { providedIn: 'root', factory: () => DEFAULT_RUNTIME_CONFIG },
+);
 
 /** Used when `config.json` cannot be read: local development values. */
 export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
@@ -23,6 +41,8 @@ export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
   googleClientId:
     // "World Quiz Web" in Google Auth Platform (origins: localhost:4200).
     '294520908592-vhhkau8mlstl3s1d105i3efqnopuu0nm.apps.googleusercontent.com',
+  googleIosClientId: null,
+  devSignIn: false,
 };
 
 const isRuntimeConfig = (value: unknown): value is RuntimeConfig => {
@@ -49,9 +69,16 @@ export async function loadRuntimeConfig(
     if (!response.ok) throw new Error(`config.json: ${response.status}`);
     const value: unknown = await response.json();
     if (!isRuntimeConfig(value)) throw new Error('config.json is not valid');
+    const candidate = value as unknown as Record<string, unknown>;
     return {
       apiUrl: value.apiUrl.replace(/\/$/, ''),
       googleClientId: value.googleClientId || null,
+      googleIosClientId:
+        typeof candidate['googleIosClientId'] === 'string' &&
+        candidate['googleIosClientId'].length > 0
+          ? candidate['googleIosClientId']
+          : null,
+      devSignIn: candidate['devSignIn'] === true,
     };
   } catch (error) {
     console.error('[shell] falling back to the default configuration', error);
