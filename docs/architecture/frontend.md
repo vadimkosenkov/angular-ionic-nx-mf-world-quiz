@@ -114,8 +114,12 @@ may know about each other, is described in
   unsent, it asks — with the number — before deleting them with the rest of
   the device's data. **Account deletion** asks inline, with the consequence
   spelled out, before `DELETE /v1/me`, then clears the device too.
-- The API URL and the Google client id are in `apps/shell/src/app/api-config.ts`
-  (public values; per-environment configuration comes with Phase 12).
+- The API URL and the Google client id are **not compiled in**: the app reads
+  them from `config.json` before it starts
+  (`apps/shell/src/app/runtime-config.ts`, [ADR-012](../decisions/ADR-012-environments.md)),
+  and a deployment replaces that file together with
+  `federation.manifest.json`. `apps/shell/public/config.json` holds the
+  development values.
 - Progress and sync: [state-management.md](state-management.md) and
   [ADR-006](../decisions/ADR-006-local-persistence.md).
 

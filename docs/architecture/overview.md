@@ -110,7 +110,7 @@ typos). The app has no custom speech-recognition UI and no external AI/LLM judgi
 | 9b  | `feat/leaderboard-client`    | Challenges and the leaderboard screen in the app                                       | ✅ merged      |
 | 9c  | `feat/site-ssr`              | `apps/site` SSR: legal pages, public leaderboard; SSR-in-shell spike, ADR-003          | ✅ merged      |
 | 10  | `feat/achievements-mistakes` | Achievements, practice mistakes                                                        | ✅ merged      |
-| 11  | `feat/e2e`                   | Full Cypress journeys                                                                  | ✅ this branch |
-| 12  | `feat/ci-cd`                 | Deployment pipelines                                                                   | 📐             |
+| 11  | `feat/e2e`                   | Full Cypress journeys                                                                  | ✅ merged      |
+| 12  | `feat/ci-cd`                 | Deployment pipelines                                                                   | ✅ this branch |
 | 13  | `feat/ios`                   | Capacitor iOS, TestFlight docs                                                         | 📐             |
 | 14  | `feat/polish`                | a11y, performance, animation, audio/haptics, security review                           | 📐             |

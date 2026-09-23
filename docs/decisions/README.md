@@ -17,6 +17,7 @@ decision. A new ADR supersedes the old one.
 | [ADR-009](ADR-009-i18n.md)              | Runtime i18n with Transloco and bundled translation modules        | Accepted |
 | [ADR-010](ADR-010-authentication.md)    | Sign-in: provider ID tokens, JWT access, rotating refresh tokens   | Accepted |
 | [ADR-011](ADR-011-sign-in-required.md)  | Sign-in is required before playing                                 | Accepted |
+| [ADR-012](ADR-012-environments.md)      | One build for every environment, configured at start-up            | Accepted |
 
 Template:
 

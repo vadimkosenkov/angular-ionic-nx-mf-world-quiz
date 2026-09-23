@@ -9,14 +9,17 @@ Runs on every pull request and on pushes to `main`.
 flowchart LR
   PR[pull request / push to main] --> A[checks job]
   PR --> B[e2e job]
+  PR --> C[images job]
   A --> A1[npm ci] --> A2[nx-set-shas] --> A2b[control characters] --> A3[format:check] --> A4["nx affected -t lint typecheck test build"]
   B --> B1[npm ci + Cypress cache] --> B2[cypress verify] --> B3[nx-set-shas] --> B4["nx affected -t e2e --configuration=production"]
+  C --> C1["docker build apps/api/Dockerfile"] --> C2["docker build apps/site/Dockerfile"]
 ```
 
 | Job      | What fails it                                                                                                                                                                                                               |
 | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `checks` | Raw control characters in tracked text files, unformatted files, lint errors (including module-boundary violations), type errors (including Angular templates), failing unit/component/API tests, failing production builds |
 | `e2e`    | Failing Cypress specs against production-configuration builds of the shell, both remotes, the API (`serve-e2e`) and the site (`serve-ssr`). Screenshots are uploaded as an artifact on failure.                             |
+| `images` | A container image that no longer builds. The images are built from the repository root (`apps/api/Dockerfile`, `apps/site/Dockerfile`) and **not** pushed here; `release.yml` publishes them.                               |
 
 Every step exits non-zero on failure. No step uses `continue-on-error`.
 
@@ -72,10 +75,31 @@ npx nx run-many -t e2e --configuration=production
 
 ## Continuous delivery
 
-Not implemented yet. The plan (Phase 12, iOS in Phase 13):
+Workflow: [`.github/workflows/release.yml`](../../.github/workflows/release.yml).
+Full instructions: [deploying.md](deploying.md); the configuration rules are
+[ADR-012](../decisions/ADR-012-environments.md).
 
-| Target                       | Plan                                                                                                                                                                      |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Web (shell + remotes + site) | Static hosting per app with an environment-specific federation manifest; `site` needs a Node host for SSR                                                                 |
-| API + PostgreSQL             | Managed Node host + managed PostgreSQL; migrations as a release step                                                                                                      |
-| iOS                          | Capacitor build, signing and TestFlight upload through a manually approved workflow; credentials as GitHub secrets (placeholders until an Apple Developer account exists) |
+```mermaid
+flowchart LR
+  M[push to main] --> S[environment: staging]
+  T[tag v*] --> P[environment: production, approval]
+  S --> J
+  P --> J[images job + static job]
+  J --> D{DEPLOY_ENABLED}
+  D -->|true| E[deploy job: Render services + Netlify sites + health checks]
+  D -->|unset| F[artefacts only: GHCR images, web-&lt;sha&gt; artifact]
+```
+
+| Job      | What it produces                                                                                                                                                                                                                |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `images` | `ghcr.io/<owner>/world-quiz-api` (one image for every environment) and `world-quiz-site` (built per environment, because its pages are prerendered)                                                                             |
+| `static` | Production builds of `shell`, `capitals` and `flags` plus the environment's `config.json` and `federation.manifest.json`, as artifact `web-<sha>`                                                                               |
+| `deploy` | Only with `DEPLOY_ENABLED=true`: Render's API is asked to deploy the exact image tag for the API and the site, `netlify deploy --prod` publishes the three bundles, then health checks on `/health`, the site and `config.json` |
+
+**Nothing is hosted yet**, so `DEPLOY_ENABLED` is unset and the `deploy` job
+is skipped: the pipeline is complete and provably builds what would be
+deployed, without pretending a service is running. The API's migrations run
+at its start-up, so deploying its image is the whole database step (ADR-005).
+
+iOS (Phase 13) is not part of this workflow: Capacitor bundles the remotes
+into the app, and signing and TestFlight need an Apple Developer account.

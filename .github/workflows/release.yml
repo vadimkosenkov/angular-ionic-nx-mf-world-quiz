@@ -1,0 +1,210 @@
+# Builds the deployable artefacts and, once a deployment target is
+# configured, deploys them. Documentation: docs/deployment/deploying.md
+#
+# Every push to main goes to **staging**; a `v*` tag goes to **production**,
+# which is a protected GitHub Environment (approval before it runs).
+#
+# Deployment is **off until it is configured**: the deploy jobs run only when
+# the environment's variable `DEPLOY_ENABLED` is `true`. Without it the
+# workflow still builds and publishes the images and the static bundles, so
+# the artefacts of every commit exist and can be deployed by hand.
+name: Release
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # Pushing images to the GitHub Container Registry.
+  packages: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NX_NO_CLOUD: true
+  NX_DAEMON: false
+  REGISTRY: ghcr.io
+
+jobs:
+  images:
+    name: Publish images (${{ startsWith(github.ref, 'refs/tags/v') && 'production' || 'staging' }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: ${{ startsWith(github.ref, 'refs/tags/v') && 'production' || 'staging' }}
+    outputs:
+      api: ${{ steps.names.outputs.api }}
+      site: ${{ steps.names.outputs.site }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Sign in to the registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Image names must be lower case; a GitHub account name need not be.
+      - name: Image names
+        id: names
+        env:
+          OWNER: ${{ github.repository_owner }}
+          ENVIRONMENT: ${{ startsWith(github.ref, 'refs/tags/v') && 'production' || 'staging' }}
+        run: |
+          owner=$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')
+          echo "api=${{ env.REGISTRY }}/$owner/world-quiz-api" >> "$GITHUB_OUTPUT"
+          echo "site=${{ env.REGISTRY }}/$owner/world-quiz-site" >> "$GITHUB_OUTPUT"
+          echo "environment=$ENVIRONMENT" >> "$GITHUB_OUTPUT"
+
+      # The API reads everything from its environment at start-up, so one
+      # image serves every environment.
+      - name: API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.names.outputs.api }}:${{ github.sha }}
+            ${{ steps.names.outputs.api }}:${{ steps.names.outputs.environment }}
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+
+      # The site prerenders its home and legal pages, so its URLs and the
+      # operator's contact are part of the image: one image per environment
+      # (ADR-003, docs/deployment/deploying.md).
+      - name: Site image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/site/Dockerfile
+          push: true
+          build-args: |
+            SITE_URL=${{ vars.SITE_URL }}
+            APP_URL=${{ vars.APP_URL }}
+            API_URL=${{ vars.API_URL }}
+            SITE_OPERATOR_NAME=${{ vars.SITE_OPERATOR_NAME }}
+            SITE_OPERATOR_EMAIL=${{ vars.SITE_OPERATOR_EMAIL }}
+          tags: |
+            ${{ steps.names.outputs.site }}:${{ github.sha }}
+            ${{ steps.names.outputs.site }}:${{ steps.names.outputs.environment }}
+          cache-from: type=gha,scope=site
+          cache-to: type=gha,mode=max,scope=site
+
+  static:
+    name: Build the app (${{ startsWith(github.ref, 'refs/tags/v') && 'production' || 'staging' }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: ${{ startsWith(github.ref, 'refs/tags/v') && 'production' || 'staging' }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          CYPRESS_INSTALL_BINARY: 0
+
+      - name: Build the shell and the quiz remotes
+        run: npx nx run-many -t build -p shell capitals flags --configuration=production
+
+      # The same bundles run on every environment; these two files say which
+      # API and which remotes this deployment uses.
+      - name: Write the environment's configuration
+        env:
+          API_URL: ${{ vars.API_URL }}
+          GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
+          CAPITALS_URL: ${{ vars.CAPITALS_URL }}
+          FLAGS_URL: ${{ vars.FLAGS_URL }}
+        run: node tools/scripts/write-deploy-config.mjs dist/apps/shell/browser
+
+      - name: Upload the static applications
+        uses: actions/upload-artifact@v7
+        with:
+          name: web-${{ github.sha }}
+          # The artefact keeps the paths below their common root, so it
+          # contains shell/browser, capitals/browser and flags/browser.
+          path: |
+            dist/apps/shell/browser
+            dist/apps/capitals/browser
+            dist/apps/flags/browser
+          if-no-files-found: error
+
+  deploy:
+    name: Deploy (${{ startsWith(github.ref, 'refs/tags/v') && 'production' || 'staging' }})
+    needs: [images, static]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: ${{ startsWith(github.ref, 'refs/tags/v') && 'production' || 'staging' }}
+    # Set DEPLOY_ENABLED=true in the environment once its secrets exist;
+    # until then the artefacts are published and nothing is deployed.
+    if: ${{ vars.DEPLOY_ENABLED == 'true' }}
+    steps:
+      # Render runs the two services from the images published above: a
+      # deploy is "run this exact tag". The API applies its migrations at
+      # start-up, so that is the whole database step.
+      - name: Deploy the API and the site to Render
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          API_SERVICE: ${{ vars.RENDER_API_SERVICE_ID }}
+          SITE_SERVICE: ${{ vars.RENDER_SITE_SERVICE_ID }}
+          API_IMAGE: ${{ needs.images.outputs.api }}:${{ github.sha }}
+          SITE_IMAGE: ${{ needs.images.outputs.site }}:${{ github.sha }}
+        run: |
+          deploy() {
+            curl --fail --silent --show-error \
+              --request POST "https://api.render.com/v1/services/$1/deploys" \
+              --header "Authorization: Bearer $RENDER_API_KEY" \
+              --header 'Content-Type: application/json' \
+              --data "{\"imageUrl\":\"$2\"}" > /dev/null
+            echo "Requested a deploy of $2"
+          }
+          deploy "$API_SERVICE" "$API_IMAGE"
+          deploy "$SITE_SERVICE" "$SITE_IMAGE"
+
+      - name: Download the static applications
+        uses: actions/download-artifact@v7
+        with:
+          name: web-${{ github.sha }}
+          path: web
+
+      # The shell and the two remotes are plain static bundles. Each is its
+      # own Netlify site, so a remote keeps its own origin — which is what
+      # makes the quiz a real microfrontend.
+      - name: Publish the shell and the remotes to Netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          SHELL_SITE: ${{ vars.NETLIFY_SHELL_SITE_ID }}
+          CAPITALS_SITE: ${{ vars.NETLIFY_CAPITALS_SITE_ID }}
+          FLAGS_SITE: ${{ vars.NETLIFY_FLAGS_SITE_ID }}
+        run: |
+          publish() {
+            npx --yes netlify-cli@23 deploy --prod --no-build \
+              --dir "web/$1/browser" --site "$2" \
+              --message "${{ github.sha }}"
+          }
+          publish shell "$SHELL_SITE"
+          publish capitals "$CAPITALS_SITE"
+          publish flags "$FLAGS_SITE"
+
+      # Render's deploy is asynchronous, so give the services a moment
+      # before asking them whether they are serving the new version.
+      - name: Wait for the services to restart
+        run: sleep 60
+
+      - name: Check that the deployment answers
+        run: |
+          curl --fail --silent --show-error "${{ vars.API_URL }}/health" > /dev/null
+          curl --fail --silent --show-error "${{ vars.SITE_URL }}/en" > /dev/null
+          curl --fail --silent --show-error "${{ vars.APP_URL }}/config.json" > /dev/null

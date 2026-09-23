@@ -5,7 +5,7 @@ built as a full-stack portfolio project on a modern Angular ecosystem: **Nx,
 Angular 22 (signals, zoneless), Native Federation microfrontends, Ionic,
 Capacitor (iOS), Express 5, PostgreSQL** and a multi-level test strategy.
 
-> **Project status: Phase 11, full E2E journeys.**
+> **Project status: Phase 12, build and release pipeline.**
 > The workspace, CI, the 195-country dataset, the platform-independent quiz
 > domain and the Ionic shell (welcome screen, tabs, Home, Achievements,
 > Leaderboard with an honest "not available yet" state, Settings, light/dark
@@ -25,7 +25,9 @@ Capacitor (iOS), Express 5, PostgreSQL** and a multi-level test strategy.
 > Russian) publishes the Privacy Policy, the Terms and the public
 > leaderboards. Countries answered wrongly can be practised from Home or the
 > quiz setup. Cypress journeys cover every mode, sign-in, sync, achievements,
-> the leaderboard, the site and the phone layout. This README only describes what exists; planned items are
+> the leaderboard, the site and the phone layout. Every commit produces deployable artefacts — container
+> images for the API and the site, static bundles for the app — configured
+> per environment at start-up; no environment is hosted yet. This README only describes what exists; planned items are
 > marked as such.
 
 ## Product in one minute
@@ -80,6 +82,7 @@ The same quiz rules run in the browser (offline play) and on the server
 | Unit/component/API tests | Vitest 4, Angular TestBed, supertest, PGlite                      | ✅                               |
 | E2E                      | Cypress 15                                                        | ✅ every user journey            |
 | CI                       | GitHub Actions + `nx affected`                                    | ✅                               |
+| Delivery                 | Container images (GHCR), static bundles, staging/production       | ✅ pipeline · 📐 not hosted yet  |
 
 ✅ implemented · 📐 designed and approved, not implemented yet
 
