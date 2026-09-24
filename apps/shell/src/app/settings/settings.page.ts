@@ -12,9 +12,11 @@ import {
   IonSegment,
   IonSegmentButton,
   IonTitle,
+  IonToggle,
   IonToolbar,
   type RadioGroupCustomEvent,
   type SegmentCustomEvent,
+  type ToggleCustomEvent,
 } from '@ionic/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
@@ -25,6 +27,7 @@ import {
 import { flagAssetPath } from '@world-quiz/quiz/countries';
 import { isLocale, type Locale } from '@world-quiz/quiz/domain';
 import { APP_VERSION } from '../app-info';
+import { NATIVE_PLATFORM } from '../core/platform';
 import { AccountSection } from './account-section';
 
 interface ThemeOption {
@@ -52,6 +55,7 @@ interface LanguageOption {
     IonLabel,
     IonList,
     IonItem,
+    IonToggle,
     IonRadioGroup,
     IonRadio,
     IonNote,
@@ -64,6 +68,8 @@ interface LanguageOption {
 export class SettingsPage {
   protected readonly settings = inject(SettingsStore);
   protected readonly version = APP_VERSION;
+  /** Haptics exist only on the device, so the toggle does too. */
+  protected readonly nativePlatform = inject(NATIVE_PLATFORM);
 
   protected readonly themes: readonly ThemeOption[] = [
     { value: 'light', icon: 'sunny-outline' },
@@ -83,6 +89,14 @@ export class SettingsPage {
     if (isThemePreference(value)) {
       this.settings.setTheme(value);
     }
+  }
+
+  protected onSoundChange(event: Event): void {
+    this.settings.setSound((event as ToggleCustomEvent).detail.checked);
+  }
+
+  protected onHapticsChange(event: Event): void {
+    this.settings.setHaptics((event as ToggleCustomEvent).detail.checked);
   }
 
   protected onLanguageChange(event: Event): void {

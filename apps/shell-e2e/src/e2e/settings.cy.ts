@@ -16,7 +16,7 @@ describe('settings', () => {
 
   it('keeps an explicit theme choice after a reload, regardless of the system', () => {
     cy.visitWithScheme('/settings', 'light');
-    cy.get('[data-testid="theme-dark"]').click();
+    cy.get('[data-testid="theme-dark"]').click({ scrollBehavior: 'center' });
     html()
       .should('have.class', 'ion-palette-dark')
       .and('have.css', 'color-scheme', 'dark');
@@ -24,13 +24,13 @@ describe('settings', () => {
     cy.visitWithScheme('/settings', 'light');
     html().should('have.class', 'ion-palette-dark');
 
-    cy.get('[data-testid="theme-light"]').click();
+    cy.get('[data-testid="theme-light"]').click({ scrollBehavior: 'center' });
     html().should('not.have.class', 'ion-palette-dark');
   });
 
   it('switches the whole UI to Russian and remembers it', () => {
     cy.visit('/settings');
-    cy.get('[data-testid="language-ru"]').click();
+    cy.get('[data-testid="language-ru"]').click({ scrollBehavior: 'center' });
 
     html().should('have.attr', 'lang', 'ru');
     cy.get('[data-testid="tab-home"]').should('contain.text', 'Главная');

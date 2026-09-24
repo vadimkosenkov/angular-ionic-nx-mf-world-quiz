@@ -342,6 +342,12 @@ export const ru: TranslationShape = {
       dark: 'Тёмное',
       system: 'Системное',
     },
+    feel: {
+      title: 'Звук и отклик',
+      sound: 'Звуки',
+      haptics: 'Вибрация',
+      hint: 'Короткие сигналы на ответ и в конце раунда.',
+    },
     language: {
       title: 'Язык',
       en: 'Английский',

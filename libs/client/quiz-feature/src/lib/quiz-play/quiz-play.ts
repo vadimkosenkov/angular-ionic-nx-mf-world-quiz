@@ -28,6 +28,7 @@ import {
   TIMED_MODE_DURATION_MS,
 } from '@world-quiz/quiz/domain';
 import { COUNTRY_DATASET } from '@world-quiz/client/quiz-ports';
+import { Feedback } from '@world-quiz/client/feedback';
 import { AnswerFeedback } from '../answer-feedback/answer-feedback';
 import { QuizSessionStore } from '../quiz-session.store';
 
@@ -83,6 +84,7 @@ export class QuizPlay {
   private latestField: IonicInputElement | null = null;
   private listensForPageEnter = false;
   private readonly settings = inject(SettingsStore);
+  private readonly feedback = inject(Feedback);
   private readonly countries = indexCountriesByCode(inject(COUNTRY_DATASET));
 
   /** The Hard-mode field; recreated for every question. */
@@ -140,6 +142,16 @@ export class QuizPlay {
       const field = this.answerInput()?.nativeElement as
         IonicInputElement | undefined;
       if (field) this.focusWhenVisible(field);
+    });
+
+    // A sound and a tap the moment the verdict appears, so a player who is
+    // looking at the flag and not at the text still knows the answer landed.
+    effect(() => {
+      const feedback = this.store.feedback();
+      if (!feedback) return;
+      untracked(() =>
+        this.feedback.play(feedback.record.correct ? 'correct' : 'incorrect'),
+      );
     });
 
     const ticker = setInterval(() => this.store.tick(), TICK_INTERVAL_MS);

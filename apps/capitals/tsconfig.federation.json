@@ -9,6 +9,7 @@
     "../../libs/shared/contracts/src/index.ts",
     "../../libs/client/settings/src/index.ts",
     "../../libs/client/ui/src/index.ts",
+    "../../libs/client/feedback/src/index.ts",
     "../../libs/client/i18n/src/index.ts",
     "src/app/remote.routes.ts"
   ],

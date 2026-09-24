@@ -244,3 +244,34 @@ page container adds `var(--ion-safe-area-top)` to its top padding.
 - Icons: `ionicons` SVGs, registered explicitly in `apps/shell/src/app/icons.ts`,
   so only the icons used are bundled. No icon CDN is used.
 - Fonts: the system font stack (SF Pro on Apple devices); no web fonts to download.
+
+## Motion, sound and haptics
+
+Three small signals, all of them optional and all of them saying the same
+thing the screen already says — never the only carrier of information.
+
+**Motion.** Two animations, both short (`--wq-duration-base`, 220 ms) and
+both on arrival, never on departure: the answer's verdict rises into place
+where the choices were, and the blocks of the result screen appear from the
+top down (0 ms, 60 ms, 110 ms, then 160 ms for the rest) so the eye reads
+the score first. Everything else is Ionic's own page transition. The base
+styles turn all of it off under `prefers-reduced-motion`.
+
+**Sound** (`libs/client/feedback`). Two-note tones made with the Web Audio
+API — no audio files to download, decode or ship in the app bundle: a rising
+third for a correct answer, one low note for a wrong one (information, not
+punishment), a short fanfare for a perfect run, an achievement or a record.
+Quiet by design (`0.12` peak gain, 90 ms per note) and faded in and out so
+the speaker does not click.
+
+**Haptics.** The iPhone only: iOS separates an _impact_ (something was
+touched) from a _notification_ (something succeeded or failed), and the app
+follows that — a light tap for a correct answer, a warning for a wrong one,
+a success pattern at the end of a perfect run. A browser has no taptic
+engine, so there is nothing there and the setting is hidden.
+
+**The player decides.** Settings → Sound and feel has a switch for each
+channel; they are independent, so the taps can stay while the sound goes.
+Both default to on, and a failure in either (a browser that refuses to play
+before a gesture, a device without an engine) is swallowed: a quiz must
+never break because a sound did not play.

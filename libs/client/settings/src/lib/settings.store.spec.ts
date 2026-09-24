@@ -88,7 +88,7 @@ describe('SettingsStore', () => {
     expect(store.theme()).toBe('light');
     await store.flush();
     expect(JSON.parse((await storage.get(SETTINGS_STORAGE_KEY)) ?? '')).toEqual(
-      { theme: 'light', locale: 'ru' },
+      { theme: 'light', locale: 'ru', sound: true, haptics: true },
     );
   });
 
@@ -118,5 +118,19 @@ describe('SettingsStore', () => {
 
     expect(store.theme()).toBe('dark');
     expect(errorHandler.handleError).toHaveBeenCalledWith(failure);
+  });
+
+  it('remembers that sound and haptics were turned off', async () => {
+    const { store, storage } = setup();
+
+    store.setSound(false);
+    store.setHaptics(false);
+
+    expect(store.sound()).toBe(false);
+    expect(store.haptics()).toBe(false);
+    await store.flush();
+    expect(
+      JSON.parse((await storage.get(SETTINGS_STORAGE_KEY)) ?? ''),
+    ).toMatchObject({ sound: false, haptics: false });
   });
 });

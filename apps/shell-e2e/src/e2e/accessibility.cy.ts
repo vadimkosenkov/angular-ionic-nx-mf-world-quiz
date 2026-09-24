@@ -70,7 +70,7 @@ describe('accessibility', () => {
 
     it('checks a screen in Russian and in the dark theme', () => {
       cy.visitWithScheme('/settings', 'dark');
-      byTestId('language-ru').click();
+      byTestId('language-ru').click({ scrollBehavior: 'center' });
       cy.get('html').should('have.attr', 'lang', 'ru');
       expectAccessible();
 

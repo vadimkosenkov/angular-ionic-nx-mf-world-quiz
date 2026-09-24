@@ -7,6 +7,10 @@ export type ColorScheme = 'light' | 'dark';
 export interface AppSettings {
   readonly theme: ThemePreference;
   readonly locale: Locale;
+  /** Short tones on an answer and on a finished round. */
+  readonly sound: boolean;
+  /** Haptic feedback; the iPhone app only — a browser has no taptic engine. */
+  readonly haptics: boolean;
 }
 
 /** Storage key. The version suffix allows a future format change with a migration. */
@@ -48,9 +52,11 @@ export function parseStoredSettings(
   }
   if (typeof parsed !== 'object' || parsed === null) return fallback;
 
-  const { theme, locale } = parsed as Record<string, unknown>;
+  const { theme, locale, sound, haptics } = parsed as Record<string, unknown>;
   return {
     theme: isThemePreference(theme) ? theme : fallback.theme,
     locale: isLocale(locale) ? locale : fallback.locale,
+    sound: typeof sound === 'boolean' ? sound : fallback.sound,
+    haptics: typeof haptics === 'boolean' ? haptics : fallback.haptics,
   };
 }

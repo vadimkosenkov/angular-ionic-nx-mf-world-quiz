@@ -65,6 +65,37 @@
       </div>
     </section>
 
+    <section class="wq-section" aria-labelledby="feel-title">
+      <h2 id="feel-title" class="wq-section-title">
+        {{ 'settings.feel.title' | transloco }}
+      </h2>
+      <div class="list">
+        <ion-item>
+          <ion-toggle
+            data-testid="sound-toggle"
+            [checked]="settings.sound()"
+            (ionChange)="onSoundChange($event)"
+          >
+            {{ 'settings.feel.sound' | transloco }}
+          </ion-toggle>
+        </ion-item>
+        @if (nativePlatform) {
+        <ion-item>
+          <ion-toggle
+            data-testid="haptics-toggle"
+            [checked]="settings.haptics()"
+            (ionChange)="onHapticsChange($event)"
+          >
+            {{ 'settings.feel.haptics' | transloco }}
+          </ion-toggle>
+        </ion-item>
+        }
+      </div>
+      <p class="wq-text-secondary hint">
+        {{ 'settings.feel.hint' | transloco }}
+      </p>
+    </section>
+
     <section class="wq-section" aria-labelledby="about-title">
       <h2 id="about-title" class="wq-section-title">
         {{ 'settings.about.title' | transloco }}

@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { render, screen } from '@testing-library/angular';
 import { SettingsStore } from '@world-quiz/client/settings';
+import { NATIVE_PLATFORM } from '../core/platform';
 import { provideShellTesting } from '../../testing/shell-testing';
 import { APP_VERSION } from '../app-info';
 import { SettingsPage } from './settings.page';
@@ -25,7 +26,7 @@ describe('SettingsPage', () => {
   it('titles every section with a heading above its card', async () => {
     await render(SettingsPage, { providers: provideShellTesting() });
 
-    for (const name of ['Appearance', 'Language', 'About']) {
+    for (const name of ['Appearance', 'Language', 'Sound and feel', 'About']) {
       const region = await screen.findByRole('region', { name });
       const heading = screen.getByRole('heading', { level: 2, name });
       expect(region.firstElementChild).toBe(heading);
@@ -81,5 +82,38 @@ describe('SettingsPage', () => {
       'flags/ru.svg',
     ]);
     expect(flags.every((img) => img.getAttribute('alt') === '')).toBe(true);
+  });
+
+  it('turns the sounds off through the store', async () => {
+    await render(SettingsPage, { providers: provideShellTesting() });
+    const store = TestBed.inject(SettingsStore);
+    expect(store.sound()).toBe(true);
+
+    screen
+      .getByTestId('sound-toggle')
+      .dispatchEvent(
+        new CustomEvent('ionChange', { detail: { checked: false } }),
+      );
+
+    expect(store.sound()).toBe(false);
+  });
+
+  // A browser has no taptic engine, so the toggle would promise something
+  // the web cannot do.
+  it('hides the vibration toggle on the web', async () => {
+    await render(SettingsPage, { providers: provideShellTesting() });
+
+    expect(screen.queryByTestId('haptics-toggle')).toBeNull();
+  });
+
+  it('offers the vibration toggle in the app', async () => {
+    await render(SettingsPage, {
+      providers: [
+        ...provideShellTesting(),
+        { provide: NATIVE_PLATFORM, useValue: true },
+      ],
+    });
+
+    expect(screen.getByTestId('haptics-toggle')).toBeTruthy();
   });
 });

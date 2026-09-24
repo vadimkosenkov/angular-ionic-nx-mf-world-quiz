@@ -114,5 +114,5 @@ typos). The app has no custom speech-recognition UI and no external AI/LLM judgi
 | 12  | `feat/ci-cd`                 | Deployment pipelines                                                                   | ✅ merged      |
 | 13a | `feat/ios-app`               | Capacitor iOS app, remotes bundled in, simulator                                       | ✅ merged      |
 | 13b | `feat/ios-auth`              | Native sign-in on iOS, refresh token in the Keychain                                   | ✅ merged      |
-| 14a | `feat/polish-quality`        | Accessibility checks, security headers and CSP, performance review                     | ✅ this branch |
-| 14b | `feat/polish-feel`           | Animation, sound and haptics                                                           | 📐             |
+| 14a | `feat/polish-quality`        | Accessibility checks, security headers and CSP, performance review                     | ✅ merged      |
+| 14b | `feat/polish-feel`           | Animation, sound and haptics                                                           | ✅ this branch |

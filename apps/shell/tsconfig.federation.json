@@ -2,6 +2,7 @@
   "extends": "./tsconfig.app.json",
   "files": [
     "../../libs/client/auth/src/index.ts",
+    "../../libs/client/feedback/src/index.ts",
     "../../libs/client/i18n/src/index.ts",
     "../../libs/client/progress/src/index.ts",
     "../../libs/client/settings/src/index.ts",
