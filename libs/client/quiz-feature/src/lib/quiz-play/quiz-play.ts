@@ -85,6 +85,8 @@ export class QuizPlay {
   private listensForPageEnter = false;
   private readonly settings = inject(SettingsStore);
   private readonly feedback = inject(Feedback);
+  /** The country whose flag the browser has finished loading. */
+  private readonly loadedFlag = signal<CountryCode | null>(null);
   private readonly countries = indexCountriesByCode(inject(COUNTRY_DATASET));
 
   /** The Hard-mode field; recreated for every question. */
@@ -154,6 +156,18 @@ export class QuizPlay {
       );
     });
 
+    // Fetch the next question's flag while this one is still on screen, so
+    // the picture is already in the browser's cache when the player moves
+    // on. The dataset's flags are small SVGs; one at a time is cheap.
+    effect(() => {
+      const next = this.store.nextCountry();
+      if (!next) return;
+      untracked(() => {
+        const image = new Image();
+        image.src = this.flagFor(next);
+      });
+    });
+
     const ticker = setInterval(() => this.store.tick(), TICK_INTERVAL_MS);
     inject(DestroyRef).onDestroy(() => clearInterval(ticker));
   }
@@ -183,6 +197,23 @@ export class QuizPlay {
 
   protected flagFor(country: Country): string {
     return flagAssetPath(country.code);
+  }
+
+  /**
+   * Whether the flag on screen is the one for this question.
+   *
+   * An `<img>` keeps painting the previous picture until the new one has
+   * loaded, so without this the next question appeared next to the flag of
+   * the question just answered. The image is hidden over its own outline
+   * until the browser says it is ready — which, thanks to the preloading
+   * below, is usually immediate.
+   */
+  protected flagShown(country: Country): boolean {
+    return this.loadedFlag() === country.code;
+  }
+
+  protected onFlagLoad(country: Country): void {
+    this.loadedFlag.set(country.code);
   }
 
   protected answerLabel(code: CountryCode): string {

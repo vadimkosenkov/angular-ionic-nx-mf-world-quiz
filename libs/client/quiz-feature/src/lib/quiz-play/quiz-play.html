@@ -56,12 +56,20 @@
 >
   @if (config().category === 'capitals') {
   <!-- The name below says which country it is; the flag is decorative. -->
-  <img class="flag" [src]="flagFor(country)" alt="" />
+  <img
+    class="flag"
+    [class.loading]="!flagShown(country)"
+    [src]="flagFor(country)"
+    (load)="onFlagLoad(country)"
+    alt=""
+  />
   <h1 data-testid="quiz-country">{{ country.name[locale()] }}</h1>
   } @else {
   <img
     class="flag"
+    [class.loading]="!flagShown(country)"
     [src]="flagFor(country)"
+    (load)="onFlagLoad(country)"
     [alt]="'quiz.flagLabel' | transloco"
     data-testid="quiz-flag"
   />
