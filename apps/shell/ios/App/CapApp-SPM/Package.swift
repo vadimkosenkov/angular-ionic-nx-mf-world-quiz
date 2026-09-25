@@ -13,6 +13,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", exact: "8.5.2"),
         .package(name: "AparajitaCapacitorSecureStorage", path: "../../../../../node_modules/@aparajita/capacitor-secure-storage"),
+        .package(name: "CapacitorHaptics", path: "../../../../../node_modules/@capacitor/haptics"),
         .package(name: "CapacitorPreferences", path: "../../../../../node_modules/@capacitor/preferences"),
         .package(name: "CapgoCapacitorSocialLogin", path: "../../../../../node_modules/@capgo/capacitor-social-login")
     ],
@@ -23,6 +24,7 @@ let package = Package(
                 .product(name: "Capacitor", package: "capacitor-swift-pm"),
                 .product(name: "Cordova", package: "capacitor-swift-pm"),
                 .product(name: "AparajitaCapacitorSecureStorage", package: "AparajitaCapacitorSecureStorage"),
+                .product(name: "CapacitorHaptics", package: "CapacitorHaptics"),
                 .product(name: "CapacitorPreferences", package: "CapacitorPreferences"),
                 .product(name: "CapgoCapacitorSocialLogin", package: "CapgoCapacitorSocialLogin")
             ]

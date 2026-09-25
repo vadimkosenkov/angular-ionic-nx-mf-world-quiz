@@ -127,6 +127,10 @@ jobs:
         if: ${{ vars.API_URL != '' }}
         env:
           API_URL: ${{ vars.API_URL }}
+          # With API_URL=/ the app asks its own origin and this is where the
+          # published `_redirects` proxies `/v1/*` — which keeps the sign-in
+          # cookie first-party (docs/deployment/deploying.md).
+          API_UPSTREAM: ${{ vars.API_UPSTREAM }}
           GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
           CAPITALS_URL: ${{ vars.CAPITALS_URL }}
           FLAGS_URL: ${{ vars.FLAGS_URL }}
@@ -213,6 +217,6 @@ jobs:
 
       - name: Check that the deployment answers
         run: |
-          curl --fail --silent --show-error "${{ vars.API_URL }}/health" > /dev/null
+          curl --fail --silent --show-error "${{ vars.API_UPSTREAM || vars.API_URL }}/health" > /dev/null
           curl --fail --silent --show-error "${{ vars.SITE_URL }}/en" > /dev/null
           curl --fail --silent --show-error "${{ vars.APP_URL }}/config.json" > /dev/null

@@ -16,18 +16,18 @@ import { API, session } from './testing';
 
 const flush = () => new Promise((resolve) => setTimeout(resolve));
 
-async function signedInSetup() {
+async function signedInSetup(apiUrl: string = API) {
   TestBed.configureTestingModule({
     providers: [
       provideHttpClient(withInterceptors([authInterceptor])),
       provideHttpClientTesting(),
-      { provide: AUTH_CONFIG, useValue: { apiUrl: API, googleClientId: null } },
+      { provide: AUTH_CONFIG, useValue: { apiUrl, googleClientId: null } },
     ],
   });
   const http = TestBed.inject(HttpTestingController);
   const store = TestBed.inject(AuthStore);
   const restored = store.restore();
-  http.expectOne(`${API}/v1/auth/refresh`).flush(session('access-1'));
+  http.expectOne(`${apiUrl}/v1/auth/refresh`).flush(session('access-1'));
   await restored;
   return { http, store, client: TestBed.inject(HttpClient) };
 }
@@ -107,5 +107,27 @@ describe('authInterceptor', () => {
 
     await expect(response).rejects.toMatchObject({ status: 401 });
     expect(store.status()).toBe('signed-out');
+  });
+
+  // A deployment can proxy `/v1` under the app's own origin, so that the
+  // sign-in cookie is first-party. The API URL is then empty, and the token
+  // must still go to the API — and only to it.
+  describe("with the API under the app's own origin", () => {
+    it('sends the token to /v1 and to nothing else', async () => {
+      const { http, client, store } = await signedInSetup('');
+
+      client.get('/v1/sessions').subscribe();
+      expect(
+        http.expectOne('/v1/sessions').request.headers.get('Authorization'),
+      ).toBe(`Bearer ${store.currentAccessToken()}`);
+
+      client.get('/assets/data.json').subscribe();
+      expect(
+        http
+          .expectOne('/assets/data.json')
+          .request.headers.has('Authorization'),
+      ).toBe(false);
+      http.verify();
+    });
   });
 });

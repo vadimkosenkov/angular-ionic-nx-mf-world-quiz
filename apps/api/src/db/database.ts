@@ -35,11 +35,34 @@ const logPoolError: PoolErrorHandler = (error) =>
  * the process. With one, the broken client is discarded and the next query
  * opens a new connection.
  */
+/**
+ * Whether to encrypt the connection, decided from the address.
+ *
+ * A managed database (Neon, Render, anything else) is reached over the
+ * public internet and must be encrypted, with its certificate verified —
+ * otherwise anyone between here and there reads the player's data and the
+ * credentials in the URL. A database on this machine (development, tests,
+ * a container on the same host) has no certificate and needs none.
+ *
+ * It is decided here rather than left to the connection string, because a
+ * missing `sslmode` would then silently mean "no encryption".
+ */
+export function poolSslOptions(
+  connectionString: string,
+): false | { rejectUnauthorized: boolean } {
+  const host = new URL(connectionString).hostname;
+  const local = host === 'localhost' || host === '127.0.0.1' || host === '::1';
+  return local ? false : { rejectUnauthorized: true };
+}
+
 export function createPool(
   connectionString: string,
   onError: PoolErrorHandler = logPoolError,
 ): pg.Pool {
-  const pool = new pg.Pool({ connectionString });
+  const pool = new pg.Pool({
+    connectionString,
+    ssl: poolSslOptions(connectionString),
+  });
   pool.on('error', onError);
   return pool;
 }

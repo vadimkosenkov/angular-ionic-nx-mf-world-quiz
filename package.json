@@ -13,6 +13,8 @@
     "start:capitals": "nx serve capitals",
     "start:flags": "nx serve flags",
     "start:api": "nx serve api",
+    "ios:sync": "nx run shell:ios-sync",
+    "ios:open": "nx run shell:ios-open",
     "format": "nx format:write",
     "format:check": "nx format:check",
     "lint": "nx run-many -t lint",

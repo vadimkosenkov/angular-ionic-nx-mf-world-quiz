@@ -30,6 +30,22 @@ Capacitor (iOS), Express 5, PostgreSQL** and a multi-level test strategy.
 > per environment at start-up; no environment is hosted yet. This README only describes what exists; planned items are
 > marked as such.
 
+## Live
+
+| What          | Address                                                                |
+| ------------- | ---------------------------------------------------------------------- |
+| App           | https://world-quiz-shell.netlify.app                                   |
+| Capitals quiz | https://world-quiz-capitals.netlify.app (loaded by the app at runtime) |
+| Flags quiz    | https://world-quiz-flags.netlify.app (loaded by the app at runtime)    |
+| API           | https://world-quiz-api-staging.onrender.com (`/health`)                |
+| Images        | `ghcr.io/vadimkosenkov/world-quiz-api` (built by CI)                   |
+
+Hosted on free tiers: Netlify for the three static apps, Render for the API
+(it sleeps after 15 minutes without traffic, so the first request then takes
+about a minute), Neon for PostgreSQL. Dashboards: Netlify
+`app.netlify.com`, Render `dashboard.render.com`, Neon `console.neon.tech`.
+How to operate it: [docs/deployment/runbook.md](docs/deployment/runbook.md).
+
 ## Product in one minute
 
 - **Capitals** (country → capital) and **Flags** (flag → country), for 195 countries.

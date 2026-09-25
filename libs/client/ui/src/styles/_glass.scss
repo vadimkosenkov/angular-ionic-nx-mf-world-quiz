@@ -14,15 +14,13 @@
   @supports (
     (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
   ) {
-    @media not (prefers-reduced-transparency: reduce) {
-      background: var(--wq-color-glass-surface);
-      border-color: var(--wq-color-glass-border);
-      box-shadow:
-        inset 0 1px 0 var(--wq-color-glass-highlight),
-        var(--wq-shadow-card);
-      -webkit-backdrop-filter: blur(24px) saturate(180%);
-      backdrop-filter: blur(24px) saturate(180%);
-    }
+    background: var(--wq-color-glass-surface);
+    border-color: var(--wq-color-glass-border);
+    box-shadow:
+      inset 0 1px 0 var(--wq-color-glass-highlight),
+      var(--wq-shadow-card);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
   }
 }
 
@@ -42,22 +40,20 @@
   @supports (
     (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
   ) {
-    @media not (prefers-reduced-transparency: reduce) {
-      background:
-        linear-gradient(
-          180deg,
-          var(--wq-color-glass-highlight) 0%,
-          transparent 45%
-        ),
-        var(--wq-color-tab-bar-glass);
-      border-color: var(--wq-color-glass-border);
-      box-shadow:
-        inset 0 1px 0 var(--wq-color-glass-highlight),
-        inset 0 -1px 0 rgb(255 255 255 / 12%),
-        var(--wq-shadow-floating);
-      -webkit-backdrop-filter: blur(10px) saturate(200%);
-      backdrop-filter: blur(10px) saturate(200%);
-    }
+    background:
+      linear-gradient(
+        180deg,
+        var(--wq-color-glass-highlight) 0%,
+        transparent 45%
+      ),
+      var(--wq-color-tab-bar-glass);
+    border-color: var(--wq-color-glass-border);
+    box-shadow:
+      inset 0 1px 0 var(--wq-color-glass-highlight),
+      inset 0 -1px 0 rgb(255 255 255 / 12%),
+      var(--wq-shadow-floating);
+    -webkit-backdrop-filter: blur(10px) saturate(200%);
+    backdrop-filter: blur(10px) saturate(200%);
   }
 }
 
@@ -69,7 +65,7 @@
 .wq-action-bar {
   position: fixed;
   inset-inline: var(--wq-space-3);
-  bottom: max(var(--wq-space-3), var(--ion-safe-area-bottom, 0px));
+  bottom: var(--wq-chrome-inset);
   z-index: 10;
   display: flex;
   gap: var(--wq-space-2);
@@ -116,7 +112,7 @@ ion-tab-bar.wq-floating-tab-bar {
   --border: 0;
   position: absolute;
   inset-inline: var(--wq-space-3);
-  bottom: max(var(--wq-space-3), var(--ion-safe-area-bottom, 0px));
+  bottom: var(--wq-chrome-inset);
   z-index: 10;
   --wq-tab-bar-height: 60px;
   --wq-tab-bar-padding: 4px;
@@ -179,18 +175,16 @@ ion-header.header-translucent {
     @supports (
       (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
     ) {
-      @media not (prefers-reduced-transparency: reduce) {
-        background:
-          linear-gradient(
-            180deg,
-            var(--wq-color-glass-highlight) 0%,
-            transparent 70%
-          ),
-          var(--wq-color-tab-bar-glass);
-        box-shadow: inset 0 -1px 0 var(--wq-color-glass-border);
-        -webkit-backdrop-filter: blur(10px) saturate(200%);
-        backdrop-filter: blur(10px) saturate(200%);
-      }
+      background:
+        linear-gradient(
+          180deg,
+          var(--wq-color-glass-highlight) 0%,
+          transparent 70%
+        ),
+        var(--wq-color-tab-bar-glass);
+      box-shadow: inset 0 -1px 0 var(--wq-color-glass-border);
+      -webkit-backdrop-filter: blur(10px) saturate(200%);
+      backdrop-filter: blur(10px) saturate(200%);
     }
   }
 }
@@ -199,11 +193,22 @@ ion-tabs .wq-page {
   padding-bottom: var(--wq-tab-bar-clearance);
 }
 
-// Toolbars use backdrop-filter too; fall back to opaque chrome when
-// transparency should be reduced.
+// A player who asked the system for less transparency gets the opaque
+// baseline back. This is written as its own rule rather than as a condition
+// on each glass rule: `@media not (prefers-reduced-transparency: reduce)` is
+// **false** in a browser that does not know the feature, which used to turn
+// the whole material off where it was perfectly supported.
 @media (prefers-reduced-transparency: reduce) {
   ion-toolbar {
     --background: var(--wq-color-surface);
+  }
+
+  .wq-glass,
+  .glass-chrome,
+  ion-tab-bar,
+  ion-header.header-translucent .header-background {
+    background: var(--wq-color-surface);
+    border-color: var(--wq-color-border);
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }

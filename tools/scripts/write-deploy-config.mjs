@@ -11,7 +11,17 @@
  *   node tools/scripts/write-deploy-config.mjs dist/apps/shell/browser
  *
  * Required environment variables: API_URL, CAPITALS_URL, FLAGS_URL.
- * Optional: GOOGLE_CLIENT_ID (empty disables Google sign-in).
+ * Optional: GOOGLE_CLIENT_ID (empty disables Google sign-in),
+ * API_UPSTREAM (see below).
+ *
+ * **The sign-in cookie decides the shape of this.** The API sets an
+ * httpOnly `SameSite=Strict` cookie, which a browser only sends back when
+ * the app and the API are the same site. With the app on one host and the
+ * API on another, the cookie never comes back and a reload signs the player
+ * out. So a deployment either puts both under one domain, or — as the free
+ * hosting here does — serves the API under the app's own origin:
+ * `API_URL=/` plus `API_UPSTREAM=https://…` writes a Netlify `_redirects`
+ * rule that proxies `/v1/*` to the real API.
  */
 import { writeFile, access } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -29,9 +39,20 @@ export function deployConfig(env) {
   if (missing.length > 0) {
     throw new Error(`Missing environment variables: ${missing.join(', ')}`);
   }
-  return {
+
+  // `API_URL=/` means "under this app's own origin"; the app then asks for
+  // `/v1/…` and the proxy below carries it to the API.
+  const apiUrl = withoutTrailingSlash(env['API_URL']);
+  const upstream = env['API_UPSTREAM']
+    ? withoutTrailingSlash(env['API_UPSTREAM'])
+    : '';
+  if (apiUrl === '' && !upstream) {
+    throw new Error('API_URL=/ needs API_UPSTREAM: the address to proxy to');
+  }
+
+  const files = {
     'config.json': {
-      apiUrl: withoutTrailingSlash(env['API_URL']),
+      apiUrl,
       googleClientId: env['GOOGLE_CLIENT_ID'] || null,
     },
     'federation.manifest.json': {
@@ -39,6 +60,17 @@ export function deployConfig(env) {
       flags: remoteEntry(env['FLAGS_URL']),
     },
   };
+
+  // Netlify reads `_redirects` from the published folder, top to bottom.
+  // The proxy (`200` = proxy, not redirect) has to come first; the last rule
+  // is the one every single-page app needs — the routes are drawn by the
+  // app, so a reload of `/home` must still be served `index.html` instead of
+  // a 404.
+  const rules = [];
+  if (upstream) rules.push(`/v1/*  ${upstream}/v1/:splat  200`);
+  rules.push('/*  /index.html  200');
+  files['_redirects'] = `${rules.join('\n')}\n`;
+  return files;
 }
 
 async function main() {
@@ -55,7 +87,11 @@ async function main() {
   const files = deployConfig(process.env);
   for (const [name, content] of Object.entries(files)) {
     const path = join(directory, name);
-    await writeFile(path, `${JSON.stringify(content, null, 2)}\n`);
+    const body =
+      typeof content === 'string'
+        ? content
+        : `${JSON.stringify(content, null, 2)}\n`;
+    await writeFile(path, body);
     console.log(`Wrote ${path}`);
   }
 }

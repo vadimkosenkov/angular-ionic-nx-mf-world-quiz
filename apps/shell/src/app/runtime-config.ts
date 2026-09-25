@@ -12,7 +12,12 @@ import { InjectionToken } from '@angular/core';
  * `apps/shell/public/config.json` holds the development values.
  */
 export interface RuntimeConfig {
-  /** Origin of the API, without a trailing slash. */
+  /**
+   * Origin of the API, without a trailing slash — or **empty**, meaning the
+   * API answers under this app's own origin because the deployment proxies
+   * `/v1` to it. That is what makes the sign-in cookie first-party
+   * (docs/deployment/deploying.md).
+   */
   readonly apiUrl: string;
   /** Google Identity Services client id; `null` disables Google sign-in. */
   readonly googleClientId: string | null;
@@ -50,7 +55,6 @@ const isRuntimeConfig = (value: unknown): value is RuntimeConfig => {
   const candidate = value as Record<string, unknown>;
   return (
     typeof candidate['apiUrl'] === 'string' &&
-    candidate['apiUrl'].length > 0 &&
     (candidate['googleClientId'] === null ||
       typeof candidate['googleClientId'] === 'string')
   );

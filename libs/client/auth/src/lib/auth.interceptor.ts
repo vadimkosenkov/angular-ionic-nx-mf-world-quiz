@@ -14,15 +14,18 @@ import { AuthStore } from './auth.store';
  *
  * Other hosts never see the token, and `/v1/auth` requests are left alone:
  * they authenticate with the provider's ID token or the refresh cookie.
+ *
+ * An empty `apiUrl` means the API is reached under this app's own origin
+ * (a deployment proxies `/v1` to it, so the sign-in cookie is first-party).
+ * The match is then on `/v1/`, not on every relative request: an asset
+ * fetched with `HttpClient` must not carry the token.
  */
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const { apiUrl } = inject(AUTH_CONFIG);
   const store = inject(AuthStore);
 
-  if (
-    !request.url.startsWith(`${apiUrl}/`) ||
-    request.url.startsWith(`${apiUrl}/v1/auth/`)
-  ) {
+  const api = `${apiUrl}/v1/`;
+  if (!request.url.startsWith(api) || request.url.startsWith(`${api}auth/`)) {
     return next(request);
   }
 
