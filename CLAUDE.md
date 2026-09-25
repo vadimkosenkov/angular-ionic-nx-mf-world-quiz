@@ -209,4 +209,4 @@ Read `docs/architecture/site.md` and ADR-003. Key points:
 
 ## Where to read more
 
-`README.md` (overview) · `docs/architecture/` (overview, nx, frontend, backend, site, microfrontends, design-system, i18n, state-management, accessibility, security) · `docs/decisions/` (ADRs) · `docs/domain/` (quiz rules) · `docs/testing/strategy.md` · `docs/development/{setup,troubleshooting}.md` · `docs/deployment/ci-cd.md`.
+`README.md` (overview) · `docs/architecture/` (overview, nx, frontend, backend, site, microfrontends, design-system, i18n, state-management, accessibility, security) · `docs/decisions/` (ADRs) · `docs/domain/` (quiz rules) · `docs/testing/strategy.md` · `docs/development/{setup,troubleshooting}.md` · `docs/deployment/{ci-cd,deploying,runbook,ios}.md` (runbook = the commands for running, deploying and fixing the live project).

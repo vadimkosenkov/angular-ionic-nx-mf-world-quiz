@@ -4,6 +4,37 @@
   gap: var(--wq-space-5);
   // Room for the floating action bar, so the last answer is never under it.
   padding-bottom: var(--wq-action-bar-clearance);
+  --wq-flag-height: 38svh;
+}
+
+// A phone in a browser: the address bar and the toolbar eat a third of the
+// screen, and the fourth answer ended up below the fold. Everything the
+// player needs to answer — the flag, the question and all four choices —
+// has to be visible at once, so on a short window the flag gives up height
+// and the spacing tightens. A tall phone, and the installed app, keep the
+// roomier proportions.
+@media (max-height: 760px) {
+  :host {
+    gap: var(--wq-space-4);
+    --wq-flag-height: 25svh;
+  }
+
+  .prompt {
+    gap: var(--wq-space-3);
+
+    h1 {
+      font-size: 1.5rem;
+    }
+  }
+
+  .choices {
+    gap: var(--wq-space-2);
+  }
+
+  .choice {
+    min-height: 52px;
+    padding: var(--wq-space-3) var(--wq-space-4);
+  }
 }
 
 .quiz-header {
@@ -80,10 +111,10 @@
   .flag {
     display: block;
     // The flag is the question, but it must not push the answers off the
-    // screen: on a wide window its size is limited by the window's height,
-    // not its width. On a phone the first term always wins, so nothing
-    // changes there.
-    width: min(100%, calc(38svh * 4 / 3));
+    // screen. Its size is limited by the window's height as well as its
+    // width, so a wide window does not turn it into a poster and a short
+    // one still leaves room for four answers.
+    width: min(100%, calc(var(--wq-flag-height) * 4 / 3));
     margin-inline: auto;
     aspect-ratio: 4 / 3;
     object-fit: contain; // flag-icons 4x3 are all 4:3; never crop a flag
