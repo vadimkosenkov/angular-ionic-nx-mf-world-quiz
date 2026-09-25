@@ -176,6 +176,8 @@ export const en = {
       flags: '{{scope}} · Flags',
     },
     progress: '{{mastered}}/{{total}} mastered',
+    howItWorks:
+      'A country is mastered when you answer that same country correctly three times in a row — twice in Hard mode. A wrong answer starts it over. The achievement opens once every country of the region is mastered.',
   },
   setup: {
     title: 'Quiz setup',

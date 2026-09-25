@@ -1,11 +1,13 @@
 import {
   Component,
   computed,
+  DestroyRef,
   inject,
   input,
   linkedSignal,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import {
   IonButton,
@@ -76,7 +78,7 @@ interface FinishedQuiz {
   selector: 'wq-quiz-page',
   imports: [IonButton, IonContent, QuizPlay, QuizResults, TranslocoPipe],
   template: `
-    <ion-content [fullscreen]="true" class="wq-aurora">
+    <ion-content #content [fullscreen]="true" class="wq-aurora">
       <div class="wq-page quiz-page">
         @if (practiceIsEmpty()) {
           <div class="wq-card nothing" data-testid="practice-empty">
@@ -136,11 +138,32 @@ interface FinishedQuiz {
   `,
 })
 export class QuizPage implements ViewDidLeave {
+  private readonly content = viewChild.required(IonContent);
   private readonly nav = inject(NavController);
   private readonly results = inject(QUIZ_RESULT_SINK);
   private readonly progress = inject(QUIZ_PROGRESS_READER);
   private readonly dataset = inject(COUNTRY_DATASET);
   private readonly engine = createQuizEngine(this.dataset);
+
+  constructor() {
+    // A phone keyboard shrinks the visible page, and opening it scrolls the
+    // answer field into view. When it closes the page grows back but the
+    // scroll stays where it was, leaving the flag half off the top. Growing
+    // back means the question should be at the top again.
+    const viewport = globalThis.visualViewport;
+    if (viewport) {
+      let height = viewport.height;
+      const onResize = () => {
+        const grew = viewport.height > height + 1;
+        height = viewport.height;
+        if (grew) void this.content().scrollToTop(200);
+      };
+      viewport.addEventListener('resize', onResize);
+      inject(DestroyRef).onDestroy(() =>
+        viewport.removeEventListener('resize', onResize),
+      );
+    }
+  }
 
   /**
    * Bound from the query string by `withComponentInputBinding()`; query
