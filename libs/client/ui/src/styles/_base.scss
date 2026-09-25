@@ -81,3 +81,27 @@ ion-note {
     scroll-behavior: auto !important;
   }
 }
+
+// A browser window is not a phone: there is no home indicator to clear, and
+// chrome glued to the bottom edge of a large window looks like a mistake.
+// From tablet width the floating bars lift off the edge, and the pages keep
+// the matching amount of room free.
+@media (min-width: 768px) {
+  :root {
+    --wq-chrome-inset: 48px;
+    --wq-tab-bar-clearance: 140px;
+    --wq-action-bar-clearance: 144px;
+  }
+}
+
+// The visible part of a page is smaller than the layout viewport while a
+// mobile browser shows its address bar and toolbar, and Ionic's fixed body
+// fills the larger one — so the last row of content hid behind the browser's
+// own chrome. `dvh` follows what the player can actually see, and equals
+// `100%` in an installed app, where there is no browser chrome at all.
+@supports (height: 100dvh) {
+  html,
+  body {
+    height: 100dvh;
+  }
+}

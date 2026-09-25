@@ -1,7 +1,25 @@
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createPool, openPglite } from './database';
+import { createPool, openPglite, poolSslOptions } from './database';
+
+describe('poolSslOptions', () => {
+  // A managed database is reached over the public internet: the connection
+  // is encrypted and the certificate verified, whatever the URL says.
+  it.each([
+    'postgres://user:pw@ep-cool-name.eu-central-1.aws.neon.tech/db',
+    'postgres://user:pw@db.example.test:5432/world_quiz?sslmode=disable',
+  ])('verifies TLS for %s', (url) => {
+    expect(poolSslOptions(url)).toEqual({ rejectUnauthorized: true });
+  });
+
+  it.each([
+    'postgres://localhost:5432/world_quiz',
+    'postgres://user@127.0.0.1:5432/world_quiz',
+  ])('uses no TLS for a database on this machine (%s)', (url) => {
+    expect(poolSslOptions(url)).toBe(false);
+  });
+});
 
 describe('createPool', () => {
   it('handles errors of idle connections instead of crashing the process', async () => {

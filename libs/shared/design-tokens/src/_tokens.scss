@@ -95,6 +95,11 @@
   --wq-font-size-caption: 0.8125rem; // 13 px, iOS "footnote"
 
   // Space reserved at the bottom of tab pages for the floating tab bar
+  // How far the floating chrome (tab bar, action bar) sits above the bottom
+  // edge. On a phone the safe area does the work; on a desktop window there
+  // is no safe area and a bar glued to the window's edge looks wrong, so the
+  // gap grows with the viewport (see the media query in `_base.scss`).
+  --wq-chrome-inset: max(var(--wq-space-3), var(--ion-safe-area-bottom, 0px));
   --wq-tab-bar-clearance: calc(92px + var(--ion-safe-area-bottom, 0px));
   // Space a page keeps free under the floating `.wq-action-bar`.
   --wq-action-bar-clearance: calc(96px + var(--ion-safe-area-bottom, 0px));

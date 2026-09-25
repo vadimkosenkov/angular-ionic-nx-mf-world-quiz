@@ -1,0 +1,9 @@
+# Netlify reads this from the published folder.
+#
+# A quiz is loaded by the shell, which lives on another origin: the browser
+# fetches `remoteEntry.json` and imports the modules cross-origin, and both
+# need CORS. Everything here is a public, versioned static file, so any
+# origin may read it — there is nothing user-specific to protect.
+/*
+  Access-Control-Allow-Origin: *
+  X-Content-Type-Options: nosniff

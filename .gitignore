@@ -62,3 +62,6 @@ apps/shell/ios/App/Pods/
 apps/shell/ios/App/output/
 **/*.xcuserdatad/
 **/xcuserdata/
+
+# Local Netlify folder
+.netlify

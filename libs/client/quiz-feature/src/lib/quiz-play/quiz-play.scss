@@ -79,7 +79,12 @@
   // background (white, light blue) still has a visible edge.
   .flag {
     display: block;
-    width: 100%;
+    // The flag is the question, but it must not push the answers off the
+    // screen: on a wide window its size is limited by the window's height,
+    // not its width. On a phone the first term always wins, so nothing
+    // changes there.
+    width: min(100%, calc(38svh * 4 / 3));
+    margin-inline: auto;
     aspect-ratio: 4 / 3;
     object-fit: contain; // flag-icons 4x3 are all 4:3; never crop a flag
     border-radius: var(--wq-radius-md);

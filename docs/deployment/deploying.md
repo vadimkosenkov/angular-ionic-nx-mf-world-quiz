@@ -78,13 +78,20 @@ deploy job are provider-specific.
 
 ## Rules the hosting must satisfy
 
-- **One registrable domain for the app and the API.** The refresh token is a
-  `SameSite=Strict` cookie, so `app.example` and `api.example` work, while
-  the hosts' own free subdomains do not: `*.netlify.app` and `*.onrender.com`
-  are on the [Public Suffix List](https://publicsuffix.org/list/), which
-  makes a browser treat them as separate sites and drop the cookie, so
-  sign-in would never restore (ADR-010). A custom domain with both under it
-  is therefore part of setting an environment up.
+- **The app and the API must look like one site to the browser.** The
+  refresh token is a `SameSite=Strict` cookie, so a browser only sends it
+  back when both are the same site. The hosts' own free subdomains are not:
+  `*.netlify.app` and `*.onrender.com` are on the
+  [Public Suffix List](https://publicsuffix.org/list/), so a browser treats
+  them as separate sites, drops the cookie and the player is signed out on
+  every reload (ADR-010). Two ways out:
+  - **Proxy** (no domain, what this project does): the app is deployed with
+    `API_URL=/` and `API_UPSTREAM=https://…`, which publishes a Netlify
+    `_redirects` rule proxying `/v1/*` to the API. The browser sees one
+    origin, the cookie is first-party, and the API keeps its own address for
+    the iPhone app.
+  - **A custom domain** with the app and the API as two names under it.
+    Costs about 10 USD a year and is the better long-term answer.
 - **HTTPS everywhere.** Cookies are `Secure` in production, and Google's
   sign-in only runs on HTTPS origins.
 - `CORS_ORIGINS` on the API must list the shell's and the site's origins;
@@ -96,12 +103,20 @@ deploy job are provider-specific.
 
 ## Setting up an environment (once, by hand)
 
-1. Create the hosting: two Render services **from an existing image**
-   (`ghcr.io/<owner>/world-quiz-api`, `…-site`), a PostgreSQL database
-   (Render's own, or any provider that gives a `DATABASE_URL`), and three
-   Netlify sites (shell, capitals, flags). If the GHCR packages are private,
-   give Render a registry credential (a GitHub token with `read:packages`);
-   making the packages public is simpler.
+1. Create the hosting: a Render service **from an existing image**
+   (`ghcr.io/<owner>/world-quiz-api`; the site gets its own service when it
+   is deployed), a PostgreSQL database (Neon's free tier keeps running;
+   Render's own free database is deleted after a month), and three Netlify
+   sites (shell, capitals, flags). The GHCR packages are public, so Render
+   needs no registry credentials.
+
+   The API service's own variables: `NODE_ENV=production`, `HOST=0.0.0.0`,
+   `DATABASE_URL`, `AUTH_JWT_SECRET` (`openssl rand -base64 48`),
+   `GOOGLE_CLIENT_IDS`, and `CORS_ORIGINS` once the app has an address.
+   `PORT` comes from the host. It refuses to start without the first four,
+   which is the intended behaviour — a half-configured API is worse than
+   none.
+
 2. Point DNS names at them — for example `app`, `api`, `capitals`, `flags`
    and the bare domain for the site — **all under one registrable domain**
    (see the rule above).
