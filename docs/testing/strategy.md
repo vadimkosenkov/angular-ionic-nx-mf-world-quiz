@@ -82,6 +82,10 @@ microfrontend test.
 
 E2E helpers (`apps/shell-e2e/src/support/`):
 
+- `e2e.ts` silences the app for the whole run by replacing `AudioContext`
+  before each page loads; the quizzes are really played, so otherwise every
+  answer beeps at whoever is near the machine.
+
 - `quiz.ts`: `answerChoice()` (the prompt's `data-country-code` names the
   right choice), `askedCountryKey()` (the asked country's names and capital
   from the dataset, through the `country` task of `cypress.config.ts` — the
