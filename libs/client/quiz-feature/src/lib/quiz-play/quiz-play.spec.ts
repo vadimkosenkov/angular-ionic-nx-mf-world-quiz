@@ -147,4 +147,18 @@ describe('QuizPlay', () => {
     expect(exits()).toBe(1);
     expect(finished).toHaveLength(0);
   });
+
+  // An <img> keeps painting the previous picture until the new one loads,
+  // so the next question used to appear beside the flag of the one just
+  // answered. The image stays hidden until the browser reports it loaded.
+  it('does not show a flag that belongs to another question', async () => {
+    const view = await renderPlay({ category: 'flags' });
+    const flag = () => screen.getByTestId('quiz-flag');
+    expect(flag().classList.contains('loading')).toBe(true);
+
+    flag().dispatchEvent(new Event('load'));
+    await view.fixture.whenStable();
+
+    expect(flag().classList.contains('loading')).toBe(false);
+  });
 });

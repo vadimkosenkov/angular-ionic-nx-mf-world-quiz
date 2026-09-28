@@ -41,7 +41,19 @@ publishes it, and builds the three static bundles as a workflow artefact
 when the GitHub environment has `DEPLOY_ENABLED=true` and the Netlify and
 Render credentials.
 
-**By hand**, which is how the first deployment was done:
+**One command**, which is how it is published today:
+
+```bash
+npm run deploy:web                 # build, configure, publish all three
+npm run deploy:web -- --skip-build # when the build is already current
+```
+
+It writes the environment's files into the shell's bundle and then runs the
+three Netlify deploys with the right `--filter` and site ids
+(`tools/scripts/deploy-web.mjs`; every address in it can be overridden from
+the environment).
+
+**Step by step**, which is what that script does:
 
 ```bash
 npx nx run-many -t build -p shell capitals flags --configuration=production

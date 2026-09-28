@@ -59,6 +59,22 @@ export class QuizSessionStore {
     return code ? (this.countries.get(code) ?? null) : null;
   });
 
+  /**
+   * The country of the question **after** this one, so its flag can be
+   * fetched while the player is still answering. Without that, pressing
+   * Continue shows the new answers next to the previous flag until the new
+   * image arrives.
+   */
+  readonly nextCountry = computed<Country | null>(() => {
+    const session = this.session();
+    if (!session || session.status === 'finished') return null;
+    const source = this.engine.questions(session);
+    const next = session.answers.length + 1;
+    if (source.length !== null && next >= source.length) return null;
+    const code = source.questionAt(next).countryCode;
+    return this.countries.get(code) ?? null;
+  });
+
   readonly summary = computed(() => {
     const session = this.session();
     return session ? this.engine.summarize(session) : null;
