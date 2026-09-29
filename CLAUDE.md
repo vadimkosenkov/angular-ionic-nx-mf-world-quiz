@@ -144,6 +144,12 @@ Read `docs/architecture/site.md` and ADR-003. Key points:
 - Ionic runs in `mode: 'ios'` on every platform. Ionic's `ionChange` events are not Angular outputs under strict templates: handlers take `Event`, cast to e.g. `SegmentCustomEvent`, and validate the value with the domain guards (`isDifficulty`, `isQuizScope`, …).
 - Design system rules (`docs/architecture/design-system.md`): colours only via `--wq-*` tokens (light + dark defined), one glass material (`glass-chrome`) for the tab bar and headers, a page's next action in the bottom `.wq-action-bar` with `ion-button.wq-glass-button` (solid fill), control text `--wq-font-size-control`, captions `--wq-font-size-caption`. Icons must be registered explicitly (`apps/shell/src/app/icons.ts`, `registerQuizIcons()`).
 
+### Installable web app (`docs/architecture/pwa.md`)
+
+- `apps/shell/public/`: `manifest.webmanifest`, `icon.svg` and the rendered `icons/` (regenerate with `node tools/scripts/render-icons.mjs`), and a hand-written `service-worker.js`. Angular's service worker is not used: the app is three deployments on three origins, and its builder only knows one of them.
+- Cache rules: `/v1/*` never; pages network-first; everything else cache-first (hashed filenames). Bump `CACHE` in the worker to drop old entries.
+- `registerServiceWorker()` skips `localhost` (a worker serving yesterday's chunk during development wastes an afternoon) and registers immediately when the page has already loaded — the app often starts after `load` because its modules come through the federation's import map.
+
 ### Accessibility and security (`docs/architecture/accessibility.md`, `security.md`)
 
 - Every screen is checked with **axe** (WCAG 2.2 A/AA) in `accessibility.cy.ts`, including the public site; violations print the offending element. Waive a rule in the spec with a reason, never by shrinking the rule set.

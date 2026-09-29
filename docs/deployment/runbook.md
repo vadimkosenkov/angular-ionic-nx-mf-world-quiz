@@ -117,6 +117,21 @@ Render's logs: the service → _Logs_. Netlify's: the site → _Deploys_ → a
 deploy. Neither keeps secrets in the log; the API never prints its
 environment.
 
+## The installed app (PWA)
+
+Adding the app to a phone's home screen needs nothing at deploy time: the
+manifest, the icons and the service worker are part of the shell's build
+(`docs/architecture/pwa.md`). After changing `apps/shell/public/icon.svg`,
+re-render the PNGs:
+
+```bash
+node tools/scripts/render-icons.mjs
+```
+
+A new deployment reaches installed apps on their next start: pages are
+fetched network-first, so the worker picks up the new build and serves it
+from then on.
+
 ## The iPhone app
 
 See [ios.md](ios.md). In short: `npx nx run shell:ios-sync` (with
