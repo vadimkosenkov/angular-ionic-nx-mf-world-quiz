@@ -44,9 +44,22 @@ exactly like the shell's:
    (ADR-006).
 2. **Pages: network first, cache as the fallback.** A deployment is picked
    up on the next visit; without a network the app still opens.
-3. **Everything else: cache first.** Scripts, styles and flags carry a hash
+3. **The files a deployment rewrites: network first** (the `MUTABLE` list —
+   `config.json`, `federation.manifest.json`, a remote's `remoteEntry.json`,
+   `manifest.webmanifest`). Their names never change while their contents
+   do, so cache-first would keep an installed app on the previous
+   deployment's API address and remote URLs until someone cleared the site's
+   data. `loadRuntimeConfig()` asking for `config.json` with
+   `cache: 'no-cache'` does **not** help: that concerns the browser's HTTP
+   cache, which is never consulted when a worker answers from Cache Storage.
+4. **Everything else: cache first.** Scripts, styles and flags carry a hash
    in their name, so a new build asks for new names and the old entries go
    with the old cache (`world-quiz-v1` → bump the name to drop it).
+
+The rules are tested by running the worker: `service-worker-rules.spec.ts`
+reads the file and executes it against a fake `caches`/`fetch`, because an
+answer from the wrong place is invisible until an installed app is stuck on
+an old deployment.
 
 **Not registered on `localhost`**: a worker serving yesterday's chunk while
 the dev server rebuilds is a confusing afternoon. To see it working, serve a

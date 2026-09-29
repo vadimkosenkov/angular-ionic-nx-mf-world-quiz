@@ -147,7 +147,7 @@ Read `docs/architecture/site.md` and ADR-003. Key points:
 ### Installable web app (`docs/architecture/pwa.md`)
 
 - `apps/shell/public/`: `manifest.webmanifest`, `icon.svg` and the rendered `icons/` (regenerate with `node tools/scripts/render-icons.mjs`), and a hand-written `service-worker.js`. Angular's service worker is not used: the app is three deployments on three origins, and its builder only knows one of them.
-- Cache rules: `/v1/*` never; pages network-first; everything else cache-first (hashed filenames). Bump `CACHE` in the worker to drop old entries.
+- Cache rules: `/v1/*` never; pages network-first; the files a deployment rewrites in place network-first (`MUTABLE`: `config.json`, `federation.manifest.json`, `remoteEntry.json`, `manifest.webmanifest` — cache-first would freeze an installed app on the previous deployment); everything else cache-first (hashed filenames). Bump `CACHE` in the worker to drop old entries. The rules are tested by really running the worker against a fake `caches`/`fetch` (`apps/shell/src/app/service-worker-rules.spec.ts`; reading the file is why the shell's `tsconfig.spec.json` has Node's types).
 - `registerServiceWorker()` skips `localhost` (a worker serving yesterday's chunk during development wastes an afternoon) and registers immediately when the page has already loaded — the app often starts after `load` because its modules come through the federation's import map.
 
 ### Accessibility and security (`docs/architecture/accessibility.md`, `security.md`)
