@@ -99,6 +99,7 @@ The same quiz rules run in the browser (offline play) and on the server
 | E2E                      | Cypress 15                                                        | ✅ every user journey            |
 | CI                       | GitHub Actions + `nx affected`                                    | ✅                               |
 | Accessibility            | axe (WCAG 2.2 A/AA) on every screen, in the E2E suite             | ✅                               |
+| Installable (PWA)        | Manifest, icons, offline service worker                           | ✅                               |
 | Delivery                 | Container images (GHCR), static bundles, staging/production       | ✅ pipeline · 📐 not hosted yet  |
 | iOS                      | Capacitor 8, quizzes bundled in, native sign-in, Keychain         | ✅ simulator · 📐 TestFlight     |
 

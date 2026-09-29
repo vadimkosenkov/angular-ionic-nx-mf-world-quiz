@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="World Quiz">
+  <!--
+    The app's icon: a globe with a question badge — the two things the app
+    is about. Drawn once at 512x512; the PNG sizes a home screen needs are
+    rendered from it by tools/scripts/render-icons.mjs.
+
+    Two rules shaped it. The mark must be readable at 48 pixels, so the
+    question sits in a badge of its own instead of crossing the globe's
+    lines. And everything stays inside the middle 80%, because a "maskable"
+    icon may be cropped to a circle.
+  -->
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4f6bff" />
+      <stop offset="1" stop-color="#3a52e0" />
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" fill="url(#background)" />
+
+  <!-- The globe, drawn up and to the left to leave the badge its corner. -->
+  <g
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="22"
+    stroke-linecap="round"
+    transform="translate(-14 -14)"
+  >
+    <circle cx="256" cy="256" r="132" />
+    <path d="M124 256h264" />
+    <path d="M256 124c44 37 44 227 0 264-44-37-44-227 0-264z" />
+  </g>
+
+  <!-- The question, in a badge so it never sits on a globe line. -->
+  <circle cx="372" cy="372" r="86" fill="#ffffff" />
+  <g fill="#3a52e0">
+    <path
+      d="M372 316c-26 0-46 16-50 39l31 6c2-10 9-16 19-16 10 0 17 6 17 15 0 7-4 12-13 18-13 9-19 18-19 31v5h31v-3c0-7 4-11 14-18 13-9 19-20 19-35 0-25-20-42-49-42z"
+    />
+    <circle cx="372" cy="424" r="18" />
+  </g>
+</svg>

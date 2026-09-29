@@ -21,6 +21,17 @@
     />
     <meta name="format-detection" content="telephone=no" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="icon" type="image/svg+xml" href="icon.svg" />
+    <!-- Installing the app: the manifest describes it, and iOS reads the
+         two Apple tags instead (it ignores most of the manifest). -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="World Quiz" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
   </head>
   <body>
     <wq-root></wq-root>
