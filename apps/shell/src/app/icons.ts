@@ -15,6 +15,7 @@ import {
   logoApple,
   logoGoogle,
   listOutline,
+  logOutOutline,
   lockClosedOutline,
   moonOutline,
   personCircle,
@@ -28,6 +29,7 @@ import {
   sunnyOutline,
   timeOutline,
   timerOutline,
+  trashOutline,
   trophyOutline,
 } from 'ionicons/icons';
 
@@ -55,6 +57,7 @@ export function registerIcons(): void {
     'logo-apple': logoApple,
     'logo-google': logoGoogle,
     'list-outline': listOutline,
+    'log-out-outline': logOutOutline,
     'lock-closed-outline': lockClosedOutline,
     'moon-outline': moonOutline,
     'person-circle': personCircle,
@@ -68,6 +71,7 @@ export function registerIcons(): void {
     'sunny-outline': sunnyOutline,
     'time-outline': timeOutline,
     'timer-outline': timerOutline,
+    'trash-outline': trashOutline,
     'trophy-outline': trophyOutline,
   });
 }

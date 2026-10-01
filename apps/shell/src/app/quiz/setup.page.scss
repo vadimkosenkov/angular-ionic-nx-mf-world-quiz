@@ -21,6 +21,15 @@
   }
 }
 
+// The number of countries in a region: present, but never competing with
+// the region's name.
+.count {
+  margin-inline-start: var(--wq-space-1);
+  color: var(--wq-color-text-secondary);
+  font-size: var(--wq-font-size-caption);
+  font-weight: 600;
+}
+
 .option {
   width: 100%;
   min-height: var(--wq-touch-target);

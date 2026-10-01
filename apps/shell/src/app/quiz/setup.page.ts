@@ -22,6 +22,7 @@ import {
   type SegmentCustomEvent,
 } from '@ionic/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { PluralPipe } from '@world-quiz/client/i18n';
 import { ProgressStore } from '@world-quiz/client/progress';
 import {
   countriesInScope,
@@ -65,6 +66,7 @@ const isSetupMode = (value: unknown): value is SetupMode =>
     IonIcon,
     IonButton,
     TranslocoPipe,
+    PluralPipe,
   ],
   templateUrl: './setup.page.html',
   styleUrl: './setup.page.scss',
@@ -74,7 +76,6 @@ export class QuizSetupPage {
   private readonly progress = inject(ProgressStore);
 
   protected readonly categories = QUIZ_CATEGORIES;
-  protected readonly scopes = QUIZ_SCOPES;
   protected readonly difficulties = DIFFICULTIES;
   protected readonly modes = SETUP_MODES;
   protected readonly defaultQuestionCount = DEFAULT_FIXED_QUESTION_COUNT;
@@ -112,6 +113,16 @@ export class QuizSetupPage {
       this.selectedCategory(),
     ).filter((code) => inScope.has(code)).length;
   });
+
+  /**
+   * The regions to choose from, each with the number of countries it holds,
+   * so the size of a round is clear before it starts. Counted once: the
+   * dataset is fixed for the life of the app.
+   */
+  protected readonly scopeOptions = QUIZ_SCOPES.map((scope) => ({
+    scope,
+    count: countriesInScope(this.progress.dataset, scope).length,
+  }));
 
   protected readonly categoryIcons: Readonly<Record<QuizCategory, string>> = {
     capitals: 'business-outline',

@@ -174,26 +174,48 @@
       </ion-button>
     </div>
     } @default {
+    <!-- Both commands are the same kind of thing — a row that leads to a
+         confirmation — so they look the same; only the colour says which one
+         is destructive. -->
     <div class="actions">
-      <ion-button
-        class="wq-glass-button secondary"
-        expand="block"
+      <button
+        type="button"
+        class="account-action"
         data-testid="sign-out"
         [disabled]="auth.busy() || signingOut()"
         (click)="signOut()"
       >
-        {{ 'settings.account.signOut' | transloco }}
-      </ion-button>
-      <ion-button
-        class="delete"
-        fill="clear"
-        expand="block"
+        <span class="action-icon" aria-hidden="true">
+          <ion-icon name="log-out-outline" />
+        </span>
+        <span class="action-label">
+          {{ 'settings.account.signOut' | transloco }}
+        </span>
+        <ion-icon
+          class="action-chevron"
+          name="chevron-forward"
+          aria-hidden="true"
+        />
+      </button>
+      <button
+        type="button"
+        class="account-action danger"
         data-testid="delete-account"
         [disabled]="auth.busy() || signingOut()"
         (click)="confirming.set('delete')"
       >
-        {{ 'settings.account.delete' | transloco }}
-      </ion-button>
+        <span class="action-icon" aria-hidden="true">
+          <ion-icon name="trash-outline" />
+        </span>
+        <span class="action-label">
+          {{ 'settings.account.delete' | transloco }}
+        </span>
+        <ion-icon
+          class="action-chevron"
+          name="chevron-forward"
+          aria-hidden="true"
+        />
+      </button>
     </div>
     } } } } @if (auth.error(); as error) {
     <p class="error" role="alert" data-testid="account-error">

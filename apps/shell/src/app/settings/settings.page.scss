@@ -37,3 +37,10 @@ ion-item {
   font-size: 0.875rem;
   color: var(--wq-color-text-secondary);
 }
+
+// A note under a group of settings, not a heading: it used to read at body
+// size and looked like the next section's title.
+.hint {
+  margin: var(--wq-space-2) 0 0;
+  font-size: var(--wq-font-size-caption);
+}

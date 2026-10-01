@@ -98,12 +98,19 @@ describe('SettingsPage', () => {
     expect(store.sound()).toBe(false);
   });
 
-  // A browser has no taptic engine, so the toggle would promise something
-  // the web cannot do.
-  it('hides the vibration toggle on the web', async () => {
+  // A browser has no taptic engine. The toggle is still shown, so the app
+  // does not look as if a setting were missing, but it cannot be switched on
+  // and a note says why.
+  it('shows the vibration toggle disabled on the web, with the reason', async () => {
     await render(SettingsPage, { providers: provideShellTesting() });
 
-    expect(screen.queryByTestId('haptics-toggle')).toBeNull();
+    // Ionic's toggle is not upgraded in jsdom, so Angular's binding shows up
+    // as a property, not an attribute.
+    const toggle = screen.getByTestId('haptics-toggle') as HTMLElement & {
+      disabled?: boolean;
+    };
+    expect(toggle.disabled).toBe(true);
+    expect(screen.getByText(/iPhone/)).toBeTruthy();
   });
 
   it('offers the vibration toggle in the app', async () => {
@@ -114,6 +121,9 @@ describe('SettingsPage', () => {
       ],
     });
 
-    expect(screen.getByTestId('haptics-toggle')).toBeTruthy();
+    const toggle = screen.getByTestId('haptics-toggle') as HTMLElement & {
+      disabled?: boolean;
+    };
+    expect(toggle.disabled).toBe(false);
   });
 });
