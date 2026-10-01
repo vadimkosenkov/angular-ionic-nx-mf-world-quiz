@@ -87,7 +87,7 @@
             data-testid="haptics-toggle"
             [checked]="nativePlatform && settings.haptics()"
             [disabled]="!nativePlatform"
-            aria-describedby="haptics-note"
+            [attr.aria-describedby]="nativePlatform ? null : 'haptics-note'"
             (ionChange)="onHapticsChange($event)"
           >
             {{ 'settings.feel.haptics' | transloco }}

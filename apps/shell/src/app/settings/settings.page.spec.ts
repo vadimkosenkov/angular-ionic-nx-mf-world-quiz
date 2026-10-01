@@ -10,6 +10,19 @@ function emitIonChange(element: Element, value: unknown) {
   element.dispatchEvent(new CustomEvent('ionChange', { detail: { value } }));
 }
 
+/**
+ * Ionic's toggle takes the aria attributes off its host and puts them on the
+ * real control inside its shadow root, so that is where a description ends
+ * up. The host is read as well, in case that ever changes.
+ */
+function describedBy(toggle: HTMLElement): string | null {
+  const control = toggle.shadowRoot?.querySelector('input');
+  return (
+    control?.getAttribute('aria-describedby') ??
+    toggle.getAttribute('aria-describedby')
+  );
+}
+
 describe('SettingsPage', () => {
   it('offers Light, Dark and System and marks the current theme', async () => {
     await render(SettingsPage, { providers: provideShellTesting() });
@@ -110,7 +123,8 @@ describe('SettingsPage', () => {
       disabled?: boolean;
     };
     expect(toggle.disabled).toBe(true);
-    expect(screen.getByText(/iPhone/)).toBeTruthy();
+    const note = screen.getByText(/iPhone/);
+    expect(describedBy(toggle)).toEqual(note.id);
   });
 
   it('offers the vibration toggle in the app', async () => {
@@ -125,5 +139,8 @@ describe('SettingsPage', () => {
       disabled?: boolean;
     };
     expect(toggle.disabled).toBe(false);
+    // The note explains why the web cannot vibrate, so it is not rendered
+    // here — and the toggle must not point at an element that does not exist.
+    expect(describedBy(toggle)).toBeNull();
   });
 });
