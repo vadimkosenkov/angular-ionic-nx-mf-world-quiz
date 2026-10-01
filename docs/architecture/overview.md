@@ -94,25 +94,32 @@ typos). The app has no custom speech-recognition UI and no external AI/LLM judgi
 
 ## Delivery phases
 
-| #   | Branch                       | Scope                                                                                  | Status         |
-| --- | ---------------------------- | -------------------------------------------------------------------------------------- | -------------- |
-| 1   | `feat/project-foundation`    | Nx, apps/libs skeleton, boundaries, CI, ADR-001/002/007                                | ✅ merged      |
-| 2   | `feat/domain-model`          | 195-country dataset + flags, engine, matching, scoring, mastery, achievements, ranking | ✅ merged      |
-| 3   | `feat/shell-design-system`   | Ionic shell, tokens, Liquid Glass, themes, i18n, Settings                              | ✅ merged      |
-| 4   | `feat/capitals-mfe`          | Native Federation host/remote, setup, play, results                                    | ✅ merged      |
-| 5   | `feat/flags-mfe`             | Flags remote                                                                           | ✅ merged      |
-| 6   | `feat/backend-database`      | Express, Drizzle, migrations, API tests                                                | ✅ merged      |
-| 7a  | `feat/auth-server`           | Sign-in (Apple, Google ID tokens), tokens, account deletion — API                      | ✅ merged      |
-| 7b  | `feat/auth-client`           | Sign-in, sign-out and account deletion in the app                                      | ✅ merged      |
-| 8a  | `feat/sync-server`           | A player's history for sync (`GET /v1/sessions`, keyset pages) — API                   | ✅ merged      |
-| 8b  | `feat/sync-client`           | Sign-in first, local store (IndexedDB), outbox, sync                                   | ✅ merged      |
-| 9a  | `feat/leaderboard-server`    | Challenges with a server seed, ranked runs, public boards, records, nicknames — API    | ✅ merged      |
-| 9b  | `feat/leaderboard-client`    | Challenges and the leaderboard screen in the app                                       | ✅ merged      |
-| 9c  | `feat/site-ssr`              | `apps/site` SSR: legal pages, public leaderboard; SSR-in-shell spike, ADR-003          | ✅ merged      |
-| 10  | `feat/achievements-mistakes` | Achievements, practice mistakes                                                        | ✅ merged      |
-| 11  | `feat/e2e`                   | Full Cypress journeys                                                                  | ✅ merged      |
-| 12  | `feat/ci-cd`                 | Deployment pipelines                                                                   | ✅ merged      |
-| 13a | `feat/ios-app`               | Capacitor iOS app, remotes bundled in, simulator                                       | ✅ merged      |
-| 13b | `feat/ios-auth`              | Native sign-in on iOS, refresh token in the Keychain                                   | ✅ merged      |
-| 14a | `feat/polish-quality`        | Accessibility checks, security headers and CSP, performance review                     | ✅ merged      |
-| 14b | `feat/polish-feel`           | Animation, sound and haptics                                                           | ✅ this branch |
+| #   | Branch                       | Scope                                                                                   | Status         |
+| --- | ---------------------------- | --------------------------------------------------------------------------------------- | -------------- |
+| 1   | `feat/project-foundation`    | Nx, apps/libs skeleton, boundaries, CI, ADR-001/002/007                                 | ✅ merged      |
+| 2   | `feat/domain-model`          | 195-country dataset + flags, engine, matching, scoring, mastery, achievements, ranking  | ✅ merged      |
+| 3   | `feat/shell-design-system`   | Ionic shell, tokens, Liquid Glass, themes, i18n, Settings                               | ✅ merged      |
+| 4   | `feat/capitals-mfe`          | Native Federation host/remote, setup, play, results                                     | ✅ merged      |
+| 5   | `feat/flags-mfe`             | Flags remote                                                                            | ✅ merged      |
+| 6   | `feat/backend-database`      | Express, Drizzle, migrations, API tests                                                 | ✅ merged      |
+| 7a  | `feat/auth-server`           | Sign-in (Apple, Google ID tokens), tokens, account deletion — API                       | ✅ merged      |
+| 7b  | `feat/auth-client`           | Sign-in, sign-out and account deletion in the app                                       | ✅ merged      |
+| 8a  | `feat/sync-server`           | A player's history for sync (`GET /v1/sessions`, keyset pages) — API                    | ✅ merged      |
+| 8b  | `feat/sync-client`           | Sign-in first, local store (IndexedDB), outbox, sync                                    | ✅ merged      |
+| 9a  | `feat/leaderboard-server`    | Challenges with a server seed, ranked runs, public boards, records, nicknames — API     | ✅ merged      |
+| 9b  | `feat/leaderboard-client`    | Challenges and the leaderboard screen in the app                                        | ✅ merged      |
+| 9c  | `feat/site-ssr`              | `apps/site` SSR: legal pages, public leaderboard; SSR-in-shell spike, ADR-003           | ✅ merged      |
+| 10  | `feat/achievements-mistakes` | Achievements, practice mistakes                                                         | ✅ merged      |
+| 11  | `feat/e2e`                   | Full Cypress journeys                                                                   | ✅ merged      |
+| 12  | `feat/ci-cd`                 | Deployment pipelines                                                                    | ✅ merged      |
+| 13a | `feat/ios-app`               | Capacitor iOS app, remotes bundled in, simulator                                        | ✅ merged      |
+| 13b | `feat/ios-auth`              | Native sign-in on iOS, refresh token in the Keychain                                    | ✅ merged      |
+| 14a | `feat/polish-quality`        | Accessibility checks, security headers and CSP, performance review                      | ✅ merged      |
+| 14b | `feat/polish-feel`           | Animation, sound and haptics                                                            | ✅ merged      |
+| 15  | `feat/pwa`                   | Installable web app: manifest, icons, offline service worker                            | ✅ merged      |
+| 16  | `feat/polish-details`        | Region sizes, the vibration setting on the web, the account card                        | 🚧 this branch |
+| 17  | `feat/page-header`           | The header as floating controls: a round back button and a title pill, off `ion-header` | planned        |
+| 18  | `feat/toasts-boards`         | One way to say something went well or wrong (toasts); a clearer leaderboard switcher    | planned        |
+| 19  | `feat/countries-reference`   | A browsable list of every country by region: flag, country, capital                     | planned        |
+| 20  | `feat/share-sounds`          | Sharing a result; a sound on the actions that start something                           | planned        |
+| 21  | `feat/regional-boards`       | Leaderboards per region: domain, API and app                                            | planned        |

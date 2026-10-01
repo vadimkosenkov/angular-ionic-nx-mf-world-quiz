@@ -355,6 +355,8 @@ export const en = {
       sound: 'Sounds',
       haptics: 'Vibration',
       hint: 'Short tones when an answer lands and when a round ends.',
+      hapticsOnIos:
+        'Vibration needs the iPhone app: a browser cannot reach the taptic engine.',
     },
     language: {
       title: 'Language',

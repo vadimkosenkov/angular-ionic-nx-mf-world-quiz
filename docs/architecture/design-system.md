@@ -154,6 +154,25 @@ setup page. Secondary lines under or inside a control use
 `--wq-font-size-caption` (13 px, iOS "footnote"). Ionic's iOS segments default
 to 13 px, which made them look smaller than neighbouring option buttons.
 
+A note **under** a group of settings is a caption, not a heading: at body
+size it reads as the next section's title (the sound hint in Settings did).
+
+### Destructive actions
+
+A destructive action is never a peer of the safe one next to it. "Delete
+account" sits below a hairline, a whole step away from "Sign out", in the
+control size and the error colour — a full-width target, but not the loudest
+thing in the card. The confirmation that follows keeps the error colour and
+spells out what is lost.
+
+### Counting what a choice covers
+
+Where a choice decides how much of the dataset is in play, the number is part
+of the label: "Europe (44)", "World (195)". It comes from the dataset
+(`countriesInScope`), never from a translation, and the bare number is
+`aria-hidden` while the button's `aria-label` spells it out ("Europe, 44
+countries") — "(44)" on its own tells a screen reader nothing.
+
 ### Segmented controls
 
 `ion-segment` is styled globally so that every segment looks the same

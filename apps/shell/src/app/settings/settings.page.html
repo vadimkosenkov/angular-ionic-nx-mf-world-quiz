@@ -79,21 +79,29 @@
             {{ 'settings.feel.sound' | transloco }}
           </ion-toggle>
         </ion-item>
-        @if (nativePlatform) {
+        <!-- Shown everywhere, so the app never looks as if it were missing a
+             setting; a browser simply has no taptic engine, and the note
+             below says so. -->
         <ion-item>
           <ion-toggle
             data-testid="haptics-toggle"
-            [checked]="settings.haptics()"
+            [checked]="nativePlatform && settings.haptics()"
+            [disabled]="!nativePlatform"
+            [attr.aria-describedby]="nativePlatform ? null : 'haptics-note'"
             (ionChange)="onHapticsChange($event)"
           >
             {{ 'settings.feel.haptics' | transloco }}
           </ion-toggle>
         </ion-item>
-        }
       </div>
       <p class="wq-text-secondary hint">
         {{ 'settings.feel.hint' | transloco }}
       </p>
+      @if (!nativePlatform) {
+      <p id="haptics-note" class="wq-text-secondary hint">
+        {{ 'settings.feel.hapticsOnIos' | transloco }}
+      </p>
+      }
     </section>
 
     <section class="wq-section" aria-labelledby="about-title">

@@ -10,6 +10,19 @@ function emitIonChange(element: Element, value: unknown) {
   element.dispatchEvent(new CustomEvent('ionChange', { detail: { value } }));
 }
 
+/**
+ * Ionic's toggle takes the aria attributes off its host and puts them on the
+ * real control inside its shadow root, so that is where a description ends
+ * up. The host is read as well, in case that ever changes.
+ */
+function describedBy(toggle: HTMLElement): string | null {
+  const control = toggle.shadowRoot?.querySelector('input');
+  return (
+    control?.getAttribute('aria-describedby') ??
+    toggle.getAttribute('aria-describedby')
+  );
+}
+
 describe('SettingsPage', () => {
   it('offers Light, Dark and System and marks the current theme', async () => {
     await render(SettingsPage, { providers: provideShellTesting() });
@@ -98,12 +111,20 @@ describe('SettingsPage', () => {
     expect(store.sound()).toBe(false);
   });
 
-  // A browser has no taptic engine, so the toggle would promise something
-  // the web cannot do.
-  it('hides the vibration toggle on the web', async () => {
+  // A browser has no taptic engine. The toggle is still shown, so the app
+  // does not look as if a setting were missing, but it cannot be switched on
+  // and a note says why.
+  it('shows the vibration toggle disabled on the web, with the reason', async () => {
     await render(SettingsPage, { providers: provideShellTesting() });
 
-    expect(screen.queryByTestId('haptics-toggle')).toBeNull();
+    // Ionic's toggle is not upgraded in jsdom, so Angular's binding shows up
+    // as a property, not an attribute.
+    const toggle = screen.getByTestId('haptics-toggle') as HTMLElement & {
+      disabled?: boolean;
+    };
+    expect(toggle.disabled).toBe(true);
+    const note = screen.getByText(/iPhone/);
+    expect(describedBy(toggle)).toEqual(note.id);
   });
 
   it('offers the vibration toggle in the app', async () => {
@@ -114,6 +135,12 @@ describe('SettingsPage', () => {
       ],
     });
 
-    expect(screen.getByTestId('haptics-toggle')).toBeTruthy();
+    const toggle = screen.getByTestId('haptics-toggle') as HTMLElement & {
+      disabled?: boolean;
+    };
+    expect(toggle.disabled).toBe(false);
+    // The note explains why the web cannot vibrate, so it is not rendered
+    // here — and the toggle must not point at an element that does not exist.
+    expect(describedBy(toggle)).toBeNull();
   });
 });

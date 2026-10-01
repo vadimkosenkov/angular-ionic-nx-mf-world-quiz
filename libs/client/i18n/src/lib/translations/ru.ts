@@ -349,6 +349,8 @@ export const ru: TranslationShape = {
       sound: 'Звуки',
       haptics: 'Вибрация',
       hint: 'Короткие сигналы на ответ и в конце раунда.',
+      hapticsOnIos:
+        'Вибрация работает только в приложении для iPhone: из браузера нет доступа к тактильному отклику.',
     },
     language: {
       title: 'Язык',

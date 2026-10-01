@@ -36,17 +36,25 @@
         {{ 'setup.scope' | transloco }}
       </h2>
       <ul class="options grid" data-testid="setup-scope">
-        @for (item of scopes; track item) {
+        @for (option of scopeOptions; track option.scope) {
         <li>
           <button
             type="button"
             class="option"
-            [class.selected]="scope() === item"
-            [attr.aria-pressed]="scope() === item"
-            [attr.data-testid]="'setup-scope-' + item"
-            (click)="selectScope(item)"
+            [class.selected]="scope() === option.scope"
+            [attr.aria-pressed]="scope() === option.scope"
+            [attr.data-testid]="'setup-scope-' + option.scope"
+            [attr.aria-label]="
+              ('regions.' + option.scope | transloco) +
+              ', ' +
+              ('counts.countries' | wqPlural: option.count)
+            "
+            (click)="selectScope(option.scope)"
           >
-            {{ 'regions.' + item | transloco }}
+            {{ 'regions.' + option.scope | transloco }}
+            <!-- The bare number is meaningless on its own, so the button's
+                 aria-label spells it out and this is hidden. -->
+            <span class="count" aria-hidden="true">({{ option.count }})</span>
           </button>
         </li>
         }

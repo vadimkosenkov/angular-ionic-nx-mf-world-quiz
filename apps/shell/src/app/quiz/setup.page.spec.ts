@@ -24,8 +24,15 @@ describe('QuizSetupPage', () => {
   it('offers every region, difficulty and mode from the domain', async () => {
     await renderSetup();
 
-    for (const region of ['World', 'Europe', 'Asia', 'Africa', 'Oceania']) {
-      expect(await screen.findByText(region)).toBeTruthy();
+    for (const [scope, name] of [
+      ['world', 'World'],
+      ['europe', 'Europe'],
+      ['asia', 'Asia'],
+      ['africa', 'Africa'],
+      ['oceania', 'Oceania'],
+    ]) {
+      const option = await screen.findByTestId(`setup-scope-${scope}`);
+      expect(option.textContent).toContain(name);
     }
     for (const label of ['Easy', 'Hard']) {
       expect(screen.getByText(label)).toBeTruthy();
@@ -35,6 +42,26 @@ describe('QuizSetupPage', () => {
     }
     expect(screen.getByTestId('setup-mode-fixed').textContent).toContain(
       '10 questions',
+    );
+  });
+
+  // How long a round will be is part of choosing a region: "Europe (44)"
+  // answers it before the quiz starts. The bare number means nothing to a
+  // screen reader, so the button's label spells it out.
+  it('says how many countries each region has', async () => {
+    await renderSetup();
+    const dataset = TestBed.inject(ProgressStore).dataset;
+    const inEurope = dataset.filter(
+      (country) => country.region === 'europe',
+    ).length;
+
+    const world = await screen.findByTestId('setup-scope-world');
+    const europe = screen.getByTestId('setup-scope-europe');
+
+    expect(world.textContent).toContain(`(${dataset.length})`);
+    expect(europe.textContent).toContain(`(${inEurope})`);
+    expect(europe.getAttribute('aria-label')).toMatch(
+      new RegExp(`^Europe, ${inEurope} countr(y|ies)$`),
     );
   });
 
