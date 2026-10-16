@@ -113,13 +113,14 @@ interface FinishedQuiz {
     </ion-content>
   `,
   styles: `
-    /* The quiz has no ion-header to reserve the status bar area, so the page
-       keeps clear of the notch itself. */
+    /* The quiz has no floating header, but its exit button is the same round
+       chrome button, so it starts where a header's back button would: the
+       same token, and the two line up on every screen. */
     .quiz-page {
       display: flex;
       flex-direction: column;
       gap: var(--wq-space-5);
-      padding-top: calc(var(--wq-space-4) + var(--ion-safe-area-top, 0px));
+      padding-top: var(--wq-page-header-inset);
     }
     .nothing {
       display: flex;

@@ -1,13 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
-import {
-  IonContent,
-  IonHeader,
-  IonIcon,
-  IonTitle,
-  IonToolbar,
-} from '@ionic/angular';
+import { IonContent, IonIcon } from '@ionic/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { ProgressBar } from '@world-quiz/client/ui';
+import { ProgressBar, PageHeader } from '@world-quiz/client/ui';
 import type { AchievementStatus } from '@world-quiz/quiz/domain';
 import { ProgressStore } from '@world-quiz/client/progress';
 
@@ -20,15 +14,7 @@ const STATUS_ICONS: Readonly<Record<AchievementStatus, string>> = {
 
 @Component({
   selector: 'wq-achievements-page',
-  imports: [
-    IonHeader,
-    IonToolbar,
-    IonTitle,
-    IonContent,
-    IonIcon,
-    TranslocoPipe,
-    ProgressBar,
-  ],
+  imports: [IonContent, PageHeader, IonIcon, TranslocoPipe, ProgressBar],
   templateUrl: './achievements.page.html',
   styleUrl: './achievements.page.scss',
 })

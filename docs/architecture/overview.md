@@ -118,7 +118,7 @@ typos). The app has no custom speech-recognition UI and no external AI/LLM judgi
 | 14b | `feat/polish-feel`           | Animation, sound and haptics                                                            | ✅ merged      |
 | 15  | `feat/pwa`                   | Installable web app: manifest, icons, offline service worker                            | ✅ merged      |
 | 16  | `feat/polish-details`        | Region sizes, the vibration setting on the web, the account card                        | 🚧 this branch |
-| 17  | `feat/page-header`           | The header as floating controls: a round back button and a title pill, off `ion-header` | planned        |
+| 17  | `feat/page-header`           | The header as floating controls: a round back button and a title pill, off `ion-header` | 🚧 this branch |
 | 18  | `feat/toasts-boards`         | One way to say something went well or wrong (toasts); a clearer leaderboard switcher    | planned        |
 | 19  | `feat/countries-reference`   | A browsable list of every country by region: flag, country, capital                     | planned        |
 | 20  | `feat/share-sounds`          | Sharing a result; a sound on the actions that start something                           | planned        |

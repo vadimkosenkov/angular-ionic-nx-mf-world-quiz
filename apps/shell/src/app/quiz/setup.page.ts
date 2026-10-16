@@ -8,21 +8,21 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import {
-  IonBackButton,
   IonButton,
-  IonButtons,
   IonContent,
-  IonHeader,
   IonIcon,
   IonLabel,
   IonSegment,
   IonSegmentButton,
-  IonTitle,
-  IonToolbar,
   type SegmentCustomEvent,
 } from '@ionic/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { PluralPipe } from '@world-quiz/client/i18n';
+import {
+  FadesWithPage,
+  PageChromeState,
+  PageHeader,
+} from '@world-quiz/client/ui';
 import { ProgressStore } from '@world-quiz/client/progress';
 import {
   countriesInScope,
@@ -54,12 +54,9 @@ const isSetupMode = (value: unknown): value is SetupMode =>
 @Component({
   selector: 'wq-quiz-setup-page',
   imports: [
-    IonHeader,
-    IonToolbar,
-    IonTitle,
-    IonButtons,
-    IonBackButton,
     IonContent,
+    PageHeader,
+    FadesWithPage,
     IonSegment,
     IonSegmentButton,
     IonLabel,
@@ -68,6 +65,7 @@ const isSetupMode = (value: unknown): value is SetupMode =>
     TranslocoPipe,
     PluralPipe,
   ],
+  providers: [PageChromeState],
   templateUrl: './setup.page.html',
   styleUrl: './setup.page.scss',
 })

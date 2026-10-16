@@ -1,15 +1,11 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>{{ 'app.name' | transloco }}</ion-title>
-  </ion-toolbar>
-</ion-header>
+<wq-page-header [heading]="'app.name' | transloco" />
 
 <ion-content [fullscreen]="true" class="wq-aurora">
   <div class="wq-page">
     <header class="greeting">
-      <h1 data-testid="greeting">
+      <p class="greeting-title" data-testid="greeting">
         {{ 'home.greeting.' + greeting() | transloco }}
-      </h1>
+      </p>
       <p class="wq-text-secondary">{{ 'home.subtitle' | transloco }}</p>
     </header>
 

@@ -14,13 +14,26 @@ ion-note {
   --color: var(--wq-color-text-secondary);
 }
 
+// A page that carries the floating header starts its content below it. The
+// rule keys off the markup rather than a class, so a new page cannot forget
+// it; the quiz pages have no header and keep their own spacing.
+wq-page-header + ion-content {
+  --padding-top: var(--wq-page-header-clearance);
+
+  // The clearance already leaves a gap below the header, so the page does not
+  // add its own on top of it.
+  .wq-page {
+    padding-top: 0;
+  }
+}
+
 .wq-page {
   display: flex;
   flex-direction: column;
   gap: var(--wq-space-6);
   max-width: 720px;
   margin-inline: auto;
-  padding: var(--wq-space-4) var(--wq-space-5) var(--wq-space-8);
+  padding: 0 var(--wq-space-5) var(--wq-space-8);
 }
 
 .wq-section {

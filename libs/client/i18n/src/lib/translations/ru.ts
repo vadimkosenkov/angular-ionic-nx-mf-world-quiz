@@ -38,6 +38,9 @@ export const ru: TranslationShape = {
     'south-america': 'Южная Америка',
     oceania: 'Океания',
   },
+  nav: {
+    back: 'Назад',
+  },
   counts: {
     countries: {
       one: '{{count}} страна',

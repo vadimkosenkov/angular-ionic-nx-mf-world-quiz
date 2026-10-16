@@ -2,15 +2,15 @@
 = promptCountry(); @let total = store.total();
 
 <header class="quiz-header">
-  <ion-button
-    fill="solid"
+  <button
+    type="button"
     class="exit"
     data-testid="quiz-exit"
     [attr.aria-label]="'quiz.exit' | transloco"
     (click)="exit()"
   >
-    <ion-icon name="close" slot="icon-only" aria-hidden="true" />
-  </ion-button>
+    <ion-icon name="close" aria-hidden="true" />
+  </button>
 
   <div class="progress">
     @if (isTimed()) {

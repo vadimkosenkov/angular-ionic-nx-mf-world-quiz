@@ -1,11 +1,8 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-buttons slot="start">
-      <ion-back-button defaultHref="/home" />
-    </ion-buttons>
-    <ion-title>{{ 'setup.title' | transloco }}</ion-title>
-  </ion-toolbar>
-</ion-header>
+<wq-page-header
+  backHref="/home"
+  [heading]="'setup.title' | transloco"
+  [backLabel]="'nav.back' | transloco"
+/>
 
 <ion-content [fullscreen]="true" class="wq-aurora">
   <div class="wq-page setup">
@@ -121,7 +118,7 @@
 <!-- The primary action floats above the content in the tab bar's glass
      material. It is deliberately not inside an ion-toolbar: Ionic paints a
      solid button there in the toolbar's own (here transparent) colour. -->
-<div class="wq-action-bar">
+<div class="wq-action-bar" wqFadesWithPage>
   <ion-button
     class="wq-glass-button"
     expand="block"

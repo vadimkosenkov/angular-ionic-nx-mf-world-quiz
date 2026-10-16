@@ -10,12 +10,9 @@ import {
 import {
   IonButton,
   IonContent,
-  IonHeader,
   IonLabel,
   IonSegment,
   IonSegmentButton,
-  IonTitle,
-  IonToolbar,
   NavController,
   type SegmentCustomEvent,
   type ViewWillEnter,
@@ -24,7 +21,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { AUTH_CONFIG } from '@world-quiz/client/auth';
 import { PluralPipe } from '@world-quiz/client/i18n';
 import { ProgressStore, SyncService } from '@world-quiz/client/progress';
-import { EmptyState } from '@world-quiz/client/ui';
+import { EmptyState, PageHeader } from '@world-quiz/client/ui';
 import {
   challengeSchema,
   leaderboardSchema,
@@ -59,10 +56,8 @@ function isLeaderboardView(value: unknown): value is LeaderboardView {
 @Component({
   selector: 'wq-leaderboard-page',
   imports: [
-    IonHeader,
-    IonToolbar,
-    IonTitle,
     IonContent,
+    PageHeader,
     IonSegment,
     IonSegmentButton,
     IonLabel,

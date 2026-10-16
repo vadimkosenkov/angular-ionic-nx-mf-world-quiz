@@ -1,3 +1,5 @@
+@use 'materials' as *;
+
 // Liquid Glass-inspired surfaces, as progressive enhancement.
 //
 // Baseline: an opaque surface that is fully readable everywhere.
@@ -7,23 +9,6 @@
 //
 // Use sparingly: navigation chrome, the progress summary, highlights.
 
-@mixin glass-surface {
-  background: var(--wq-color-surface);
-  border: 1px solid var(--wq-color-border);
-
-  @supports (
-    (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
-  ) {
-    background: var(--wq-color-glass-surface);
-    border-color: var(--wq-color-glass-border);
-    box-shadow:
-      inset 0 1px 0 var(--wq-color-glass-highlight),
-      var(--wq-shadow-card);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    backdrop-filter: blur(24px) saturate(180%);
-  }
-}
-
 .wq-glass {
   @include glass-surface;
 }
@@ -32,36 +17,18 @@
 // floating action capsule share it, so they read as one material. A top
 // highlight and an inner light edge make the glass visible even over a plain
 // background; the opaque baseline stays readable without backdrop-filter.
-@mixin glass-chrome {
-  background: var(--wq-color-surface);
-  border: 1px solid var(--wq-color-border);
-  box-shadow: var(--wq-shadow-floating);
-
-  @supports (
-    (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
-  ) {
-    background:
-      linear-gradient(
-        180deg,
-        var(--wq-color-glass-highlight) 0%,
-        transparent 45%
-      ),
-      var(--wq-color-tab-bar-glass);
-    border-color: var(--wq-color-glass-border);
-    box-shadow:
-      inset 0 1px 0 var(--wq-color-glass-highlight),
-      inset 0 -1px 0 rgb(255 255 255 / 12%),
-      var(--wq-shadow-floating);
-    -webkit-backdrop-filter: blur(10px) saturate(200%);
-    backdrop-filter: blur(10px) saturate(200%);
-  }
-}
-
 // Bottom action bar: a page's next step always sits in the same place, at the
 // bottom of the screen above the content, which scrolls underneath. Pages
 // keep `--wq-action-bar-clearance` free at the bottom. `position: fixed` is
 // relative to the Ionic page while it animates (it is transformed then) and
 // to the viewport afterwards, so the bar travels with page transitions.
+// Chrome that floats over a page is hidden while the page is being left, so
+// it never crosses the chrome of the page arriving (`FadesWithPage`).
+.wq-leaving {
+  opacity: 0;
+  transition: opacity var(--wq-duration-fast, 120ms) var(--wq-easing-standard);
+}
+
 .wq-action-bar {
   position: fixed;
   inset-inline: var(--wq-space-3);

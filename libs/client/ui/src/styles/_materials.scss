@@ -1,0 +1,73 @@
+// The glass materials, as mixins only.
+//
+// They live apart from `_glass.scss` because that file also carries global
+// rules; a component stylesheet that only wants the material would otherwise
+// copy every one of them into its own scope.
+
+@mixin glass-surface {
+  background: var(--wq-color-surface);
+  border: 1px solid var(--wq-color-border);
+
+  @supports (
+    (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+  ) {
+    background: var(--wq-color-glass-surface);
+    border-color: var(--wq-color-glass-border);
+    box-shadow:
+      inset 0 1px 0 var(--wq-color-glass-highlight),
+      var(--wq-shadow-card);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
+  }
+}
+
+@mixin glass-chrome {
+  background: var(--wq-color-surface);
+  border: 1px solid var(--wq-color-border);
+  box-shadow: var(--wq-shadow-floating);
+
+  @supports (
+    (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+  ) {
+    background:
+      linear-gradient(
+        180deg,
+        var(--wq-color-glass-highlight) 0%,
+        transparent 45%
+      ),
+      var(--wq-color-tab-bar-glass);
+    border-color: var(--wq-color-glass-border);
+    box-shadow:
+      inset 0 1px 0 var(--wq-color-glass-highlight),
+      inset 0 -1px 0 rgb(255 255 255 / 12%),
+      var(--wq-shadow-floating);
+    -webkit-backdrop-filter: blur(10px) saturate(200%);
+    backdrop-filter: blur(10px) saturate(200%);
+  }
+}
+
+// A round glass button of the app's chrome: the header's back button and the
+// quiz's exit button. One mixin, so the two are the same by construction
+// rather than by two sets of numbers that agree today.
+//
+// It drops the bright top edge `glass-chrome` draws: both buttons live in the
+// top strip of the screen, where iOS 26/27 smear a sharp horizontal line
+// (CLAUDE.md). The tab bar, far from that strip, keeps its highlight.
+@mixin chrome-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--wq-page-header-height);
+  height: var(--wq-page-header-height);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: var(--wq-color-primary-strong);
+  font-size: 20px;
+  cursor: pointer;
+
+  @include glass-chrome;
+
+  background: var(--wq-color-tab-bar-glass);
+  box-shadow: var(--wq-shadow-floating);
+}

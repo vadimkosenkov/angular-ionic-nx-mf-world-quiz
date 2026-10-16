@@ -48,6 +48,9 @@ export const en = {
     'south-america': 'South America',
     oceania: 'Oceania',
   },
+  nav: {
+    back: 'Back',
+  },
   counts: {
     countries: {
       one: '{{count}} country',
