@@ -5,9 +5,9 @@
 //
 // `absolute`, not `fixed`: the routed component's host *is* Ionic's
 // `.ion-page`, which is positioned, so the header anchors to its own page and
-// travels with it. A fixed header stays pinned to the viewport while the two
-// pages of a transition slide past each other, and for half a second the
-// leaving page's title sits on top of the arriving one.
+// travels with it through a transition. On its own that does not keep the
+// leaving page's header off the arriving one — Ionic holds the leaving page in
+// place instead of moving it, which is what `FadesWithPage` is for.
 :host {
   position: absolute;
   top: var(--wq-page-header-inset);
@@ -52,21 +52,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
 
-  @include materials.glass-chrome;
-}
-
-// No bright edge along the top of the floating pieces.
-//
-// `glass-chrome` draws a one-pixel highlight along the top of a surface, and
-// on the tab bar it is what makes the glass read as glass. Up here it is the
-// one thing iOS 26/27 can visibly smear: the system paints a legibility
-// effect over the top of an installed app, and a sharp horizontal line is
-// exactly the feature that shows it. Measured on an iPhone 17 (iOS 27), the
-// contrast of that smeared transition drops from 14.2 to 8.6 without the
-// highlight — the blur is still there, but there is almost nothing left for
-// it to blur. The tab bar keeps its highlight: at the other end of the
-// screen the same edge renders in a single pixel.
-.heading {
-  background: var(--wq-color-tab-bar-glass);
-  box-shadow: var(--wq-shadow-floating);
+  // No bright edge along the top: it is the one thing iOS 26/27 visibly smear
+  // up here, and without it the contrast of that smear falls from 14.2 to 8.6
+  // (measured on an iPhone 17). The tab bar keeps its highlight — at the other
+  // end of the screen the same edge renders in a single pixel.
+  @include materials.glass-chrome($top-highlight: false);
 }

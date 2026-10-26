@@ -21,7 +21,14 @@
   }
 }
 
-@mixin glass-chrome {
+// `$top-highlight: false` leaves off the bright edge along the top. Anything
+// floating in the top ~100 px of the screen asks for that: iOS 26/27 smear a
+// sharp horizontal line there (CLAUDE.md). It is a parameter rather than an
+// override after the include, so the opaque baseline and the reduced
+// transparency rule below keep working — an override lands outside `@supports`
+// and puts a translucent, unblurred surface in front of scrolling content
+// wherever `backdrop-filter` is missing.
+@mixin glass-chrome($top-highlight: true) {
   background: var(--wq-color-surface);
   border: 1px solid var(--wq-color-border);
   box-shadow: var(--wq-shadow-floating);
@@ -29,20 +36,39 @@
   @supports (
     (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
   ) {
-    background:
-      linear-gradient(
-        180deg,
-        var(--wq-color-glass-highlight) 0%,
-        transparent 45%
-      ),
-      var(--wq-color-tab-bar-glass);
     border-color: var(--wq-color-glass-border);
-    box-shadow:
-      inset 0 1px 0 var(--wq-color-glass-highlight),
-      inset 0 -1px 0 rgb(255 255 255 / 12%),
-      var(--wq-shadow-floating);
     -webkit-backdrop-filter: blur(10px) saturate(200%);
     backdrop-filter: blur(10px) saturate(200%);
+
+    @if $top-highlight {
+      background:
+        linear-gradient(
+          180deg,
+          var(--wq-color-glass-highlight) 0%,
+          transparent 45%
+        ),
+        var(--wq-color-tab-bar-glass);
+      box-shadow:
+        inset 0 1px 0 var(--wq-color-glass-highlight),
+        inset 0 -1px 0 rgb(255 255 255 / 12%),
+        var(--wq-shadow-floating);
+    } @else {
+      background: var(--wq-color-tab-bar-glass);
+      box-shadow: var(--wq-shadow-floating);
+    }
+  }
+
+  // A player who asked the system for less transparency gets the opaque
+  // surface back. It belongs in the mixin: a global rule cannot reach into a
+  // component's scoped styles, which win on specificity. Written as its own
+  // positive rule, never as `@media not (...)` — that is false in a browser
+  // that does not know the feature (see `_glass.scss`).
+  @media (prefers-reduced-transparency: reduce) {
+    background: var(--wq-color-surface);
+    border-color: var(--wq-color-border);
+    box-shadow: var(--wq-shadow-floating);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 }
 
@@ -66,8 +92,5 @@
   font-size: 20px;
   cursor: pointer;
 
-  @include glass-chrome;
-
-  background: var(--wq-color-tab-bar-glass);
-  box-shadow: var(--wq-shadow-floating);
+  @include glass-chrome($top-highlight: false);
 }
