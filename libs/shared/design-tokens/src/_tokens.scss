@@ -100,6 +100,19 @@
   // is no safe area and a bar glued to the window's edge looks wrong, so the
   // gap grows with the viewport (see the media query in `_base.scss`).
   --wq-chrome-inset: max(var(--wq-space-3), var(--ion-safe-area-bottom, 0px));
+  // The floating page header: its distance from the top edge, its height, and
+  // the room a page leaves for it. The inset clears the status bar and the
+  // strip iOS 26/27 paint their legibility effect over — a step wider than
+  // the chrome inset at the bottom of the screen, because up there the title
+  // is still slightly soft at the narrower one (CLAUDE.md).
+  --wq-page-header-height: 44px;
+  --wq-page-header-inset: calc(
+    var(--ion-safe-area-top, 0px) + var(--wq-space-5)
+  );
+  --wq-page-header-clearance: calc(
+    var(--wq-page-header-inset) + var(--wq-page-header-height) +
+      var(--wq-space-4)
+  );
   --wq-tab-bar-clearance: calc(92px + var(--ion-safe-area-bottom, 0px));
   // Space a page keeps free under the floating `.wq-action-bar`.
   --wq-action-bar-clearance: calc(96px + var(--ion-safe-area-bottom, 0px));

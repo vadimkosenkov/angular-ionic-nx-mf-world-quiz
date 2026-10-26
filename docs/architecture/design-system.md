@@ -157,6 +157,15 @@ to 13 px, which made them look smaller than neighbouring option buttons.
 A note **under** a group of settings is a caption, not a heading: at body
 size it reads as the next section's title (the sound hint in Settings did).
 
+### The round chrome button
+
+The header's back button and the quiz's exit button are the same control: a
+44 px glass circle with a primary-coloured glyph, from one mixin
+(`chrome-button` in `client/ui/src/styles/_materials.scss`). They used to be a
+plain button and an `ion-button` with their own numbers, which agreed by
+accident and looked different. Both live in the top strip of the screen, so
+the mixin drops the bright top edge `glass-chrome` draws.
+
 ### Destructive actions
 
 A destructive action is never a peer of the safe one next to it. "Delete
@@ -172,6 +181,48 @@ of the label: "Europe (44)", "World (195)". It comes from the dataset
 (`countriesInScope`), never from a translation, and the bare number is
 `aria-hidden` while the button's `aria-label` spells it out ("Europe, 44
 countries") — "(44)" on its own tells a screen reader nothing.
+
+### The page header
+
+A page's top is not a bar: `wq-page-header` (`client/ui`) floats a round back
+button and the page's title in a glass pill over the content, which scrolls
+underneath. It is the same material and the same inset as the tab bar at the
+other end of the screen, so the two read as one system, and it replaces
+`ion-header`/`ion-toolbar` everywhere in the shell.
+
+- The title is the page's `h1`. Home's greeting is therefore a paragraph: the
+  pill already says where you are.
+- `backHref` decides whether a back button appears at all — the tab pages
+  have nowhere to go back to.
+- The host is `position: absolute` and the routed component's host _is_
+  Ionic's `.ion-page`, so the header is anchored to its own page. Back goes
+  through `NavController.pop()`, with the href as the fallback for a page
+  opened by a deep link.
+- **A page that can be left by the back button hides its floating chrome while
+  it leaves.** Ionic keeps that page alive for the length of the transition and
+  does not move it, so its title pill and action bar would sit on top of the
+  arriving page's for half a second. The page provides `PageChromeState`, and
+  the `wqFadesWithPage` directive — a host directive on the header, an
+  attribute on the action bar — reads it; the state flips on Angular's
+  `NavigationStart`. Measured in the running app: 80 ms after the tap both are
+  at opacity 0.
+- A page leaves room for it through `wq-page-header + ion-content`, a rule
+  that follows the markup rather than a class, so a new page cannot forget
+  it. Sizes come from `--wq-page-header-inset` / `-height` / `-clearance`.
+- It also ends the blurred title of an installed app on iOS 26/27 (CLAUDE.md).
+  Measured on an iPhone 17 (iOS 27): the title's darkest pixel is 27, the same
+  as Safari, where the toolbar gave 48.
+- **No bright top edge up here.** The system's effect cannot be switched off,
+  and a sharp horizontal line is what makes it visible, so the header's glass
+  drops the one-pixel highlight that `glass-chrome` draws along the top: the
+  contrast of the smeared transition falls from 14.2 to 8.6. The tab bar keeps
+  its highlight — at the bottom of the screen that same edge renders in a
+  single pixel. The rule for anything floating in the top ~100 px of a page:
+  no hairlines, no borders, nothing with a crisp horizontal edge.
+
+The glass itself lives in `styles/_materials.scss` as mixins — `_glass.scss`
+keeps the global rules, and a component that only wants the material would
+otherwise pull all of them into its own scope.
 
 ### Segmented controls
 

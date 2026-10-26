@@ -1,14 +1,8 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import {
-  IonButton,
-  IonContent,
-  IonHeader,
-  IonTitle,
-  IonToolbar,
-} from '@ionic/angular';
+import { IonButton, IonContent } from '@ionic/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { EmptyState } from '@world-quiz/client/ui';
+import { EmptyState, PageHeader } from '@world-quiz/client/ui';
 
 /**
  * Shown when a quiz microfrontend cannot be loaded — on the web the remote is
@@ -18,21 +12,15 @@ import { EmptyState } from '@world-quiz/client/ui';
 @Component({
   selector: 'wq-remote-unavailable-page',
   imports: [
-    IonHeader,
-    IonToolbar,
-    IonTitle,
     IonContent,
+    PageHeader,
     IonButton,
     RouterLink,
     TranslocoPipe,
     EmptyState,
   ],
   template: `
-    <ion-header [translucent]="true">
-      <ion-toolbar>
-        <ion-title>{{ 'quiz.unavailable.title' | transloco }}</ion-title>
-      </ion-toolbar>
-    </ion-header>
+    <wq-page-header [heading]="'quiz.unavailable.title' | transloco" />
 
     <ion-content [fullscreen]="true" class="wq-aurora">
       <div class="wq-page">

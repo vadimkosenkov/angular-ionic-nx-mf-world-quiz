@@ -1,3 +1,5 @@
+@use '../../../../ui/src/styles/materials' as materials;
+
 :host {
   display: flex;
   flex-direction: column;
@@ -42,20 +44,12 @@
   align-items: center;
   gap: var(--wq-space-3);
 
-  // A round surface button: easy to find and to hit (44 px), unlike a bare
-  // hairline cross on the aurora background.
+  // The same round glass button as the page header's back button — one mixin
+  // for both, so they cannot drift apart.
   .exit {
-    --padding-start: 0;
-    --padding-end: 0;
-    --border-radius: var(--wq-radius-pill);
-    --background: var(--wq-color-surface);
-    --background-activated: var(--wq-color-surface-secondary);
-    --color: var(--wq-color-text-primary);
-    --box-shadow: var(--wq-shadow-card);
-    width: var(--wq-touch-target);
-    height: var(--wq-touch-target);
-    margin: 0;
-    font-size: 1.375rem;
+    flex: none;
+
+    @include materials.chrome-button;
   }
 
   .progress {

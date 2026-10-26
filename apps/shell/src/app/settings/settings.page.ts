@@ -1,7 +1,6 @@
 import { Component, inject } from '@angular/core';
 import {
   IonContent,
-  IonHeader,
   IonIcon,
   IonItem,
   IonLabel,
@@ -11,14 +10,13 @@ import {
   IonRadioGroup,
   IonSegment,
   IonSegmentButton,
-  IonTitle,
   IonToggle,
-  IonToolbar,
   type RadioGroupCustomEvent,
   type SegmentCustomEvent,
   type ToggleCustomEvent,
 } from '@ionic/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { PageHeader } from '@world-quiz/client/ui';
 import {
   isThemePreference,
   SettingsStore,
@@ -45,10 +43,8 @@ interface LanguageOption {
 @Component({
   selector: 'wq-settings-page',
   imports: [
-    IonHeader,
-    IonToolbar,
-    IonTitle,
     IonContent,
+    PageHeader,
     IonSegment,
     IonSegmentButton,
     IonIcon,

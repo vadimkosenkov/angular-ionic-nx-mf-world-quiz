@@ -3,15 +3,17 @@ import { RouterLink } from '@angular/router';
 import {
   IonButton,
   IonContent,
-  IonHeader,
   IonIcon,
-  IonTitle,
-  IonToolbar,
   type ViewWillEnter,
 } from '@ionic/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { PluralPipe } from '@world-quiz/client/i18n';
-import { EmptyState, ProgressBar, ProgressCard } from '@world-quiz/client/ui';
+import {
+  EmptyState,
+  ProgressBar,
+  ProgressCard,
+  PageHeader,
+} from '@world-quiz/client/ui';
 import {
   practiceCandidates,
   QUIZ_CATEGORIES,
@@ -30,10 +32,8 @@ interface CategoryCard {
 @Component({
   selector: 'wq-home-page',
   imports: [
-    IonHeader,
-    IonToolbar,
-    IonTitle,
     IonContent,
+    PageHeader,
     IonIcon,
     IonButton,
     RouterLink,
