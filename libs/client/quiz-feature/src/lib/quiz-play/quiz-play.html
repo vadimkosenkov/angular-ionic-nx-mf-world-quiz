@@ -122,6 +122,8 @@
     (ngModelChange)="typedAnswer.set($event)"
     name="answer"
     (keydown.enter)="submitTyped()"
+    (ionFocus)="onFieldFocus()"
+    (ionBlur)="fieldFocused.set(false)"
   />
   @if (showEmptyAnswerError()) {
   <p class="error" role="alert">{{ 'quiz.emptyAnswer' | transloco }}</p>
@@ -129,10 +131,6 @@
 </form>
 } }
 
-<!-- While a question is open, its actions live in the glass bar at the
-     bottom. The verdict carries its own. -->
-@if (question && (config().difficulty === 'hard' || config().mode ===
-'endless')) {
 <!-- While a question is open, its actions live in the glass bar at the
      bottom. The verdict carries its own. -->
 @if (hasActionBar()) {
@@ -157,4 +155,4 @@
   </ion-button>
   }
 </div>
-} }
+}

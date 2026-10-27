@@ -287,6 +287,25 @@ The clearance the action bar asks for is reserved only while there is one
 (`:host(.with-action-bar)`), or an Easy round would end with a screen's worth
 of empty space below the choices and every question would scroll.
 
+### The on-screen keyboard (Hard mode)
+
+iOS does not shrink the layout viewport when the keyboard opens: `svh`, `vh`
+and every media query stay as they were, so a stylesheet cannot see it. The
+page therefore shrinks itself — `:host(.keyboard-open)` gives the flag
+`15svh` and tightens the prompt — driven by the answer field's own focus,
+which on a touch device only happens when the player taps it (the page does
+not focus the field there; iOS opens no keyboard for a programmatic focus and
+the player would be left with a focused field and nothing to type on).
+
+iOS then lifts the page by scrolling the document, by an amount it decides
+_while_ the keyboard opens and measures on the layout as it was before the
+shrink — so it scrolls further than it needs to and the flag ends up above
+the fold. Once the keyboard has settled the page scrolls back to the least
+that still leaves the field clear of it, which is usually nothing at all.
+That same moment is when a keyboard that never arrived is noticed — a
+hardware keyboard is paired, or this is a simulator — and the page gives the
+flag its height back rather than making room for nothing.
+
 Feedback blocks are tinted with `--wq-color-success-vivid` /
 `--wq-color-error-vivid` (the iOS system green and red) and glow softly in the
 same hue. The darker `success` / `error` tokens are for text only: mixed into a

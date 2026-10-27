@@ -29,6 +29,7 @@ import {
 } from '@world-quiz/quiz/domain';
 import { COUNTRY_DATASET } from '@world-quiz/client/quiz-ports';
 import { Feedback } from '@world-quiz/client/feedback';
+import { keyboardOpen } from '../keyboard';
 import { AnswerFeedback } from '../answer-feedback/answer-feedback';
 import { QuizSessionStore } from '../quiz-session.store';
 
@@ -39,6 +40,12 @@ interface IonicInputElement {
 
 /** How often the Timed-mode countdown re-renders. The rules use the clock, not this tick. */
 const TICK_INTERVAL_MS = 250;
+
+/** How long iOS takes to open the keyboard and scroll the field into view. */
+const KEYBOARD_SETTLE_MS = 400;
+
+/** Breathing room between the answer field and the top of the keyboard. */
+const KEYBOARD_FIELD_MARGIN_PX = 12;
 
 /**
  * Plays one quiz session: prompt, answers, feedback and progress.
@@ -60,6 +67,7 @@ const TICK_INTERVAL_MS = 250;
   providers: [QuizSessionStore],
   host: {
     '[class.with-action-bar]': 'hasActionBar()',
+    '[class.keyboard-open]': 'keyboardOpen()',
   },
   templateUrl: './quiz-play.html',
   styleUrl: './quiz-play.scss',
@@ -83,6 +91,7 @@ export class QuizPlay {
   readonly exited = output<void>();
 
   protected readonly store = inject(QuizSessionStore);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private latestField: IonicInputElement | null = null;
   private listensForPageEnter = false;
@@ -120,6 +129,65 @@ export class QuizPlay {
   });
 
   protected readonly promptCountry = computed(() => this.store.country());
+
+  /**
+   * Whether a keyboard is about to cover the lower half of the screen, so
+   * the prompt has to make room for the answer field.
+   *
+   * Driven by the field's own focus, which on a touch device only happens
+   * when the player taps it — the page does not focus it there (see
+   * `focusWhenVisible`). `visualViewport` reports the keyboard exactly, but
+   * late: iOS decides how far to push the page up *while* the keyboard
+   * opens, and the resize arrives after that decision, so a layout that
+   * shrank on the resize was shrunk too late and the flag still ended up
+   * above the fold. It is kept as the second half of the condition, for a
+   * keyboard that arrives some other way.
+   *
+   * Shrinking even earlier, on `pointerdown`, backfires: the field moves up
+   * from under the finger before the tap completes, the tap lands on what is
+   * now in its place, and no keyboard opens at all.
+   */
+  protected readonly fieldFocused = signal(false);
+  private readonly keyboardInWindow = keyboardOpen();
+  /** A pointer that cannot hover is a finger: a keyboard will take space. */
+  private readonly touch = globalThis.matchMedia?.('(pointer: coarse)').matches;
+  protected readonly keyboardOpen = computed(
+    () => !!this.touch && (this.fieldFocused() || this.keyboardInWindow()),
+  );
+
+  /**
+   * Puts the answer field in focus and the whole question back on screen.
+   *
+   * iOS lifts the page by itself to clear the keyboard — it scrolls the
+   * document, measured on the layout as it was *before* `.keyboard-open`
+   * shrank it, so it scrolls further than it needs to and takes the flag
+   * with it. Once the keyboard has settled the page is scrolled back to the
+   * least that still leaves the field clear of it, which is usually nothing
+   * at all. There is no event for "the keyboard has finished", hence the
+   * delay — which is also when a keyboard that never came is noticed.
+   */
+  protected onFieldFocus(): void {
+    this.fieldFocused.set(true);
+    if (!this.touch) return;
+    const settled = setTimeout(() => {
+      // Focus is a guess that a keyboard is coming. By now it has either
+      // arrived or it never will — a hardware keyboard is paired, or the
+      // player is on a simulator — and in that case the page gives the flag
+      // its height back instead of making room for nothing.
+      if (!this.keyboardInWindow()) {
+        this.fieldFocused.set(false);
+        window.scrollTo(0, 0);
+        return;
+      }
+      const field = this.answerInput()?.nativeElement.getBoundingClientRect();
+      const visible = globalThis.visualViewport?.height ?? window.innerHeight;
+      if (!field) return;
+      const scrolled = window.scrollY;
+      const overflow = field.bottom + KEYBOARD_FIELD_MARGIN_PX - visible;
+      window.scrollTo(0, Math.max(0, scrolled + overflow));
+    }, KEYBOARD_SETTLE_MS);
+    this.destroyRef.onDestroy(() => clearTimeout(settled));
+  }
 
   /**
    * Whether the bottom bar is on screen. It carries the actions of an open
@@ -193,8 +261,16 @@ export class QuizPlay {
    * field on a page that is still hidden by Ionic's enter transition cannot
    * keep focus. So focus now, and once more when the page has finished
    * entering (`ionViewDidEnter` is dispatched on the page element).
+   *
+   * Not on a touch device. iOS opens no keyboard for a focus the player did
+   * not ask for, and then a tap on the field it had already focused opened
+   * none either — measured on an iPhone 17: the field looked ready, the
+   * keyboard did not come, and whether it came on the next question depended
+   * on what the previous one had left focused. Letting the player tap the
+   * field keeps it predictable, and the tap is what sizes the prompt.
    */
   private focusWhenVisible(field: IonicInputElement): void {
+    if (this.touch) return;
     this.latestField = field;
     const focus = () =>
       void customElements
