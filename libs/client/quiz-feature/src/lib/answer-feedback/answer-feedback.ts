@@ -1,6 +1,7 @@
 import {
   afterNextRender,
   Component,
+  computed,
   type ElementRef,
   input,
   output,
@@ -52,12 +53,7 @@ import type { AnswerRecord } from '@world-quiz/quiz/domain';
         </span>
       }
       <span class="answer-block">
-        <span class="label">
-          {{
-            (answer.correct ? 'quiz.yourAnswer' : 'quiz.correctAnswer')
-              | transloco
-          }}
-        </span>
+        <span class="label">{{ answerLabel() | transloco }}</span>
         <span class="answer" data-testid="quiz-correct-answer">
           {{ correctAnswer() }}
         </span>
@@ -74,6 +70,21 @@ export class AnswerFeedback {
   readonly record = input.required<AnswerRecord>();
   /** The right answer, already localized (a capital or a country name). */
   readonly correctAnswer = input.required<string>();
+  /**
+   * What the block under the verdict is showing.
+   *
+   * A right answer repeats what the player chose or typed. A typo did not:
+   * it was accepted *as* something else, and the block carries that
+   * canonical spelling — which is the thing worth taking away. Calling it
+   * "your answer" would put words in their mouth; they wrote "Pariss".
+   */
+  protected readonly answerLabel = computed(() => {
+    const answer = this.record();
+    return answer.correct && answer.judgement !== 'typo'
+      ? 'quiz.yourAnswer'
+      : 'quiz.correctAnswer';
+  });
+
   /** The player is done reading: move to the next question. */
   readonly next = output<void>();
 

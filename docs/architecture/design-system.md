@@ -281,7 +281,9 @@ question, not to a verdict.
 
 Both verdicts end with the answer in its own white block, in the largest text
 on the screen: after a mistake it is what the player should remember, after a
-correct answer it confirms what they chose.
+correct answer it confirms what they chose. An accepted typo is the exception
+— the block carries the canonical spelling, not what was typed, so it is
+labelled as the correct answer rather than as the player's own.
 
 The clearance the action bar asks for is reserved only while there is one
 (`:host(.with-action-bar)`), or an Easy round would end with a screen's worth

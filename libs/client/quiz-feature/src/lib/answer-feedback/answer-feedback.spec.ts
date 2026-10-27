@@ -84,6 +84,8 @@ describe('AnswerFeedback', () => {
     expect(fixture.nativeElement.classList.contains('correct')).toBe(false);
   });
 
+  // The block holds the spelling to remember, not what was typed, so it may
+  // not claim to be the player's own answer here.
   it('says which answer a typo was accepted as', async () => {
     await renderFeedback(
       record({
@@ -95,6 +97,11 @@ describe('AnswerFeedback', () => {
 
     expect((await screen.findByRole('status')).textContent).toContain(
       'Accepted as Paris',
+    );
+    expect(screen.getByText('Correct answer')).toBeTruthy();
+    expect(screen.queryByText('Your answer')).toBeNull();
+    expect(screen.getByTestId('quiz-correct-answer').textContent?.trim()).toBe(
+      'Paris',
     );
   });
 });
