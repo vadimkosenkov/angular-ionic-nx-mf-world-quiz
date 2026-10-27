@@ -127,6 +127,7 @@ typos). The app has no custom speech-recognition UI and no external AI/LLM judgi
 | 23  | `feat/leaderboards-v2`       | Boards per mode, region and difficulty; top 100 plus the player's own row               | planned        |
 | 24  | `feat/friends`               | Friends, their achievements, and a board of you and your friends                        | planned        |
 | 25  | `feat/auth-fixes`            | Google sign-in: straight to Home after signing in, and no surprise sign-outs            | planned        |
+| 26  | `feat/voice-answers`         | Hard mode answered out loud: the Web Speech API on the web, a decision on iOS after     | planned        |
 
 Phase 23 replaces the earlier plan for separate regional boards: region and
 difficulty become part of every board, Quick round is ranked by time and Time
