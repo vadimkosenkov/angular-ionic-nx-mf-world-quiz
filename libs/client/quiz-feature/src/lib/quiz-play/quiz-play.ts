@@ -58,6 +58,9 @@ const TICK_INTERVAL_MS = 250;
     AnswerFeedback,
   ],
   providers: [QuizSessionStore],
+  host: {
+    '[class.with-action-bar]': 'hasActionBar()',
+  },
   templateUrl: './quiz-play.html',
   styleUrl: './quiz-play.scss',
 })
@@ -117,6 +120,19 @@ export class QuizPlay {
   });
 
   protected readonly promptCountry = computed(() => this.store.country());
+
+  /**
+   * Whether the bottom bar is on screen. It carries the actions of an open
+   * question only — the verdict is its own control — so an Easy round never
+   * shows one, and the page must not reserve its height either.
+   */
+  protected readonly hasActionBar = computed(() => {
+    const config = this.config();
+    return (
+      this.store.question() !== null &&
+      (config.difficulty === 'hard' || config.mode === 'endless')
+    );
+  });
 
   constructor() {
     // Start (or restart) whenever the configuration or seed changes.

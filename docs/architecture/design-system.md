@@ -283,6 +283,10 @@ Both verdicts end with the answer in its own white block, in the largest text
 on the screen: after a mistake it is what the player should remember, after a
 correct answer it confirms what they chose.
 
+The clearance the action bar asks for is reserved only while there is one
+(`:host(.with-action-bar)`), or an Easy round would end with a screen's worth
+of empty space below the choices and every question would scroll.
+
 Feedback blocks are tinted with `--wq-color-success-vivid` /
 `--wq-color-error-vivid` (the iOS system green and red) and glow softly in the
 same hue. The darker `success` / `error` tokens are for text only: mixed into a

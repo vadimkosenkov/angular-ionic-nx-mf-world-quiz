@@ -4,9 +4,14 @@
   display: flex;
   flex-direction: column;
   gap: var(--wq-space-5);
-  // Room for the floating action bar, so the last answer is never under it.
-  padding-bottom: var(--wq-action-bar-clearance);
   --wq-flag-height: 38svh;
+}
+
+// Room for the floating action bar, so the last answer is never under it —
+// but only while there is one. Reserving it always left a screen's worth of
+// empty space below an Easy round and made every question scrollable.
+:host(.with-action-bar) {
+  padding-bottom: var(--wq-action-bar-clearance);
 }
 
 // A phone in a browser: the address bar and the toolbar eat a third of the

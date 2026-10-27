@@ -133,6 +133,9 @@
      bottom. The verdict carries its own. -->
 @if (question && (config().difficulty === 'hard' || config().mode ===
 'endless')) {
+<!-- While a question is open, its actions live in the glass bar at the
+     bottom. The verdict carries its own. -->
+@if (hasActionBar()) {
 <div class="wq-action-bar">
   @if (config().mode === 'endless') {
   <ion-button
@@ -154,4 +157,4 @@
   </ion-button>
   }
 </div>
-}
+} }
