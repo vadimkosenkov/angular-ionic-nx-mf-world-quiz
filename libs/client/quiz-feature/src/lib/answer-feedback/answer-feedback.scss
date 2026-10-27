@@ -3,11 +3,8 @@
 // glow in the same hue lifts the block off the page.
 :host {
   --wq-feedback-hue: var(--wq-color-error-vivid);
-  --wq-feedback-text: var(--wq-color-error);
-  display: flex;
-  flex-direction: column;
-  gap: var(--wq-space-3);
-  padding: var(--wq-space-4) var(--wq-space-5);
+  --wq-feedback-text: var(--wq-color-error-strong);
+  display: block;
   border: 1px solid color-mix(in srgb, var(--wq-feedback-hue) 45%, transparent);
   border-radius: var(--wq-radius-lg);
   background: color-mix(
@@ -19,7 +16,6 @@
     0 8px 24px color-mix(in srgb, var(--wq-feedback-hue) 30%, transparent),
     var(--wq-shadow-card);
   color: var(--wq-feedback-text);
-  text-align: center;
   // The verdict replaces the answers in place, so it arrives with a short
   // rise and a slight overshoot: enough to catch the eye of a player who is
   // still looking at the flag. Turned off by the reduced-motion rule in the
@@ -41,7 +37,7 @@
 
 :host(.correct) {
   --wq-feedback-hue: var(--wq-color-success-vivid);
-  --wq-feedback-text: var(--wq-color-success);
+  --wq-feedback-text: var(--wq-color-success-strong);
   border-color: color-mix(in srgb, var(--wq-feedback-hue) 55%, transparent);
   background: color-mix(
     in srgb,
@@ -50,8 +46,21 @@
   );
 }
 
-p {
-  margin: 0;
+// The whole card is the button that continues, so it owns the padding: a tap
+// on the edge of the card has to count.
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wq-space-3);
+  width: 100%;
+  padding: var(--wq-space-4) var(--wq-space-5);
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
 }
 
 .verdict {
@@ -67,7 +76,8 @@ p {
   color: var(--wq-color-text-primary);
 }
 
-.correct-answer {
+.answer-block {
+  display: block;
   padding: var(--wq-space-3) var(--wq-space-4);
   border-radius: var(--wq-radius-md);
   background: var(--wq-color-surface);
@@ -81,6 +91,11 @@ p {
   color: var(--wq-color-text-secondary);
 }
 
+.label,
+.answer {
+  display: block;
+}
+
 // The answer to remember: the largest text on screen, in the brand colour so
 // it does not read like the surrounding labels.
 .answer {
@@ -91,4 +106,17 @@ p {
   letter-spacing: -0.01em;
   color: var(--wq-color-primary-strong);
   overflow-wrap: anywhere;
+}
+
+// Nothing else says the card can be tapped now that the bottom button is
+// gone. Small, in the verdict's own colour, under the answer it follows.
+.hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--wq-space-1);
+  font-size: var(--wq-font-size-caption);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }

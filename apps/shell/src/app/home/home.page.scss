@@ -27,51 +27,6 @@
     font-weight: 800;
     letter-spacing: -0.01em;
   }
-
-  // The featured card is an accent surface (not glass): solid brand gradient
-  // with white text, 4.9:1 contrast on its darkest stop.
-  &.featured {
-    border-color: transparent;
-    background: linear-gradient(
-      135deg,
-      var(--wq-color-primary),
-      var(--wq-color-primary-strong)
-    );
-    box-shadow: var(--wq-shadow-raised);
-    color: var(--wq-color-on-primary);
-
-    .eyebrow,
-    .description,
-    .meta,
-    .category-footer {
-      color: inherit;
-      opacity: 0.92;
-    }
-
-    .category-icon {
-      background: rgb(255 255 255 / 18%);
-      color: inherit;
-    }
-
-    // The bar takes the card's text colour in both themes.
-    wq-progress-bar {
-      --wq-color-progress-track: color-mix(
-        in srgb,
-        currentColor 25%,
-        transparent
-      );
-      --wq-color-primary: currentColor;
-      --wq-color-accent: currentColor;
-    }
-
-    // Inverted pill, so the only action on the card stands out from the
-    // brand gradient in both themes.
-    .play {
-      --background: var(--wq-color-on-primary);
-      --background-activated: var(--wq-color-on-primary);
-      --color: var(--wq-color-primary-strong);
-    }
-  }
 }
 
 .category-header {

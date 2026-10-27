@@ -26,7 +26,6 @@ import { CLOCK } from '../core/tokens';
 interface CategoryCard {
   readonly category: QuizCategory;
   readonly icon: string;
-  readonly featured: boolean;
 }
 
 @Component({
@@ -57,8 +56,8 @@ export class HomePage implements ViewWillEnter {
   protected readonly greeting = signal(this.currentGreeting());
 
   protected readonly categories: readonly CategoryCard[] = [
-    { category: 'capitals', icon: 'business', featured: true },
-    { category: 'flags', icon: 'flag', featured: false },
+    { category: 'capitals', icon: 'business' },
+    { category: 'flags', icon: 'flag' },
   ];
 
   ionViewWillEnter(): void {

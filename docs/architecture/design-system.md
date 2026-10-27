@@ -89,8 +89,9 @@ Glass is **progressive enhancement** and used **selectively**:
 | The one hero summary per screen (`wq-progress-card variant="glass"`, achievements summary) | Focal point                                            |
 | Theme selector                                                                             | A floating control                                     |
 
-Lists, category cards and achievement cards stay solid; the featured category
-card is an **accent** surface (a brand gradient), not glass.
+Lists, category cards and achievement cards stay solid. Brand colour is for
+**actions**: the two category cards on Home are the same neutral surface, and
+the blue belongs to the Play button inside them.
 
 How it degrades (`_glass.scss`):
 
@@ -267,16 +268,29 @@ Its buttons are `ion-button.wq-glass-button`: pill-shaped with a **solid**
 fill — primary, or `secondary` (surface, primary label, border). A
 translucent tinted fill was tried and dropped: over busy content the label
 lost contrast and the button looked washed out. Used for Start quiz, Check,
-Continue, Finish, Play again and Back to home.
+Finish, Play again and Back to home.
 
-The verdict of an answer is shown under the flag, never next to the button.
-After a wrong answer the correct answer gets its own white block with the
-largest text on the screen, because it is what the player should remember.
+The one exception is the verdict between two questions. It is shown under the
+flag, where the player is already looking, and the **card itself** is the
+control that moves on: a tap anywhere on it continues, so the hand that just
+answered does not travel to the bottom of the screen for every question. It
+takes focus when it appears (Enter continues) and carries a small "tap to
+continue" hint, because without the bottom button nothing else says it is a
+control. The action bar is then empty — its buttons belong to an open
+question, not to a verdict.
+
+Both verdicts end with the answer in its own white block, in the largest text
+on the screen: after a mistake it is what the player should remember, after a
+correct answer it confirms what they chose.
 
 Feedback blocks are tinted with `--wq-color-success-vivid` /
 `--wq-color-error-vivid` (the iOS system green and red) and glow softly in the
 same hue. The darker `success` / `error` tokens are for text only: mixed into a
 fill they turned greyish and did not read as "correct" on the lavender page.
+Their text on those tinted cards is `--wq-color-success-strong` /
+`--wq-color-error-strong`: the plain tokens are AA on white but reach only
+4.4:1 on the tint, which axe never caught because the suite answered and left
+the verdict in one step. It now checks both verdicts.
 
 The quiz's exit button is a 44 px round surface button with the filled
 `close` icon; a bare hairline cross was too easy to miss.

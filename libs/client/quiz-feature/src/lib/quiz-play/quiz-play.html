@@ -76,11 +76,14 @@
   }
 </section>
 } @if (feedback) {
-<!-- The verdict sits where the answers were, right under the flag. -->
+<!-- The verdict sits where the answers were, right under the flag, and is
+     itself the control that moves on: no reaching for the bottom of the
+     screen between questions. -->
 <wq-answer-feedback
   data-testid="quiz-feedback"
   [record]="feedback.record"
   [correctAnswer]="answerLabel(feedback.record.countryCode)"
+  (next)="continue()"
 />
 } @else if (question) { @if (config().difficulty === 'easy') {
 <ul class="choices" data-testid="quiz-choices">
@@ -126,20 +129,12 @@
 </form>
 } }
 
-<!-- Every next step lives in the same place: the glass bar at the bottom. -->
-@if (feedback || (question && (config().difficulty === 'hard' || config().mode
-=== 'endless'))) {
+<!-- While a question is open, its actions live in the glass bar at the
+     bottom. The verdict carries its own. -->
+@if (question && (config().difficulty === 'hard' || config().mode ===
+'endless')) {
 <div class="wq-action-bar">
-  @if (feedback) {
-  <ion-button
-    class="wq-glass-button"
-    expand="block"
-    data-testid="quiz-continue"
-    (click)="continue()"
-  >
-    {{ 'quiz.continue' | transloco }}
-  </ion-button>
-  } @else { @if (config().mode === 'endless') {
+  @if (config().mode === 'endless') {
   <ion-button
     class="wq-glass-button secondary"
     expand="block"
@@ -157,6 +152,6 @@
   >
     {{ 'quiz.check' | transloco }}
   </ion-button>
-  } }
+  }
 </div>
 }
