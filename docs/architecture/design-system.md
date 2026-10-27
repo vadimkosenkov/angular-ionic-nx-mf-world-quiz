@@ -338,7 +338,7 @@ page container adds `var(--ion-safe-area-top)` to its top padding.
 
 - Status is never shown by colour alone: achievement states have an icon and a text label.
 - Touch targets are at least 44 px (`--wq-touch-target`, Ionic list items 56 px).
-- `:focus-visible` shows a 3 px outline for keyboard users on the web.
+- `:focus-visible` shows a ring for keyboard users on the web: a 2 px gap in `--wq-color-focus-ring-gap`, a 1 px line in `--wq-color-primary` and a soft glow of the same hue, drawn with `box-shadow`. A plain outline sat flat on whatever was behind it; on the tinted verdict card, which takes focus after every Hard-mode answer, it read as part of the card. The rule keeps a transparent `outline` because Windows' forced-colours modes drop `box-shadow` and paint that outline in the system's focus colour.
 - `prefers-reduced-motion` reduces animations and transitions to near zero.
 - Decorative images (language flags) have `alt=""`; the language name is text.
 - `<html lang>` follows the UI language, and each language name is marked with its own `lang`.

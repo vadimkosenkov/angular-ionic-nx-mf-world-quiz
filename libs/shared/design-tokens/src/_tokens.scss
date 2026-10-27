@@ -25,6 +25,10 @@
   // Surfaces
   --wq-color-background: #f4f5ff;
   --wq-color-surface: #ffffff;
+  // The gap between a focused control and its focus ring, so the ring never
+  // touches the control's own edge. The page's lightest surface in each
+  // theme, because the ring lands on cards and on the page alike.
+  --wq-color-focus-ring-gap: #ffffff;
   --wq-color-surface-secondary: #eceefb;
   // Unfilled part of a progress bar; darker than surface-secondary so the
   // track stays visible on the page background as well as on white cards.
@@ -137,6 +141,7 @@
 
   --wq-color-background: #0b0e1f;
   --wq-color-surface: #151a33;
+  --wq-color-focus-ring-gap: #151a33;
   --wq-color-surface-secondary: #1c2242;
   --wq-color-progress-track: #2f3766;
   --wq-color-glass-surface: rgb(28 34 66 / 58%);
