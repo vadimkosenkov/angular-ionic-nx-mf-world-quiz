@@ -10,6 +10,7 @@ import {
   finishedSession,
   sessionResult,
 } from '@world-quiz/client/progress/testing';
+import { Toasts } from '@world-quiz/client/ui';
 import type { AuthResponse } from '@world-quiz/shared/contracts';
 import { provideShellTesting, TEST_API_URL } from '../../testing/shell-testing';
 import { AccountSection } from './account-section';
@@ -72,6 +73,7 @@ async function renderSection(state: 'offline' | AuthResponse) {
     emptyHistory,
     progress: TestBed.inject(ProgressStore),
     auth: TestBed.inject(AuthStore),
+    toasts: TestBed.inject(Toasts),
   };
 }
 
@@ -86,7 +88,8 @@ describe('AccountSection', () => {
   });
 
   it('keeps an unreachable sign-in, says so, counts unsent results and retries', async () => {
-    const { http, progress, fixture, auth } = await renderSection('offline');
+    const { http, progress, fixture, auth, toasts } =
+      await renderSection('offline');
     progress.recordSession(finishedSession([{ code: 'fr', correct: true }]));
     fixture.detectChanges();
 
@@ -96,6 +99,18 @@ describe('AccountSection', () => {
     expect(screen.getByTestId('sync-status').textContent).toContain(
       '1 result is waiting to be saved',
     );
+
+    // A retry that fails again changes nothing on screen, so it is said.
+    fireEvent.click(screen.getByTestId('retry-restore'));
+    http
+      .expectOne(`${TEST_API_URL}/v1/auth/refresh`)
+      .error(new ProgressEvent('error'));
+    await settle();
+    fixture.detectChanges();
+
+    expect(auth.status()).toBe('unverified');
+    expect(toasts.current()).toMatchObject({ tone: 'error' });
+    expect(toasts.current()?.text).toContain('cannot be reached');
 
     fireEvent.click(screen.getByTestId('retry-restore'));
     http.expectOne(`${TEST_API_URL}/v1/auth/refresh`).flush(signedIn());
@@ -142,7 +157,7 @@ describe('AccountSection', () => {
   });
 
   it('saves what is left, signs out and deletes the data on this device', async () => {
-    const { answer, emptyHistory, progress, auth } =
+    const { answer, emptyHistory, progress, auth, toasts } =
       await renderSection(signedIn());
     progress.recordSession(finishedSession([{ code: 'fr', correct: true }]));
 
@@ -161,6 +176,8 @@ describe('AccountSection', () => {
     expect(auth.status()).toBe('signed-out');
     expect(progress.owner()).toBeNull();
     expect(progress.pendingCount()).toBe(0);
+    // Said on the welcome screen the app leaves for.
+    expect(toasts.current()?.text).toBe('You are signed out.');
   });
 
   it('asks before signing out when results could not be saved, and deletes them only then', async () => {
@@ -194,7 +211,8 @@ describe('AccountSection', () => {
   });
 
   it('deletes the account only after an explicit confirmation, then the data on this device', async () => {
-    const { http, answer, fixture, progress } = await renderSection(signedIn());
+    const { http, answer, fixture, progress, toasts } =
+      await renderSection(signedIn());
     await progress.claim(signedIn().user);
 
     fireEvent.click(screen.getByTestId('delete-account'));
@@ -215,6 +233,9 @@ describe('AccountSection', () => {
     );
 
     expect(progress.owner()).toBeNull();
+    expect(toasts.current()?.text).toBe(
+      'Your account and its results are deleted.',
+    );
   });
 
   it('names a development account as such', async () => {
@@ -229,7 +250,7 @@ describe('AccountSection', () => {
   });
 
   it('shows the public name and changes it within the rules', async () => {
-    const { answer, fixture, auth } = await renderSection(signedIn());
+    const { answer, fixture, auth, toasts } = await renderSection(signedIn());
     expect(screen.getByTestId('account-nickname').textContent).toContain(
       'Ann the Explorer',
     );
@@ -261,10 +282,14 @@ describe('AccountSection', () => {
     expect(screen.getByTestId('account-nickname').textContent).toContain(
       'Globe Trotter',
     );
+    expect(toasts.current()).toMatchObject({
+      tone: 'success',
+      text: 'Your public name is saved.',
+    });
   });
 
   it('explains when the server refuses a name', async () => {
-    const { answer, fixture } = await renderSection(signedIn());
+    const { answer, fixture, toasts } = await renderSection(signedIn());
     fireEvent.click(screen.getByTestId('nickname-edit'));
     fixture.detectChanges();
     screen
@@ -279,9 +304,9 @@ describe('AccountSection', () => {
       request.flush(null, { status: 400, statusText: 'Bad Request' }),
     );
 
-    expect(screen.getByTestId('account-error').textContent).toContain(
-      'This name is not allowed',
-    );
+    expect(toasts.current()).toMatchObject({ tone: 'error' });
+    expect(toasts.current()?.text).toContain('This name is not allowed');
+    // The form stays open, with the rules under the field it is about.
     expect(screen.getByTestId('nickname-input')).toBeTruthy();
   });
 });

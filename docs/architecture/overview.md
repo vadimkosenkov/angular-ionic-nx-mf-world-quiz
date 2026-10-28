@@ -119,8 +119,8 @@ typos). The app has no custom speech-recognition UI and no external AI/LLM judgi
 | 15  | `feat/pwa`                   | Installable web app: manifest, icons, offline service worker                            | ✅ merged      |
 | 16  | `feat/polish-details`        | Region sizes, the vibration setting on the web, the account card                        | ✅ merged      |
 | 17  | `feat/page-header`           | The header as floating controls: a round back button and a title pill, off `ion-header` | ✅ merged      |
-| 18  | `feat/answer-feedback`       | The verdict card continues the quiz and repeats the answer; one card style on Home      | 🚧 this branch |
-| 19  | `feat/toasts`                | One way to say something went well or wrong                                             | planned        |
+| 18  | `feat/answer-feedback`       | The verdict card continues the quiz and repeats the answer; one card style on Home      | ✅ merged      |
+| 19  | `feat/toasts`                | One way to say something went well or wrong                                             | 🚧 this branch |
 | 20  | `feat/first-run-tips`        | Short hints on the first run: the quiz setup can be changed before starting             | planned        |
 | 21  | `feat/countries-reference`   | A browsable list of every country by region: flag, country, capital                     | planned        |
 | 22  | `feat/share-sounds`          | Sharing a result; a sound on the actions that start something                           | planned        |

@@ -26,6 +26,10 @@ VoiceOver. Those are checked by hand, and the app is built for them:
   empty `alt`;
 - the answer feedback is a `role="status"`, so it is announced without
   moving the focus;
+- a message about an action is announced as what it is — `role="alert"` for
+  a failure, `role="status"` for a confirmation — and each one is a newly
+  inserted element, which is what makes an alert announce reliably
+  (design-system.md);
 - progress bars carry `aria-valuetext` in words, not only numbers;
 - `prefers-reduced-motion` turns the animations off (global style).
 

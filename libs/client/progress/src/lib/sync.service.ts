@@ -20,6 +20,20 @@ import { SyncApi } from './sync-api';
  */
 export type SyncStatus = 'idle' | 'syncing' | 'offline';
 
+/**
+ * A sync that finally got through with results that had been waiting.
+ *
+ * The player was told nothing while they waited — the app keeps playing
+ * offline on purpose — so the moment their results reach the account is
+ * worth one word. A new object every time, so a watcher sees every recovery.
+ */
+export interface SyncRecovery {
+  /** How many waiting results were sent (at least one). */
+  readonly sent: number;
+  /** When it happened, epoch milliseconds. */
+  readonly at: number;
+}
+
 /** Waits between retries after a failed sync; the last one repeats. */
 export const SYNC_RETRY_DELAYS_MS = [5_000, 30_000, 120_000, 600_000] as const;
 
@@ -64,9 +78,17 @@ export class SyncService {
 
   private readonly statusState = signal<SyncStatus>('idle');
   private readonly lastSyncedAtState = signal<number | null>(null);
+  private readonly recoveredState = signal<SyncRecovery | null>(null);
   private running: Promise<void> | null = null;
   private runAgain = false;
   private failures = 0;
+  /**
+   * Results the API has accepted since the player was last told about them.
+   * A run can send the outbox and still fail on the pull that follows, and
+   * those results are then out of the outbox: counting only what the next
+   * run sends would lose them, and the player would hear nothing.
+   */
+  private sentSinceReport = 0;
   private cancelRetry: (() => void) | null = null;
   /** The API's answers to sessions sent in this run of the app. */
   private readonly results = new Map<string, SessionResult>();
@@ -74,6 +96,8 @@ export class SyncService {
   readonly status = this.statusState.asReadonly();
   /** When the device last matched the account (epoch milliseconds). */
   readonly lastSyncedAt = this.lastSyncedAtState.asReadonly();
+  /** The last sync that caught up after failing; `null` until one does. */
+  readonly recovered = this.recoveredState.asReadonly();
 
   /** Syncs now; resolves when this sync (and any queued one) is over. */
   sync(): Promise<void> {
@@ -110,31 +134,41 @@ export class SyncService {
 
     this.cancelRetry?.();
     this.cancelRetry = null;
+    // Whether this run is catching up after one that could not reach the API.
+    const stuck = this.failures > 0;
     this.statusState.set('syncing');
     try {
       await this.progress.claim(user);
-      await this.push();
+      this.sentSinceReport += await this.push();
       await this.pull();
       this.failures = 0;
-      this.lastSyncedAtState.set(this.clock.now());
+      const at = this.clock.now();
+      this.lastSyncedAtState.set(at);
       this.statusState.set('idle');
+      const sent = this.sentSinceReport;
+      this.sentSinceReport = 0;
+      if (stuck && sent > 0) this.recoveredState.set({ sent, at });
     } catch (error) {
       this.handleFailure(error);
     }
   }
 
-  private async push(): Promise<void> {
+  /** Sends the outbox; answers how many results the API accepted. */
+  private async push(): Promise<number> {
+    let sent = 0;
     for (const session of this.progress.pending()) {
       if (!session.request) continue;
       try {
         this.results.set(session.id, await this.api.submit(session.request));
         this.progress.markSynced([session.id]);
+        sent += 1;
       } catch (error) {
         if (!isFinalRefusal(error)) throw error;
         this.progress.markRejected([session.id]);
         this.errorHandler.handleError(error);
       }
     }
+    return sent;
   }
 
   private async pull(): Promise<void> {

@@ -21,6 +21,7 @@ import {
   SETTINGS_STORAGE_KEY,
   SYSTEM_PREFERS_DARK,
 } from '@world-quiz/client/settings';
+import { TOAST_SCHEDULER } from '@world-quiz/client/ui';
 import type { Locale } from '@world-quiz/quiz/domain';
 import { createManualClock } from '@world-quiz/shared/util';
 import { signal } from '@angular/core';
@@ -69,6 +70,9 @@ export function provideShellTesting(
     { provide: KEY_VALUE_STORAGE, useValue: storage },
     { provide: DEVICE_LANGUAGES, useValue: ['en'] },
     { provide: SYSTEM_PREFERS_DARK, useValue: signal(false).asReadonly() },
+    // A toast stays until the test has looked at it, and leaves no timer
+    // running after the test ends.
+    { provide: TOAST_SCHEDULER, useValue: () => () => undefined },
     {
       provide: CLOCK,
       useValue: createManualClock(

@@ -9,6 +9,7 @@ import {
 } from '@world-quiz/client/auth';
 import { ProgressStore } from '@world-quiz/client/progress';
 import { ANN } from '@world-quiz/client/progress/testing';
+import { Toasts } from '@world-quiz/client/ui';
 import type { Locale } from '@world-quiz/quiz/domain';
 import { provideShellTesting, TEST_API_URL } from '../../testing/shell-testing';
 import { NATIVE_SIGN_IN, type NativeSignIn } from '@world-quiz/client/auth';
@@ -130,9 +131,10 @@ describe('WelcomePage', () => {
     await settle();
     fixture.detectChanges();
 
-    expect(screen.getByTestId('welcome-error').textContent).toContain(
-      'Sign-in did not work.',
-    );
+    expect(TestBed.inject(Toasts).current()).toMatchObject({
+      tone: 'error',
+      text: 'Sign-in did not work. Please try again.',
+    });
     expect(roots).toEqual([]);
   });
 

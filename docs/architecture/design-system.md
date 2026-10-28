@@ -142,6 +142,7 @@ is supported in Chromium and WebKit; where it is not, the enhancement stays on.
 | `wq-progress-bar`  | Thin gradient bar; `primary`, `success` or `warning` tone (the last for a countdown running out) | `role="progressbar"` with `aria-valuemin/max/now`, a label and a translated `aria-valuetext` ("3 of 44"); values are clamped |
 | `wq-progress-card` | Heading, big `value / max`, bar, caption row; `solid` or `glass`                                 | The visual number is `aria-hidden`; the bar carries the accessible value                                                     |
 | `wq-empty-state`   | Icon, heading, message, projected actions for empty, unavailable and offline states              | `role="status"`; decorative icon hidden                                                                                      |
+| `wq-toast-host`    | The one transient message: a confirmation or a failure, at the bottom over the chrome            | A new element per message, `role="alert"` for a failure and `role="status"` for a confirmation; its close button is labelled |
 
 UI components are **i18n-free**: they receive already translated strings.
 Ionic components (tabs, segments, lists, radios, badges) are used directly
@@ -288,6 +289,62 @@ labelled as the correct answer rather than as the player's own.
 The clearance the action bar asks for is reserved only while there is one
 (`:host(.with-action-bar)`), or an Easy round would end with a screen's worth
 of empty space below the choices and every question would scroll.
+
+### Saying it went well or wrong
+
+One mechanism, one place: `Toasts` holds a message and `wq-toast-host`
+(rendered once in `App`, outside the router outlet) shows it in a glass card
+at the bottom of the screen. The screens call it through `AccountNotices`,
+which picks the text; `client/ui` carries no translations, so the service
+takes a finished sentence.
+
+What belongs there, and what does not:
+
+- A **toast** reports the outcome of something the player just did — the
+  public name was saved, it could not be saved, you are signed out, the
+  account is gone, the challenge could not be started. It is about an action,
+  not about the screen. "Try again" on an unverified sign-in belongs here
+  too: when the API is still unreachable the screen looks exactly as it did,
+  and without a word the button looks broken.
+- **Losing the connection is not a message.** Nobody pressed anything, there
+  is nothing to do about it, and it would fire in every tunnel. The screens
+  that depend on the server say so themselves, and an action that fails
+  because of it already gets its toast.
+- **Getting it back is**, but only with something to show for it: when a sync
+  that had been failing finally gets the device's waiting results through
+  (`SyncService.recovered` → `provideSyncNotices`, which counts the results
+  accepted since the player was last told, because a run can send them and
+  still fail on the pull that follows). The player played those
+  rounds and was told nothing at the time, so this closes the loop; the
+  ordinary sync after a finished quiz stays silent, or every round would end
+  with a receipt.
+- A **screen state** stays on the screen: a result the server refused, an
+  empty leaderboard, "no connection", the nickname rules under the field that
+  say what a valid name is. These are still true after a message would have
+  faded, so they are not messages.
+
+The details that matter:
+
+- **At the bottom**, above the floating chrome (`--wq-toast-inset`). Not at
+  the top: iOS 26/27 smear anything with a crisp horizontal edge in the top
+  ~100 px of an installed web app (CLAUDE.md), and a glass card is exactly
+  that. Over the page's own content a message may still overlap — hence the
+  close button.
+- **One at a time.** A second message replaces the first. A queue would show
+  the player something about an action they have already moved on from.
+- **A failure stays longer** than a confirmation (5 s against 3 s): it is a
+  longer sentence and usually asks for something.
+- **Announced as what it is.** A failure is an `alert` (it interrupts), a
+  confirmation a `status` (it waits its turn). Every message gets its **own
+  element** — an element inserted with `role="alert"` is what screen readers
+  announce reliably, while text swapped inside an element that was already
+  there is announced by some and missed by others.
+- It is the chrome material (`glass-chrome`), like the tab bar under it.
+
+Ionic's `ion-toast` is not used. It renders itself in its own shadow DOM
+outside the application's tree, so the app's glass would have to be rebuilt
+through `::part()`, and it never upgrades in jsdom, which would leave
+everything about a message untestable below the E2E suite.
 
 ### The on-screen keyboard (Hard mode)
 

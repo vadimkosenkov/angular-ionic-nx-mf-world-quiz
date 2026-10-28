@@ -1,11 +1,14 @@
 import { registerQuizIcons } from '@world-quiz/client/quiz-feature';
 import { addIcons } from 'ionicons';
 import {
+  alertCircle,
   arrowForward,
   business,
   businessOutline,
+  checkmarkCircle,
   chevronBack,
   chevronForward,
+  close,
   cloudOfflineOutline,
   flag,
   flagOutline,
@@ -44,11 +47,17 @@ export function registerIcons(): void {
   registerQuizIcons();
 
   addIcons({
+    // The toast's three icons are listed here even though the quiz happens to
+    // register two of them: the toast is the shell's own chrome, and a map
+    // entry with the same value twice costs nothing.
+    'alert-circle': alertCircle,
     'arrow-forward': arrowForward,
     business,
     'business-outline': businessOutline,
+    'checkmark-circle': checkmarkCircle,
     'chevron-back': chevronBack,
     'chevron-forward': chevronForward,
+    close,
     'cloud-offline-outline': cloudOfflineOutline,
     flag,
     'flag-outline': flagOutline,

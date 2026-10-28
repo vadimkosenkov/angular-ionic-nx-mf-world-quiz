@@ -23,6 +23,7 @@ import { provideAppI18n } from '@world-quiz/client/i18n';
 import { provideProgress } from '@world-quiz/client/progress';
 import { provideAppSettings } from '@world-quiz/client/settings';
 import { isNativePlatform } from './core/platform';
+import { provideSyncNotices } from './core/sync-notices';
 import { RUNTIME_CONFIG, type RuntimeConfig } from './runtime-config';
 import { appRoutes } from './app.routes';
 import { provideSignInFlow } from './auth/sign-in.providers';
@@ -53,6 +54,7 @@ export const appConfig = (runtime: RuntimeConfig): ApplicationConfig => ({
     provideProgress(),
     provideFeedback({ native: isNativePlatform() }),
     provideSignInFlow(),
+    provideSyncNotices(),
     ...nativeAuthProviders(runtime),
   ],
 });

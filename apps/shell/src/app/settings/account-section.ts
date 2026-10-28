@@ -5,6 +5,7 @@ import { AuthStore } from '@world-quiz/client/auth';
 import { PluralPipe } from '@world-quiz/client/i18n';
 import { ProgressStore, SyncService } from '@world-quiz/client/progress';
 import { nicknameSchema } from '@world-quiz/shared/contracts';
+import { AccountNotices } from '../auth/account-notices';
 
 /**
  * Settings → Account: who is signed in, whether their results are saved to
@@ -16,7 +17,10 @@ import { nicknameSchema } from '@world-quiz/shared/contracts';
  * player is told how many would be lost and decides.
  *
  * Confirmations are inline rather than modal alerts, so the consequence is
- * spelled out next to the button that causes it.
+ * spelled out next to the button that causes it. How an action **turned
+ * out** is a toast instead (`AccountNotices`): the card is long, and a line
+ * of text appearing at its bottom went unnoticed next to the field that
+ * caused it.
  */
 @Component({
   selector: 'wq-account-section',
@@ -28,6 +32,7 @@ export class AccountSection {
   protected readonly auth = inject(AuthStore);
   protected readonly progress = inject(ProgressStore);
   protected readonly sync = inject(SyncService);
+  private readonly notices = inject(AccountNotices);
 
   protected readonly confirming = signal<'delete' | 'sign-out' | null>(null);
   protected readonly signingOut = signal(false);
@@ -71,13 +76,16 @@ export class AccountSection {
   protected async saveNickname(event: Event): Promise<void> {
     event.preventDefault();
     if (!this.nicknameValid()) return;
-    if (await this.auth.setNickname(this.nicknameDraft())) {
-      this.editingNickname.set(false);
+    if (!(await this.auth.setNickname(this.nicknameDraft()))) {
+      this.notices.failed();
+      return;
     }
+    this.editingNickname.set(false);
+    this.notices.nicknameSaved();
   }
 
   protected retry(): void {
-    void this.auth.restore();
+    void this.notices.retryRestore();
   }
 
   protected async signOut(): Promise<void> {
@@ -98,11 +106,18 @@ export class AccountSection {
     this.confirming.set(null);
     await this.auth.signOut();
     await this.progress.forget();
+    // Said after the app has left for the welcome screen: the toast lives
+    // outside the router outlet, so it is still there to read.
+    this.notices.signedOut();
   }
 
   protected async deleteAccount(): Promise<void> {
-    if (!(await this.auth.deleteAccount())) return;
+    if (!(await this.auth.deleteAccount())) {
+      this.notices.failed();
+      return;
+    }
     this.confirming.set(null);
     await this.progress.forget();
+    this.notices.accountDeleted();
   }
 }
