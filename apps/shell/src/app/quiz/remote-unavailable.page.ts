@@ -30,16 +30,28 @@ import { EmptyState, PageHeader } from '@world-quiz/client/ui';
             [heading]="'quiz.unavailable.title' | transloco"
             [message]="'quiz.unavailable.message' | transloco"
           />
-          <ion-button
-            expand="block"
-            routerLink="/home"
-            data-testid="quiz-unavailable-home"
-          >
-            {{ 'quiz.unavailable.back' | transloco }}
-          </ion-button>
         </div>
       </div>
     </ion-content>
+
+    <!-- The way out of a dead end is this page's next step, so it sits where
+         every page keeps its next step. Inside the card it had no padding of
+         its own and ran edge to edge. -->
+    <div class="wq-action-bar">
+      <ion-button
+        class="wq-glass-button secondary"
+        expand="block"
+        routerLink="/home"
+        data-testid="quiz-unavailable-home"
+      >
+        {{ 'quiz.unavailable.back' | transloco }}
+      </ion-button>
+    </div>
+  `,
+  styles: `
+    .wq-page {
+      padding-bottom: var(--wq-action-bar-clearance);
+    }
   `,
 })
 export class RemoteUnavailablePage {}
