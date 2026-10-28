@@ -17,11 +17,11 @@ import {
   type SegmentCustomEvent,
   type ViewWillEnter,
 } from '@ionic/angular';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AUTH_CONFIG } from '@world-quiz/client/auth';
 import { PluralPipe } from '@world-quiz/client/i18n';
 import { ProgressStore, SyncService } from '@world-quiz/client/progress';
-import { EmptyState, PageHeader } from '@world-quiz/client/ui';
+import { EmptyState, PageHeader, Toasts } from '@world-quiz/client/ui';
 import {
   challengeSchema,
   leaderboardSchema,
@@ -75,12 +75,13 @@ export class LeaderboardPage implements ViewWillEnter {
   private readonly apiUrl = inject(AUTH_CONFIG).apiUrl;
   protected readonly progress = inject(ProgressStore);
   private readonly sync = inject(SyncService);
+  private readonly toasts = inject(Toasts);
+  private readonly transloco = inject(TranslocoService);
 
   protected readonly boards = LEADERBOARD_BOARDS;
   protected readonly view = signal<LeaderboardView>('global');
   protected readonly board = signal<LeaderboardBoardId>('capitals-easy');
   protected readonly starting = signal(false);
-  protected readonly startFailed = signal(false);
   protected readonly formatRunTime = formatRunTime;
 
   /** The board's ranking; public, the same for everyone. */
@@ -151,7 +152,6 @@ export class LeaderboardPage implements ViewWillEnter {
     const board = this.boards.find((entry) => entry.id === this.board());
     if (!board || this.starting()) return;
     this.starting.set(true);
-    this.startFailed.set(false);
     try {
       const challenge = challengeSchema.parse(
         await firstValueFrom(
@@ -168,7 +168,8 @@ export class LeaderboardPage implements ViewWillEnter {
         },
       });
     } catch {
-      this.startFailed.set(true);
+      // Nothing on screen changed, so the button would look broken.
+      this.toasts.failure(this.transloco.translate('leaderboard.startFailed'));
     } finally {
       this.starting.set(false);
     }

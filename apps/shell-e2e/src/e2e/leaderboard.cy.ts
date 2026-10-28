@@ -96,10 +96,9 @@ describe('leaderboard', () => {
       scrollBehavior: 'center',
     });
 
-    cy.get('[data-testid="challenge-start-failed"]').should(
-      'contain.text',
-      'could not be started',
-    );
+    cy.get('[data-testid="toast"]')
+      .should('have.attr', 'role', 'alert')
+      .and('contain.text', 'could not be started');
     cy.location('pathname').should('eq', '/leaderboard');
   });
 });

@@ -7,6 +7,7 @@ import { NavController } from '@ionic/angular';
 import { fireEvent, render, screen } from '@testing-library/angular';
 import { signal } from '@angular/core';
 import { SyncService } from '@world-quiz/client/progress';
+import { Toasts } from '@world-quiz/client/ui';
 import type { Leaderboard, MyRecords } from '@world-quiz/shared/contracts';
 import { provideShellTesting, TEST_API_URL } from '../../testing/shell-testing';
 import { LeaderboardPage } from './leaderboard.page';
@@ -89,7 +90,14 @@ async function renderPage({
   await answer('/v1/me/records', (request) =>
     records === 'error' ? failWith(request) : request.flush(records),
   );
-  return { ...view, http, answer, roots, lastSyncedAt };
+  return {
+    ...view,
+    http,
+    answer,
+    roots,
+    lastSyncedAt,
+    toasts: TestBed.inject(Toasts),
+  };
 }
 
 const emit = (testId: string, value: unknown) =>
@@ -205,16 +213,15 @@ describe('LeaderboardPage', () => {
   });
 
   it('says so when a challenge cannot be started', async () => {
-    const { answer, roots } = await renderPage();
+    const { answer, roots, toasts } = await renderPage();
 
     fireEvent.click(screen.getByTestId('challenge-start'));
     await answer('/v1/challenges', (request) =>
       request.error(new ProgressEvent('error')),
     );
 
-    expect(screen.getByTestId('challenge-start-failed').textContent).toContain(
-      'could not be started',
-    );
+    expect(toasts.current()).toMatchObject({ tone: 'error' });
+    expect(toasts.current()?.text).toContain('could not be started');
     expect(roots).toEqual([]);
   });
 

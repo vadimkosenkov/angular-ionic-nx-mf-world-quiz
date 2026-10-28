@@ -302,10 +302,10 @@ What belongs there, and what does not:
 
 - A **toast** reports the outcome of something the player just did — the
   public name was saved, it could not be saved, you are signed out, the
-  account is gone. It is about an action, not about the screen. "Try again"
-  on an unverified sign-in belongs here too: when the API is still
-  unreachable the screen looks exactly as it did, and without a word the
-  button looks broken.
+  account is gone, the challenge could not be started. It is about an action,
+  not about the screen. "Try again" on an unverified sign-in belongs here
+  too: when the API is still unreachable the screen looks exactly as it did,
+  and without a word the button looks broken.
 - **Losing the connection is not a message.** Nobody pressed anything, there
   is nothing to do about it, and it would fire in every tunnel. The screens
   that depend on the server say so themselves, and an action that fails
