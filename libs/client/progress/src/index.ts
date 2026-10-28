@@ -13,4 +13,8 @@ export {
   SYNC_SCHEDULER,
   SyncService,
 } from './lib/sync.service';
-export type { SyncScheduler, SyncStatus } from './lib/sync.service';
+export type {
+  SyncRecovery,
+  SyncScheduler,
+  SyncStatus,
+} from './lib/sync.service';

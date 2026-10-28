@@ -319,6 +319,13 @@ export const en = {
         },
         offline:
           'No connection to the World Quiz server; saving is retried automatically.',
+        // Said once the connection is back and the waiting results are in.
+        caughtUp: {
+          one: 'Back online: {{count}} result is saved to your account.',
+          few: 'Back online: {{count}} results are saved to your account.',
+          many: 'Back online: {{count}} results are saved to your account.',
+          other: 'Back online: {{count}} results are saved to your account.',
+        },
       },
       nickname: {
         label: 'Public name',

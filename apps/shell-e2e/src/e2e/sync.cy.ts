@@ -87,6 +87,11 @@ describe('sync', () => {
       online = true;
     });
     cy.window().trigger('online');
+    // The player was told nothing while it waited, so catching up is said.
+    cy.get('[data-testid="toast"]').should(
+      'contain.text',
+      'Back online: 1 result is saved to your account.',
+    );
     cy.get('[data-testid="sync-status"]').should(
       'contain.text',
       'All your results are saved to your account.',

@@ -169,6 +169,8 @@ describe('SyncService', () => {
       SYNC_RETRY_DELAYS_MS.slice(0, 2),
     );
 
+    expect(sync.recovered()).toBeNull();
+
     scheduled.at(-1)?.run();
     await answer(http, isPost, (request) => {
       expect(request.request.body).toEqual(played.request);
@@ -182,6 +184,26 @@ describe('SyncService', () => {
 
     expect(progress.pendingCount()).toBe(0);
     expect(sync.status()).toBe('idle');
+    // The player heard nothing while it waited, so catching up is reported.
+    expect(sync.recovered()).toEqual({ sent: 1, at: 9_000_000 });
+  });
+
+  it('says nothing about a sync that never had to wait', async () => {
+    const { sync, progress, http } = setup();
+    progress.recordSession(finishedSession([{ code: 'fr', correct: true }]));
+
+    const run = sync.sync();
+    await answer(http, isPost, (request) =>
+      request.flush(sessionResult(request.request.body.id), {
+        status: 201,
+        statusText: 'Created',
+      }),
+    );
+    await answer(http, isHistory, (request) => request.flush(page([], null)));
+    await run;
+
+    expect(progress.pendingCount()).toBe(0);
+    expect(sync.recovered()).toBeNull();
   });
 
   it('marks a session the API refuses as rejected, reports it and sends the next', async () => {

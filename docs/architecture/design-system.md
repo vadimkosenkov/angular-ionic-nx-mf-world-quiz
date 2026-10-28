@@ -310,6 +310,12 @@ What belongs there, and what does not:
   is nothing to do about it, and it would fire in every tunnel. The screens
   that depend on the server say so themselves, and an action that fails
   because of it already gets its toast.
+- **Getting it back is**, but only with something to show for it: when a sync
+  that had been failing finally sends the results waiting on the device
+  (`SyncService.recovered` → `provideSyncNotices`). The player played those
+  rounds and was told nothing at the time, so this closes the loop; the
+  ordinary sync after a finished quiz stays silent, or every round would end
+  with a receipt.
 - A **screen state** stays on the screen: a result the server refused, an
   empty leaderboard, "no connection", the nickname rules under the field that
   say what a valid name is. These are still true after a message would have
