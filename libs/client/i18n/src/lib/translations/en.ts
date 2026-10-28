@@ -18,6 +18,11 @@ export const en = {
   common: {
     progressValue: '{{value}} of {{max}}',
   },
+  // The app's one transient message (see `Toasts`); the texts it shows come
+  // from the screen that asked for it.
+  toast: {
+    dismiss: 'Close message',
+  },
   tabs: {
     label: 'Main navigation',
     home: 'Home',
@@ -319,6 +324,7 @@ export const en = {
         label: 'Public name',
         edit: 'Change',
         save: 'Save name',
+        saved: 'Your public name is saved.',
         rules:
           'Shown on leaderboards instead of your name: 3 to 24 letters, digits, spaces, "_", "-" or ".".',
       },
@@ -339,12 +345,15 @@ export const en = {
       },
       signOutAnyway: 'Sign out anyway',
       staySignedIn: 'Stay signed in',
+      signedOut: 'You are signed out.',
+      deleted: 'Your account and its results are deleted.',
       errors: {
         'sign-in-failed': 'Sign-in did not work. Please try again.',
         unreachable:
           'The World Quiz server cannot be reached. Check your connection.',
         'delete-failed': 'Your account could not be deleted. Please try again.',
-        'nickname-invalid': 'This name is not allowed. Check the rules below.',
+        'nickname-invalid':
+          'This name is not allowed. The rules are under the field.',
         'nickname-failed': 'The name could not be saved. Please try again.',
       },
     },

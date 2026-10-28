@@ -11,6 +11,7 @@ import { PluralPipe } from '@world-quiz/client/i18n';
 import { ProgressStore } from '@world-quiz/client/progress';
 import { SettingsStore } from '@world-quiz/client/settings';
 import { TRAINING_MODES } from '@world-quiz/quiz/domain';
+import { AccountNotices } from '../auth/account-notices';
 import { NATIVE_PLATFORM } from '../core/platform';
 import { RUNTIME_CONFIG } from '../runtime-config';
 
@@ -36,6 +37,7 @@ export class WelcomePage {
   protected readonly settings = inject(SettingsStore);
   protected readonly progress = inject(ProgressStore);
   private readonly nav = inject(NavController);
+  private readonly notices = inject(AccountNotices);
 
   protected readonly modeCount = TRAINING_MODES.length;
   /**
@@ -53,7 +55,10 @@ export class WelcomePage {
     idToken,
     nonce,
   }: GoogleCredential): Promise<void> {
-    if (!(await this.auth.signIn('google', idToken, nonce))) return;
+    if (!(await this.auth.signIn('google', idToken, nonce))) {
+      this.notices.failed();
+      return;
+    }
     const user = this.auth.user();
     if (user) await this.progress.claim(user);
     await this.nav.navigateRoot('/home');
@@ -75,14 +80,16 @@ export class WelcomePage {
 
   /** Only in a build that enables it, against an API that allows it. */
   protected async signInForDevelopment(): Promise<void> {
-    if (!(await this.auth.signInForDevelopment(`ios-${crypto.randomUUID()}`)))
+    if (!(await this.auth.signInForDevelopment(`ios-${crypto.randomUUID()}`))) {
+      this.notices.failed();
       return;
+    }
     const user = this.auth.user();
     if (user) await this.progress.claim(user);
     await this.nav.navigateRoot('/home');
   }
 
   protected retry(): void {
-    void this.auth.restore();
+    void this.notices.retryRestore();
   }
 }

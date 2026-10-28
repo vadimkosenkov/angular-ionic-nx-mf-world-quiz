@@ -125,6 +125,11 @@
   --wq-tab-bar-clearance: calc(92px + var(--ion-safe-area-bottom, 0px));
   // Space a page keeps free under the floating `.wq-action-bar`.
   --wq-action-bar-clearance: calc(96px + var(--ion-safe-area-bottom, 0px));
+  // How high a toast floats: clear of the tallest floating chrome at the
+  // bottom edge (the 60 px tab bar; the action bar's buttons are 52 px). A
+  // message may still cross the page's own content — that is what its close
+  // button is for.
+  --wq-toast-inset: calc(var(--wq-chrome-inset) + 60px + var(--wq-space-2));
 }
 
 // Dark theme: designed separately, not an inversion. Deep navy surfaces keep

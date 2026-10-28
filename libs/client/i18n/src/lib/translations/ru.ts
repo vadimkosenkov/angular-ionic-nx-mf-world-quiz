@@ -8,6 +8,9 @@ export const ru: TranslationShape = {
   common: {
     progressValue: '{{value}} из {{max}}',
   },
+  toast: {
+    dismiss: 'Закрыть сообщение',
+  },
   tabs: {
     label: 'Основная навигация',
     home: 'Главная',
@@ -314,6 +317,7 @@ export const ru: TranslationShape = {
         label: 'Публичное имя',
         edit: 'Изменить',
         save: 'Сохранить имя',
+        saved: 'Публичное имя сохранено.',
         rules:
           'Показывается в рейтингах вместо вашего имени: от 3 до 24 букв, цифр, пробелов, «_», «-» или «.».',
       },
@@ -334,11 +338,13 @@ export const ru: TranslationShape = {
       },
       signOutAnyway: 'Всё равно выйти',
       staySignedIn: 'Остаться',
+      signedOut: 'Вы вышли из аккаунта.',
+      deleted: 'Аккаунт и его результаты удалены.',
       errors: {
         'sign-in-failed': 'Войти не получилось. Попробуйте ещё раз.',
         unreachable: 'Сервер World Quiz недоступен. Проверьте соединение.',
         'delete-failed': 'Не удалось удалить аккаунт. Попробуйте ещё раз.',
-        'nickname-invalid': 'Такое имя не подходит. Проверьте правила ниже.',
+        'nickname-invalid': 'Такое имя не подходит. Правила — под полем.',
         'nickname-failed': 'Не удалось сохранить имя. Попробуйте ещё раз.',
       },
     },

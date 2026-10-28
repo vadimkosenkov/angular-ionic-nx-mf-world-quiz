@@ -1,0 +1,84 @@
+@use '../../styles/materials' as *;
+
+// A message floats at the **bottom** of the screen, above the floating
+// chrome: iOS 26/27 smear anything with a crisp horizontal edge in the top
+// ~100 px of an installed web app (CLAUDE.md), which is exactly what a card
+// of glass is.
+//
+// `position: fixed` and not inside a page: the host lives in `ion-app`, so a
+// message is not carried away by the page transition that may follow it.
+:host {
+  position: fixed;
+  inset-inline: var(--wq-space-3);
+  bottom: var(--wq-toast-inset);
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  max-width: 560px;
+  margin-inline: auto;
+  // The host spans the width of the screen whether or not it holds a message,
+  // so it must never take a tap meant for the page underneath it.
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--wq-space-2);
+  // The close button brings its own 44 px of touch target, so the end of the
+  // row needs less padding than the start.
+  padding: var(--wq-space-2) var(--wq-space-2) var(--wq-space-2)
+    var(--wq-space-4);
+  border-radius: var(--wq-radius-lg);
+  pointer-events: auto;
+  animation: wq-toast-in var(--wq-duration-base) var(--wq-easing-standard);
+
+  // The chrome material, like the tab bar below it: one glass in the app.
+  @include glass-chrome;
+
+  > ion-icon {
+    flex-shrink: 0;
+    font-size: 22px;
+    color: var(--wq-color-success);
+  }
+
+  &.error > ion-icon {
+    color: var(--wq-color-error);
+  }
+}
+
+.text {
+  margin: 0;
+  font-size: var(--wq-font-size-control);
+  color: var(--wq-color-text-primary);
+}
+
+.dismiss {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--wq-touch-target);
+  height: var(--wq-touch-target);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--wq-color-text-secondary);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+// Rises from behind the chrome it floats above. `prefers-reduced-motion` is
+// handled globally in `_base.scss`.
+@keyframes wq-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--wq-space-2));
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

@@ -88,11 +88,7 @@
         <ion-icon name="logo-apple" aria-hidden="true" />
         {{ 'settings.account.appleOnIos' | transloco }}
       </p>
-      } } @if (auth.error(); as error) {
-      <p class="error" role="alert" data-testid="welcome-error">
-        {{ 'settings.account.errors.' + error | transloco }}
-      </p>
-      }
+      } }
     </div>
   </main>
 </ion-content>
