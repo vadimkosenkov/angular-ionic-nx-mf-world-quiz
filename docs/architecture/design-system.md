@@ -89,8 +89,9 @@ Glass is **progressive enhancement** and used **selectively**:
 | The one hero summary per screen (`wq-progress-card variant="glass"`, achievements summary) | Focal point                                            |
 | Theme selector                                                                             | A floating control                                     |
 
-Lists, category cards and achievement cards stay solid; the featured category
-card is an **accent** surface (a brand gradient), not glass.
+Lists, category cards and achievement cards stay solid. Brand colour is for
+**actions**: the two category cards on Home are the same neutral surface, and
+the blue belongs to the Play button inside them.
 
 How it degrades (`_glass.scss`):
 
@@ -267,16 +268,54 @@ Its buttons are `ion-button.wq-glass-button`: pill-shaped with a **solid**
 fill — primary, or `secondary` (surface, primary label, border). A
 translucent tinted fill was tried and dropped: over busy content the label
 lost contrast and the button looked washed out. Used for Start quiz, Check,
-Continue, Finish, Play again and Back to home.
+Finish, Play again and Back to home.
 
-The verdict of an answer is shown under the flag, never next to the button.
-After a wrong answer the correct answer gets its own white block with the
-largest text on the screen, because it is what the player should remember.
+The one exception is the verdict between two questions. It is shown under the
+flag, where the player is already looking, and the **card itself** is the
+control that moves on: a tap anywhere on it continues, so the hand that just
+answered does not travel to the bottom of the screen for every question. It
+takes focus when it appears (Enter continues) and carries a small "tap to
+continue" hint, because without the bottom button nothing else says it is a
+control. The action bar is then empty — its buttons belong to an open
+question, not to a verdict.
+
+Both verdicts end with the answer in its own white block, in the largest text
+on the screen: after a mistake it is what the player should remember, after a
+correct answer it confirms what they chose. An accepted typo is the exception
+— the block carries the canonical spelling, not what was typed, so it is
+labelled as the correct answer rather than as the player's own.
+
+The clearance the action bar asks for is reserved only while there is one
+(`:host(.with-action-bar)`), or an Easy round would end with a screen's worth
+of empty space below the choices and every question would scroll.
+
+### The on-screen keyboard (Hard mode)
+
+iOS does not shrink the layout viewport when the keyboard opens: `svh`, `vh`
+and every media query stay as they were, so a stylesheet cannot see it. The
+page therefore shrinks itself — `:host(.keyboard-open)` gives the flag
+`15svh` and tightens the prompt — driven by the answer field's own focus,
+which on a touch device only happens when the player taps it (the page does
+not focus the field there; iOS opens no keyboard for a programmatic focus and
+the player would be left with a focused field and nothing to type on).
+
+iOS then lifts the page by scrolling the document, by an amount it decides
+_while_ the keyboard opens and measures on the layout as it was before the
+shrink — so it scrolls further than it needs to and the flag ends up above
+the fold. Once the keyboard has settled the page scrolls back to the least
+that still leaves the field clear of it, which is usually nothing at all.
+That same moment is when a keyboard that never arrived is noticed — a
+hardware keyboard is paired, or this is a simulator — and the page gives the
+flag its height back rather than making room for nothing.
 
 Feedback blocks are tinted with `--wq-color-success-vivid` /
 `--wq-color-error-vivid` (the iOS system green and red) and glow softly in the
 same hue. The darker `success` / `error` tokens are for text only: mixed into a
 fill they turned greyish and did not read as "correct" on the lavender page.
+Their text on those tinted cards is `--wq-color-success-strong` /
+`--wq-color-error-strong`: the plain tokens are AA on white but reach only
+4.4:1 on the tint, which axe never caught because the suite answered and left
+the verdict in one step. It now checks both verdicts.
 
 The quiz's exit button is a 44 px round surface button with the filled
 `close` icon; a bare hairline cross was too easy to miss.
@@ -301,7 +340,7 @@ page container adds `var(--ion-safe-area-top)` to its top padding.
 
 - Status is never shown by colour alone: achievement states have an icon and a text label.
 - Touch targets are at least 44 px (`--wq-touch-target`, Ionic list items 56 px).
-- `:focus-visible` shows a 3 px outline for keyboard users on the web.
+- `:focus-visible` shows a ring for keyboard users on the web: a 2 px gap in `--wq-color-focus-ring-gap`, a 1 px line in `--wq-color-primary` and a soft glow of the same hue, drawn with `box-shadow`. A plain outline sat flat on whatever was behind it; on the tinted verdict card, which takes focus after every Hard-mode answer, it read as part of the card. The rule keeps a transparent `outline` because Windows' forced-colours modes drop `box-shadow` and paint that outline in the system's focus colour.
 - `prefers-reduced-motion` reduces animations and transitions to near zero.
 - Decorative images (language flags) have `alt=""`; the language name is text.
 - `<html lang>` follows the UI language, and each language name is marked with its own `lang`.

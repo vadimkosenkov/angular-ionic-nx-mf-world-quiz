@@ -4,9 +4,34 @@
   display: flex;
   flex-direction: column;
   gap: var(--wq-space-5);
-  // Room for the floating action bar, so the last answer is never under it.
-  padding-bottom: var(--wq-action-bar-clearance);
   --wq-flag-height: 38svh;
+}
+
+// Room for the floating action bar, so the last answer is never under it —
+// but only while there is one. Reserving it always left a screen's worth of
+// empty space below an Easy round and made every question scrollable.
+:host(.with-action-bar) {
+  padding-bottom: var(--wq-action-bar-clearance);
+}
+
+// While the keyboard is up it covers the lower half of the window, and the
+// page does not shrink with it on iOS. Without this the answer field ends up
+// under the keyboard, or the browser shifts the whole page to reach it and
+// the flag is cut off at the top — which of the two happened depended on
+// whether the page could scroll at that moment, so the quiz behaved
+// differently from question to question. The flag gives up its height
+// instead, and everything fits in what the keyboard leaves.
+:host(.keyboard-open) {
+  gap: var(--wq-space-3);
+  --wq-flag-height: 15svh;
+
+  .prompt {
+    gap: var(--wq-space-2);
+
+    h1 {
+      font-size: 1.25rem;
+    }
+  }
 }
 
 // A phone in a browser: the address bar and the toolbar eat a third of the

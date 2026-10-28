@@ -20,8 +20,8 @@ export const askedCountry = () =>
       return code as string;
     });
 
-/** Answers the visible Easy question, then leaves the feedback. */
-export const answerChoice = (correctly: boolean) => {
+/** Answers the visible Easy question and stops on the verdict. */
+export const chooseAnswer = (correctly: boolean) => {
   askedCountry().then((code) => {
     const correctChoice = `[data-testid="quiz-choice-${code}"]`;
     if (correctly) cy.get(correctChoice).click();
@@ -31,6 +31,13 @@ export const answerChoice = (correctly: boolean) => {
         .first()
         .click();
   });
+};
+
+/** Answers the visible Easy question, then leaves the feedback. */
+export const answerChoice = (correctly: boolean) => {
+  chooseAnswer(correctly);
+  // The verdict card is the control that continues; there is no button at
+  // the bottom of the screen any more.
   byTestId('quiz-continue').click();
 };
 

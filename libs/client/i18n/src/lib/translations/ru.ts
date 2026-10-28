@@ -218,7 +218,8 @@ export const ru: TranslationShape = {
     incorrect: 'Неверно',
     accepted: 'Засчитано как «{{answer}}»',
     correctAnswer: 'Правильный ответ',
-    continue: 'Дальше',
+    yourAnswer: 'Ваш ответ',
+    tapToContinue: 'Нажмите, чтобы продолжить',
     finish: 'Завершить',
     finishEarly: 'Завершить квиз',
     unavailable: {

@@ -1,6 +1,7 @@
 import { addIcons } from 'ionicons';
 import {
   checkmarkCircle,
+  chevronForward,
   close,
   closeCircle,
   sparklesOutline,
@@ -17,6 +18,7 @@ import {
 export function registerQuizIcons(): void {
   addIcons({
     'checkmark-circle': checkmarkCircle,
+    'chevron-forward': chevronForward,
     close,
     'close-circle': closeCircle,
     'sparkles-outline': sparklesOutline,

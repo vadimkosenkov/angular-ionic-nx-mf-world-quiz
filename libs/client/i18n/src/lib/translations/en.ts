@@ -223,7 +223,8 @@ export const en = {
     incorrect: 'Not quite',
     accepted: 'Accepted as {{answer}}',
     correctAnswer: 'Correct answer',
-    continue: 'Continue',
+    yourAnswer: 'Your answer',
+    tapToContinue: 'Tap to continue',
     finish: 'Finish',
     finishEarly: 'Finish quiz',
     unavailable: {

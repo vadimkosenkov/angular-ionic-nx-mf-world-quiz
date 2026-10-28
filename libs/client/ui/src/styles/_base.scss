@@ -63,6 +63,15 @@ wq-page-header + ion-content {
 }
 
 // Visible keyboard focus for web (touch users never see it).
+//
+// A ring of shadows rather than an outline: a gap in the page's own colour,
+// then the brand line, then a soft glow of the same hue. A plain outline sat
+// flat on whatever was behind it — on the tinted verdict card, which takes
+// focus after every Hard-mode answer, it read as part of the card.
+//
+// The transparent outline is not decoration: Windows' forced-colours modes
+// drop `box-shadow` entirely and would leave focus invisible, and they paint
+// a transparent outline in the system's own focus colour.
 :where(
   a,
   button,
@@ -71,8 +80,12 @@ wq-page-header + ion-content {
   ion-segment-button,
   ion-tab-button
 ):focus-visible {
-  outline: 3px solid var(--wq-color-primary-bright);
+  outline: 2px solid transparent;
   outline-offset: 2px;
+  box-shadow:
+    0 0 0 2px var(--wq-color-focus-ring-gap),
+    0 0 0 3px var(--wq-color-primary),
+    0 0 12px 5px color-mix(in srgb, var(--wq-color-primary) 50%, transparent);
 }
 
 .wq-visually-hidden {

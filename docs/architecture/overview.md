@@ -117,9 +117,19 @@ typos). The app has no custom speech-recognition UI and no external AI/LLM judgi
 | 14a | `feat/polish-quality`        | Accessibility checks, security headers and CSP, performance review                      | ✅ merged      |
 | 14b | `feat/polish-feel`           | Animation, sound and haptics                                                            | ✅ merged      |
 | 15  | `feat/pwa`                   | Installable web app: manifest, icons, offline service worker                            | ✅ merged      |
-| 16  | `feat/polish-details`        | Region sizes, the vibration setting on the web, the account card                        | 🚧 this branch |
-| 17  | `feat/page-header`           | The header as floating controls: a round back button and a title pill, off `ion-header` | 🚧 this branch |
-| 18  | `feat/toasts-boards`         | One way to say something went well or wrong (toasts); a clearer leaderboard switcher    | planned        |
-| 19  | `feat/countries-reference`   | A browsable list of every country by region: flag, country, capital                     | planned        |
-| 20  | `feat/share-sounds`          | Sharing a result; a sound on the actions that start something                           | planned        |
-| 21  | `feat/regional-boards`       | Leaderboards per region: domain, API and app                                            | planned        |
+| 16  | `feat/polish-details`        | Region sizes, the vibration setting on the web, the account card                        | ✅ merged      |
+| 17  | `feat/page-header`           | The header as floating controls: a round back button and a title pill, off `ion-header` | ✅ merged      |
+| 18  | `feat/answer-feedback`       | The verdict card continues the quiz and repeats the answer; one card style on Home      | 🚧 this branch |
+| 19  | `feat/toasts`                | One way to say something went well or wrong                                             | planned        |
+| 20  | `feat/first-run-tips`        | Short hints on the first run: the quiz setup can be changed before starting             | planned        |
+| 21  | `feat/countries-reference`   | A browsable list of every country by region: flag, country, capital                     | planned        |
+| 22  | `feat/share-sounds`          | Sharing a result; a sound on the actions that start something                           | planned        |
+| 23  | `feat/leaderboards-v2`       | Boards per mode, region and difficulty; top 100 plus the player's own row               | planned        |
+| 24  | `feat/friends`               | Friends, their achievements, and a board of you and your friends                        | planned        |
+| 25  | `feat/auth-fixes`            | Google sign-in: straight to Home after signing in, and no surprise sign-outs            | planned        |
+| 26  | `feat/voice-answers`         | Hard mode answered out loud: the Web Speech API on the web, a decision on iOS after     | planned        |
+
+Phase 23 replaces the earlier plan for separate regional boards: region and
+difficulty become part of every board, Quick round is ranked by time and Time
+attack by correct answers, and a challenge is started from Home rather than
+from the leaderboard screen.

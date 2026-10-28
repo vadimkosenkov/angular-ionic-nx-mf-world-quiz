@@ -5,7 +5,7 @@
  * heading order — are the ones that break silently.
  */
 import { expectAccessible } from '../support/accessibility';
-import { answerChoice, byTestId } from '../support/quiz';
+import { answerChoice, byTestId, chooseAnswer } from '../support/quiz';
 
 describe('accessibility', () => {
   it('checks the welcome screen, signed out', () => {
@@ -59,7 +59,20 @@ describe('accessibility', () => {
       byTestId('quiz-choices', { timeout: 20_000 }).should('exist');
       expectAccessible();
 
-      answerChoice(false);
+      // Both verdicts: each tints the card with its own hue, and the card is
+      // itself the button that continues.
+      chooseAnswer(true);
+      byTestId('quiz-feedback').should('exist');
+      expectAccessible();
+
+      cy.visit(
+        '/quiz/capitals?scope=europe&difficulty=easy&mode=fixed&count=1',
+      );
+      chooseAnswer(false);
+      byTestId('quiz-feedback').should('exist');
+      expectAccessible();
+
+      byTestId('quiz-continue').click();
       byTestId('results-review').should('exist');
       expectAccessible();
 

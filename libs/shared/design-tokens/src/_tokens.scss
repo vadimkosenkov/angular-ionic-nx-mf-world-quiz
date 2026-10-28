@@ -25,6 +25,10 @@
   // Surfaces
   --wq-color-background: #f4f5ff;
   --wq-color-surface: #ffffff;
+  // The gap between a focused control and its focus ring, so the ring never
+  // touches the control's own edge. The page's lightest surface in each
+  // theme, because the ring lands on cards and on the page alike.
+  --wq-color-focus-ring-gap: #ffffff;
   --wq-color-surface-secondary: #eceefb;
   // Unfilled part of a progress bar; darker than surface-secondary so the
   // track stays visible on the page background as well as on white cards.
@@ -52,6 +56,11 @@
   --wq-color-error-vivid: #ff3b30;
   --wq-color-error: #c0322f;
   --wq-color-error-container: #fde7e7;
+  // Text on a surface tinted with the vivid hue (the quiz verdict). The plain
+  // success/error values are AA on white but only reach 4.4:1 there, so the
+  // tinted cards get their own, darker ink.
+  --wq-color-success-strong: #0f5c3a;
+  --wq-color-error-strong: #a3231f;
   --wq-color-warning: #955800;
   --wq-color-warning-container: #fff1d6;
 
@@ -132,6 +141,7 @@
 
   --wq-color-background: #0b0e1f;
   --wq-color-surface: #151a33;
+  --wq-color-focus-ring-gap: #151a33;
   --wq-color-surface-secondary: #1c2242;
   --wq-color-progress-track: #2f3766;
   --wq-color-glass-surface: rgb(28 34 66 / 58%);
@@ -153,6 +163,10 @@
   --wq-color-error-vivid: #ff453a;
   --wq-color-error: #ff7a7a;
   --wq-color-error-container: #43161a;
+  // Light-on-dark already clears AA on the tinted cards (5.2:1 and 5.6:1),
+  // so the ink is the plain value; the token exists for both themes.
+  --wq-color-success-strong: #4ad295;
+  --wq-color-error-strong: #ff7a7a;
   --wq-color-warning: #f5b54a;
   --wq-color-warning-container: #3d2a0c;
 
