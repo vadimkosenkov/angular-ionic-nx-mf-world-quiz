@@ -188,6 +188,34 @@ describe('SyncService', () => {
     expect(sync.recovered()).toEqual({ sent: 1, at: 9_000_000 });
   });
 
+  it('still reports results the API took in a run that failed later', async () => {
+    const { sync, progress, http, scheduled } = setup();
+    progress.recordSession(finishedSession([{ code: 'fr', correct: true }]));
+
+    // The result is accepted, and only the pull that follows fails, so it
+    // leaves the outbox without the player ever hearing about it.
+    const first = sync.sync();
+    await answer(http, isPost, (request) =>
+      request.flush(sessionResult(request.request.body.id), {
+        status: 201,
+        statusText: 'Created',
+      }),
+    );
+    await answer(http, isHistory, (request) =>
+      request.error(new ProgressEvent('error')),
+    );
+    await first;
+    expect(sync.status()).toBe('offline');
+    expect(progress.pendingCount()).toBe(0);
+    expect(sync.recovered()).toBeNull();
+
+    scheduled.at(-1)?.run();
+    await answer(http, isHistory, (request) => request.flush(page([], null)));
+    await settle();
+
+    expect(sync.recovered()).toEqual({ sent: 1, at: 9_000_000 });
+  });
+
   it('says nothing about a sync that never had to wait', async () => {
     const { sync, progress, http } = setup();
     progress.recordSession(finishedSession([{ code: 'fr', correct: true }]));

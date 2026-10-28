@@ -82,6 +82,13 @@ export class SyncService {
   private running: Promise<void> | null = null;
   private runAgain = false;
   private failures = 0;
+  /**
+   * Results the API has accepted since the player was last told about them.
+   * A run can send the outbox and still fail on the pull that follows, and
+   * those results are then out of the outbox: counting only what the next
+   * run sends would lose them, and the player would hear nothing.
+   */
+  private sentSinceReport = 0;
   private cancelRetry: (() => void) | null = null;
   /** The API's answers to sessions sent in this run of the app. */
   private readonly results = new Map<string, SessionResult>();
@@ -132,12 +139,14 @@ export class SyncService {
     this.statusState.set('syncing');
     try {
       await this.progress.claim(user);
-      const sent = await this.push();
+      this.sentSinceReport += await this.push();
       await this.pull();
       this.failures = 0;
       const at = this.clock.now();
       this.lastSyncedAtState.set(at);
       this.statusState.set('idle');
+      const sent = this.sentSinceReport;
+      this.sentSinceReport = 0;
       if (stuck && sent > 0) this.recoveredState.set({ sent, at });
     } catch (error) {
       this.handleFailure(error);

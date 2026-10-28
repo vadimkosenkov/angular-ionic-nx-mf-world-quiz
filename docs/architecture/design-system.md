@@ -311,8 +311,10 @@ What belongs there, and what does not:
   that depend on the server say so themselves, and an action that fails
   because of it already gets its toast.
 - **Getting it back is**, but only with something to show for it: when a sync
-  that had been failing finally sends the results waiting on the device
-  (`SyncService.recovered` → `provideSyncNotices`). The player played those
+  that had been failing finally gets the device's waiting results through
+  (`SyncService.recovered` → `provideSyncNotices`, which counts the results
+  accepted since the player was last told, because a run can send them and
+  still fail on the pull that follows). The player played those
   rounds and was told nothing at the time, so this closes the loop; the
   ordinary sync after a finished quiz stays silent, or every round would end
   with a receipt.
