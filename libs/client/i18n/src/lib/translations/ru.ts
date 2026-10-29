@@ -284,6 +284,7 @@ export const ru: TranslationShape = {
   },
   settings: {
     title: 'Настройки',
+    info: 'Подробнее: {{name}}',
     account: {
       title: 'Аккаунт',
       checking: 'Проверяем вход…',
@@ -376,7 +377,8 @@ export const ru: TranslationShape = {
       title: 'Звук и отклик',
       sound: 'Звуки',
       haptics: 'Вибрация',
-      hint: 'Короткие сигналы на ответ и в конце раунда.',
+      soundHint: 'Короткие сигналы на ответ и в конце раунда.',
+      hapticsHint: 'Лёгкий тактильный отклик на ответ и в конце раунда.',
       hapticsOnIos:
         'Вибрация работает только в приложении для iPhone: из браузера нет доступа к тактильному отклику.',
     },

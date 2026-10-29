@@ -16,7 +16,7 @@ import {
   type ToggleCustomEvent,
 } from '@ionic/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { PageHeader } from '@world-quiz/client/ui';
+import { InfoButton, PageHeader } from '@world-quiz/client/ui';
 import {
   isThemePreference,
   SettingsStore,
@@ -56,6 +56,7 @@ interface LanguageOption {
     IonRadioGroup,
     IonRadio,
     IonNote,
+    InfoButton,
     TranslocoPipe,
     AccountSection,
   ],

@@ -108,6 +108,21 @@ describe('SettingsPage', () => {
     expect(flags.every((img) => img.getAttribute('alt') === '')).toBe(true);
   });
 
+  // Stacked under the card the notes ran together, and it took reading to
+  // tell which control each one was about.
+  it('puts every note behind its own "i"', async () => {
+    await render(SettingsPage, { providers: provideShellTesting() });
+
+    for (const name of [
+      'About Sounds',
+      'About Vibration',
+      'About Screen tours',
+    ]) {
+      expect(screen.getByRole('button', { name })).toBeTruthy();
+    }
+    expect(screen.queryByText(/Short tones/)).toBeNull();
+  });
+
   it('turns the sounds off through the store', async () => {
     await render(SettingsPage, { providers: provideShellTesting() });
     const store = TestBed.inject(SettingsStore);

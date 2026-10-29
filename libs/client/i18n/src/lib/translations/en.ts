@@ -292,6 +292,8 @@ export const en = {
   },
   settings: {
     title: 'Settings',
+    /** The "i" beside a setting: "About Sounds". */
+    info: 'About {{name}}',
     account: {
       title: 'Account',
       checking: 'Checking your sign-in…',
@@ -387,7 +389,8 @@ export const en = {
       title: 'Sound and feel',
       sound: 'Sounds',
       haptics: 'Vibration',
-      hint: 'Short tones when an answer lands and when a round ends.',
+      soundHint: 'Short tones when an answer lands and when a round ends.',
+      hapticsHint: 'A light tap when an answer lands and when a round ends.',
       hapticsOnIos:
         'Vibration needs the iPhone app: a browser cannot reach the taptic engine.',
     },

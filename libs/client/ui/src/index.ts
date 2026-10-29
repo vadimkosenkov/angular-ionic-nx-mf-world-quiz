@@ -1,4 +1,5 @@
 export { EmptyState } from './lib/empty-state/empty-state';
+export { InfoButton } from './lib/info/info-button';
 export { FadesWithPage } from './lib/page-chrome/fades-with-page';
 export { PageChromeState } from './lib/page-chrome/page-chrome-state';
 export { PageHeader } from './lib/page-header/page-header';

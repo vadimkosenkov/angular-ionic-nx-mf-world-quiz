@@ -65,36 +65,56 @@
       <h2 id="feel-title" class="wq-section-title">
         {{ 'settings.feel.title' | transloco }}
       </h2>
+      <!-- Each note belongs to its own row, behind the "i": stacked under
+           the card they ran together and it took reading to tell which
+           control each one was about (design-system.md). -->
       <div class="list">
         <ion-item>
+          <ion-label>{{ 'settings.feel.sound' | transloco }}</ion-label>
+          <wq-info-button
+            slot="end"
+            data-testid="sound-info"
+            [label]="'settings.info'| transloco: { name: 'settings.feel.sound' | transloco }"
+            [text]="'settings.feel.soundHint' | transloco"
+          />
           <ion-toggle
+            slot="end"
             data-testid="sound-toggle"
+            [attr.aria-label]="'settings.feel.sound' | transloco"
             [checked]="settings.sound()"
             (ionChange)="onSoundChange($event)"
-          >
-            {{ 'settings.feel.sound' | transloco }}
-          </ion-toggle>
+          />
         </ion-item>
         <!-- Shown everywhere, so the app never looks as if it were missing a
-             setting; a browser simply has no taptic engine, and the note
-             below says so. -->
+             setting; a browser simply has no taptic engine, and the toggle
+             says so to anyone who asks it. -->
         <ion-item>
+          <!-- The toggle used to carry this text and greyed it out itself
+               when it was disabled; now the row says it. -->
+          <ion-label [class.unavailable]="!nativePlatform">
+            {{ 'settings.feel.haptics' | transloco }}
+          </ion-label>
+          <wq-info-button
+            slot="end"
+            data-testid="haptics-info"
+            [label]="'settings.info' | transloco: { name: 'settings.feel.haptics' | transloco }"
+            [text]="(nativePlatform? 'settings.feel.hapticsHint': 'settings.feel.hapticsOnIos') | transloco"
+          />
           <ion-toggle
+            slot="end"
             data-testid="haptics-toggle"
+            [attr.aria-label]="'settings.feel.haptics' | transloco"
             [checked]="nativePlatform && settings.haptics()"
             [disabled]="!nativePlatform"
             [attr.aria-describedby]="nativePlatform ? null : 'haptics-note'"
             (ionChange)="onHapticsChange($event)"
-          >
-            {{ 'settings.feel.haptics' | transloco }}
-          </ion-toggle>
+          />
         </ion-item>
       </div>
-      <p class="wq-text-secondary hint">
-        {{ 'settings.feel.hint' | transloco }}
-      </p>
+      <!-- A disabled control must explain itself without being asked, so
+           the reason is on the toggle as well as behind the "i". -->
       @if (!nativePlatform) {
-      <p id="haptics-note" class="wq-text-secondary hint">
+      <p id="haptics-note" class="wq-visually-hidden">
         {{ 'settings.feel.hapticsOnIos' | transloco }}
       </p>
       }
@@ -109,18 +129,22 @@
            it back on starts them again (tips.store.ts). -->
       <div class="list">
         <ion-item>
+          <ion-label>{{ 'settings.tips.label' | transloco }}</ion-label>
+          <wq-info-button
+            slot="end"
+            data-testid="tips-info"
+            [label]="'settings.info' | transloco: { name: 'settings.tips.label' | transloco }"
+            [text]="'settings.tips.hint' | transloco"
+          />
           <ion-toggle
+            slot="end"
             data-testid="tips-toggle"
+            [attr.aria-label]="'settings.tips.label' | transloco"
             [checked]="tips.on()"
             (ionChange)="onTipsChange($event)"
-          >
-            {{ 'settings.tips.label' | transloco }}
-          </ion-toggle>
+          />
         </ion-item>
       </div>
-      <p class="wq-text-secondary hint">
-        {{ 'settings.tips.hint' | transloco }}
-      </p>
     </section>
 
     <section class="wq-section" aria-labelledby="about-title">

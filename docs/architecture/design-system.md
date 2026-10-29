@@ -144,6 +144,7 @@ is supported in Chromium and WebKit; where it is not, the enhancement stays on.
 | `wq-empty-state`   | Icon, heading, message, projected actions for empty, unavailable and offline states              | `role="status"`; decorative icon hidden                                                                                      |
 | `wq-toast-host`    | The one transient message: a confirmation or a failure, at the bottom over the chrome            | A new element per message, `role="alert"` for a failure and `role="status"` for a confirmation; its close button is labelled |
 | `wq-tour-step`     | One step of a guided tour: what to look at, how far along it is, and the way on                  | The text is the live region (`aria-live="polite"`) and the dots are labelled; the page makes everything else `inert`         |
+| `wq-info-button`   | The "i" beside a setting, and the note it opens in a popover                                     | A real button named after what it explains ("About Sounds"); the popover carries the same name                               |
 
 UI components are **i18n-free**: they receive already translated strings.
 Ionic components (tabs, segments, lists, radios, badges) are used directly
@@ -392,6 +393,23 @@ the mode are theirs to pick.
   added in a later release, which is why the player's wish is stored apart
   from what has been seen. Nothing is said out loud: the switch itself
   shows the new state, so there is nothing for a message to report.
+
+### A note belongs to its setting
+
+A note under a group of settings does not work. Two of them stack into what
+reads as one paragraph, and the reader has to match each sentence back to a
+control — on the Settings screen the sound's note and the vibration's note
+ran together, and the one under the tours switch looked like the next
+section's introduction.
+
+So a note sits behind an `i` on its own row (`wq-info-button`), and opens in
+a popover anchored to the press, the way iOS points at the thing it
+explains. The rows stay a list of settings, and nothing is explained to a
+player who did not ask.
+
+A **disabled** control is the exception: it has to say why without being
+asked, so the vibration toggle keeps its reason in a visually hidden
+paragraph it points at with `aria-describedby`, as well as behind the `i`.
 
 ### The on-screen keyboard (Hard mode)
 

@@ -19,7 +19,12 @@ const STANDARD = {
   },
 };
 
-/** Prints every violation in the terminal, not only the count. */
+/**
+ * Prints every violation in the terminal, not only the count: where it is,
+ * the element itself and what axe objected to. Without the element, a rule
+ * that fires inside a component's own markup (an overlay, say) leaves
+ * nothing to go on but a generated id.
+ */
 const report = (violations: Result[]) => {
   cy.task(
     'log',
@@ -27,7 +32,10 @@ const report = (violations: Result[]) => {
       .map(
         (violation) =>
           `${violation.impact ?? 'unknown'} · ${violation.id}: ${violation.help}\n    ${violation.nodes
-            .map((node) => node.target.join(' '))
+            .map(
+              (node) =>
+                `${node.target.join(' ')}\n      ${node.html}\n      ${node.failureSummary ?? ''}`,
+            )
             .join('\n    ')}`,
       )
       .join('\n'),
