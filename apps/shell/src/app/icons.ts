@@ -3,8 +3,8 @@ import { addIcons } from 'ionicons';
 import {
   alertCircle,
   arrowForward,
+  bulb,
   business,
-  bulbOutline,
   businessOutline,
   checkmarkCircle,
   chevronBack,
@@ -54,7 +54,7 @@ export function registerIcons(): void {
     // entry with the same value twice costs nothing.
     'alert-circle': alertCircle,
     'arrow-forward': arrowForward,
-    'bulb-outline': bulbOutline,
+    bulb,
     business,
     'business-outline': businessOutline,
     'checkmark-circle': checkmarkCircle,

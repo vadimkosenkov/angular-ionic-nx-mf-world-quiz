@@ -1,4 +1,5 @@
 import {
+  afterRenderEffect,
   Component,
   computed,
   ElementRef,
@@ -23,7 +24,10 @@ import {
   FadesWithPage,
   PageChromeState,
   PageHeader,
+  TourSpotlight,
   TourStep,
+  trackRect,
+  whenArrived,
 } from '@world-quiz/client/ui';
 import { ProgressStore } from '@world-quiz/client/progress';
 import { TipsStore } from '../core/tips.store';
@@ -71,6 +75,7 @@ const isSetupMode = (value: unknown): value is SetupMode =>
     IonButton,
     TranslocoPipe,
     PluralPipe,
+    TourSpotlight,
     TourStep,
   ],
   providers: [PageChromeState],
@@ -106,10 +111,43 @@ export class QuizSetupPage {
     total: TOUR_STEPS.length,
   }));
 
-  /** Everything the step is not about waits, blurred and out of reach. */
-  protected dimmed(section: TourStepId): boolean {
+  /** Everything the step is not about waits, dimmed and out of reach. */
+  protected outOfReach(section: TourStepId): boolean {
     const step = this.tourStep();
     return step !== null && step !== section;
+  }
+
+  /** The section the step is about, found once per step. */
+  protected readonly tourTarget = signal<HTMLElement | null>(null);
+  /** Where that section is now, frame by frame. */
+  private readonly tourSection = trackRect(this.tourTarget);
+  /**
+   * And where it is once it has arrived: the spotlight leaves it lit and the
+   * step's card stands next to it, both from this one measurement. While the
+   * page is scrolling the next section into view there is nothing to point
+   * at, and the tour waits, out of sight, rather than travelling with it.
+   */
+  protected readonly tourAnchor = whenArrived(
+    this.tourTarget,
+    this.tourSection,
+  );
+
+  constructor() {
+    // Where the step's section is, and that it can be seen, are the same
+    // question, so they are answered together, after the render that put
+    // the step on the screen. The section is scrolled to the top of the
+    // page rather than its middle (`scroll-margin-top` puts it under the
+    // header), which leaves the room below it to the card.
+    afterRenderEffect(() => {
+      const step = this.tourStep();
+      const section = step
+        ? this.host.nativeElement.querySelector<HTMLElement>(
+            `[data-tour="${step}"]`,
+          )
+        : null;
+      this.tourTarget.set(section);
+      section?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    });
   }
 
   protected readonly categories = QUIZ_CATEGORIES;
@@ -189,26 +227,15 @@ export class QuizSetupPage {
       return;
     }
     this.tourIndex.update((index) => index + 1);
-    this.showTourStep();
   }
 
   /**
-   * Ends the tour for good: the player has been through it, or left it with
-   * Escape. The index goes back to the start, so bringing the hints back in
-   * Settings begins at the first step.
+   * Ends the tour for good. The index goes back to the start, so bringing
+   * the hints back in Settings begins at the first step.
    */
   protected endTour(): void {
     this.tips.dismiss('setup');
     this.tourIndex.set(0);
-  }
-
-  /** Brings the step's own section into view, under the tour's card. */
-  private showTourStep(): void {
-    const step = this.tourStep();
-    if (!step) return;
-    this.host.nativeElement
-      .querySelector(`[data-tour="${step}"]`)
-      ?.scrollIntoView({ block: 'center', behavior: 'smooth' });
   }
 
   protected onCategoryChange(event: Event): void {

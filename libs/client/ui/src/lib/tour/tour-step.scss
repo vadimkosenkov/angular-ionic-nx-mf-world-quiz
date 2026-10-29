@@ -1,37 +1,78 @@
 @use '../../styles/materials' as *;
 
-// Where the page's next action always is: the tour's card takes that place
-// while the tour runs, so the player has one thing to press and the quiz
-// cannot be started before the tour is over.
+// The host is not the card: it is the strip of screen the card may stand
+// in, between the floating header and the bottom chrome. Nothing with a
+// crisp edge belongs above that strip (iOS smears it, CLAUDE.md), and
+// nothing of the tour belongs under the chrome. The strip itself is not
+// there to be touched; only the card in it is.
 :host {
   position: fixed;
-  inset-inline: var(--wq-space-3);
-  bottom: var(--wq-chrome-inset);
   z-index: 12;
-  max-width: 560px;
-  margin-inline: auto;
+  // The whole width: the card's own sides are measured from the section it
+  // stands by, so that it and the lit window are exactly as wide.
+  inset-inline: 0;
+  top: var(--wq-page-header-clearance);
+  bottom: var(--wq-chrome-inset);
+  pointer-events: none;
 }
 
 .card {
+  // Placed from TypeScript, next to the section the step is about: one of
+  // top/bottom is set and the other left alone, so the card keeps its own
+  // height. Never give it a default vertical edge here — with both set it
+  // would stretch to fill the band. The sides are set together, and this is
+  // where the card waits until the section has been measured.
+  position: absolute;
+  inset-inline: var(--wq-content-gutter);
+
+  // The whole of the step, in two rows: what it says and the way on, then
+  // how far along the tour is. The way on next to the words rather than
+  // under them keeps the card the height of its text, and the dots are a
+  // caption to both rather than a row of their own to look at.
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: var(--wq-space-2) var(--wq-space-3);
-  padding: var(--wq-space-4);
+  padding: var(--wq-space-3) var(--wq-space-4);
   border-radius: var(--wq-radius-lg);
+
+  // The step does not travel: it fades out where it stood and the next one
+  // fades in where it belongs (`whenArrived`). Out of sight it is also out
+  // of reach, or a tap in the gap would skip a step nobody saw.
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--wq-duration-base) var(--wq-easing-standard);
+
+  &.placed {
+    opacity: 1;
+    pointer-events: auto;
+  }
 
   // The chrome material, like the tab bar and the toast: one glass.
   @include glass-chrome;
 }
 
-ion-icon {
-  grid-row: 1;
-  font-size: 22px;
-  color: var(--wq-color-primary);
+// The lit bulb of a hint, on a disc of its own, like the mode icons of the
+// quiz setup. In the app's blue it read as one more control on a screen
+// full of them; a bare yellow glyph on glass read as a stray mark, and the
+// glass shows whatever the page behind it happens to be. The disc is the
+// card's own surface, so the yellow always lands on the colour it was
+// chosen against, in either theme.
+.bulb {
+  grid-area: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--wq-color-surface);
+  color: var(--wq-color-hint);
+  font-size: 20px;
 }
 
 .text {
-  grid-row: 1;
+  grid-area: 1 / 2;
   margin: 0;
   color: var(--wq-color-text-primary);
   font-size: var(--wq-font-size-control);
@@ -39,9 +80,10 @@ ion-icon {
 
 .dots {
   display: flex;
-  grid-row: 2;
+  grid-area: 2 / 1 / 3 / 4;
   gap: var(--wq-space-1);
   align-items: center;
+  justify-content: center;
 }
 
 .dot {
@@ -56,10 +98,9 @@ ion-icon {
 }
 
 .next {
-  grid-row: 2;
-  grid-column: 2;
-  justify-self: end;
+  grid-area: 1 / 3;
   min-height: var(--wq-touch-target);
+  white-space: nowrap;
   padding: 0 var(--wq-space-4);
   border: 0;
   border-radius: var(--wq-radius-pill);

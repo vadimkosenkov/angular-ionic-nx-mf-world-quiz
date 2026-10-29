@@ -63,6 +63,13 @@
   --wq-color-error-strong: #a3231f;
   --wq-color-warning: #955800;
   --wq-color-warning-container: #fff1d6;
+  // The lit bulb of a hint (a guided tour's card). A hint is not a warning
+  // and not an action, so it is neither of those colours: in the app's blue
+  // the bulb read as one more control, and the warning amber is text ink.
+  // Mango, on a disc of the card's own surface: the bulb needs a background
+  // it was chosen against, and the glass behind the card is whatever the
+  // page happens to show through it.
+  --wq-color-hint: #fdbe02;
 
   // Background "aurora" behind glass surfaces
   --wq-aurora-1: rgb(79 107 255 / 18%);
@@ -183,6 +190,7 @@
   --wq-color-error-strong: #ff7a7a;
   --wq-color-warning: #f5b54a;
   --wq-color-warning-container: #3d2a0c;
+  --wq-color-hint: #ffc84d;
 
   --wq-aurora-1: rgb(79 107 255 / 22%);
   --wq-aurora-2: rgb(143 122 230 / 18%);

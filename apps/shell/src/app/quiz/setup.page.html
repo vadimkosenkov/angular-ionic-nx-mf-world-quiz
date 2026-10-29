@@ -5,13 +5,12 @@
 />
 
 <ion-content [fullscreen]="true" class="wq-aurora">
-  <div class="wq-page setup">
+  <div class="wq-page setup" [class.touring]="tourStep() !== null">
     <section
       class="wq-section"
       data-tour="category"
       aria-labelledby="setup-category"
-      [class.wq-tour-aside]="dimmed('category')"
-      [attr.inert]="dimmed('category') ? '' : null"
+      [attr.inert]="outOfReach('category') ? '' : null"
     >
       <h2 id="setup-category" class="wq-section-title">
         {{ 'setup.category' | transloco }}
@@ -38,8 +37,7 @@
       class="wq-section"
       data-tour="scope"
       aria-labelledby="setup-scope"
-      [class.wq-tour-aside]="dimmed('scope')"
-      [attr.inert]="dimmed('scope') ? '' : null"
+      [attr.inert]="outOfReach('scope') ? '' : null"
     >
       <h2 id="setup-scope" class="wq-section-title">
         {{ 'setup.scope' | transloco }}
@@ -74,8 +72,7 @@
       class="wq-section"
       data-tour="difficulty"
       aria-labelledby="setup-difficulty"
-      [class.wq-tour-aside]="dimmed('difficulty')"
-      [attr.inert]="dimmed('difficulty') ? '' : null"
+      [attr.inert]="outOfReach('difficulty') ? '' : null"
     >
       <h2 id="setup-difficulty" class="wq-section-title">
         {{ 'setup.difficulty' | transloco }}
@@ -104,8 +101,7 @@
       class="wq-section"
       data-tour="mode"
       aria-labelledby="setup-mode"
-      [class.wq-tour-aside]="dimmed('mode')"
-      [attr.inert]="dimmed('mode') ? '' : null"
+      [attr.inert]="outOfReach('mode') ? '' : null"
     >
       <h2 id="setup-mode" class="wq-section-title">
         {{ 'setup.mode' | transloco }}
@@ -140,9 +136,18 @@
 </ion-content>
 
 @if (tourStep(); as step) {
-<!-- The tour stands where the page's action stands: the quiz cannot start
-     until the player has been through the four choices it explains. -->
+<!-- The screen is dimmed except the section this step is about, and the
+     step's card stands next to it. Both are placed from one measurement of
+     that section, which follows it while the page scrolls. The card also
+     takes the place of the page's action: the quiz cannot start until the
+     player has been through the four choices it explains. Both leave with
+     the page (`wqFadesWithPage`): Ionic keeps a page alive for the length
+     of its transition, so without it the tour stayed on top of the screen
+     the player had already arrived at. -->
+<wq-tour-spotlight [hole]="tourAnchor()" wqFadesWithPage />
 <wq-tour-step
+  wqFadesWithPage
+  [anchor]="tourAnchor()"
   [text]="'setup.tour.' + step | transloco"
   [step]="tourIndex() + 1"
   [total]="tourSteps.length"

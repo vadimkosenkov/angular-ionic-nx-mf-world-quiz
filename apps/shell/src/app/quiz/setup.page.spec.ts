@@ -196,31 +196,67 @@ describe('QuizSetupPage', () => {
   describe('the guided tour', () => {
     const sectionOf = (tour: string) =>
       document.querySelector(`[data-tour="${tour}"]`) as HTMLElement;
+    const spotlight = () =>
+      document.querySelector('wq-tour-spotlight') as HTMLElement;
+
+    /**
+     * The tour appears where its section has come to rest, which takes a
+     * few frames to establish (`whenArrived`): one to notice the new
+     * section, one to see it standing still, one to render.
+     */
+    const settle = async (fixture: { detectChanges(): void }) => {
+      for (let frame = 0; frame < 3; frame += 1) {
+        await new Promise((resolve) =>
+          requestAnimationFrame(() => setTimeout(resolve)),
+        );
+        fixture.detectChanges();
+      }
+    };
+
+    /**
+     * jsdom lays nothing out, so every section would be at the same place:
+     * each gets one of its own.
+     */
+    const placeSections = async (fixture: { detectChanges(): void }) => {
+      ['category', 'scope', 'difficulty', 'mode'].forEach((tour, index) => {
+        const top = 100 * (index + 1);
+        sectionOf(tour).getBoundingClientRect = () =>
+          ({ left: 0, top, right: 300, bottom: top + 60 }) as DOMRect;
+      });
+      await settle(fixture);
+    };
 
     it('walks the four choices, one at a time, and lets the quiz start after', async () => {
       const { fixture } = await renderSetup({ seenTips: [] });
 
-      // Every other section waits: blurred, and out of reach of taps, the
-      // Tab key and the screen reader.
+      // Every other section waits out of reach of taps, the Tab key and the
+      // screen reader, and the screen is dimmed except this one.
       await screen.findByTestId('tour-step');
-      expect(sectionOf('category').className).not.toContain('wq-tour-aside');
-      expect(sectionOf('scope').className).toContain('wq-tour-aside');
+      await placeSections(fixture);
+      // The window of the clip path starts on the section's top edge,
+      // a corner's width in: the section, with room left around it.
+      expect(spotlight().style.clipPath).toContain('M24,88');
       expect(sectionOf('scope').hasAttribute('inert')).toBe(true);
+      expect(sectionOf('category').hasAttribute('inert')).toBe(false);
       // The quiz cannot be started yet: the tour stands where Start does.
       expect(screen.queryByTestId('setup-start')).toBeNull();
 
-      for (const step of ['scope', 'difficulty', 'mode']) {
+      for (const [index, step] of ['scope', 'difficulty', 'mode'].entries()) {
         fireEvent.click(screen.getByTestId('tour-next'));
-        fixture.detectChanges();
-        expect(sectionOf(step).className).not.toContain('wq-tour-aside');
+        await settle(fixture);
         expect(sectionOf(step).hasAttribute('inert')).toBe(false);
+        // The lit window moved on to this step's own section.
+        expect(spotlight().style.clipPath).toContain(
+          `M24,${100 * (index + 2) - 12}`,
+        );
       }
 
       fireEvent.click(screen.getByTestId('tour-next'));
       fixture.detectChanges();
 
       expect(screen.queryByTestId('tour-step')).toBeNull();
-      expect(sectionOf('category').className).not.toContain('wq-tour-aside');
+      expect(spotlight()).toBeNull();
+      expect(sectionOf('category').hasAttribute('inert')).toBe(false);
       expect(screen.getByTestId('setup-start')).toBeTruthy();
       expect(TestBed.inject(TipsStore).shows('setup')).toBe(false);
     });
@@ -228,13 +264,16 @@ describe('QuizSetupPage', () => {
     it('says which step the player is on', async () => {
       const { fixture } = await renderSetup({ seenTips: [] });
 
-      expect((await screen.findByTestId('tour-text')).textContent).toContain(
+      await screen.findByTestId('tour-text');
+      await placeSections(fixture);
+      expect(screen.getByTestId('tour-text').textContent).toContain(
         'Start with the quiz type',
       );
       expect(screen.getByLabelText('Step 1 of 4')).toBeTruthy();
 
+      // The card says the next thing only once it stands beside it.
       fireEvent.click(screen.getByTestId('tour-next'));
-      fixture.detectChanges();
+      await settle(fixture);
 
       expect(screen.getByTestId('tour-text').textContent).toContain(
         'Now the region',

@@ -10,6 +10,56 @@ const next = () => cy.get('[data-testid="tour-next"]');
 const section = (step: string) => cy.get(`[data-tour="${step}"]`);
 const toggle = () => cy.get('[data-testid="tips-toggle"]');
 
+/** The section a step is about, as the page has laid it out. */
+const sectionRect = (document: Document, step: string) =>
+  (
+    document.querySelector(`[data-tour="${step}"]`) as HTMLElement
+  ).getBoundingClientRect();
+
+/**
+ * Checks that the lit window of the dimming layer sits on the section this
+ * step is about.
+ *
+ * The clip path is the screen, then the window; the window's first point is
+ * on its top edge. A browser writes the path back in its own way — Chrome
+ * separates `M 32 68` with spaces where the source has commas — so the
+ * separator is read as either. Both the window and the section are read
+ * inside the assertion, so it settles once the tour has arrived rather than
+ * racing it.
+ */
+const lightFallsOn = (step: string) =>
+  cy.get('wq-tour-spotlight').should((found) => {
+    const layer = found[0] as HTMLElement;
+    const window = /M\s*[\d.]+[\s,]+[\d.]+[^M]*M\s*[\d.]+[\s,]+([\d.]+)/.exec(
+      layer.style.clipPath,
+    );
+    expect(window, 'the layer has a window in it').to.not.equal(null);
+    expect(Number(window?.[1])).to.be.closeTo(
+      sectionRect(layer.ownerDocument, step).top - 12,
+      3,
+    );
+  });
+
+/**
+ * Checks that the step's card is shown, and stands next to that section
+ * rather than anywhere else. A card still fading in has not been placed
+ * yet, so the assertion is retried until it has.
+ */
+const cardStandsBy = (step: string) =>
+  cy.get('[data-testid="tour-step"]').should((found) => {
+    const element = found[0] as HTMLElement;
+    expect(element.classList.contains('placed'), 'the card is shown').to.equal(
+      true,
+    );
+    const card = element.getBoundingClientRect();
+    const section = sectionRect(element.ownerDocument, step);
+    const gap =
+      card.top >= section.bottom
+        ? card.top - section.bottom
+        : section.top - card.bottom;
+    expect(gap, 'the card stands next to the section').to.be.within(0, 60);
+  });
+
 describe('first-run hints', () => {
   beforeEach(() => {
     // The rest of the suite skips the hints; this spec is about them.
@@ -21,9 +71,10 @@ describe('first-run hints', () => {
     cy.visit('/quiz/setup?category=capitals');
 
     tour().should('contain.text', 'Start with the quiz type');
-    // Everything the step is not about waits, out of reach of taps and of
-    // the screen reader.
-    section('category').should('not.have.class', 'wq-tour-aside');
+    // Everything the step is not about waits, dimmed and out of reach of
+    // taps and of the screen reader.
+    lightFallsOn('category');
+    cardStandsBy('category');
     section('scope').should('have.attr', 'inert');
     cy.get('[data-testid="setup-start"]').should('not.exist');
     expectAccessible();
@@ -31,6 +82,10 @@ describe('first-run hints', () => {
     next().click();
     tour().should('contain.text', 'Now the region');
     section('scope').should('not.have.attr', 'inert');
+    // Neither the window nor the card travels: they wait, out of sight,
+    // while the page scrolls, and appear on the step's own section.
+    lightFallsOn('scope');
+    cardStandsBy('scope');
 
     next().click();
     next().click();
@@ -38,6 +93,7 @@ describe('first-run hints', () => {
 
     next().click();
     tour().should('not.exist');
+    cy.get('wq-tour-spotlight').should('not.exist');
     cy.get('[data-tour="scope"]').should('not.have.attr', 'inert');
     cy.get('[data-testid="setup-start"]').should('be.visible');
   });

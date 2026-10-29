@@ -2,6 +2,17 @@
   padding-bottom: var(--wq-action-bar-clearance);
 }
 
+// While the tour runs every section has to be able to reach the top of the
+// screen, including the last one — otherwise the page simply cannot scroll
+// far enough and the step's card ends up over the section it explains.
+.setup.touring {
+  padding-bottom: 100dvh;
+
+  .wq-section {
+    scroll-margin-top: var(--wq-page-header-clearance);
+  }
+}
+
 .hint {
   margin: 0;
   font-size: var(--wq-font-size-caption);

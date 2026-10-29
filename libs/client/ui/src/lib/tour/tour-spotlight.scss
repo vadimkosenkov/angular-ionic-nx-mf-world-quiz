@@ -1,0 +1,28 @@
+:host {
+  position: fixed;
+  inset: 0;
+
+  // Above the page, below the floating header (10): the back button stays
+  // lit and usable, so a tour is never a trap. The tour's card is above
+  // both.
+  z-index: 9;
+  background: var(--wq-color-overlay);
+
+  // Until the first measurement the layer would cover the whole screen,
+  // the step's section included; it fades in with the hole already in it,
+  // and then stays for the whole tour, window or no window.
+  opacity: 0;
+  transition: opacity var(--wq-duration-base) var(--wq-easing-standard);
+
+  &.measured {
+    opacity: 1;
+  }
+
+  // The layer floats over the page like the rest of the chrome, so it leaves
+  // with it (`FadesWithPage`). The rule has to be here, and after the one
+  // above: the global `.wq-leaving` class cannot outweigh this stylesheet's
+  // own `:host(.measured)`.
+  &.wq-leaving {
+    opacity: 0;
+  }
+}
