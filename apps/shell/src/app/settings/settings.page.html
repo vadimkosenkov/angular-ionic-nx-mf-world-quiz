@@ -100,6 +100,29 @@
       }
     </section>
 
+    <section class="wq-section" aria-labelledby="tips-title">
+      <h2 id="tips-title" class="wq-section-title">
+        {{ 'settings.tips.title' | transloco }}
+      </h2>
+      <!-- One switch for "a tour is still going to appear somewhere": it
+           goes off by itself once the last one has been walked, and turning
+           it back on starts them again (tips.store.ts). -->
+      <div class="list">
+        <ion-item>
+          <ion-toggle
+            data-testid="tips-toggle"
+            [checked]="tips.on()"
+            (ionChange)="onTipsChange($event)"
+          >
+            {{ 'settings.tips.label' | transloco }}
+          </ion-toggle>
+        </ion-item>
+      </div>
+      <p class="wq-text-secondary hint">
+        {{ 'settings.tips.hint' | transloco }}
+      </p>
+    </section>
+
     <section class="wq-section" aria-labelledby="about-title">
       <h2 id="about-title" class="wq-section-title">
         {{ 'settings.about.title' | transloco }}

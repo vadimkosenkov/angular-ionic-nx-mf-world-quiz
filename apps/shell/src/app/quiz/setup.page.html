@@ -6,7 +6,13 @@
 
 <ion-content [fullscreen]="true" class="wq-aurora">
   <div class="wq-page setup">
-    <section class="wq-section" aria-labelledby="setup-category">
+    <section
+      class="wq-section"
+      data-tour="category"
+      aria-labelledby="setup-category"
+      [class.wq-tour-aside]="dimmed('category')"
+      [attr.inert]="dimmed('category') ? '' : null"
+    >
       <h2 id="setup-category" class="wq-section-title">
         {{ 'setup.category' | transloco }}
       </h2>
@@ -28,7 +34,13 @@
       </ion-segment>
     </section>
 
-    <section class="wq-section" aria-labelledby="setup-scope">
+    <section
+      class="wq-section"
+      data-tour="scope"
+      aria-labelledby="setup-scope"
+      [class.wq-tour-aside]="dimmed('scope')"
+      [attr.inert]="dimmed('scope') ? '' : null"
+    >
       <h2 id="setup-scope" class="wq-section-title">
         {{ 'setup.scope' | transloco }}
       </h2>
@@ -58,7 +70,13 @@
       </ul>
     </section>
 
-    <section class="wq-section" aria-labelledby="setup-difficulty">
+    <section
+      class="wq-section"
+      data-tour="difficulty"
+      aria-labelledby="setup-difficulty"
+      [class.wq-tour-aside]="dimmed('difficulty')"
+      [attr.inert]="dimmed('difficulty') ? '' : null"
+    >
       <h2 id="setup-difficulty" class="wq-section-title">
         {{ 'setup.difficulty' | transloco }}
       </h2>
@@ -82,7 +100,13 @@
       </p>
     </section>
 
-    <section class="wq-section" aria-labelledby="setup-mode">
+    <section
+      class="wq-section"
+      data-tour="mode"
+      aria-labelledby="setup-mode"
+      [class.wq-tour-aside]="dimmed('mode')"
+      [attr.inert]="dimmed('mode') ? '' : null"
+    >
       <h2 id="setup-mode" class="wq-section-title">
         {{ 'setup.mode' | transloco }}
       </h2>
@@ -115,6 +139,19 @@
   </div>
 </ion-content>
 
+@if (tourStep(); as step) {
+<!-- The tour stands where the page's action stands: the quiz cannot start
+     until the player has been through the four choices it explains. -->
+<wq-tour-step
+  [text]="'setup.tour.' + step | transloco"
+  [step]="tourIndex() + 1"
+  [total]="tourSteps.length"
+  [progressLabel]="'tips.step' | transloco: tourStepParams()"
+  [nextLabel]="'tips.next' | transloco"
+  [lastLabel]="'tips.gotIt' | transloco"
+  (advanced)="advanceTour()"
+/>
+} @else {
 <!-- The primary action floats above the content in the tab bar's glass
      material. It is deliberately not inside an ion-toolbar: Ionic paints a
      solid button there in the toolbar's own (here transparent) colour. -->
@@ -129,3 +166,4 @@
     {{ 'setup.start' | transloco }}
   </ion-button>
 </div>
+}

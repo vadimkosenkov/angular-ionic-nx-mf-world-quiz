@@ -110,6 +110,18 @@ wq-page-header + ion-content {
   cursor: pointer;
 }
 
+// What a guided tour does to the part of the page it is not talking about:
+// out of focus, out of reach, and out of the accessibility tree (`inert` is
+// set beside this class, so a screen reader and the Tab key stay inside the
+// step as well).
+.wq-tour-aside {
+  filter: blur(3px);
+  opacity: 0.5;
+  transition:
+    filter var(--wq-duration-base) var(--wq-easing-standard),
+    opacity var(--wq-duration-base) var(--wq-easing-standard);
+}
+
 // Visible keyboard focus for web (touch users never see it).
 //
 // A ring of shadows rather than an outline: a gap in the page's own colour,

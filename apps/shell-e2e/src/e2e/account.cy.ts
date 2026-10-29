@@ -5,7 +5,7 @@
  * everything after the provider — the welcome screen, cookie, restore on
  * reload, sign-out and account deletion.
  */
-import { API } from '../support/commands';
+import { API, TIPS_KEY } from '../support/commands';
 
 describe('account', () => {
   it('opens on the welcome screen until the player signs in', () => {
@@ -30,7 +30,10 @@ describe('account', () => {
     cy.get('[data-testid="account-name"]').should('contain.text', 'E2E Ann');
     cy.window().then((window) => {
       // The app never keeps tokens where scripts could read them later.
-      expect(window.localStorage.length).to.equal(0);
+      // The suite's own seed (the hints the device has been through) is the
+      // only thing in there.
+      const stored = Object.keys({ ...window.localStorage });
+      expect(stored.filter((key) => key !== TIPS_KEY)).to.deep.equal([]);
       expect(window.document.cookie).not.to.contain('wq_refresh');
     });
 

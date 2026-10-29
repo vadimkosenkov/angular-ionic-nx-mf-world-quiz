@@ -30,6 +30,11 @@ export const en = {
     achievements: 'Achievements',
     settings: 'Settings',
   },
+  tips: {
+    step: 'Step {{current}} of {{total}}',
+    next: 'Next',
+    gotIt: 'Got it',
+  },
   categories: {
     capitals: 'Capitals',
     flags: 'Flags',
@@ -205,6 +210,14 @@ export const en = {
     },
     start: 'Start quiz',
     play: 'Start',
+    // The guided tour of this screen, one step per choice, shown once.
+    tour: {
+      category: 'Start with the quiz type: capitals, or flags.',
+      scope: 'Now the region — the whole world, or one part of it.',
+      difficulty:
+        'Then the difficulty: pick from four answers, or type the answer yourself.',
+      mode: 'Last, the game mode: a set round, endless, or against the clock.',
+    },
   },
   quiz: {
     exit: 'Leave quiz',
@@ -382,6 +395,11 @@ export const en = {
       title: 'Language',
       en: 'English',
       ru: 'Russian',
+    },
+    tips: {
+      title: 'Hints',
+      label: 'Screen tours',
+      hint: 'A short tour the first time you open a screen. It switches itself off once you have been through them all.',
     },
     about: {
       title: 'About',

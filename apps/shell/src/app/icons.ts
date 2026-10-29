@@ -4,6 +4,7 @@ import {
   alertCircle,
   arrowForward,
   business,
+  bulbOutline,
   businessOutline,
   checkmarkCircle,
   chevronBack,
@@ -52,6 +53,7 @@ export function registerIcons(): void {
     // entry with the same value twice costs nothing.
     'alert-circle': alertCircle,
     'arrow-forward': arrowForward,
+    'bulb-outline': bulbOutline,
     business,
     'business-outline': businessOutline,
     'checkmark-circle': checkmarkCircle,

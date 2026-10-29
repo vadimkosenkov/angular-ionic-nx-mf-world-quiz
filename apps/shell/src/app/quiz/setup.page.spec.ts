@@ -5,16 +5,29 @@ import { provideShellTesting } from '../../testing/shell-testing';
 import { ProgressStore } from '@world-quiz/client/progress';
 import { finishedSession } from '@world-quiz/client/progress/testing';
 import { QuizSetupPage } from './setup.page';
+import { TIPS_STORAGE_KEY, type TipId, TipsStore } from '../core/tips.store';
 
 function emitIonChange(element: Element, value: unknown) {
   element.dispatchEvent(new CustomEvent('ionChange', { detail: { value } }));
 }
 
-async function renderSetup(inputs: { category?: string; mode?: string } = {}) {
+/**
+ * Renders the screen as a player who has already been through its guided
+ * tour — which is how it is seen every time but the first. The tests of the
+ * tour itself pass `seenTips: []`.
+ */
+async function renderSetup({
+  seenTips = ['setup'] as readonly TipId[],
+  ...inputs
+}: { category?: string; mode?: string; seenTips?: readonly TipId[] } = {}) {
   const view = await render(QuizSetupPage, {
     inputs,
-    providers: provideShellTesting(),
+    providers: provideShellTesting({
+      storage: { [TIPS_STORAGE_KEY]: JSON.stringify(seenTips) },
+    }),
   });
+  await TestBed.inject(TipsStore).load();
+  view.fixture.detectChanges();
   const router = TestBed.inject(Router);
   const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
   return { ...view, navigate };
@@ -175,6 +188,77 @@ describe('QuizSetupPage', () => {
       expect(navigate).toHaveBeenCalledWith(['/quiz', 'capitals'], {
         queryParams: { scope: 'europe', difficulty: 'easy', mode: 'practice' },
       });
+    });
+  });
+
+  // The point of this screen is easy to miss: a player can arrive with
+  // everything already chosen and press Start.
+  describe('the guided tour', () => {
+    const sectionOf = (tour: string) =>
+      document.querySelector(`[data-tour="${tour}"]`) as HTMLElement;
+
+    it('walks the four choices, one at a time, and lets the quiz start after', async () => {
+      const { fixture } = await renderSetup({ seenTips: [] });
+
+      // Every other section waits: blurred, and out of reach of taps, the
+      // Tab key and the screen reader.
+      await screen.findByTestId('tour-step');
+      expect(sectionOf('category').className).not.toContain('wq-tour-aside');
+      expect(sectionOf('scope').className).toContain('wq-tour-aside');
+      expect(sectionOf('scope').hasAttribute('inert')).toBe(true);
+      // The quiz cannot be started yet: the tour stands where Start does.
+      expect(screen.queryByTestId('setup-start')).toBeNull();
+
+      for (const step of ['scope', 'difficulty', 'mode']) {
+        fireEvent.click(screen.getByTestId('tour-next'));
+        fixture.detectChanges();
+        expect(sectionOf(step).className).not.toContain('wq-tour-aside');
+        expect(sectionOf(step).hasAttribute('inert')).toBe(false);
+      }
+
+      fireEvent.click(screen.getByTestId('tour-next'));
+      fixture.detectChanges();
+
+      expect(screen.queryByTestId('tour-step')).toBeNull();
+      expect(sectionOf('category').className).not.toContain('wq-tour-aside');
+      expect(screen.getByTestId('setup-start')).toBeTruthy();
+      expect(TestBed.inject(TipsStore).shows('setup')).toBe(false);
+    });
+
+    it('says which step the player is on', async () => {
+      const { fixture } = await renderSetup({ seenTips: [] });
+
+      expect((await screen.findByTestId('tour-text')).textContent).toContain(
+        'Start with the quiz type',
+      );
+      expect(screen.getByLabelText('Step 1 of 4')).toBeTruthy();
+
+      fireEvent.click(screen.getByTestId('tour-next'));
+      fixture.detectChanges();
+
+      expect(screen.getByTestId('tour-text').textContent).toContain(
+        'Now the region',
+      );
+      expect(screen.getByLabelText('Step 2 of 4')).toBeTruthy();
+    });
+
+    // Choosing is what the tour asks for, so it must not end the tour.
+    it('stays while the player makes the choice it is explaining', async () => {
+      const { fixture } = await renderSetup({ seenTips: [] });
+      await screen.findByTestId('tour-step');
+
+      emitIonChange(screen.getByTestId('setup-category'), 'flags');
+      fixture.detectChanges();
+
+      expect(screen.getByTestId('tour-step')).toBeTruthy();
+    });
+
+    it('is not shown to a player who has already been through it', async () => {
+      const { fixture } = await renderSetup();
+      fixture.detectChanges();
+
+      expect(screen.queryByTestId('tour-step')).toBeNull();
+      expect(screen.getByTestId('setup-start')).toBeTruthy();
     });
   });
 });

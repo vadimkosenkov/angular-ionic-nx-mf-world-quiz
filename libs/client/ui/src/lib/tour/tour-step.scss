@@ -1,0 +1,71 @@
+@use '../../styles/materials' as *;
+
+// Where the page's next action always is: the tour's card takes that place
+// while the tour runs, so the player has one thing to press and the quiz
+// cannot be started before the tour is over.
+:host {
+  position: fixed;
+  inset-inline: var(--wq-space-3);
+  bottom: var(--wq-chrome-inset);
+  z-index: 12;
+  max-width: 560px;
+  margin-inline: auto;
+}
+
+.card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: var(--wq-space-2) var(--wq-space-3);
+  padding: var(--wq-space-4);
+  border-radius: var(--wq-radius-lg);
+
+  // The chrome material, like the tab bar and the toast: one glass.
+  @include glass-chrome;
+}
+
+ion-icon {
+  grid-row: 1;
+  font-size: 22px;
+  color: var(--wq-color-primary);
+}
+
+.text {
+  grid-row: 1;
+  margin: 0;
+  color: var(--wq-color-text-primary);
+  font-size: var(--wq-font-size-control);
+}
+
+.dots {
+  display: flex;
+  grid-row: 2;
+  gap: var(--wq-space-1);
+  align-items: center;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--wq-color-border);
+
+  &.on {
+    background: var(--wq-color-primary);
+  }
+}
+
+.next {
+  grid-row: 2;
+  grid-column: 2;
+  justify-self: end;
+  min-height: var(--wq-touch-target);
+  padding: 0 var(--wq-space-4);
+  border: 0;
+  border-radius: var(--wq-radius-pill);
+  background: var(--wq-color-primary);
+  color: var(--wq-color-on-primary);
+  font-size: var(--wq-font-size-control);
+  font-weight: 700;
+  cursor: pointer;
+}

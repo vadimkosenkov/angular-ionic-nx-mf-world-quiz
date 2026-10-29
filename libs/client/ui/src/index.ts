@@ -8,3 +8,4 @@ export { ProgressCard } from './lib/progress-card/progress-card';
 export { ToastHost } from './lib/toast/toast-host';
 export { TOAST_DURATION_MS, TOAST_SCHEDULER, Toasts } from './lib/toast/toasts';
 export type { Toast, ToastScheduler, ToastTone } from './lib/toast/toasts';
+export { TourStep } from './lib/tour/tour-step';
