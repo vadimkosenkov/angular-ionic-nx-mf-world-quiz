@@ -2,8 +2,9 @@
   display: inline-flex;
 }
 
-// Quiet enough not to compete with the setting's own control, and large
-// enough to hit: WCAG 2.2 asks for 24 px, and a finger asks for more.
+// The app's own blue, like every other thing on a page that answers a tap:
+// grey it read as a disabled control rather than something to press. Large
+// enough to hit, too — WCAG 2.2 asks for 24 px, and a finger asks for more.
 .info {
   display: inline-flex;
   align-items: center;
@@ -14,7 +15,7 @@
   border: 0;
   border-radius: var(--wq-radius-pill);
   background: transparent;
-  color: var(--wq-color-text-secondary);
+  color: var(--wq-color-primary);
   font-size: 1.25rem;
   cursor: pointer;
 }
