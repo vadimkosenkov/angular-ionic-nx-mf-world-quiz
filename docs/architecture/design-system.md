@@ -143,6 +143,7 @@ is supported in Chromium and WebKit; where it is not, the enhancement stays on.
 | `wq-progress-card` | Heading, big `value / max`, bar, caption row; `solid` or `glass`                                 | The visual number is `aria-hidden`; the bar carries the accessible value                                                     |
 | `wq-empty-state`   | Icon, heading, message, projected actions for empty, unavailable and offline states              | `role="status"`; decorative icon hidden                                                                                      |
 | `wq-toast-host`    | The one transient message: a confirmation or a failure, at the bottom over the chrome            | A new element per message, `role="alert"` for a failure and `role="status"` for a confirmation; its close button is labelled |
+| `wq-tour-step`     | One step of a guided tour: what to look at, how far along it is, and the way on                  | The text is the live region (`aria-live="polite"`) and the dots are labelled; the page makes everything else `inert`         |
 
 UI components are **i18n-free**: they receive already translated strings.
 Ionic components (tabs, segments, lists, radios, badges) are used directly
@@ -248,6 +249,16 @@ Global helpers in `_base.scss`: `.wq-page` (max width 720 px for tablet and
 web), `.wq-section`, `.wq-section-title`, `.wq-card`, `.wq-text-secondary`,
 `.wq-visually-hidden`.
 
+### An offer in a row
+
+Some cards make the player an offer rather than a setting: what it is on the
+left, the way to take it as a pill on the right. Home's Practice mistakes is
+one — `.wq-row` with `.wq-row-name`, `.wq-row-note` and `.wq-row-go`, inside
+a `.wq-card`. The pill's label never wraps; the name beside it does. A row
+may be a link or a button, so `.wq-row` sets `font: inherit`: a button takes
+the browser's own smaller type otherwise, and two rows meant to look alike
+came out in different sizes.
+
 ### One glass material for all chrome
 
 The floating tab bar and translucent page headers share the `glass-chrome`
@@ -345,6 +356,42 @@ Ionic's `ion-toast` is not used. It renders itself in its own shadow DOM
 outside the application's tree, so the app's glass would have to be rebuilt
 through `::part()`, and it never upgrades in jsdom, which would leave
 everything about a message untestable below the E2E suite.
+
+### A guided tour, once
+
+A screen whose point is easy to miss gets a **tour**: one step per thing to
+look at, in the order the screen presents them. The quiz setup has the
+first. A player can arrive there with everything already chosen and press
+Start without ever noticing that the type, the region, the difficulty and
+the mode are theirs to pick.
+
+- **One step at a time.** The part the step is about is left exactly as it
+  is; everything else gets `.wq-tour-aside` — blurred and faded — and
+  `inert`, which takes it out of reach of taps, of the Tab key and of the
+  screen reader at once. The step's own section is scrolled into view.
+- **The card stands where the page's action stands**, in the chrome's glass
+  (`wq-tour-step`): while the tour runs there is one thing to press, and the
+  quiz cannot be started before the player has seen the four choices — the
+  Start button is not rendered yet, so it cannot be reached by any means,
+  not only hidden behind something.
+- **It is not a message.** Nobody did anything to cause it, so nothing is on
+  a timer. Only the step's text is a live region: the card stays, and the
+  button beside it would be re-announced on every step.
+- **It runs once.** The last step says "Got it" instead of "Next", and that
+  is the end of it. Changing an option during the tour does **not** end it:
+  choosing is exactly what the tour is asking for.
+- **It belongs to the device**, in the same storage as the settings
+  (`TipsStore`, `KEY_VALUE_STORAGE`), not to the account: having been
+  through a tour survives signing out, and `ProgressStore.forget()` wipes
+  the account's data on the device.
+- **One switch in Settings** (Hints → Screen tours) stands for "a tour is
+  still going to appear somewhere". So it goes off by itself when the last
+  one has been walked — that is the truth about what will happen, not a
+  control changing behind the player's back — and turning it back on starts
+  them all again. Turning it off is the way to refuse them, including tours
+  added in a later release, which is why the player's wish is stored apart
+  from what has been seen. Nothing is said out loud: the switch itself
+  shows the new state, so there is nothing for a message to report.
 
 ### The on-screen keyboard (Hard mode)
 
