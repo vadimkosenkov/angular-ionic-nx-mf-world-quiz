@@ -110,19 +110,19 @@
           @for (entry of practice(); track entry.category) {
           <li>
             <a
-              class="practice-row"
+              class="wq-row"
               [attr.data-testid]="'practice-' + entry.category"
               routerLink="/quiz/setup"
               [queryParams]="{ category: entry.category, mode: 'practice' }"
             >
-              <span class="practice-name">
+              <span class="wq-row-name">
                 {{ 'categories.' + entry.category | transloco }}
-                <span class="wq-text-secondary practice-count">
+                <span class="wq-text-secondary wq-row-note">
                   {{ 'counts.mistakes' | wqPlural: entry.count }}
                 </span>
               </span>
               {{ ' ' }}
-              <span class="practice-go">
+              <span class="wq-row-go">
                 {{ 'practice.start' | transloco }}
                 <ion-icon name="chevron-forward" aria-hidden="true" />
               </span>

@@ -62,6 +62,54 @@ wq-page-header + ion-content {
   color: var(--wq-color-text-secondary);
 }
 
+// A row inside a card: what it is on the left (with a note under it), the
+// action it offers as a pill on the right. Home's "Practice mistakes" and
+// Settings' "Hints" are the same offer and must look the same, so the row
+// lives here rather than in either page.
+.wq-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wq-space-3);
+  min-height: var(--wq-touch-target);
+  padding: var(--wq-space-3) 0;
+  // A row is a link today and may be a button on the next screen, and a
+  // button does not inherit the page's font: without this the same row
+  // came out in the browser's own smaller type.
+  font: inherit;
+  color: var(--wq-color-text-primary);
+  text-decoration: none;
+}
+
+.wq-row-name {
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+}
+
+.wq-row-note {
+  font-size: var(--wq-font-size-caption);
+  font-weight: 400;
+}
+
+.wq-row-go {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--wq-space-1);
+  // The label of the pill is two or three words and must read as one line;
+  // the name beside it wraps instead.
+  white-space: nowrap;
+  padding: var(--wq-space-2) var(--wq-space-3);
+  border: 0;
+  border-radius: var(--wq-radius-pill);
+  background: var(--wq-color-primary-container);
+  color: var(--wq-color-on-primary-container);
+  font-size: var(--wq-font-size-control);
+  font-weight: 700;
+  cursor: pointer;
+}
+
 // Visible keyboard focus for web (touch users never see it).
 //
 // A ring of shadows rather than an outline: a gap in the page's own colour,
