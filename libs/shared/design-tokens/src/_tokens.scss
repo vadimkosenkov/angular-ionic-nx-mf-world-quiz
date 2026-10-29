@@ -82,6 +82,15 @@
   // a CSS `filter`, which follows the painted pixels.
   --wq-drop-shadow-control: drop-shadow(0 1px 2px rgb(20 26 58 / 18%))
     drop-shadow(0 4px 10px rgb(20 26 58 / 12%));
+  // The one width the app lays out to: a page's content, and every bar that
+  // floats over it (the header, the tab bar, the action bar). The gutter is
+  // the page's own side padding, so a floating bar lines up with the cards
+  // underneath it instead of being its own, narrower column.
+  --wq-content-max-width: 720px;
+  --wq-content-gutter: var(--wq-space-5);
+  --wq-content-width: calc(
+    var(--wq-content-max-width) - 2 * var(--wq-content-gutter)
+  );
   --wq-space-1: 4px;
   --wq-space-2: 8px;
   --wq-space-3: 12px;
