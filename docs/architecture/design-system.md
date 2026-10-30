@@ -23,14 +23,14 @@ applies them to `:root` and Ionic's `:root.ion-palette-dark`, the site to
 Components use semantic names only (`--wq-color-surface`, never `#ffffff`), so
 the palette can change in one place.
 
-| Group              | Tokens                                                                                                                                                                                                                                               |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Brand              | `primary`, `primary-bright`, `primary-strong`, `on-primary`, `primary-container`, `on-primary-container`, `accent`, `lavender`                                                                                                                       |
-| Surfaces           | `background`, `surface`, `surface-secondary`, `glass-surface`, `glass-border`, `glass-highlight`, `tab-bar-glass`, `border`, `overlay`                                                                                                               |
-| Segmented controls | `segment-background`, `segment-indicator`, `segment-checked`                                                                                                                                                                                         |
-| Text               | `text-primary`, `text-secondary`                                                                                                                                                                                                                     |
-| Feedback           | `success`, `error`, `warning` and their `-container` variants                                                                                                                                                                                        |
-| Other              | `aurora-1..3` (background), `radius-*`, `shadow-card/raised/floating`, `drop-shadow-control` (a `filter` for shapes that are not their box, e.g. an iframe), `space-*`, `duration-*`, `easing-standard`, `touch-target` (44 px), `tab-bar-clearance` |
+| Group              | Tokens                                                                                                                                                                                                                                                                                                                      |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Brand              | `primary`, `primary-bright`, `primary-strong`, `on-primary`, `primary-container`, `on-primary-container`, `accent`, `lavender`                                                                                                                                                                                              |
+| Surfaces           | `background`, `surface`, `surface-secondary`, `glass-surface`, `glass-border`, `glass-highlight`, `tab-bar-glass`, `border`, `overlay`                                                                                                                                                                                      |
+| Segmented controls | `segment-background`, `segment-indicator`, `segment-checked`                                                                                                                                                                                                                                                                |
+| Text               | `text-primary`, `text-secondary`                                                                                                                                                                                                                                                                                            |
+| Feedback           | `success`, `error`, `warning` and their `-container` variants; `hint` (a tour's bulb)                                                                                                                                                                                                                                       |
+| Other              | `aurora-1..3` (background), `radius-*`, `shadow-card/raised/floating`, `drop-shadow-control` (a `filter` for shapes that are not their box, e.g. an iframe), `space-*`, `content-max-width`/`content-gutter`/`content-width` (the one column), `duration-*`, `easing-standard`, `touch-target` (44 px), `tab-bar-clearance` |
 
 ### Light and dark
 
@@ -137,12 +137,15 @@ is supported in Chromium and WebKit; where it is not, the enhancement stays on.
 
 ## Components
 
-| Component          | Purpose                                                                                          | Accessibility                                                                                                                |
-| ------------------ | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| `wq-progress-bar`  | Thin gradient bar; `primary`, `success` or `warning` tone (the last for a countdown running out) | `role="progressbar"` with `aria-valuemin/max/now`, a label and a translated `aria-valuetext` ("3 of 44"); values are clamped |
-| `wq-progress-card` | Heading, big `value / max`, bar, caption row; `solid` or `glass`                                 | The visual number is `aria-hidden`; the bar carries the accessible value                                                     |
-| `wq-empty-state`   | Icon, heading, message, projected actions for empty, unavailable and offline states              | `role="status"`; decorative icon hidden                                                                                      |
-| `wq-toast-host`    | The one transient message: a confirmation or a failure, at the bottom over the chrome            | A new element per message, `role="alert"` for a failure and `role="status"` for a confirmation; its close button is labelled |
+| Component           | Purpose                                                                                                          | Accessibility                                                                                                                |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `wq-progress-bar`   | Thin gradient bar; `primary`, `success` or `warning` tone (the last for a countdown running out)                 | `role="progressbar"` with `aria-valuemin/max/now`, a label and a translated `aria-valuetext` ("3 of 44"); values are clamped |
+| `wq-progress-card`  | Heading, big `value / max`, bar, caption row; `solid` or `glass`                                                 | The visual number is `aria-hidden`; the bar carries the accessible value                                                     |
+| `wq-empty-state`    | Icon, heading, message, projected actions for empty, unavailable and offline states                              | `role="status"`; decorative icon hidden                                                                                      |
+| `wq-toast-host`     | The one transient message: a confirmation or a failure, at the bottom over the chrome                            | A new element per message, `role="alert"` for a failure and `role="status"` for a confirmation; its close button is labelled |
+| `wq-tour-step`      | One step of a guided tour: what to look at, how far along it is, and the way on, next to the section it is about | The text is the live region (`aria-live="polite"`) and the dots are labelled; the page makes everything else `inert`         |
+| `wq-tour-spotlight` | The dimming layer of a tour, with a rounded window in it where the step's own section is                         | `aria-hidden`: it is decoration, and the tour's words are in the step's card                                                 |
+| `wq-info-button`    | The "i" after a setting's name, and the note it opens in a popover                                               | A real button named after what it explains ("About Sounds"); the popover carries the same name                               |
 
 UI components are **i18n-free**: they receive already translated strings.
 Ionic components (tabs, segments, lists, radios, badges) are used directly
@@ -244,9 +247,34 @@ otherwise pull all of them into its own scope.
 - **`wq-segment-pill`:** a variant with fully rounded ends, for compact filters.
 - Scrollable segments hide the scrollbar.
 
-Global helpers in `_base.scss`: `.wq-page` (max width 720 px for tablet and
-web), `.wq-section`, `.wq-section-title`, `.wq-card`, `.wq-text-secondary`,
-`.wq-visually-hidden`.
+Global helpers in `_base.scss`: `.wq-page`, `.wq-section`,
+`.wq-section-title`, `.wq-card`, `.wq-text-secondary`, `.wq-visually-hidden`.
+
+### One column
+
+Everything on a screen lays out to the same column: `--wq-content-max-width`
+(720 px) centred, with `--wq-content-gutter` (20 px) at the sides, so
+`--wq-content-width` is what a thing in it may be. `.wq-page` is that column,
+and so is every bar that floats over it — the page header, the tab bar, the
+action bar, a message and a tour's card.
+
+They used to be a narrower column of their own (560 px, 12 px from the edge),
+which on a phone was 8 px wider than the cards and on a tablet 160 px
+narrower: the back button started inside the content it belonged to and the
+tab bar looked like a different page's. The tab bar subtracts its own padding
+and borders from the width as well as from the height — Ionic forces
+`box-sizing: content-box` inside its shadow DOM, so an unadjusted
+`max-width` makes the capsule 10 px wider than everything else.
+
+### An offer in a row
+
+Some cards make the player an offer rather than a setting: what it is on the
+left, the way to take it as a pill on the right. Home's Practice mistakes is
+one — `.wq-row` with `.wq-row-name`, `.wq-row-note` and `.wq-row-go`, inside
+a `.wq-card`. The pill's label never wraps; the name beside it does. A row
+may be a link or a button, so `.wq-row` sets `font: inherit`: a button takes
+the browser's own smaller type otherwise, and two rows meant to look alike
+came out in different sizes.
 
 ### One glass material for all chrome
 
@@ -345,6 +373,163 @@ Ionic's `ion-toast` is not used. It renders itself in its own shadow DOM
 outside the application's tree, so the app's glass would have to be rebuilt
 through `::part()`, and it never upgrades in jsdom, which would leave
 everything about a message untestable below the E2E suite.
+
+### A guided tour, once
+
+A screen whose point is easy to miss gets a **tour**: one step per thing to
+look at, in the order the screen presents them. The quiz setup has the
+first. A player can arrive there with everything already chosen and press
+Start without ever noticing that the type, the region, the difficulty and
+the mode are theirs to pick.
+
+- **One step at a time.** The part the step is about is left exactly as it
+  is — real colours, real contrast — and `wq-tour-spotlight` dims the rest
+  of the screen around it: one fixed layer whose `clip-path` has a window in
+  it where the section is, with corners as round as a card's. The window is
+  a second subpath of a `path()` wound the opposite way round, which the
+  default fill rule leaves out of the shape; `polygon()` cannot round a
+  corner, and an `evenodd` fill rule inside it is younger than the browsers
+  the app supports. The sections the step is not about are also `inert`,
+  which takes them out of reach of taps, of the Tab key and of the screen
+  reader at once.
+
+  A hole, not a blur over everything else. Blurring said "these are out of
+  focus" where the point is "this one", and it changed the look of the very
+  controls the tour was explaining. A hole is also left out of hit testing,
+  so the step's section stays usable while the rest of the screen is not.
+
+  The layer sits **below the floating header** and above everything else
+  (`z-index: 9` against the header's 10): a tour has no "Skip", so the way
+  off the screen must stay lit and usable. Ionic's own `ion-popover` was
+  considered for the step's words and refused: its backdrop covers the
+  whole screen, the element it is anchored to included, and nothing inside
+  an `ion-content` can be raised above an overlay in Ionic's layer.
+
+- **The card stands next to the section it is about**, in the chrome's glass
+  (`wq-tour-step`): under it when there is room between the section and the
+  bottom chrome, over it when there is not, and at the foot of the screen —
+  where the page's action normally is — for a section too tall for either
+  side. The words and the thing they are about are then read in one glance.
+  It is still the only thing to press: the Start button is not rendered
+  while the tour runs, so it cannot be reached by any means, not only
+  hidden behind something. The host element is the band the card may stand
+  in and lets taps through; only the card itself takes them.
+
+  The card is two rows: what the step says, with the way on beside it, and
+  the dots underneath, centred. The button under the words made the card as
+  tall as its emptiest half; beside them it costs nothing, because the row
+  is already the height of a touch target. Its bulb is the **filled** icon in
+  `--wq-color-hint` on a disc of `--wq-color-surface`, like the mode icons
+  of the quiz setup: a hint is neither an action nor a warning, so in the
+  app's blue the bulb read as one more control, the outline version of the
+  icon was too faint to carry a colour at all, and a bare yellow glyph read
+  as a stray mark on glass that shows whatever the page behind it happens
+  to be. The disc gives the yellow the colour it was chosen against, which
+  is why each theme holds its own (mango on white, a brighter one on the
+  dark card).
+
+  The card is **exactly as wide as the window** around the same section,
+  because both are computed from that one rectangle with the same room at
+  the sides (`TOUR_WINDOW_ROOM`, narrower than the room above and below so
+  that the two land on the page's own column). A card of its own fixed width
+  looked like a second column on a wide screen, and like a mistake on a
+  narrow one.
+
+  Both the window and the card are placed from **one measurement** of the
+  section (`trackRect`), taken every frame. Listening for the scroll does
+  not work: a scroll event is not composed, so it never leaves the shadow
+  root of the element Ionic actually scrolls, and a window listener in the
+  capture phase hears nothing while the page moves. The step's section is
+  scrolled to the **top** of the page (`scroll-margin-top` puts it under the
+  floating header), which leaves the room below it to the card; while the
+  tour runs the page keeps a screen's worth of empty space at its foot, or
+  the last section could not reach the top at all.
+
+  The band the card is placed in is bounded by the header clearance and the
+  bottom chrome inset. Above it is the strip iOS 26/27 smear anything with
+  a crisp horizontal edge over (CLAUDE.md), and the card has one.
+
+- **The tour does not travel.** A layer placed from a rectangle cannot ride
+  a scroll: the page is moved by the browser and the layer by us, a frame
+  later, which reads as a shiver rather than a slide. So between two steps
+  the card fades out where it stood, the screen is dim all over while the
+  next section scrolls into view, and the card fades in beside it — with the
+  next step's words, which it takes while it is out of sight, so that what
+  it says and where it stands change together. Out of sight it is also out
+  of reach (`pointer-events: none`), or a tap into the gap would skip a step
+  nobody saw.
+
+  Both layers also leave with the page (`wqFadesWithPage`, as the header and
+  the action bar do): Ionic keeps a page alive for the length of its
+  transition, so a tour left by the back button stayed lit over the screen
+  the player had already arrived at. The dimming layer needs the rule in its
+  own stylesheet, after the one that shows it — a global class cannot
+  outweigh the component's own `:host(.measured)`.
+
+  `whenArrived` is what holds it back: `null` from the moment the tracked
+  element changes until it has stood in one place for a frame. Only a change
+  of **section** starts that wait — a page the player scrolls themselves
+  keeps the window on its section, frame by frame, where hiding the tour on
+  every touch would be its own kind of flicker. The dimming itself never
+  blinks: it fades in once, when the tour starts, and stays until the tour
+  ends.
+
+- **It is not a message.** Nobody did anything to cause it, so nothing is on
+  a timer. Only the step's text is a live region: the card stays, and the
+  button beside it would be re-announced on every step.
+- **It runs once.** The last step says "Got it" instead of "Next", and that
+  is the end of it. Changing an option during the tour does **not** end it:
+  choosing is exactly what the tour is asking for.
+- **It belongs to the device**, in the same storage as the settings
+  (`TipsStore`, `KEY_VALUE_STORAGE`), not to the account: having been
+  through a tour survives signing out, and `ProgressStore.forget()` wipes
+  the account's data on the device.
+- **One switch in Settings** (Hints → Screen tours) stands for "a tour is
+  still going to appear somewhere". So it goes off by itself when the last
+  one has been walked — that is the truth about what will happen, not a
+  control changing behind the player's back — and turning it back on starts
+  them all again. Turning it off is the way to refuse them, including tours
+  added in a later release, which is why the player's wish is stored apart
+  from what has been seen. Nothing is said out loud: the switch itself
+  shows the new state, so there is nothing for a message to report.
+
+### A note belongs to its setting
+
+A note under a group of settings does not work. Two of them stack into what
+reads as one paragraph, and the reader has to match each sentence back to a
+control — on the Settings screen the sound's note and the vibration's note
+ran together, and the one under the tours switch looked like the next
+section's introduction.
+
+So a note sits behind an `i` on its own row (`wq-info-button`), and opens in
+a popover anchored to the press, the way iOS points at the thing it
+explains. The rows stay a list of settings, and nothing is explained to a
+player who did not ask.
+
+The `i` stands **right after the setting's name**, close to it (Ionic's own
+gap after a label is for a control at the far end of the row, so the rows
+that carry a note give it back), not out by the control:
+the note is about the name, and a row that ends in two things to press says
+nothing about which of them does what. It is drawn in the app's primary
+colour, like everything else on a page that answers a tap — in the
+secondary text colour it read as a disabled control. Ionic's label grows to
+fill its row by itself, so the rows that carry a note hand that growth back
+(`.setting ion-label`).
+
+A **disabled** control is the exception: it has to say why without being
+asked, so the vibration toggle keeps its reason in a visually hidden
+paragraph it points at with `aria-describedby`, as well as behind the `i`.
+Its name is dimmed the way Ionic dims a disabled control, with
+`opacity: 0.5` — in the secondary text colour it still read as an ordinary
+label next to the rows above it, and the row said "unavailable" only
+through the toggle. The opacity is on the **label alone**, not on the row:
+`disabled` on an `ion-item` also takes the row's pointer events, and the
+`i` next to that name is where the reason is written. Half opacity leaves
+the name at 3.3:1, under AA: the text of an inactive control is exempt
+(WCAG 1.4.3), and the name carries `aria-disabled` so that the exemption is
+stated rather than waived in the test — axe reads it and skips the check,
+while screen readers ignore it on a label and never pass it on to the
+`i` button beside it, which is still operable.
 
 ### The on-screen keyboard (Hard mode)
 

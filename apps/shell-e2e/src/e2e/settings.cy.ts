@@ -47,6 +47,22 @@ describe('settings', () => {
     );
   });
 
+  it('explains a setting where the setting is, and puts it away again', () => {
+    cy.visit('/settings');
+    cy.get('[data-testid="sound-info"] button').click({
+      scrollBehavior: 'center',
+    });
+
+    cy.get('[data-testid="info-note"]').should(
+      'contain.text',
+      'Short tones when an answer lands',
+    );
+    // The backdrop lives in the popover's shadow root, out of reach of a
+    // test; Escape is the other way out.
+    cy.get('body').type('{esc}');
+    cy.get('[data-testid="info-note"]').should('not.exist');
+  });
+
   it('shows bundled flag images for the languages', () => {
     cy.visit('/settings');
     cy.get('[data-testid="language-ru"] img.flag')

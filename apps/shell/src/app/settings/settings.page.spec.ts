@@ -4,10 +4,15 @@ import { SettingsStore } from '@world-quiz/client/settings';
 import { NATIVE_PLATFORM } from '../core/platform';
 import { provideShellTesting } from '../../testing/shell-testing';
 import { APP_VERSION } from '../app-info';
+import { TIPS_STORAGE_KEY, TipsStore } from '../core/tips.store';
 import { SettingsPage } from './settings.page';
 
 function emitIonChange(element: Element, value: unknown) {
   element.dispatchEvent(new CustomEvent('ionChange', { detail: { value } }));
+}
+
+function emitToggle(element: Element, checked: boolean) {
+  element.dispatchEvent(new CustomEvent('ionChange', { detail: { checked } }));
 }
 
 /**
@@ -39,7 +44,13 @@ describe('SettingsPage', () => {
   it('titles every section with a heading above its card', async () => {
     await render(SettingsPage, { providers: provideShellTesting() });
 
-    for (const name of ['Appearance', 'Language', 'Sound and feel', 'About']) {
+    for (const name of [
+      'Appearance',
+      'Language',
+      'Sound and feel',
+      'Hints',
+      'About',
+    ]) {
       const region = await screen.findByRole('region', { name });
       const heading = screen.getByRole('heading', { level: 2, name });
       expect(region.firstElementChild).toBe(heading);
@@ -97,6 +108,21 @@ describe('SettingsPage', () => {
     expect(flags.every((img) => img.getAttribute('alt') === '')).toBe(true);
   });
 
+  // Stacked under the card the notes ran together, and it took reading to
+  // tell which control each one was about.
+  it('puts every note behind its own "i"', async () => {
+    await render(SettingsPage, { providers: provideShellTesting() });
+
+    for (const name of [
+      'About Sounds',
+      'About Vibration',
+      'About Screen tours',
+    ]) {
+      expect(screen.getByRole('button', { name })).toBeTruthy();
+    }
+    expect(screen.queryByText(/Short tones/)).toBeNull();
+  });
+
   it('turns the sounds off through the store', async () => {
     await render(SettingsPage, { providers: provideShellTesting() });
     const store = TestBed.inject(SettingsStore);
@@ -142,5 +168,54 @@ describe('SettingsPage', () => {
     // The note explains why the web cannot vibrate, so it is not rendered
     // here — and the toggle must not point at an element that does not exist.
     expect(describedBy(toggle)).toBeNull();
+  });
+
+  // The switch says whether a tour is still going to appear, so a device
+  // that has been through them all shows it off.
+  it('shows the tours as off once they have all been walked', async () => {
+    const { fixture } = await render(SettingsPage, {
+      providers: provideShellTesting({
+        storage: { [TIPS_STORAGE_KEY]: '["setup"]' },
+      }),
+    });
+    // The page renders before the store has read the device; the switch
+    // follows the signal, so the view is brought up to date here.
+    await TestBed.inject(TipsStore).load();
+    fixture.detectChanges();
+
+    const toggle = screen.getByTestId('tips-toggle') as HTMLElement & {
+      checked?: boolean;
+    };
+    expect(toggle.checked).toBe(false);
+  });
+
+  it('walks every tour again when the switch is turned back on', async () => {
+    const { fixture } = await render(SettingsPage, {
+      providers: provideShellTesting({
+        storage: { [TIPS_STORAGE_KEY]: '["setup"]' },
+      }),
+    });
+    const tips = TestBed.inject(TipsStore);
+    await tips.load();
+    expect(tips.shows('setup')).toBe(false);
+
+    emitToggle(screen.getByTestId('tips-toggle'), true);
+    fixture.detectChanges();
+
+    expect(tips.shows('setup')).toBe(true);
+  });
+
+  it('shows no tour at all once the switch is turned off', async () => {
+    const { fixture } = await render(SettingsPage, {
+      providers: provideShellTesting(),
+    });
+    const tips = TestBed.inject(TipsStore);
+    await tips.load();
+    expect(tips.shows('setup')).toBe(true);
+
+    emitToggle(screen.getByTestId('tips-toggle'), false);
+    fixture.detectChanges();
+
+    expect(tips.shows('setup')).toBe(false);
   });
 });

@@ -24,6 +24,7 @@ import { provideProgress } from '@world-quiz/client/progress';
 import { provideAppSettings } from '@world-quiz/client/settings';
 import { isNativePlatform } from './core/platform';
 import { provideSyncNotices } from './core/sync-notices';
+import { provideTips } from './core/tips.store';
 import { RUNTIME_CONFIG, type RuntimeConfig } from './runtime-config';
 import { appRoutes } from './app.routes';
 import { provideSignInFlow } from './auth/sign-in.providers';
@@ -55,6 +56,7 @@ export const appConfig = (runtime: RuntimeConfig): ApplicationConfig => ({
     provideFeedback({ native: isNativePlatform() }),
     provideSignInFlow(),
     provideSyncNotices(),
+    provideTips(),
     ...nativeAuthProviders(runtime),
   ],
 });

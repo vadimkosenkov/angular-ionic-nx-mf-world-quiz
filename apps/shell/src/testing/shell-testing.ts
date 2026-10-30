@@ -42,6 +42,8 @@ export interface ShellTestingOptions {
   readonly locale?: Locale;
   /** Local wall-clock time used for greetings. */
   readonly now?: Date;
+  /** Extra values the device starts with (hints already seen, say). */
+  readonly storage?: Readonly<Record<string, string>>;
 }
 
 /** The shell's real providers, with in-memory storage and a fixed clock. */
@@ -53,6 +55,7 @@ export function provideShellTesting(
       theme: 'light',
       locale: options.locale ?? 'en',
     }),
+    ...options.storage,
   });
   return [
     provideIonicAngular({ mode: 'ios' }),

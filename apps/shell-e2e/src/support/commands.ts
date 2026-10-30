@@ -16,12 +16,24 @@ declare global {
        * share an account or the data on the device.
        */
       signIn(subject?: string, displayName?: string): Chainable<SignedIn>;
+      /**
+       * Keeps the first-run hints for this spec: by default every page
+       * loads on a device that has already been through them (support/e2e.ts).
+       */
+      showHints(): void;
     }
   }
 }
 
 /** The API of the E2E run (`api:serve-e2e`). */
 export const API = 'http://localhost:3333';
+
+/**
+ * Where the app remembers which first-run hints the device has been through
+ * (Capacitor Preferences keeps its values in `localStorage` on the web).
+ * The suite seeds it before every page load; see support/e2e.ts.
+ */
+export const TIPS_KEY = 'CapacitorStorage.world-quiz.tips.seen';
 
 export interface SignedIn {
   readonly userId: string;
@@ -46,6 +58,10 @@ Cypress.Commands.add(
       },
     }),
 );
+
+Cypress.Commands.add('showHints', () => {
+  Cypress.env('showHints', true);
+});
 
 Cypress.Commands.add(
   'signIn',

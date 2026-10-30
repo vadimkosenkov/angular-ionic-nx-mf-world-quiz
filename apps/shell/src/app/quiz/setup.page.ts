@@ -1,6 +1,8 @@
 import {
+  afterRenderEffect,
   Component,
   computed,
+  ElementRef,
   inject,
   input,
   linkedSignal,
@@ -22,8 +24,13 @@ import {
   FadesWithPage,
   PageChromeState,
   PageHeader,
+  TourSpotlight,
+  TourStep,
+  trackRect,
+  whenArrived,
 } from '@world-quiz/client/ui';
 import { ProgressStore } from '@world-quiz/client/progress';
+import { TipsStore } from '../core/tips.store';
 import {
   countriesInScope,
   DEFAULT_FIXED_QUESTION_COUNT,
@@ -39,6 +46,10 @@ import {
   type QuizScope,
   TRAINING_MODES,
 } from '@world-quiz/quiz/domain';
+
+/** The tour walks the screen's choices in the order they are shown. */
+export const TOUR_STEPS = ['category', 'scope', 'difficulty', 'mode'] as const;
+export type TourStepId = (typeof TOUR_STEPS)[number];
 
 /** Training modes, and Practice Mistakes (a Quick round over the mistakes). */
 const SETUP_MODES = [...TRAINING_MODES, 'practice'] as const;
@@ -64,6 +75,8 @@ const isSetupMode = (value: unknown): value is SetupMode =>
     IonButton,
     TranslocoPipe,
     PluralPipe,
+    TourSpotlight,
+    TourStep,
   ],
   providers: [PageChromeState],
   templateUrl: './setup.page.html',
@@ -72,6 +85,70 @@ const isSetupMode = (value: unknown): value is SetupMode =>
 export class QuizSetupPage {
   private readonly router = inject(Router);
   private readonly progress = inject(ProgressStore);
+  private readonly tips = inject(TipsStore);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  /**
+   * The guided tour of this screen: one step per choice, in the order the
+   * screen presents them. A player can otherwise arrive here with
+   * everything already chosen and press Start without noticing that any of
+   * it is theirs to pick.
+   *
+   * Whether it runs is the store's state, not a copy of it, so bringing the
+   * hints back in Settings simply makes it run again.
+   */
+  protected readonly tourSteps = TOUR_STEPS;
+  protected readonly tourIndex = signal(0);
+  protected readonly tourRunning = computed(() => this.tips.shows('setup'));
+  protected readonly tourStep = computed(() =>
+    this.tourRunning() ? (TOUR_STEPS[this.tourIndex()] ?? null) : null,
+  );
+  protected readonly lastTourStep = computed(
+    () => this.tourIndex() === TOUR_STEPS.length - 1,
+  );
+  protected readonly tourStepParams = computed(() => ({
+    current: this.tourIndex() + 1,
+    total: TOUR_STEPS.length,
+  }));
+
+  /** Everything the step is not about waits, dimmed and out of reach. */
+  protected outOfReach(section: TourStepId): boolean {
+    const step = this.tourStep();
+    return step !== null && step !== section;
+  }
+
+  /** The section the step is about, found once per step. */
+  protected readonly tourTarget = signal<HTMLElement | null>(null);
+  /** Where that section is now, frame by frame. */
+  private readonly tourSection = trackRect(this.tourTarget);
+  /**
+   * And where it is once it has arrived: the spotlight leaves it lit and the
+   * step's card stands next to it, both from this one measurement. While the
+   * page is scrolling the next section into view there is nothing to point
+   * at, and the tour waits, out of sight, rather than travelling with it.
+   */
+  protected readonly tourAnchor = whenArrived(
+    this.tourTarget,
+    this.tourSection,
+  );
+
+  constructor() {
+    // Where the step's section is, and that it can be seen, are the same
+    // question, so they are answered together, after the render that put
+    // the step on the screen. The section is scrolled to the top of the
+    // page rather than its middle (`scroll-margin-top` puts it under the
+    // header), which leaves the room below it to the card.
+    afterRenderEffect(() => {
+      const step = this.tourStep();
+      const section = step
+        ? this.host.nativeElement.querySelector<HTMLElement>(
+            `[data-tour="${step}"]`,
+          )
+        : null;
+      this.tourTarget.set(section);
+      section?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    });
+  }
 
   protected readonly categories = QUIZ_CATEGORIES;
   protected readonly difficulties = DIFFICULTIES;
@@ -142,6 +219,24 @@ export class QuizSetupPage {
   protected readonly canStart = computed(
     () => this.selectedMode() !== 'practice' || this.mistakes() > 0,
   );
+
+  /** Moves to the next step, or ends the tour after the last one. */
+  protected advanceTour(): void {
+    if (this.lastTourStep()) {
+      this.endTour();
+      return;
+    }
+    this.tourIndex.update((index) => index + 1);
+  }
+
+  /**
+   * Ends the tour for good. The index goes back to the start, so bringing
+   * the hints back in Settings begins at the first step.
+   */
+  protected endTour(): void {
+    this.tips.dismiss('setup');
+    this.tourIndex.set(0);
+  }
 
   protected onCategoryChange(event: Event): void {
     const { value } = (event as SegmentCustomEvent).detail;

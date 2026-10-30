@@ -1,7 +1,8 @@
 @use '../../styles/materials' as materials;
 
-// Floating, like the tab bar at the other end of the screen: the same inset
-// from the edge, the same material.
+// Floating, like the tab bar at the other end of the screen: the same column,
+// the same material. The column is the page's own (`--wq-content-*`), so the
+// back button starts where the cards under it start.
 //
 // `absolute`, not `fixed`: the routed component's host *is* Ionic's
 // `.ion-page`, which is positioned, so the header anchors to its own page and
@@ -11,14 +12,14 @@
 :host {
   position: absolute;
   top: var(--wq-page-header-inset);
-  inset-inline: var(--wq-space-3);
+  inset-inline: var(--wq-content-gutter);
   z-index: 10;
   display: grid;
   grid-template-columns:
     var(--wq-page-header-height) 1fr
     var(--wq-page-header-height);
   align-items: center;
-  max-width: 560px;
+  max-width: var(--wq-content-width);
   margin-inline: auto;
   // The gaps between the floating pieces belong to the content underneath.
   pointer-events: none;

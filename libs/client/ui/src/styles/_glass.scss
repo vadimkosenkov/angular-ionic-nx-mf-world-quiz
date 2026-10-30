@@ -27,12 +27,14 @@
 // viewport afterwards, so the bar travels with page transitions.
 .wq-action-bar {
   position: fixed;
-  inset-inline: var(--wq-space-3);
+  inset-inline: var(--wq-content-gutter);
   bottom: var(--wq-chrome-inset);
   z-index: 10;
   display: flex;
   gap: var(--wq-space-2);
-  max-width: 560px;
+  // The same column as the page's cards, so the bar is not a narrower
+  // thing of its own floating over them.
+  max-width: var(--wq-content-width);
   margin-inline: auto;
 
   > * {
@@ -74,17 +76,20 @@ ion-tab-bar.wq-floating-tab-bar {
   --background: transparent;
   --border: 0;
   position: absolute;
-  inset-inline: var(--wq-space-3);
+  inset-inline: var(--wq-content-gutter);
   bottom: var(--wq-chrome-inset);
   z-index: 10;
   --wq-tab-bar-height: 60px;
   --wq-tab-bar-padding: 4px;
-  max-width: 560px;
   margin-inline: auto;
   padding: var(--wq-tab-bar-padding);
   // Ionic forces `box-sizing: content-box !important` inside the tab bar's
   // shadow DOM, which outside styles cannot override. Subtract padding and
-  // the 1 px borders so the total height is exactly --wq-tab-bar-height.
+  // the 1 px borders from both sizes, so the bar is exactly as tall as
+  // --wq-tab-bar-height and exactly as wide as the cards it floats over.
+  max-width: calc(
+    var(--wq-content-width) - 2 * var(--wq-tab-bar-padding) - 2px
+  );
   height: calc(var(--wq-tab-bar-height) - 2 * var(--wq-tab-bar-padding) - 2px);
   border-radius: var(--wq-radius-pill);
 

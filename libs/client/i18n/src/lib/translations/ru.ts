@@ -18,6 +18,11 @@ export const ru: TranslationShape = {
     achievements: 'Достижения',
     settings: 'Настройки',
   },
+  tips: {
+    step: 'Шаг {{current}} из {{total}}',
+    next: 'Далее',
+    gotIt: 'Понятно',
+  },
   categories: {
     capitals: 'Столицы',
     flags: 'Флаги',
@@ -198,6 +203,13 @@ export const ru: TranslationShape = {
     },
     start: 'Начать квиз',
     play: 'Играть',
+    tour: {
+      category: 'Начните с типа квиза: столицы или флаги.',
+      scope: 'Теперь регион — весь мир или одна его часть.',
+      difficulty:
+        'Дальше сложность: выбрать из четырёх вариантов или ввести ответ самому.',
+      mode: 'И режим игры: раунд на несколько вопросов, бесконечный или на время.',
+    },
   },
   quiz: {
     exit: 'Выйти из квиза',
@@ -272,6 +284,7 @@ export const ru: TranslationShape = {
   },
   settings: {
     title: 'Настройки',
+    info: 'Подробнее: {{name}}',
     account: {
       title: 'Аккаунт',
       checking: 'Проверяем вход…',
@@ -364,7 +377,8 @@ export const ru: TranslationShape = {
       title: 'Звук и отклик',
       sound: 'Звуки',
       haptics: 'Вибрация',
-      hint: 'Короткие сигналы на ответ и в конце раунда.',
+      soundHint: 'Короткие сигналы на ответ и в конце раунда.',
+      hapticsHint: 'Лёгкий тактильный отклик на ответ и в конце раунда.',
       hapticsOnIos:
         'Вибрация работает только в приложении для iPhone: из браузера нет доступа к тактильному отклику.',
     },
@@ -372,6 +386,11 @@ export const ru: TranslationShape = {
       title: 'Язык',
       en: 'Английский',
       ru: 'Русский',
+    },
+    tips: {
+      title: 'Подсказки',
+      label: 'Гид по экранам',
+      hint: 'Короткий гид при первом заходе на экран. Выключается, когда вы прошли все.',
     },
     about: {
       title: 'О приложении',

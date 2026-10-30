@@ -48,6 +48,13 @@ describe('accessibility', () => {
       cy.visit('/settings');
       byTestId('theme-dark', { timeout: 20_000 }).should('exist');
       expectAccessible();
+
+      // A note lives in a dialog over the page, so it is checked there.
+      cy.get('[data-testid="sound-info"] button').click({
+        scrollBehavior: 'center',
+      });
+      byTestId('info-note').should('exist');
+      expectAccessible();
     });
 
     it('checks the quiz itself and its results, in both difficulties', () => {

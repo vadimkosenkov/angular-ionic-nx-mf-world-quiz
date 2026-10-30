@@ -9,12 +9,13 @@
 // message is not carried away by the page transition that may follow it.
 :host {
   position: fixed;
-  inset-inline: var(--wq-space-3);
+  inset-inline: var(--wq-content-gutter);
   bottom: var(--wq-toast-inset);
   z-index: 20;
   display: flex;
   justify-content: center;
-  max-width: 560px;
+  // The same column as everything else that floats over a page.
+  max-width: var(--wq-content-width);
   margin-inline: auto;
   // The host spans the width of the screen whether or not it holds a message,
   // so it must never take a tap meant for the page underneath it.
