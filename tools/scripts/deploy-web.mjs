@@ -97,6 +97,9 @@ async function main() {
   for (const [app, site] of Object.entries(SITES)) {
     console.log(`\nPublishing ${app}…`);
     run('npx', [
+      // Without this npx stops to ask before fetching the CLI — once per
+      // app, so a deploy left alone publishes the shell and nothing else.
+      '--yes',
       NETLIFY,
       'deploy',
       '--prod',
