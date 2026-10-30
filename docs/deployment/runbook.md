@@ -107,7 +107,9 @@ matters after a deploy: a run that stopped halfway leaves a new shell in
 front of an old quiz, and the app gives no sign of it. `development` or a
 missing stamp means that bundle was never published since the stamp
 existed, and `-dirty` after a commit means it was built from a working tree
-with uncommitted changes.
+with uncommitted changes. The command exits non-zero when the three do not
+agree, so `npm run deploy:web && npm run deploy:check` says in one line
+whether the deployment is complete.
 
 Compare the commit with `git log --oneline origin/main`: merging a pull
 request changes **nothing** on Netlify by itself — the deploy job is off

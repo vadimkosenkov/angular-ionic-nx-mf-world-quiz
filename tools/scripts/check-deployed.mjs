@@ -10,7 +10,8 @@
  * they are published one after another, so a run that stops halfway leaves
  * the player with a new shell and an old quiz. Each page carries the commit
  * it was built from (`tools/scripts/stamp-build.mjs`); this reads the three
- * and says plainly whether they agree.
+ * and says plainly whether they agree. It exits non-zero when they do not,
+ * so it can stand at the end of a deploy without being read.
  *
  * Every address can be overridden from the environment, like the deploy
  * script's.
@@ -52,11 +53,15 @@ async function main() {
   const commits = new Set(
     results.map(([, result]) => result.stamp?.split(' ')[0] ?? null),
   );
+  const agree = commits.size === 1 && !commits.has(null);
   console.log(
-    commits.size === 1 && !commits.has(null)
+    agree
       ? '\nAll three serve the same commit.'
       : '\nThe three do not agree: run `npm run deploy:web` to publish them all.',
   );
+  // This is a check, so it answers as one: a half-finished deployment that
+  // exited 0 could pass for a successful one in a shell chain or a job.
+  if (!agree) process.exitCode = 1;
 }
 
 main();
