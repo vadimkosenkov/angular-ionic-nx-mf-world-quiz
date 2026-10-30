@@ -16,7 +16,9 @@
 Each published page carries the commit it was built from in a
 `<meta name="wq-build">` (`tools/scripts/stamp-build.mjs`, run by the
 pipeline and by `npm run deploy:web`), so one request says what a deployment
-is serving; [runbook.md](runbook.md) has the check.
+is serving; `npm run deploy:check` reads all three and says whether they
+agree — they are published one after another, and a run that stops halfway
+leaves a new shell in front of an old quiz.
 
 Images are built and published by
 [`.github/workflows/release.yml`](../../.github/workflows/release.yml) on

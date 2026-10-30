@@ -91,14 +91,26 @@ answers it — for the shell and for each quiz remote separately, because
 they are three deployments that can drift apart:
 
 ```bash
-for app in shell capitals flags; do
-  printf '%-9s ' "$app"
-  curl -s "https://world-quiz-$app.netlify.app/" | grep -o 'wq-build[^>]*'
-done
+npm run deploy:check
 ```
 
-`development` means the bundle was never stamped, and a commit with
-`-dirty` after it was built from a working tree with uncommitted changes.
+```
+shell     45e03ce 2026-10-30T16:20Z
+capitals  45e03ce 2026-10-30T16:21Z
+flags     45e03ce 2026-10-30T16:21Z
+
+All three serve the same commit.
+```
+
+The three are published one after another, so this is the check that
+matters after a deploy: a run that stopped halfway leaves a new shell in
+front of an old quiz, and the app gives no sign of it. `development` or a
+missing stamp means that bundle was never published since the stamp
+existed, and `-dirty` after a commit means it was built from a working tree
+with uncommitted changes. The command exits non-zero when the three do not
+agree, so `npm run deploy:web && npm run deploy:check` says in one line
+whether the deployment is complete.
+
 Compare the commit with `git log --oneline origin/main`: merging a pull
 request changes **nothing** on Netlify by itself — the deploy job is off
 (see below), so what is live is whatever `npm run deploy:web` last put
