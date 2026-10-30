@@ -13,6 +13,11 @@
 | `site`                       | Container image `ghcr.io/<owner>/world-quiz-site` | Node host                               |
 | `shell`, `capitals`, `flags` | Static bundles (workflow artefact `web-<sha>`)    | Any static hosting, three separate URLs |
 
+Each published page carries the commit it was built from in a
+`<meta name="wq-build">` (`tools/scripts/stamp-build.mjs`, run by the
+pipeline and by `npm run deploy:web`), so one request says what a deployment
+is serving; [runbook.md](runbook.md) has the check.
+
 Images are built and published by
 [`.github/workflows/release.yml`](../../.github/workflows/release.yml) on
 every push to `main` (environment **staging**) and on every `v*` tag

@@ -93,13 +93,21 @@ flowchart LR
 | Job      | What it produces                                                                                                                                                                                                                |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `images` | `ghcr.io/<owner>/world-quiz-api` (one image for every environment) and `world-quiz-site` (built per environment, because its pages are prerendered)                                                                             |
-| `static` | Production builds of `shell`, `capitals` and `flags` plus the environment's `config.json` and `federation.manifest.json`, as artifact `web-<sha>`                                                                               |
+| `static` | Production builds of `shell`, `capitals` and `flags`, each stamped with the commit it was built from, plus the environment's `config.json` and `federation.manifest.json`, as artifact `web-<sha>`                              |
 | `deploy` | Only with `DEPLOY_ENABLED=true`: Render's API is asked to deploy the exact image tag for the API and the site, `netlify deploy --prod` publishes the three bundles, then health checks on `/health`, the site and `config.json` |
 
-**Nothing is hosted yet**, so `DEPLOY_ENABLED` is unset and the `deploy` job
-is skipped: the pipeline is complete and provably builds what would be
-deployed, without pretending a service is running. The API's migrations run
-at its start-up, so deploying its image is the whole database step (ADR-005).
+**The `deploy` job has never run.** `DEPLOY_ENABLED` is unset and the
+environment holds none of the variables, so every push to `main` builds the
+images and the `web-<sha>` artefact and stops there. What is actually live
+(a Render service for the API, three Netlify sites for the app) was
+published **by hand** with `npm run deploy:web`, and merging a pull request
+changes nothing there until someone runs it again —
+[runbook.md](runbook.md) has the command and the one-line check for which
+commit each deployment is serving. The pipeline is complete and provably
+builds what would be deployed; turning it on is a matter of putting the
+Render and Netlify credentials into the GitHub environment. The API's
+migrations run at its start-up, so deploying its image is the whole
+database step (ADR-005).
 
 iOS (Phase 13) is not part of this workflow: Capacitor bundles the remotes
 into the app, and signing and TestFlight need an Apple Developer account.

@@ -58,6 +58,9 @@ the environment).
 ```bash
 npx nx run-many -t build -p shell capitals flags --configuration=production
 
+node tools/scripts/stamp-build.mjs \
+  dist/apps/shell/browser dist/apps/capitals/browser dist/apps/flags/browser
+
 API_URL=/ \
 API_UPSTREAM=https://world-quiz-api-staging.onrender.com \
 GOOGLE_CLIENT_ID=294520908592-vhhkau8mlstl3s1d105i3efqnopuu0nm.apps.googleusercontent.com \
@@ -80,6 +83,26 @@ npx netlify-cli@23 deploy --prod --no-build --filter flags \
   what keeps the sign-in cookie first-party without a custom domain — see
   [deploying.md](deploying.md).
 - Site ids: `npx netlify-cli@23 sites:list`.
+
+### Which version is live
+
+Each published page carries the commit it was built from, so one request
+answers it — for the shell and for each quiz remote separately, because
+they are three deployments that can drift apart:
+
+```bash
+for app in shell capitals flags; do
+  printf '%-9s ' "$app"
+  curl -s "https://world-quiz-$app.netlify.app/" | grep -o 'wq-build[^>]*'
+done
+```
+
+`development` means the bundle was never stamped, and a commit with
+`-dirty` after it was built from a working tree with uncommitted changes.
+Compare the commit with `git log --oneline origin/main`: merging a pull
+request changes **nothing** on Netlify by itself — the deploy job is off
+(see below), so what is live is whatever `npm run deploy:web` last put
+there.
 
 ## Publishing the API
 

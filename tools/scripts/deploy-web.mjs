@@ -21,7 +21,8 @@
  */
 import { execFileSync } from 'node:child_process';
 import { deployConfig } from './write-deploy-config.mjs';
-import { writeFile } from 'node:fs/promises';
+import { buildIdentity, stampHtml } from './stamp-build.mjs';
+import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const NETLIFY = 'netlify-cli@23';
@@ -83,6 +84,15 @@ async function main() {
     await writeFile(join(directory, name), body);
   }
   console.log(`Configured ${directory} for ${environment.API_UPSTREAM}`);
+
+  // Each bundle says which commit it is, so that a look at any of the
+  // three deployments tells you what is actually live.
+  const identity = buildIdentity();
+  for (const app of Object.keys(SITES)) {
+    const page = join('dist', 'apps', app, 'browser', 'index.html');
+    await writeFile(page, stampHtml(await readFile(page, 'utf8'), identity));
+  }
+  console.log(`Stamped the three bundles with ${identity}`);
 
   for (const [app, site] of Object.entries(SITES)) {
     console.log(`\nPublishing ${app}…`);

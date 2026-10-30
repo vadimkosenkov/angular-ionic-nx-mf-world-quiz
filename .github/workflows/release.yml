@@ -119,6 +119,15 @@ jobs:
       - name: Build the shell and the quiz remotes
         run: npx nx run-many -t build -p shell capitals flags --configuration=production
 
+      # One request to any of the three deployments then says which commit
+      # it is serving: curl -s https://… | grep wq-build.
+      - name: Stamp the bundles with the commit
+        run: >
+          node tools/scripts/stamp-build.mjs
+          dist/apps/shell/browser
+          dist/apps/capitals/browser
+          dist/apps/flags/browser
+
       # The same bundles run on every environment; these two files say which
       # API and which remotes this deployment uses. Without a configured
       # environment there is nothing to write — the artefact then keeps the
