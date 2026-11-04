@@ -7,8 +7,8 @@
 
 `apps/shell-e2e/src/e2e/accessibility.cy.ts` runs **axe** (`cypress-axe`)
 against the real screens, in the production build: the welcome screen, Home,
-quiz setup, the quiz itself in both difficulties, the results, Leaderboard,
-Achievements, Settings, a screen in Russian, a screen in the dark theme, and
+quiz setup, the quiz itself in both difficulties, the results, the countries
+reference, Leaderboard, Achievements, Settings, a screen in Russian, a screen in the dark theme, and
 the three kinds of page on the public site.
 
 The rule set is `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`, `wcag22aa`, and
@@ -41,6 +41,18 @@ Two real defects, both invisible until axe ran:
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
 | Settings     | `aria-required-children`: the language chooser was an `ion-list`, whose `role="list"` may only contain list items — it contained a `radiogroup`              | The card is a plain `div` with the same styles; the radio group keeps its own semantics           |
 | Achievements | `scrollable-region-focusable`: nothing on the page can be focused, so a keyboard could not reach the scroll area and the list below the fold was unreachable | The list itself takes the focus (`tabindex="0"` + an accessible name) and scrolls with the arrows |
+
+## Colour is never the whole message
+
+The countries reference marks a mastered capital or flag with a green tick,
+and axe cannot see what colour or a picture means, so the rule is kept by
+hand: every marked fact is followed by a `wq-visually-hidden` span that says
+the same in words ("Capital: mastered"), and the tick itself is
+`aria-hidden`, because it would otherwise say it twice. The capital's words
+measure 8.0:1 in the light theme and 8.9:1 in the dark one, and the tick on
+its light green disc 5.1:1 in both — against the 4.5:1 that AA asks of
+small text and the 3:1 it asks of a graphic that carries meaning. The same holds for
+the quiz verdict, which says "Correct" as well as turning green.
 
 ## Keeping it
 

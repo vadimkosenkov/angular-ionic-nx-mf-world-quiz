@@ -57,6 +57,14 @@ export const appRoutes: Route[] = [
     ],
   },
   {
+    // The reference is opened from Home and pushed over the tabs, like the
+    // quiz: it is a place the player goes to read, not a tab to come back to.
+    path: 'countries',
+    canActivate: [signedInGuard],
+    loadComponent: () =>
+      import('./countries/countries.page').then((m) => m.CountriesPage),
+  },
+  {
     path: 'quiz/setup',
     canActivate: [signedInGuard],
     loadComponent: () =>

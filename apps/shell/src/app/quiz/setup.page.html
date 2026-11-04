@@ -42,12 +42,12 @@
       <h2 id="setup-scope" class="wq-section-title">
         {{ 'setup.scope' | transloco }}
       </h2>
-      <ul class="options grid" data-testid="setup-scope">
+      <ul class="wq-options grid" data-testid="setup-scope">
         @for (option of scopeOptions; track option.scope) {
         <li>
           <button
             type="button"
-            class="option"
+            class="wq-option"
             [class.selected]="scope() === option.scope"
             [attr.aria-pressed]="scope() === option.scope"
             [attr.data-testid]="'setup-scope-' + option.scope"
@@ -61,7 +61,9 @@
             {{ 'regions.' + option.scope | transloco }}
             <!-- The bare number is meaningless on its own, so the button's
                  aria-label spells it out and this is hidden. -->
-            <span class="count" aria-hidden="true">({{ option.count }})</span>
+            <span class="wq-option-count" aria-hidden="true"
+              >({{ option.count }})</span
+            >
           </button>
         </li>
         }
@@ -106,12 +108,12 @@
       <h2 id="setup-mode" class="wq-section-title">
         {{ 'setup.mode' | transloco }}
       </h2>
-      <ul class="options" data-testid="setup-mode">
+      <ul class="wq-options" data-testid="setup-mode">
         @for (item of modes; track item) {
         <li>
           <button
             type="button"
-            class="option mode"
+            class="wq-option mode"
             [class.selected]="selectedMode() === item"
             [attr.aria-pressed]="selectedMode() === item"
             [attr.data-testid]="'setup-mode-' + item"

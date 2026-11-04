@@ -130,9 +130,33 @@ export const en = {
       emptyTitle: 'All clear',
       empty: 'No mistakes yet. They will appear here to review.',
     },
+    learn: {
+      title: 'Learn',
+      countries: {
+        title: 'Countries',
+        description: 'Every country with its capital and its flag',
+        open: 'Browse',
+      },
+    },
     achievements: {
       title: 'Achievements',
       seeAll: 'See all',
+    },
+  },
+  countries: {
+    title: 'Countries',
+    region: 'Region',
+    legend: 'A capital or a flag gets a green tick once you have mastered it.',
+    flagOf: 'Flag of {{country}}',
+    mark: {
+      capitals: {
+        known: 'Capital: mastered',
+        unknown: 'Capital: not mastered yet',
+      },
+      flags: {
+        known: 'Flag: mastered',
+        unknown: 'Flag: not mastered yet',
+      },
     },
   },
   leaderboard: {

@@ -1,0 +1,104 @@
+<wq-page-header
+  backHref="/home"
+  [heading]="'countries.title' | transloco"
+  [backLabel]="'nav.back' | transloco"
+/>
+
+<ion-content [fullscreen]="true" class="wq-aurora">
+  <div class="wq-page countries">
+    <section class="wq-section" aria-labelledby="countries-scope">
+      <h2 id="countries-scope" class="wq-section-title">
+        {{ 'countries.region' | transloco }}
+      </h2>
+      <ul class="wq-options grid" data-testid="countries-scope">
+        @for (option of scopeOptions; track option.scope) {
+        <li>
+          <button
+            type="button"
+            class="wq-option"
+            [class.selected]="scope() === option.scope"
+            [attr.aria-pressed]="scope() === option.scope"
+            [attr.data-testid]="'countries-scope-' + option.scope"
+            [attr.aria-label]="
+              ('regions.' + option.scope | transloco) +
+              ', ' +
+              ('counts.countries' | wqPlural: option.count)
+            "
+            (click)="scope.set(option.scope)"
+          >
+            {{ 'regions.' + option.scope | transloco }}
+            <!-- The bare number is meaningless on its own, so the button's
+                 aria-label spells it out and this is hidden. -->
+            <span class="wq-option-count" aria-hidden="true"
+              >({{ option.count }})</span
+            >
+          </button>
+        </li>
+        }
+      </ul>
+      <p class="wq-text-secondary legend">
+        {{ 'countries.legend' | transloco }}
+      </p>
+    </section>
+
+    <section class="wq-section" aria-labelledby="countries-list-title">
+      <div class="section-row">
+        <h2 id="countries-list-title" class="wq-section-title">
+          {{ 'regions.' + scope() | transloco }}
+        </h2>
+        <span class="wq-text-secondary">
+          {{ 'counts.countries' | wqPlural: rows().length }}
+        </span>
+      </div>
+
+      <ul class="wq-card wq-card-rows country-list" data-testid="country-list">
+        @for (row of rows(); track row.country.code) {
+        <li class="country" [attr.data-testid]="'country-' + row.country.code">
+          <span class="names">
+            <span class="name">{{ row.name }}</span>
+            <!-- The fact itself carries its state, so each one says which
+                 state it is in for a reader who cannot see the colour. -->
+            <span
+              class="capital"
+              [class.mastered]="row.mastered.capitals"
+              [attr.data-testid]="'mark-capitals-' + row.country.code"
+            >
+              {{ row.capital }} @if (row.mastered.capitals) {
+              <ion-icon name="checkmark" class="tick" aria-hidden="true" />
+              }
+              <span class="wq-visually-hidden">
+                {{ markLabel('capitals', row) | transloco }}
+              </span>
+            </span>
+          </span>
+          <span
+            class="flag-cell"
+            [class.mastered]="row.mastered.flags"
+            [attr.data-testid]="'mark-flags-' + row.country.code"
+          >
+            <img
+              class="flag"
+              [src]="row.flag"
+              [alt]="'countries.flagOf' | transloco: { country: row.name }"
+              width="48"
+              height="36"
+              loading="lazy"
+              decoding="async"
+            />
+            @if (row.mastered.flags) {
+            <ion-icon
+              name="checkmark"
+              class="tick on-flag"
+              aria-hidden="true"
+            />
+            }
+            <span class="wq-visually-hidden">
+              {{ markLabel('flags', row) | transloco }}
+            </span>
+          </span>
+        </li>
+        }
+      </ul>
+    </section>
+  </div>
+</ion-content>

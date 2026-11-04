@@ -123,9 +123,33 @@ export const ru: TranslationShape = {
       emptyTitle: 'Всё чисто',
       empty: 'Ошибок пока нет. Здесь появятся страны для повторения.',
     },
+    learn: {
+      title: 'Обучение',
+      countries: {
+        title: 'Страны',
+        description: 'Все страны со столицами и флагами',
+        open: 'Открыть',
+      },
+    },
     achievements: {
       title: 'Достижения',
       seeAll: 'Все',
+    },
+  },
+  countries: {
+    title: 'Страны',
+    region: 'Регион',
+    legend: 'Освоенная столица или флаг отмечаются зелёной галочкой.',
+    flagOf: 'Флаг {{country}}',
+    mark: {
+      capitals: {
+        known: 'Столица: освоена',
+        unknown: 'Столица: ещё не освоена',
+      },
+      flags: {
+        known: 'Флаг: освоен',
+        unknown: 'Флаг: ещё не освоен',
+      },
     },
   },
   leaderboard: {

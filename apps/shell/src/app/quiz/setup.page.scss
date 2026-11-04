@@ -18,50 +18,6 @@
   font-size: var(--wq-font-size-caption);
 }
 
-.options {
-  display: flex;
-  flex-direction: column;
-  gap: var(--wq-space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-
-  &.grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  }
-}
-
-// The number of countries in a region: present, but never competing with
-// the region's name.
-.count {
-  margin-inline-start: var(--wq-space-1);
-  color: var(--wq-color-text-secondary);
-  font-size: var(--wq-font-size-caption);
-  font-weight: 600;
-}
-
-.option {
-  width: 100%;
-  min-height: var(--wq-touch-target);
-  padding: var(--wq-space-3) var(--wq-space-4);
-  border: 1px solid var(--wq-color-border);
-  border-radius: var(--wq-radius-md);
-  background: var(--wq-color-surface);
-  color: inherit;
-  font: inherit;
-  font-size: var(--wq-font-size-control);
-  font-weight: 600;
-  text-align: start;
-  cursor: pointer;
-
-  &.selected {
-    border-color: var(--wq-color-primary);
-    background: var(--wq-color-primary-container);
-    color: var(--wq-color-on-primary-container);
-  }
-}
-
 .mode {
   display: flex;
   align-items: center;

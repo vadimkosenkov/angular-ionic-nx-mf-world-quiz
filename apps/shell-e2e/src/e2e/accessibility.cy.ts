@@ -5,7 +5,7 @@
  * heading order — are the ones that break silently.
  */
 import { expectAccessible } from '../support/accessibility';
-import { answerChoice, byTestId, chooseAnswer } from '../support/quiz';
+import { byTestId, chooseAnswer } from '../support/quiz';
 
 describe('accessibility', () => {
   it('checks the welcome screen, signed out', () => {
@@ -29,6 +29,12 @@ describe('accessibility', () => {
     it('checks the quiz setup', () => {
       cy.visit('/quiz/setup?category=capitals');
       byTestId('setup-start', { timeout: 20_000 }).should('exist');
+      expectAccessible();
+    });
+
+    it('checks the countries reference', () => {
+      cy.visit('/countries');
+      byTestId('country-list', { timeout: 20_000 }).should('exist');
       expectAccessible();
     });
 

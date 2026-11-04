@@ -4,6 +4,10 @@
   "include": [],
   "references": [
     { "path": "./tsconfig.lib.json" },
-    { "path": "./tsconfig.spec.json" }
+    { "path": "./tsconfig.spec.json" },
+    // The maintenance tool lives outside src, so without this reference it
+    // belongs to no project an editor can see and every `@world-quiz/*`
+    // import in it is reported as unresolved (TS2307).
+    { "path": "./tsconfig.tools.json" }
   ]
 }
