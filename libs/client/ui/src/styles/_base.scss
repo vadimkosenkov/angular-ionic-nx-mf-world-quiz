@@ -58,6 +58,63 @@ wq-page-header + ion-content {
   box-shadow: var(--wq-shadow-card);
 }
 
+// A card holds no padding of its own, because what goes inside it decides:
+// a chart bleeds to the edges, rows do not. This is the inset for a card
+// that holds rows, so that every such card on every screen lines up.
+.wq-card-rows {
+  margin: 0;
+  padding: var(--wq-space-2) var(--wq-space-5);
+  list-style: none;
+}
+
+// A set of choices the player picks from by pressing one: the quiz setup's
+// regions and modes, the reference's regions. A segment would hide half of
+// six regions behind a sideways scroll, and a choice nobody scrolls to is a
+// choice nobody makes, so they are laid out as blocks that all fit.
+.wq-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wq-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  &.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+}
+
+.wq-option {
+  width: 100%;
+  min-height: var(--wq-touch-target);
+  padding: var(--wq-space-3) var(--wq-space-4);
+  border: 1px solid var(--wq-color-border);
+  border-radius: var(--wq-radius-md);
+  background: var(--wq-color-surface);
+  color: inherit;
+  font: inherit;
+  font-size: var(--wq-font-size-control);
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+
+  &.selected {
+    border-color: var(--wq-color-primary);
+    background: var(--wq-color-primary-container);
+    color: var(--wq-color-on-primary-container);
+  }
+}
+
+// How many countries a region holds: present, but never competing with the
+// region's name.
+.wq-option-count {
+  margin-inline-start: var(--wq-space-1);
+  color: var(--wq-color-text-secondary);
+  font-size: var(--wq-font-size-caption);
+  font-weight: 600;
+}
+
 .wq-text-secondary {
   color: var(--wq-color-text-secondary);
 }

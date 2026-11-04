@@ -1,0 +1,105 @@
+.legend {
+  margin: var(--wq-space-3) 0 0;
+  font-size: var(--wq-font-size-caption);
+}
+
+.section-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--wq-space-3);
+}
+
+.country {
+  // The country over its capital, the flag at the end of the row.
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--wq-space-3);
+  padding: var(--wq-space-3) 0;
+
+  & + .country {
+    border-top: 1px solid var(--wq-color-border);
+  }
+}
+
+.names {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--wq-space-1);
+}
+
+// A name that does not fit wraps at a space, and only hyphenates as a last
+// resort: a bare break gives "Азербайджа / н".
+.name {
+  overflow-wrap: break-word;
+  hyphens: auto;
+  font-weight: 600;
+}
+
+// A mastered fact is marked with a tick placed over it, not beside it: an
+// absolute tick takes no room, so a row that lights up neither moves the
+// words nor pushes the flags of mastered countries out of their column.
+.capital {
+  position: relative;
+  font-size: var(--wq-font-size-caption);
+  color: var(--wq-color-text-secondary);
+  overflow-wrap: break-word;
+
+  &.mastered {
+    color: var(--wq-color-success-strong);
+  }
+}
+
+// The flag keeps the 4:3 proportions of the one the quiz asks about. Its
+// hairline is what gives a mostly white flag (Japan) an edge on a white
+// card, so the mastered state recolours that same line.
+.flag-cell {
+  position: relative;
+  display: inline-flex;
+}
+
+.flag {
+  width: 3rem;
+  height: 2.25rem;
+  border: 1px solid var(--wq-color-border);
+  border-radius: 6px;
+  object-fit: cover;
+  background: var(--wq-color-surface-secondary);
+
+  .mastered > & {
+    border-color: var(--wq-color-success-vivid);
+  }
+}
+
+.tick {
+  position: absolute;
+  padding: 3px;
+  border-radius: 50%;
+  // The design system's success mark: a light green disc with dark green ink,
+  // the one pair that reads in both themes (design-system.md).
+  background: var(--wq-color-success-mark);
+  color: var(--wq-color-on-success-mark);
+  font-size: 11px;
+
+  // Just past the last letter of the capital, left at the level the line
+  // itself gives it: a block inset of its own put it below the flag's tick,
+  // and the two marks belong at the same height in the row.
+  inset-inline-start: 100%;
+  margin-inline-start: 3px;
+
+  // In the flag's bottom corner, hanging over its edge. The ring in the
+  // card's own colour is what cuts the disc out of whatever the flag has
+  // under it — in the dark theme that colour is the dark card, not white,
+  // or the ring would be a bright line around a small mark.
+  &.on-flag {
+    inset-inline-start: auto;
+    right: -6px;
+    bottom: -6px;
+    margin: 0;
+    border: 2px solid var(--wq-color-surface);
+    font-size: 12px;
+  }
+}

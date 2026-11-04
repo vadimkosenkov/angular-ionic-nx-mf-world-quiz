@@ -94,6 +94,27 @@
       }
     </section>
 
+    <section class="wq-section" aria-labelledby="learn-title">
+      <h2 id="learn-title" class="wq-section-title">
+        {{ 'home.learn.title' | transloco }}
+      </h2>
+      <div class="wq-card wq-card-rows">
+        <a class="wq-row" routerLink="/countries" data-testid="learn-countries">
+          <span class="wq-row-name">
+            {{ 'home.learn.countries.title' | transloco }}
+            <span class="wq-text-secondary wq-row-note">
+              {{ 'home.learn.countries.description' | transloco }}
+            </span>
+          </span>
+          {{ ' ' }}
+          <span class="wq-row-go">
+            {{ 'home.learn.countries.open' | transloco }}
+            <ion-icon name="chevron-forward" aria-hidden="true" />
+          </span>
+        </a>
+      </div>
+    </section>
+
     <section class="wq-section" aria-labelledby="practice-title">
       <h2 id="practice-title" class="wq-section-title">
         {{ 'home.practice.title' | transloco }}
@@ -106,7 +127,7 @@
           [message]="'home.practice.empty' | transloco"
         />
         } @else {
-        <ul class="practice-list">
+        <ul class="wq-card-rows practice-list">
           @for (entry of practice(); track entry.category) {
           <li>
             <a
