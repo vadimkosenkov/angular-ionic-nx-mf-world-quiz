@@ -33,22 +33,22 @@ flowchart LR
 
 ## Building blocks
 
-| Unit                                               | Responsibility                                                                                                                          | Status                                                                                                                                                                 |
-| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/shell`                                       | Bootstrap, auth, tabs, Home, Quiz Setup, Leaderboard, Achievements, Settings; Native Federation host                                    | ✅ welcome + required sign-in, tabs, Home, quiz setup, Leaderboard (challenges, rankings, records), Achievements, Settings (nickname), federation host                 |
-| `apps/capitals`                                    | Capitals play + results route; Native Federation remote                                                                                 | ✅ ([microfrontends.md](microfrontends.md))                                                                                                                            |
-| `apps/flags`                                       | Flags play + results route; Native Federation remote                                                                                    | ✅ ([microfrontends.md](microfrontends.md))                                                                                                                            |
-| `apps/api`                                         | REST API: auth, sessions (idempotent result ingestion), progress sync, leaderboard                                                      | ✅ sign-in (Google, Apple), sessions per player, server-graded and idempotent, history for sync, leaderboard challenges, boards and records ([backend.md](backend.md)) |
-| `apps/site`                                        | Angular SSR: prerendered legal pages, server-rendered public leaderboard                                                                | ✅ en/ru, home, Privacy, Terms, leaderboards ([site.md](site.md))                                                                                                      |
-| `apps/shell-e2e`                                   | Cypress user journeys                                                                                                                   | ✅ navigation, theme, language, Capitals quiz across the federation boundary · 📐 the remaining journeys                                                               |
-| `libs/quiz/domain`                                 | Pure TS quiz rules shared by client and server: engine, answer matching, scoring, mastery, progress, achievements, leaderboard          | ✅                                                                                                                                                                     |
-| `libs/quiz/countries`                              | 195-country dataset (en/ru), UN M49 regions, flag asset paths                                                                           | ✅                                                                                                                                                                     |
-| `libs/shared/util`                                 | Dependency-free helpers (`Clock`, `Result`, `assertNever`)                                                                              | ✅                                                                                                                                                                     |
-| `libs/client/ui`, `client/i18n`, `client/settings` | Design system, English/Russian i18n, settings store and theme/language sync                                                             | ✅                                                                                                                                                                     |
-| `libs/client/quiz-ports`                           | The shell ↔ remote contract: `QUIZ_RESULT_SINK`, `QUIZ_PROGRESS_READER`, `COUNTRY_DATASET`, `CLOCK`                                     | ✅                                                                                                                                                                     |
-| `libs/client/quiz-feature`                         | The quiz screens themselves (play, results), used by every remote                                                                       | ✅                                                                                                                                                                     |
-| `libs/client/auth`, `libs/client/progress`         | Sign-in state and API calls; progress on the device (IndexedDB), outbox and sync ([ADR-006](../decisions/ADR-006-local-persistence.md)) | ✅                                                                                                                                                                     |
-| `libs/shared/contracts`                            | Zod schemas of API requests, responses and errors, shared by server and client                                                          | ✅                                                                                                                                                                     |
+| Unit                                               | Responsibility                                                                                                                          | Status                                                                                                                                                                          |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/shell`                                       | Bootstrap, auth, tabs, Home, Quiz Setup, Countries, Leaderboard, Achievements, Settings; Native Federation host                         | ✅ welcome + required sign-in, tabs, Home, quiz setup, the countries reference, Leaderboard (challenges, rankings, records), Achievements, Settings (nickname), federation host |
+| `apps/capitals`                                    | Capitals play + results route; Native Federation remote                                                                                 | ✅ ([microfrontends.md](microfrontends.md))                                                                                                                                     |
+| `apps/flags`                                       | Flags play + results route; Native Federation remote                                                                                    | ✅ ([microfrontends.md](microfrontends.md))                                                                                                                                     |
+| `apps/api`                                         | REST API: auth, sessions (idempotent result ingestion), progress sync, leaderboard                                                      | ✅ sign-in (Google, Apple), sessions per player, server-graded and idempotent, history for sync, leaderboard challenges, boards and records ([backend.md](backend.md))          |
+| `apps/site`                                        | Angular SSR: prerendered legal pages, server-rendered public leaderboard                                                                | ✅ en/ru, home, Privacy, Terms, leaderboards ([site.md](site.md))                                                                                                               |
+| `apps/shell-e2e`                                   | Cypress user journeys                                                                                                                   | ✅ navigation, theme, language, Capitals quiz across the federation boundary · 📐 the remaining journeys                                                                        |
+| `libs/quiz/domain`                                 | Pure TS quiz rules shared by client and server: engine, answer matching, scoring, mastery, progress, achievements, leaderboard          | ✅                                                                                                                                                                              |
+| `libs/quiz/countries`                              | 195-country dataset (en/ru), UN M49 regions, flag asset paths                                                                           | ✅                                                                                                                                                                              |
+| `libs/shared/util`                                 | Dependency-free helpers (`Clock`, `Result`, `assertNever`)                                                                              | ✅                                                                                                                                                                              |
+| `libs/client/ui`, `client/i18n`, `client/settings` | Design system, English/Russian i18n, settings store and theme/language sync                                                             | ✅                                                                                                                                                                              |
+| `libs/client/quiz-ports`                           | The shell ↔ remote contract: `QUIZ_RESULT_SINK`, `QUIZ_PROGRESS_READER`, `COUNTRY_DATASET`, `CLOCK`                                     | ✅                                                                                                                                                                              |
+| `libs/client/quiz-feature`                         | The quiz screens themselves (play, results), used by every remote                                                                       | ✅                                                                                                                                                                              |
+| `libs/client/auth`, `libs/client/progress`         | Sign-in state and API calls; progress on the device (IndexedDB), outbox and sync ([ADR-006](../decisions/ADR-006-local-persistence.md)) | ✅                                                                                                                                                                              |
+| `libs/shared/contracts`                            | Zod schemas of API requests, responses and errors, shared by server and client                                                          | ✅                                                                                                                                                                              |
 
 ## Key architectural principles
 
@@ -94,40 +94,41 @@ typos). The app has no custom speech-recognition UI and no external AI/LLM judgi
 
 ## Delivery phases
 
-| #   | Branch                       | Scope                                                                                   | Status         |
-| --- | ---------------------------- | --------------------------------------------------------------------------------------- | -------------- |
-| 1   | `feat/project-foundation`    | Nx, apps/libs skeleton, boundaries, CI, ADR-001/002/007                                 | ✅ merged      |
-| 2   | `feat/domain-model`          | 195-country dataset + flags, engine, matching, scoring, mastery, achievements, ranking  | ✅ merged      |
-| 3   | `feat/shell-design-system`   | Ionic shell, tokens, Liquid Glass, themes, i18n, Settings                               | ✅ merged      |
-| 4   | `feat/capitals-mfe`          | Native Federation host/remote, setup, play, results                                     | ✅ merged      |
-| 5   | `feat/flags-mfe`             | Flags remote                                                                            | ✅ merged      |
-| 6   | `feat/backend-database`      | Express, Drizzle, migrations, API tests                                                 | ✅ merged      |
-| 7a  | `feat/auth-server`           | Sign-in (Apple, Google ID tokens), tokens, account deletion — API                       | ✅ merged      |
-| 7b  | `feat/auth-client`           | Sign-in, sign-out and account deletion in the app                                       | ✅ merged      |
-| 8a  | `feat/sync-server`           | A player's history for sync (`GET /v1/sessions`, keyset pages) — API                    | ✅ merged      |
-| 8b  | `feat/sync-client`           | Sign-in first, local store (IndexedDB), outbox, sync                                    | ✅ merged      |
-| 9a  | `feat/leaderboard-server`    | Challenges with a server seed, ranked runs, public boards, records, nicknames — API     | ✅ merged      |
-| 9b  | `feat/leaderboard-client`    | Challenges and the leaderboard screen in the app                                        | ✅ merged      |
-| 9c  | `feat/site-ssr`              | `apps/site` SSR: legal pages, public leaderboard; SSR-in-shell spike, ADR-003           | ✅ merged      |
-| 10  | `feat/achievements-mistakes` | Achievements, practice mistakes                                                         | ✅ merged      |
-| 11  | `feat/e2e`                   | Full Cypress journeys                                                                   | ✅ merged      |
-| 12  | `feat/ci-cd`                 | Deployment pipelines                                                                    | ✅ merged      |
-| 13a | `feat/ios-app`               | Capacitor iOS app, remotes bundled in, simulator                                        | ✅ merged      |
-| 13b | `feat/ios-auth`              | Native sign-in on iOS, refresh token in the Keychain                                    | ✅ merged      |
-| 14a | `feat/polish-quality`        | Accessibility checks, security headers and CSP, performance review                      | ✅ merged      |
-| 14b | `feat/polish-feel`           | Animation, sound and haptics                                                            | ✅ merged      |
-| 15  | `feat/pwa`                   | Installable web app: manifest, icons, offline service worker                            | ✅ merged      |
-| 16  | `feat/polish-details`        | Region sizes, the vibration setting on the web, the account card                        | ✅ merged      |
-| 17  | `feat/page-header`           | The header as floating controls: a round back button and a title pill, off `ion-header` | ✅ merged      |
-| 18  | `feat/answer-feedback`       | The verdict card continues the quiz and repeats the answer; one card style on Home      | ✅ merged      |
-| 19  | `feat/toasts`                | One way to say something went well or wrong                                             | ✅ merged      |
-| 20  | `feat/first-run-tips`        | A guided tour of the quiz setup on the first run: every choice is the player's          | ✅ merged      |
-| 21  | `feat/countries-reference`   | A browsable list of every country by region: flag, country, capital                     | 🚧 this branch |
-| 22  | `feat/share-sounds`          | Sharing a result; a sound on the actions that start something                           | planned        |
-| 23  | `feat/leaderboards-v2`       | Boards per mode, region and difficulty; top 100 plus the player's own row               | planned        |
-| 24  | `feat/friends`               | Friends, their achievements, and a board of you and your friends                        | planned        |
-| 25  | `feat/auth-fixes`            | Google sign-in: straight to Home after signing in, and no surprise sign-outs            | planned        |
-| 26  | `feat/voice-answers`         | Hard mode answered out loud: the Web Speech API on the web, a decision on iOS after     | planned        |
+| #   | Branch                       | Scope                                                                                    | Status         |
+| --- | ---------------------------- | ---------------------------------------------------------------------------------------- | -------------- |
+| 1   | `feat/project-foundation`    | Nx, apps/libs skeleton, boundaries, CI, ADR-001/002/007                                  | ✅ merged      |
+| 2   | `feat/domain-model`          | 195-country dataset + flags, engine, matching, scoring, mastery, achievements, ranking   | ✅ merged      |
+| 3   | `feat/shell-design-system`   | Ionic shell, tokens, Liquid Glass, themes, i18n, Settings                                | ✅ merged      |
+| 4   | `feat/capitals-mfe`          | Native Federation host/remote, setup, play, results                                      | ✅ merged      |
+| 5   | `feat/flags-mfe`             | Flags remote                                                                             | ✅ merged      |
+| 6   | `feat/backend-database`      | Express, Drizzle, migrations, API tests                                                  | ✅ merged      |
+| 7a  | `feat/auth-server`           | Sign-in (Apple, Google ID tokens), tokens, account deletion — API                        | ✅ merged      |
+| 7b  | `feat/auth-client`           | Sign-in, sign-out and account deletion in the app                                        | ✅ merged      |
+| 8a  | `feat/sync-server`           | A player's history for sync (`GET /v1/sessions`, keyset pages) — API                     | ✅ merged      |
+| 8b  | `feat/sync-client`           | Sign-in first, local store (IndexedDB), outbox, sync                                     | ✅ merged      |
+| 9a  | `feat/leaderboard-server`    | Challenges with a server seed, ranked runs, public boards, records, nicknames — API      | ✅ merged      |
+| 9b  | `feat/leaderboard-client`    | Challenges and the leaderboard screen in the app                                         | ✅ merged      |
+| 9c  | `feat/site-ssr`              | `apps/site` SSR: legal pages, public leaderboard; SSR-in-shell spike, ADR-003            | ✅ merged      |
+| 10  | `feat/achievements-mistakes` | Achievements, practice mistakes                                                          | ✅ merged      |
+| 11  | `feat/e2e`                   | Full Cypress journeys                                                                    | ✅ merged      |
+| 12  | `feat/ci-cd`                 | Deployment pipelines                                                                     | ✅ merged      |
+| 13a | `feat/ios-app`               | Capacitor iOS app, remotes bundled in, simulator                                         | ✅ merged      |
+| 13b | `feat/ios-auth`              | Native sign-in on iOS, refresh token in the Keychain                                     | ✅ merged      |
+| 14a | `feat/polish-quality`        | Accessibility checks, security headers and CSP, performance review                       | ✅ merged      |
+| 14b | `feat/polish-feel`           | Animation, sound and haptics                                                             | ✅ merged      |
+| 15  | `feat/pwa`                   | Installable web app: manifest, icons, offline service worker                             | ✅ merged      |
+| 16  | `feat/polish-details`        | Region sizes, the vibration setting on the web, the account card                         | ✅ merged      |
+| 17  | `feat/page-header`           | The header as floating controls: a round back button and a title pill, off `ion-header`  | ✅ merged      |
+| 18  | `feat/answer-feedback`       | The verdict card continues the quiz and repeats the answer; one card style on Home       | ✅ merged      |
+| 19  | `feat/toasts`                | One way to say something went well or wrong                                              | ✅ merged      |
+| 20  | `feat/first-run-tips`        | A guided tour of the quiz setup on the first run: every choice is the player's           | ✅ merged      |
+| 21a | `feat/countries-reference`   | A browsable list of every country by region: flag, country, capital                      | 🚧 this branch |
+| 21b | `feat/home-play-card`        | One Play card on Home, a setup that remembers, region sketches and square category tiles | planned        |
+| 22  | `feat/share-sounds`          | Sharing a result; a sound on the actions that start something                            | planned        |
+| 23  | `feat/leaderboards-v2`       | Boards per mode, region and difficulty; top 100 plus the player's own row                | planned        |
+| 24  | `feat/friends`               | Friends, their achievements, and a board of you and your friends                         | planned        |
+| 25  | `feat/auth-fixes`            | Google sign-in: straight to Home after signing in, and no surprise sign-outs             | planned        |
+| 26  | `feat/voice-answers`         | Hard mode answered out loud: the Web Speech API on the web, a decision on iOS after      | planned        |
 
 Phase 23 replaces the earlier plan for separate regional boards: region and
 difficulty become part of every board, Quick round is ranked by time and Time

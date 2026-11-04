@@ -172,6 +172,12 @@ Everything is derived; nothing is copied from the Figma mock-ups:
 - **Overall progress** is Capitals + Flags mastered, out of 2 × 195.
 - **Achievements** (14) come from `evaluateAchievements`, with per-scope totals from the dataset.
 - **Practice Mistakes** comes from `practiceCandidates`.
+- **The countries reference** (`/countries`, opened from Home) is the dataset
+  itself: every country of the chosen region with its capital and its flag,
+  sorted with an `Intl.Collator` of the display language. The capital and the
+  flag are each lit green on their own, by `isMastered` — mastery is kept per
+  category (`capitals:fr` and `flags:fr` are separate states), so one combined
+  mark would claim knowledge the player may not have.
 - **Leaderboard** shows real rankings and records from the API.
 
 `ProgressStore` (`client-progress`) keeps the finished sessions on the device

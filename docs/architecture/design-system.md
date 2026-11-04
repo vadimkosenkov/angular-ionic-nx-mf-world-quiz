@@ -276,6 +276,49 @@ may be a link or a button, so `.wq-row` sets `font: inherit`: a button takes
 the browser's own smaller type otherwise, and two rows meant to look alike
 came out in different sizes.
 
+`.wq-card` carries no padding of its own, because what goes inside decides
+how far from the edge it belongs. A card that holds rows takes
+`.wq-card-rows` for that inset, so the rows of every such card — Home's
+Learn and Practice mistakes, the countries reference — start on the same
+line. A card that sets its own padding instead drifts from the rest by a
+few pixels, which is exactly what happened to the reference list.
+
+### The mark sits on the fact, not beside it
+
+The countries reference lists two facts per row — the capital in words and
+the flag as a picture — and each is marked on its own: a tick on a round,
+light green disc placed over it, plus the success colour on the capital's
+words and on the flag's hairline. One mark for the country would be a lie, because mastery is kept
+per category, and a column of marks at the end of the row would not say
+which of the two it answers for.
+
+The tick is positioned absolutely, which is the point: it takes no room, so
+lighting a row up neither moves the words nor pushes the flags of mastered
+countries out of the column every other flag stands in. It sits just past
+the last letter of the capital — at the level the line itself gives it, so
+it stands as high in the row as the flag's does — and in the bottom corner
+of the flag, hanging over the edge. There it may land on any colour a flag
+has, so it carries a ring in the card's own colour that cuts the disc out of
+whatever is under it — the card's colour, not white, because in the dark
+theme a white ring would be a bright line around a small mark.
+
+The disc and its ink are one token pair of their own,
+`--wq-color-success-mark` / `--wq-color-on-success-mark`, and the pair holds
+the **same** two colours in both themes. That is the exception the mark
+earns: it lies over content rather than on a surface, so it is a badge like
+Ionic's, which stays light in a dark palette, and the tinted-card tokens do
+not work for it — tinting the card's own colour gives a pale disc in the
+light theme and a mid-green one in the dark theme, where the dark theme's
+light ink falls to 2.2:1 and nothing in the palette reads on it. Light green
+with dark green gives 5.1:1 either way, against the 3:1 WCAG asks of a
+graphic that carries meaning. Colour alone means nothing to a screen reader,
+so each fact is also followed by a `wq-visually-hidden` span that says the
+same in words: "Capital: mastered", "Flag: not mastered yet".
+
+A tick in a column of its own was tried first and read as a form rather than
+a reference; a green tint behind the capital read as a button. Both are in
+the branch's history.
+
 ### One glass material for all chrome
 
 The floating tab bar and translucent page headers share the `glass-chrome`
