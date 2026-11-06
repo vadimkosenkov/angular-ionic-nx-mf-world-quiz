@@ -187,6 +187,81 @@ of the label: "Europe (44)", "World (195)". It comes from the dataset
 `aria-hidden` while the button's `aria-label` spells it out ("Europe, 44
 countries") — "(44)" on its own tells a screen reader nothing.
 
+### Two offers, card-sized
+
+Home's point is the two things a player came to do: play, or look something
+up. Each is a card the size of that decision — `.offer`, with the section's
+name as an `.eyebrow` heading, what it is in large type, a line saying what
+pressing it would start, an icon in a filled tile, and the way in as a pill
+in `.offer-footer`. The Play card also carries the progress bar of the
+category it would start, because how far along you are is part of deciding.
+
+There used to be one such card per category (Capitals, Flags), which asked
+the player to choose the category twice: here, and again on the setup
+screen. One card, and the setup screen owns the choice. The shape stayed:
+it is what made the two cards read as the page's main controls rather than
+as list items.
+
+A card that is the only thing in its section does not need a
+`.wq-section-title` above it as well — its eyebrow is the `h2`.
+
+### A choice that shows what it is
+
+Three of the quiz setup's four choices are about a thing rather than a word,
+and all three say so.
+
+**A region carries a sketch of its own continent** — `wq-region-options`
+(`client/ui`), one component for every screen that asks which part of the
+world it is about: the quiz setup and the countries reference. They offered
+the same list of names before it existed, and only one of them would have
+grown the sketches. The host passes the options with their names already
+translated (`client/ui` holds no translations; `regionOptions()` in the
+shell's `core/` builds them) and the prefix for the test ids, and gets the
+new scope back.
+
+The drawing is a CSS **mask**, not a picture, and its rules live in the
+design system's global stylesheet rather than in the component, because an
+asset referenced from a component stylesheet is emitted hashed but
+referenced unhashed (CLAUDE.md). It works like this: the file holds nothing
+but alpha, `background: currentColor` gives it the colour of the option it
+sits in, and so one file serves the light theme, the dark theme and a
+selected option that turns blue. An `img` would need three files, or a
+filter that guesses. The seven globes are drawn to one rim and one size, so
+they line up down the grid. The sketch is `aria-hidden`: the button is
+already named by its `aria-label`, which spells the count out ("Europe, 44
+countries").
+
+**The quiz type and the difficulty are square tiles** — `.wq-option.tile`
+inside `.wq-options.grid .tiles`, `aspect-ratio: 1`, each with an icon, the
+name and what the choice actually means: what the quiz asks for and how
+much of it is mastered, or how an answer is given. Both replaced a
+segmented control, which could only show the word — and neither choice is
+between two words. "Hard" in a segment with its explanation in a paragraph
+underneath made the player match the two up; inside the tile there is
+nothing to match. What is pushed to the foot of a tile
+(`margin-block-start: auto`, the mastery line) keeps two tiles agreeing
+whatever the line above it runs to.
+
+**The square is a phone's shape, not the tile's.** A tile is always half the
+page's column, so a square grows with the window: 165px on a phone, 275px on
+a 600px window, 340px on the widest page — a panel with a hole in the middle.
+From **480px**, the width of the widest phone, the tile drops `aspect-ratio`
+and takes the height its content asks for. The breakpoint is deliberately not
+the 768px the chrome uses: what gets too tall is the column, and the column
+outgrows the phone long before the layout changes. The two tiles still share
+one height, because the row stretches them and the mastery line is pushed to
+the foot of whichever is taller.
+
+The tile's own rules live with the quiz setup rather than in `client/ui`,
+because that screen is the only one that offers a choice of this shape; the
+option it builds on (`.wq-option`) is the shared one.
+
+A tile is a `button` with `aria-pressed`, not a radio: there is no form
+here, and `ion-list` semantics would be wrong (see below).
+
+The game modes stay a list of wide rows: there are four of them, one is
+disabled when there is nothing to practise, and their hints are sentences.
+
 ### The page header
 
 A page's top is not a bar: `wq-page-header` (`client/ui`) floats a round back
@@ -638,6 +713,14 @@ page container adds `var(--ion-safe-area-top)` to its top padding.
 - Icons: `ionicons` SVGs, registered explicitly in `apps/shell/src/app/icons.ts`,
   so only the icons used are bundled. No icon CDN is used.
 - Fonts: the system font stack (SF Pro on Apple devices); no web fonts to download.
+- Region sketches: seven hand-drawn globes in
+  `libs/client/ui/src/assets/regions/`, from freely usable sources with no
+  attribution required. They are stored as grey+alpha PNGs (215 x 215,
+  ~100 kB in all) because they are used as masks and only their alpha is
+  read. The whole-world one had no counterpart in that set and was drawn to
+  the same rim and size, with its continents toned down afterwards to the
+  grey the other six average (their hatching leaves gaps, a solid fill does
+  not, so an untouched fill read as a darker option than its neighbours).
 
 ## Motion, sound and haptics
 
