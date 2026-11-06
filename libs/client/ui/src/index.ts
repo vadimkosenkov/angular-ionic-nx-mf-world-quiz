@@ -6,6 +6,8 @@ export { PageHeader } from './lib/page-header/page-header';
 export { ProgressBar } from './lib/progress-bar/progress-bar';
 export type { ProgressTone } from './lib/progress-bar/progress-bar';
 export { ProgressCard } from './lib/progress-card/progress-card';
+export { RegionOptions } from './lib/region-options/region-options';
+export type { RegionOption } from './lib/region-options/region-options';
 export { ToastHost } from './lib/toast/toast-host';
 export { TOAST_DURATION_MS, TOAST_SCHEDULER, Toasts } from './lib/toast/toasts';
 export type { Toast, ToastScheduler, ToastTone } from './lib/toast/toasts';
