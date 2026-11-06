@@ -15,22 +15,38 @@
       <h2 id="setup-category" class="wq-section-title">
         {{ 'setup.category' | transloco }}
       </h2>
-      <ion-segment
-        data-testid="setup-category"
-        aria-labelledby="setup-category"
-        [value]="selectedCategory()"
-        (ionChange)="onCategoryChange($event)"
-      >
-        @for (item of categories; track item) {
-        <ion-segment-button
-          [value]="item"
-          [attr.data-testid]="'setup-category-' + item"
-        >
-          <ion-icon [name]="categoryIcons[item]" aria-hidden="true" />
-          <ion-label>{{ 'categories.' + item | transloco }}</ion-label>
-        </ion-segment-button>
+      <!-- A tile rather than a segment: the category is the one choice a
+           player makes on what it is rather than on a label, so it carries
+           what it asks for and how far along the player already is. -->
+      <ul class="wq-options grid tiles" data-testid="setup-category">
+        @for (item of categories; track item) { @let mastery =
+        progress.worldProgress()[item];
+        <li>
+          <button
+            type="button"
+            class="wq-option tile"
+            [class.selected]="selectedCategory() === item"
+            [attr.aria-pressed]="selectedCategory() === item"
+            [attr.data-testid]="'setup-category-' + item"
+            (click)="selectCategory(item)"
+          >
+            <span class="tile-icon" aria-hidden="true">
+              <ion-icon [name]="categoryIcons[item]" />
+            </span>
+            <span class="tile-name">
+              {{ 'categories.' + item | transloco }}
+            </span>
+            <span class="tile-note">
+              {{ 'setup.categories.' + item | transloco }}
+            </span>
+            <span class="tile-mastery">
+              {{ 'achievements.progress' | transloco : { mastered:
+              mastery.mastered, total: mastery.total } }}
+            </span>
+          </button>
+        </li>
         }
-      </ion-segment>
+      </ul>
     </section>
 
     <section
@@ -42,32 +58,12 @@
       <h2 id="setup-scope" class="wq-section-title">
         {{ 'setup.scope' | transloco }}
       </h2>
-      <ul class="wq-options grid" data-testid="setup-scope">
-        @for (option of scopeOptions; track option.scope) {
-        <li>
-          <button
-            type="button"
-            class="wq-option"
-            [class.selected]="scope() === option.scope"
-            [attr.aria-pressed]="scope() === option.scope"
-            [attr.data-testid]="'setup-scope-' + option.scope"
-            [attr.aria-label]="
-              ('regions.' + option.scope | transloco) +
-              ', ' +
-              ('counts.countries' | wqPlural: option.count)
-            "
-            (click)="selectScope(option.scope)"
-          >
-            {{ 'regions.' + option.scope | transloco }}
-            <!-- The bare number is meaningless on its own, so the button's
-                 aria-label spells it out and this is hidden. -->
-            <span class="wq-option-count" aria-hidden="true"
-              >({{ option.count }})</span
-            >
-          </button>
-        </li>
-        }
-      </ul>
+      <wq-region-options
+        testId="setup-scope"
+        [options]="regionOptions()"
+        [selected]="scope()"
+        (chosen)="selectScope($event)"
+      />
     </section>
 
     <section
@@ -79,24 +75,34 @@
       <h2 id="setup-difficulty" class="wq-section-title">
         {{ 'setup.difficulty' | transloco }}
       </h2>
-      <ion-segment
-        data-testid="setup-difficulty"
-        aria-labelledby="setup-difficulty"
-        [value]="difficulty()"
-        (ionChange)="onDifficultyChange($event)"
-      >
+      <!-- The same tile as the quiz type: the difficulty is a choice about
+           how you answer, and "Easy"/"Hard" on their own do not say that.
+           The explanation that used to sit under the control is inside the
+           tile it belongs to. -->
+      <ul class="wq-options grid tiles" data-testid="setup-difficulty">
         @for (item of difficulties; track item) {
-        <ion-segment-button
-          [value]="item"
-          [attr.data-testid]="'setup-difficulty-' + item"
-        >
-          <ion-label>{{ 'difficulty.' + item | transloco }}</ion-label>
-        </ion-segment-button>
+        <li>
+          <button
+            type="button"
+            class="wq-option tile"
+            [class.selected]="difficulty() === item"
+            [attr.aria-pressed]="difficulty() === item"
+            [attr.data-testid]="'setup-difficulty-' + item"
+            (click)="selectDifficulty(item)"
+          >
+            <span class="tile-icon" aria-hidden="true">
+              <ion-icon [name]="difficultyIcons[item]" />
+            </span>
+            <span class="tile-name">
+              {{ 'difficulty.' + item | transloco }}
+            </span>
+            <span class="tile-note">
+              {{ 'setup.difficultyHint.' + item | transloco }}
+            </span>
+          </button>
+        </li>
         }
-      </ion-segment>
-      <p class="hint wq-text-secondary">
-        {{ 'setup.difficultyHint.' + difficulty() | transloco }}
-      </p>
+      </ul>
     </section>
 
     <section

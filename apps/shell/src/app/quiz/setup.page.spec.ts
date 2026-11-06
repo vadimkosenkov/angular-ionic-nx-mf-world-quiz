@@ -5,11 +5,13 @@ import { provideShellTesting } from '../../testing/shell-testing';
 import { ProgressStore } from '@world-quiz/client/progress';
 import { finishedSession } from '@world-quiz/client/progress/testing';
 import { QuizSetupPage } from './setup.page';
+import {
+  DEFAULT_SETUP,
+  LAST_SETUP_STORAGE_KEY,
+  LastSetupStore,
+  type RememberedSetup,
+} from '../core/last-setup.store';
 import { TIPS_STORAGE_KEY, type TipId, TipsStore } from '../core/tips.store';
-
-function emitIonChange(element: Element, value: unknown) {
-  element.dispatchEvent(new CustomEvent('ionChange', { detail: { value } }));
-}
 
 /**
  * Renders the screen as a player who has already been through its guided
@@ -18,15 +20,28 @@ function emitIonChange(element: Element, value: unknown) {
  */
 async function renderSetup({
   seenTips = ['setup'] as readonly TipId[],
+  lastSetup,
   ...inputs
-}: { category?: string; mode?: string; seenTips?: readonly TipId[] } = {}) {
+}: {
+  category?: string;
+  mode?: string;
+  seenTips?: readonly TipId[];
+  /** The setup this device remembers, as if a quiz had been started. */
+  lastSetup?: RememberedSetup;
+} = {}) {
   const view = await render(QuizSetupPage, {
     inputs,
     providers: provideShellTesting({
-      storage: { [TIPS_STORAGE_KEY]: JSON.stringify(seenTips) },
+      storage: {
+        [TIPS_STORAGE_KEY]: JSON.stringify(seenTips),
+        ...(lastSetup
+          ? { [LAST_SETUP_STORAGE_KEY]: JSON.stringify(lastSetup) }
+          : {}),
+      },
     }),
   });
   await TestBed.inject(TipsStore).load();
+  await TestBed.inject(LastSetupStore).load();
   view.fixture.detectChanges();
   const router = TestBed.inject(Router);
   const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
@@ -97,7 +112,7 @@ describe('QuizSetupPage', () => {
     const { navigate } = await renderSetup();
 
     fireEvent.click(await screen.findByTestId('setup-scope-europe'));
-    emitIonChange(screen.getByTestId('setup-difficulty'), 'hard');
+    fireEvent.click(screen.getByTestId('setup-difficulty-hard'));
     fireEvent.click(screen.getByTestId('setup-mode-timed'));
     fireEvent.click(screen.getByTestId('setup-start'));
 
@@ -106,24 +121,29 @@ describe('QuizSetupPage', () => {
     });
   });
 
-  it('ignores values that are not part of the domain vocabulary', async () => {
-    const { navigate } = await renderSetup();
+  // "Easy" and "Hard" say nothing about what the player is choosing; the
+  // difference is how an answer is given, and the tile says so.
+  it('says what each difficulty means', async () => {
+    await renderSetup();
 
-    emitIonChange(await screen.findByTestId('setup-difficulty'), 'nightmare');
-    fireEvent.click(screen.getByTestId('setup-start'));
-
-    expect(navigate).toHaveBeenCalledWith(['/quiz', 'capitals'], {
-      queryParams: expect.objectContaining({ difficulty: 'easy' }),
-    });
+    expect(
+      (await screen.findByTestId('setup-difficulty-easy')).textContent,
+    ).toContain('Pick from four possible answers');
+    expect(screen.getByTestId('setup-difficulty-hard').textContent).toContain(
+      'Type or dictate the answer',
+    );
   });
 
   it('preselects the category passed in the link and starts that quiz', async () => {
     const { navigate } = await renderSetup({ category: 'flags' });
 
-    const segment = (await screen.findByTestId(
-      'setup-category',
-    )) as HTMLElement & { value?: string };
-    expect(segment.value).toBe('flags');
+    const flags = await screen.findByTestId('setup-category-flags');
+    expect(flags.getAttribute('aria-pressed')).toBe('true');
+    expect(
+      screen
+        .getByTestId('setup-category-capitals')
+        .getAttribute('aria-pressed'),
+    ).toBe('false');
 
     fireEvent.click(screen.getByTestId('setup-start'));
     expect(navigate).toHaveBeenCalledWith(['/quiz', 'flags'], {
@@ -134,13 +154,92 @@ describe('QuizSetupPage', () => {
   it('falls back to Capitals for an unknown category and lets the player switch', async () => {
     const { navigate } = await renderSetup({ category: 'rivers' });
 
-    emitIonChange(await screen.findByTestId('setup-category'), 'flags');
+    fireEvent.click(await screen.findByTestId('setup-category-flags'));
     fireEvent.click(screen.getByTestId('setup-start'));
 
     expect(navigate).toHaveBeenCalledWith(
       ['/quiz', 'flags'],
       expect.anything(),
     );
+  });
+
+  // The category is a tile rather than a word in a segment: it says what
+  // the quiz asks for, and how far the player already is in it.
+  it('describes each category and how much of it is mastered', async () => {
+    await renderSetup();
+
+    const capitals = await screen.findByTestId('setup-category-capitals');
+    expect(capitals.textContent).toContain('Name the capital of each country');
+    expect(capitals.textContent).toContain('0/195 mastered');
+    expect(screen.getByTestId('setup-category-flags').textContent).toContain(
+      'Recognize every country by its flag',
+    );
+  });
+
+  // Home has one Play button now, so this screen is where a player lands
+  // every time: it has to arrive already saying what they play.
+  describe('the setup the device remembers', () => {
+    it('opens with every choice where the player left it', async () => {
+      await renderSetup({
+        lastSetup: {
+          category: 'flags',
+          scope: 'africa',
+          difficulty: 'hard',
+          mode: 'timed',
+        },
+      });
+
+      expect(
+        (await screen.findByTestId('setup-category-flags')).getAttribute(
+          'aria-pressed',
+        ),
+      ).toBe('true');
+      expect(
+        screen.getByTestId('setup-scope-africa').getAttribute('aria-pressed'),
+      ).toBe('true');
+      expect(
+        screen.getByTestId('setup-mode-timed').getAttribute('aria-pressed'),
+      ).toBe('true');
+      expect(
+        screen
+          .getByTestId('setup-difficulty-hard')
+          .getAttribute('aria-pressed'),
+      ).toBe('true');
+    });
+
+    it('remembers the choices the player started a quiz with', async () => {
+      await renderSetup();
+
+      fireEvent.click(await screen.findByTestId('setup-category-flags'));
+      fireEvent.click(screen.getByTestId('setup-scope-europe'));
+      fireEvent.click(screen.getByTestId('setup-difficulty-hard'));
+      fireEvent.click(screen.getByTestId('setup-mode-endless'));
+      fireEvent.click(screen.getByTestId('setup-start'));
+
+      expect(TestBed.inject(LastSetupStore).setup()).toEqual({
+        category: 'flags',
+        scope: 'europe',
+        difficulty: 'hard',
+        mode: 'endless',
+      });
+    });
+
+    // Practice Mistakes needs mistakes to exist. Remembering it would hand
+    // the player a screen whose Start button is disabled.
+    it('keeps the training mode when the round was Practice Mistakes', async () => {
+      await renderSetup({ mode: 'practice' });
+      TestBed.inject(ProgressStore).recordSession(
+        finishedSession([{ code: 'fr', correct: false }]),
+      );
+
+      fireEvent.click(await screen.findByTestId('setup-scope-europe'));
+      fireEvent.click(screen.getByTestId('setup-start'));
+
+      expect(TestBed.inject(LastSetupStore).setup()).toEqual({
+        ...DEFAULT_SETUP,
+        scope: 'europe',
+      });
+    });
   });
 
   describe('Practice Mistakes', () => {
@@ -286,7 +385,7 @@ describe('QuizSetupPage', () => {
       const { fixture } = await renderSetup({ seenTips: [] });
       await screen.findByTestId('tour-step');
 
-      emitIonChange(screen.getByTestId('setup-category'), 'flags');
+      fireEvent.click(screen.getByTestId('setup-category-flags'));
       fixture.detectChanges();
 
       expect(screen.getByTestId('tour-step')).toBeTruthy();

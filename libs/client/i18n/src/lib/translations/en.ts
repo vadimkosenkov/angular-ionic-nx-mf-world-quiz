@@ -114,15 +114,11 @@ export const en = {
       caption: 'Capitals and flags mastered',
       percent: '{{percent}}% complete',
     },
-    categories: {
-      title: 'Choose a category',
-      capitals: {
-        title: 'Country → Capital',
-        description: 'Name the capital of each country',
-      },
-      flags: {
-        title: 'Flag → Country',
-        description: 'Recognize every country by its flag',
+    play: {
+      title: 'Play',
+      quiz: {
+        title: 'Quiz',
+        open: 'Play',
       },
     },
     practice: {
@@ -219,6 +215,10 @@ export const en = {
   setup: {
     title: 'Quiz setup',
     category: 'Quiz type',
+    categories: {
+      capitals: 'Name the capital of each country',
+      flags: 'Recognize every country by its flag',
+    },
     scope: 'Region',
     difficulty: 'Difficulty',
     difficultyHint: {

@@ -107,15 +107,11 @@ export const ru: TranslationShape = {
       caption: 'Освоено столиц и флагов',
       percent: 'Выполнено {{percent}}%',
     },
-    categories: {
-      title: 'Выберите категорию',
-      capitals: {
-        title: 'Страна → Столица',
-        description: 'Назовите столицу каждой страны',
-      },
-      flags: {
-        title: 'Флаг → Страна',
-        description: 'Узнайте каждую страну по флагу',
+    play: {
+      title: 'Игра',
+      quiz: {
+        title: 'Квиз',
+        open: 'Играть',
       },
     },
     practice: {
@@ -212,6 +208,10 @@ export const ru: TranslationShape = {
   setup: {
     title: 'Настройка квиза',
     category: 'Тип квиза',
+    categories: {
+      capitals: 'Назовите столицу каждой страны',
+      flags: 'Узнайте каждую страну по флагу',
+    },
     scope: 'Регион',
     difficulty: 'Сложность',
     difficultyHint: {

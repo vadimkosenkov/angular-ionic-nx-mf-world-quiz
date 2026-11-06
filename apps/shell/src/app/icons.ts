@@ -2,9 +2,10 @@ import { registerQuizIcons } from '@world-quiz/client/quiz-feature';
 import { addIcons } from 'ionicons';
 import {
   alertCircle,
+  appsOutline,
   arrowForward,
+  book,
   bulb,
-  business,
   businessOutline,
   checkmark,
   checkmarkCircle,
@@ -12,7 +13,8 @@ import {
   chevronForward,
   close,
   cloudOfflineOutline,
-  flag,
+  createOutline,
+  earth,
   flagOutline,
   globeOutline,
   home,
@@ -54,9 +56,10 @@ export function registerIcons(): void {
     // register two of them: the toast is the shell's own chrome, and a map
     // entry with the same value twice costs nothing.
     'alert-circle': alertCircle,
+    'apps-outline': appsOutline,
     'arrow-forward': arrowForward,
+    book,
     bulb,
-    business,
     'business-outline': businessOutline,
     checkmark,
     'checkmark-circle': checkmarkCircle,
@@ -64,7 +67,8 @@ export function registerIcons(): void {
     'chevron-forward': chevronForward,
     close,
     'cloud-offline-outline': cloudOfflineOutline,
-    flag,
+    'create-outline': createOutline,
+    earth,
     'flag-outline': flagOutline,
     'globe-outline': globeOutline,
     home,

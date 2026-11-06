@@ -24,11 +24,14 @@ describe('flags quiz', () => {
               .click();
       });
 
-  it('starts from the Flags card and plays a ten-question round', () => {
+  it('starts from Home, picks Flags and plays a ten-question round', () => {
     cy.visit('/home');
-    cy.get('[data-testid="play-flags"]').click({ scrollBehavior: 'center' });
-    cy.location('search').should('eq', '?category=flags');
+    // Home has one way into the quiz; the category is chosen on the setup
+    // screen, which is also what remembers it for next time.
+    cy.get('[data-testid="play-quiz"]').click({ scrollBehavior: 'center' });
+    cy.location('pathname').should('eq', '/quiz/setup');
 
+    cy.get('[data-testid="setup-category-flags"]').click();
     cy.get('[data-testid="setup-start"]').click();
 
     cy.location('pathname').should('eq', '/quiz/flags');
@@ -82,7 +85,8 @@ describe('flags quiz', () => {
         .filter((_, element) => !element.closest('.ion-page-hidden'));
 
     const startFromHome = () => {
-      current('play-flags').click({ scrollBehavior: 'center' });
+      current('play-quiz').click({ scrollBehavior: 'center' });
+      current('setup-category-flags').click();
       current('setup-start').click();
       cy.get('[data-testid="quiz-position"]', { timeout: 20_000 }).should(
         'contain.text',

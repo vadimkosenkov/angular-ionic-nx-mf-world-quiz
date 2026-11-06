@@ -10,9 +10,9 @@ describe('main navigation', () => {
     cy.title().should('eq', 'World Quiz');
     cy.location('pathname').should('eq', '/home');
     cy.get('[data-testid="greeting"]').should('be.visible');
-    cy.get('[data-testid="category-capitals"]').should(
+    cy.get('[data-testid="play-setup"]').should(
       'contain.text',
-      '195 countries · 6 regions',
+      'Capitals · World · Easy · Quick round',
     );
     cy.get('[data-testid="overall-progress"] [role="progressbar"]').should(
       'have.attr',
@@ -28,7 +28,7 @@ describe('main navigation', () => {
       ['leaderboard', 'The fastest perfect run wins'],
       ['achievements', '0/14 unlocked'],
       ['settings', 'Appearance'],
-      ['home', 'Choose a category'],
+      ['home', 'Capitals · World · Easy · Quick round'],
     ] as const;
 
     for (const [tab, text] of tabs) {

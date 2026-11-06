@@ -10,32 +10,12 @@
       <h2 id="countries-scope" class="wq-section-title">
         {{ 'countries.region' | transloco }}
       </h2>
-      <ul class="wq-options grid" data-testid="countries-scope">
-        @for (option of scopeOptions; track option.scope) {
-        <li>
-          <button
-            type="button"
-            class="wq-option"
-            [class.selected]="scope() === option.scope"
-            [attr.aria-pressed]="scope() === option.scope"
-            [attr.data-testid]="'countries-scope-' + option.scope"
-            [attr.aria-label]="
-              ('regions.' + option.scope | transloco) +
-              ', ' +
-              ('counts.countries' | wqPlural: option.count)
-            "
-            (click)="scope.set(option.scope)"
-          >
-            {{ 'regions.' + option.scope | transloco }}
-            <!-- The bare number is meaningless on its own, so the button's
-                 aria-label spells it out and this is hidden. -->
-            <span class="wq-option-count" aria-hidden="true"
-              >({{ option.count }})</span
-            >
-          </button>
-        </li>
-        }
-      </ul>
+      <wq-region-options
+        testId="countries-scope"
+        [options]="regionOptions()"
+        [selected]="scope()"
+        (chosen)="selectScope($event)"
+      />
       <p class="wq-text-secondary legend">
         {{ 'countries.legend' | transloco }}
       </p>

@@ -4,13 +4,13 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { PluralPipe } from '@world-quiz/client/i18n';
 import { ProgressStore } from '@world-quiz/client/progress';
 import { SettingsStore } from '@world-quiz/client/settings';
-import { PageHeader } from '@world-quiz/client/ui';
+import { PageHeader, RegionOptions } from '@world-quiz/client/ui';
 import {
-  countriesInScope,
-  QUIZ_SCOPES,
+  isQuizScope,
   type QuizCategory,
   type QuizScope,
 } from '@world-quiz/quiz/domain';
+import { regionOptions } from '../core/region-options';
 import { countryRows, type CountryRow } from './country-rows';
 
 /**
@@ -23,7 +23,14 @@ import { countryRows, type CountryRow } from './country-rows';
  */
 @Component({
   selector: 'wq-countries-page',
-  imports: [IonContent, IonIcon, PageHeader, PluralPipe, TranslocoPipe],
+  imports: [
+    IonContent,
+    IonIcon,
+    PageHeader,
+    PluralPipe,
+    RegionOptions,
+    TranslocoPipe,
+  ],
   templateUrl: './countries.page.html',
   styleUrl: './countries.page.scss',
 })
@@ -31,13 +38,14 @@ export class CountriesPage {
   private readonly progress = inject(ProgressStore);
   private readonly settings = inject(SettingsStore);
 
-  /** The same six regions and the same counts as the quiz setup offers. */
-  protected readonly scopeOptions = QUIZ_SCOPES.map((scope) => ({
-    scope,
-    count: countriesInScope(this.progress.dataset, scope).length,
-  }));
+  /** The same regions, in the same order, as the quiz setup offers. */
+  protected readonly regionOptions = regionOptions();
 
   protected readonly scope = signal<QuizScope>('world');
+
+  protected selectScope(scope: string): void {
+    if (isQuizScope(scope)) this.scope.set(scope);
+  }
 
   protected readonly rows = computed(() =>
     countryRows(

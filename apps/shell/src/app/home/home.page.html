@@ -30,89 +30,97 @@
       "
     />
 
-    <section class="wq-section" aria-labelledby="categories-title">
-      <h2 id="categories-title" class="wq-section-title">
-        {{ 'home.categories.title' | transloco }}
-      </h2>
-
-      @for (card of categories; track card.category) { @let world =
-      progress.worldProgress()[card.category];
-      <article
-        class="category"
-        [attr.data-testid]="'category-' + card.category"
-      >
-        <div class="category-header">
+    <!-- The two biggest things on the page: play, or learn. One Play card,
+         not one per category — the category is a choice the setup screen
+         already offers, and the setup remembers how the player left it, so
+         this card says what pressing Play is going to start rather than
+         asking the same question a second time. -->
+    @let setup = lastSetup.setup(); @let category =
+    progress.worldProgress()[setup.category];
+    <section class="wq-section" aria-labelledby="play-title">
+      <article class="offer" data-testid="play-card">
+        <div class="offer-header">
           <div>
-            <p class="eyebrow">
-              {{ 'categories.' + card.category | transloco }}
-            </p>
-            <h3>
-              {{ 'home.categories.' + card.category + '.title' | transloco }}
-            </h3>
-            <p class="description">
-              {{ 'home.categories.' + card.category + '.description' | transloco
-              }}
+            <h2 id="play-title" class="eyebrow">
+              {{ 'home.play.title' | transloco }}
+            </h2>
+            <h3>{{ 'home.play.quiz.title' | transloco }}</h3>
+            <p class="description" data-testid="play-setup">
+              {{ 'categories.' + setup.category | transloco }} · {{ 'regions.' +
+              setup.scope | transloco }} · {{ 'difficulty.' + setup.difficulty |
+              transloco }} · {{ 'modes.' + setup.mode | transloco }}
             </p>
           </div>
-          <div class="category-icon" aria-hidden="true">
-            <ion-icon [name]="card.icon" />
+          <!-- The card is one card for both categories, so its icon says
+               "the world", not "capitals" or "flags". -->
+          <div class="offer-icon" aria-hidden="true">
+            <ion-icon name="earth" />
           </div>
         </div>
 
-        <p class="meta">
-          {{ 'counts.countries' | wqPlural: progress.countryCount }} · {{
-          'counts.regions' | wqPlural: progress.regionCount }}
-        </p>
-
+        <!-- How far along the player is in what this card would start. -->
         <wq-progress-bar
-          [value]="world.mastered"
-          [max]="world.total"
-          [label]="'categories.' + card.category | transloco"
+          [value]="category.mastered"
+          [max]="category.total"
+          [label]="'categories.' + setup.category | transloco"
           [valueText]="
-              'achievements.progress'
-                | transloco: { mastered: world.mastered, total: world.total }
-            "
+            'achievements.progress'
+              | transloco
+                : { mastered: category.mastered, total: category.total }
+          "
         />
 
-        <div class="category-footer">
+        <div class="offer-footer">
           <span>
-            {{ 'achievements.progress' | transloco: { mastered: world.mastered,
-            total: world.total } }}
+            {{ 'achievements.progress' | transloco : { mastered:
+            category.mastered, total: category.total } }}
           </span>
           <ion-button
-            class="play"
+            class="go"
             size="small"
-            [routerLink]="['/quiz/setup']"
-            [queryParams]="{ category: card.category }"
-            [attr.data-testid]="'play-' + card.category"
+            routerLink="/quiz/setup"
+            data-testid="play-quiz"
           >
-            {{ 'setup.play' | transloco }}
+            {{ 'home.play.quiz.open' | transloco }}
             <ion-icon slot="end" name="arrow-forward" aria-hidden="true" />
           </ion-button>
         </div>
       </article>
-      }
     </section>
 
     <section class="wq-section" aria-labelledby="learn-title">
-      <h2 id="learn-title" class="wq-section-title">
-        {{ 'home.learn.title' | transloco }}
-      </h2>
-      <div class="wq-card wq-card-rows">
-        <a class="wq-row" routerLink="/countries" data-testid="learn-countries">
-          <span class="wq-row-name">
-            {{ 'home.learn.countries.title' | transloco }}
-            <span class="wq-text-secondary wq-row-note">
+      <article class="offer" data-testid="learn-card">
+        <div class="offer-header">
+          <div>
+            <h2 id="learn-title" class="eyebrow">
+              {{ 'home.learn.title' | transloco }}
+            </h2>
+            <h3>{{ 'home.learn.countries.title' | transloco }}</h3>
+            <p class="description">
               {{ 'home.learn.countries.description' | transloco }}
-            </span>
+            </p>
+          </div>
+          <div class="offer-icon" aria-hidden="true">
+            <ion-icon name="book" />
+          </div>
+        </div>
+
+        <div class="offer-footer">
+          <span>
+            {{ 'counts.countries' | wqPlural: progress.countryCount }} · {{
+            'counts.regions' | wqPlural: progress.regionCount }}
           </span>
-          {{ ' ' }}
-          <span class="wq-row-go">
+          <ion-button
+            class="go"
+            size="small"
+            routerLink="/countries"
+            data-testid="learn-countries"
+          >
             {{ 'home.learn.countries.open' | transloco }}
-            <ion-icon name="chevron-forward" aria-hidden="true" />
-          </span>
-        </a>
-      </div>
+            <ion-icon slot="end" name="arrow-forward" aria-hidden="true" />
+          </ion-button>
+        </div>
+      </article>
     </section>
 
     <section class="wq-section" aria-labelledby="practice-title">
