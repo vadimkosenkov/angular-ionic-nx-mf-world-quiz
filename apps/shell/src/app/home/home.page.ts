@@ -10,36 +10,28 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { PluralPipe } from '@world-quiz/client/i18n';
 import {
   EmptyState,
+  PageHeader,
   ProgressBar,
   ProgressCard,
-  PageHeader,
 } from '@world-quiz/client/ui';
-import {
-  practiceCandidates,
-  QUIZ_CATEGORIES,
-  type QuizCategory,
-} from '@world-quiz/quiz/domain';
+import { practiceCandidates, QUIZ_CATEGORIES } from '@world-quiz/quiz/domain';
 import { greetingFor } from '../core/greeting';
+import { LastSetupStore } from '../core/last-setup.store';
 import { ProgressStore } from '@world-quiz/client/progress';
 import { CLOCK } from '../core/tokens';
-
-interface CategoryCard {
-  readonly category: QuizCategory;
-  readonly icon: string;
-}
 
 @Component({
   selector: 'wq-home-page',
   imports: [
+    IonButton,
     IonContent,
     PageHeader,
     IonIcon,
-    IonButton,
     RouterLink,
     TranslocoPipe,
     PluralPipe,
-    ProgressCard,
     ProgressBar,
+    ProgressCard,
     EmptyState,
   ],
   templateUrl: './home.page.html',
@@ -47,6 +39,8 @@ interface CategoryCard {
 })
 export class HomePage implements ViewWillEnter {
   protected readonly progress = inject(ProgressStore);
+  /** What the Play card says pressing it is going to start. */
+  protected readonly lastSetup = inject(LastSetupStore);
   private readonly clock = inject(CLOCK);
 
   /**
@@ -54,11 +48,6 @@ export class HomePage implements ViewWillEnter {
    * tab is entered instead of being computed once.
    */
   protected readonly greeting = signal(this.currentGreeting());
-
-  protected readonly categories: readonly CategoryCard[] = [
-    { category: 'capitals', icon: 'business' },
-    { category: 'flags', icon: 'flag' },
-  ];
 
   ionViewWillEnter(): void {
     this.greeting.set(this.currentGreeting());
@@ -68,7 +57,6 @@ export class HomePage implements ViewWillEnter {
     return greetingFor(new Date(this.clock.now()).getHours());
   }
 
-  /** Most advanced achievements first, so the preview shows what is closest. */
   /** Categories with countries to review, for the "Practise" buttons. */
   protected readonly practice = computed(() =>
     QUIZ_CATEGORIES.map((category) => ({
@@ -81,6 +69,7 @@ export class HomePage implements ViewWillEnter {
     })).filter((entry) => entry.count > 0),
   );
 
+  /** Most advanced achievements first, so the preview shows what is closest. */
   protected readonly achievementPreview = computed(() =>
     [...this.progress.achievements()]
       .sort((a, b) => b.mastered / (b.total || 1) - a.mastered / (a.total || 1))

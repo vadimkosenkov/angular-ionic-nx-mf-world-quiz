@@ -32,7 +32,7 @@ describe('capitals quiz', () => {
     cy.visit('/home');
     // The header is translucent: scrolling the button to the top of the
     // viewport would put it under the toolbar, so click it in the middle.
-    cy.get('[data-testid="play-capitals"]').click({ scrollBehavior: 'center' });
+    cy.get('[data-testid="play-quiz"]').click({ scrollBehavior: 'center' });
     cy.location('pathname').should('eq', '/quiz/setup');
 
     cy.get('[data-testid="setup-start"]').click();

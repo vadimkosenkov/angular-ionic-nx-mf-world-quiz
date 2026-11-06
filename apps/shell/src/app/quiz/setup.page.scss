@@ -13,9 +13,76 @@
   }
 }
 
-.hint {
-  margin: 0;
+// The quiz type and the difficulty as tiles, side by side: a tile has room
+// for what the choice actually means -- what the quiz asks for and how far
+// the player has got, or how an answer is given -- which is what makes the
+// choice, rather than the word "Capitals" or "Hard".
+//
+// The two tiles always share a height, so the mastery line of one sits level
+// with the other's. The row gives them that: the item stretches, and the
+// button fills it.
+.tiles li {
+  display: flex;
+}
+
+.tiles .tile {
+  display: flex;
+  aspect-ratio: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--wq-space-2);
+  padding: var(--wq-space-4);
+}
+
+// A square works on a phone, where half the width is about as wide as the
+// three lines in it are tall. A tile is always half the page's column, so
+// the square grows with the window: on a 600px one it is already 275px tall
+// and on the widest page 340px -- a panel with a hole in the middle. Past
+// phone width the tile takes the height its content asks for instead.
+//
+// The breakpoint is the phone's own width (the widest is 430px), not the
+// 768px the chrome uses, because what is too tall here is the column, and
+// the column outgrows the phone long before the layout changes.
+@media (min-width: 480px) {
+  .tiles .tile {
+    aspect-ratio: auto;
+  }
+}
+
+.tile-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--wq-radius-sm);
+  background: var(--wq-color-surface-secondary);
+  font-size: 20px;
+}
+
+.tile.selected .tile-icon {
+  background: var(--wq-color-primary);
+  color: var(--wq-color-on-primary);
+}
+
+.tile-note {
+  font-weight: 400;
   font-size: var(--wq-font-size-caption);
+  color: var(--wq-color-text-secondary);
+}
+
+// Pushed to the foot of the tile, so the two tiles agree whatever the
+// length of the line above it.
+.tile-mastery {
+  margin-block-start: auto;
+  font-weight: 400;
+  font-size: var(--wq-font-size-caption);
+  color: var(--wq-color-text-secondary);
+}
+
+.tile.selected .tile-note,
+.tile.selected .tile-mastery {
+  color: inherit;
+  opacity: 0.85;
 }
 
 .mode {

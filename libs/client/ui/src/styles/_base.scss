@@ -106,6 +106,47 @@ wq-page-header + ion-content {
   }
 }
 
+// `wq-region-options` is an unknown element, so it would lay out inline.
+wq-region-options {
+  display: block;
+}
+
+// A region's sketch of its own continent. It is used as a **mask**, not as
+// a picture: the drawing gives the shape and the element gives the colour,
+// so the one file serves the light theme, the dark one and a selected
+// option that turns blue. An `img` would need three, or a filter that
+// guesses. The files hold nothing but alpha, which is exactly what a mask
+// reads, and they are drawn to one rim so the globes line up.
+//
+// These rules belong to the design system rather than to the component
+// that uses them, because an asset referenced from a *component*
+// stylesheet comes out unhashed in a production build (see CLAUDE.md).
+.wq-option.sketched {
+  display: flex;
+  align-items: center;
+  gap: var(--wq-space-3);
+}
+
+.wq-option-sketch {
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  background: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+}
+
+// Sass does not rewrite a relative `url()` in a partial, so this resolves
+// from the entry stylesheet -- `index.scss`, in this same folder.
+@each $region in world, europe, asia, africa, north-america, south-america,
+  oceania
+{
+  .wq-option-sketch[data-region='#{$region}'] {
+    mask-image: url('../assets/regions/#{$region}.png');
+  }
+}
+
 // How many countries a region holds: present, but never competing with the
 // region's name.
 .wq-option-count {

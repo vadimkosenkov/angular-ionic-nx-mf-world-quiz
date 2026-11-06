@@ -122,8 +122,8 @@ typos). The app has no custom speech-recognition UI and no external AI/LLM judgi
 | 18  | `feat/answer-feedback`       | The verdict card continues the quiz and repeats the answer; one card style on Home       | ✅ merged      |
 | 19  | `feat/toasts`                | One way to say something went well or wrong                                              | ✅ merged      |
 | 20  | `feat/first-run-tips`        | A guided tour of the quiz setup on the first run: every choice is the player's           | ✅ merged      |
-| 21a | `feat/countries-reference`   | A browsable list of every country by region: flag, country, capital                      | 🚧 this branch |
-| 21b | `feat/home-play-card`        | One Play card on Home, a setup that remembers, region sketches and square category tiles | planned        |
+| 21a | `feat/countries-reference`   | A browsable list of every country by region: flag, country, capital                      | ✅ merged      |
+| 21b | `feat/home-play-card`        | One Play card on Home, a setup that remembers, region sketches and square category tiles | 🚧 this branch |
 | 22  | `feat/share-sounds`          | Sharing a result; a sound on the actions that start something                            | planned        |
 | 23  | `feat/leaderboards-v2`       | Boards per mode, region and difficulty; top 100 plus the player's own row                | planned        |
 | 24  | `feat/friends`               | Friends, their achievements, and a board of you and your friends                         | planned        |

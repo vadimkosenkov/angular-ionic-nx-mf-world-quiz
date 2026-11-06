@@ -26,7 +26,7 @@ apps/shell/src/app/
   auth/                signedInGuard / signedOutGuard, back to welcome when a sign-in ends
   app.ts               <ion-app><ion-router-outlet/></ion-app>
   tabs/                ion-tabs with a translucent tab bar
-  home/                greeting, overall progress, categories, practice, achievement preview
+  home/                greeting, overall progress, Play and Learn cards, practice, achievements
   leaderboard/         challenge start, global ranking per board, my records
   achievements/        summary, legend, all 14 achievements
   settings/            account (sign-in), theme, language, about
@@ -38,6 +38,8 @@ apps/shell/src/app/
   core/
     tokens.ts          COUNTRY_DATASET, CLOCK
     greeting.ts        time-of-day greeting rule
+    last-setup.store.ts  the quiz setup as the player last left it (device state)
+    region-options.ts    the regions, named and counted, for wq-region-options
   icons.ts             explicit ionicons registration
   app-info.ts          version shown in Settings
 apps/shell/src/testing/ shared test providers (not in the app build)
@@ -64,7 +66,7 @@ Libraries used by the shell:
 | `/`                                                                        | redirect to `/home`                                   | —                                     |
 | `/home`, `/leaderboard`, `/achievements`, `/settings`                      | tab pages inside `TabsPage`                           | lazy (`loadComponent`)                |
 | `/quiz/setup`                                                              | quiz setup (shell)                                    | lazy (`loadComponent`)                |
-| `/quiz/setup?category=`                                                    | preselects Capitals or Flags (Home's cards link here) | —                                     |
+| `/quiz/setup?category=`                                                    | preselects Capitals or Flags (Home's Practise rows)   | —                                     |
 | `/quiz/capitals?scope=&difficulty=&mode=&count=`                           | Capitals microfrontend                                | `loadChildren` over Native Federation |
 | `/quiz/flags?scope=&difficulty=&mode=&count=`                              | Flags microfrontend                                   | `loadChildren` over Native Federation |
 | `/quiz/<category>?mode=challenge&difficulty=&scope=world&challenge=&seed=` | a leaderboard challenge (started from Leaderboard)    | same remotes                          |
@@ -178,6 +180,35 @@ Everything is derived; nothing is copied from the Figma mock-ups:
   flag are each lit green on their own, by `isMastered` — mastery is kept per
   category (`capitals:fr` and `flags:fr` are separate states), so one combined
   mark would claim knowledge the player may not have.
+- **One way into the quiz.** Home has a single Play card, and what it says it
+  will start is the setup the player last played (`LastSetupStore`,
+  `apps/shell/src/app/core/last-setup.store.ts`): category, region, difficulty
+  and mode, as four words. Choosing the category belongs to the setup screen,
+  which is where the other three choices already are — Home asked the same
+  question a second time and answered it differently from what the player had
+  picked the time before.
+  - The setup screen seeds all four choices with `linkedSignal`s over the
+    store, so a player moves them freely and the screen starts again from the
+    remembered setup whenever it is opened afresh. A query parameter still
+    wins: Home's "Practise" rows carry `?category=&mode=practice`.
+  - `start()` is what remembers, not every tap, and **Practice Mistakes is
+    never remembered** — it is an action, not a preference, and a player who
+    practised once would come back to a screen whose Start button is disabled
+    because there are no mistakes left.
+  - Like the tours, this is device state (`KEY_VALUE_STORAGE`), not account
+    state: signing out does not make the player want a different region.
+    `provideLastSetup()` loads it before the first render.
+- **The region is a sketch as well as a name.** `wq-region-options`
+  (`client/ui`) is the region grid of both the quiz setup and the countries
+  reference: each option carries a hand-drawn globe of that part of the
+  world, used as a CSS **mask** rather than an image, so one file serves both
+  themes and the selected state (see design-system.md). The names and counts
+  come from `regionOptions()` in `apps/shell/src/app/core/`, so the two
+  screens cannot drift apart. The category and the difficulty are square tiles
+  carrying what the quiz asks for and how much of it is mastered, and how an
+  answer is given — the choice is about the thing, not about the words
+  "Capitals" and "Hard". Home's Play card wears a neutral globe, because it
+  is one card for both categories.
 - **Leaderboard** shows real rankings and records from the API.
 
 `ProgressStore` (`client-progress`) keeps the finished sessions on the device

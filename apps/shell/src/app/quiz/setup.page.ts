@@ -9,27 +9,21 @@ import {
   signal,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import {
-  IonButton,
-  IonContent,
-  IonIcon,
-  IonLabel,
-  IonSegment,
-  IonSegmentButton,
-  type SegmentCustomEvent,
-} from '@ionic/angular';
+import { IonButton, IonContent, IonIcon } from '@ionic/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { PluralPipe } from '@world-quiz/client/i18n';
 import {
   FadesWithPage,
   PageChromeState,
   PageHeader,
+  RegionOptions,
   TourSpotlight,
   TourStep,
   trackRect,
   whenArrived,
 } from '@world-quiz/client/ui';
 import { ProgressStore } from '@world-quiz/client/progress';
+import { LastSetupStore } from '../core/last-setup.store';
+import { regionOptions } from '../core/region-options';
 import { TipsStore } from '../core/tips.store';
 import {
   countriesInScope,
@@ -39,9 +33,9 @@ import {
   isDifficulty,
   isQuizCategory,
   isQuizScope,
+  isTrainingMode,
   practiceCandidates,
   QUIZ_CATEGORIES,
-  QUIZ_SCOPES,
   type QuizCategory,
   type QuizScope,
   TRAINING_MODES,
@@ -68,13 +62,10 @@ const isSetupMode = (value: unknown): value is SetupMode =>
     IonContent,
     PageHeader,
     FadesWithPage,
-    IonSegment,
-    IonSegmentButton,
-    IonLabel,
     IonIcon,
     IonButton,
     TranslocoPipe,
-    PluralPipe,
+    RegionOptions,
     TourSpotlight,
     TourStep,
   ],
@@ -84,8 +75,9 @@ const isSetupMode = (value: unknown): value is SetupMode =>
 })
 export class QuizSetupPage {
   private readonly router = inject(Router);
-  private readonly progress = inject(ProgressStore);
+  protected readonly progress = inject(ProgressStore);
   private readonly tips = inject(TipsStore);
+  private readonly lastSetup = inject(LastSetupStore);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   /**
@@ -164,15 +156,28 @@ export class QuizSetupPage {
   /** `?mode=practice` from Home's "Practise" buttons. */
   readonly mode = input<string>();
 
+  /**
+   * Every choice opens where the player last left it, and a link may still
+   * override one: Home's Play button carries nothing, while "Practise" comes
+   * with `?mode=practice`. A `linkedSignal` is what makes both true at once
+   * — the player moves it freely, and it starts again from the remembered
+   * setup when the page is opened afresh.
+   */
   protected readonly selectedCategory = linkedSignal<QuizCategory>(() => {
     const requested = this.category();
-    return isQuizCategory(requested) ? requested : 'capitals';
+    return isQuizCategory(requested)
+      ? requested
+      : this.lastSetup.setup().category;
   });
-  protected readonly scope = signal<QuizScope>('world');
-  protected readonly difficulty = signal<Difficulty>('easy');
+  protected readonly scope = linkedSignal<QuizScope>(
+    () => this.lastSetup.setup().scope,
+  );
+  protected readonly difficulty = linkedSignal<Difficulty>(
+    () => this.lastSetup.setup().difficulty,
+  );
   protected readonly selectedMode = linkedSignal<SetupMode>(() => {
     const requested = this.mode();
-    return isSetupMode(requested) ? requested : 'fixed';
+    return isSetupMode(requested) ? requested : this.lastSetup.setup().mode;
   });
 
   /** Countries to review in the chosen category and region. */
@@ -189,19 +194,17 @@ export class QuizSetupPage {
     ).filter((code) => inScope.has(code)).length;
   });
 
-  /**
-   * The regions to choose from, each with the number of countries it holds,
-   * so the size of a round is clear before it starts. Counted once: the
-   * dataset is fixed for the life of the app.
-   */
-  protected readonly scopeOptions = QUIZ_SCOPES.map((scope) => ({
-    scope,
-    count: countriesInScope(this.progress.dataset, scope).length,
-  }));
+  /** The same regions the countries reference offers, in the same order. */
+  protected readonly regionOptions = regionOptions();
 
   protected readonly categoryIcons: Readonly<Record<QuizCategory, string>> = {
     capitals: 'business-outline',
     flags: 'flag-outline',
+  };
+  /** Easy picks from a grid of answers; Hard writes one. */
+  protected readonly difficultyIcons: Readonly<Record<Difficulty, string>> = {
+    easy: 'apps-outline',
+    hard: 'create-outline',
   };
   protected readonly modeIcons: Readonly<Record<SetupMode, string>> = {
     fixed: 'list-outline',
@@ -238,14 +241,12 @@ export class QuizSetupPage {
     this.tourIndex.set(0);
   }
 
-  protected onCategoryChange(event: Event): void {
-    const { value } = (event as SegmentCustomEvent).detail;
-    if (isQuizCategory(value)) this.selectedCategory.set(value);
+  protected selectCategory(category: string): void {
+    if (isQuizCategory(category)) this.selectedCategory.set(category);
   }
 
-  protected onDifficultyChange(event: Event): void {
-    const { value } = (event as SegmentCustomEvent).detail;
-    if (isDifficulty(value)) this.difficulty.set(value);
+  protected selectDifficulty(difficulty: string): void {
+    if (isDifficulty(difficulty)) this.difficulty.set(difficulty);
   }
 
   protected selectScope(scope: string): void {
@@ -258,6 +259,15 @@ export class QuizSetupPage {
 
   protected start(): void {
     if (!this.canStart()) return;
+    // Practice Mistakes is an action rather than a preference, so what is
+    // remembered is the training mode the player would come back to.
+    const mode = this.selectedMode();
+    this.lastSetup.remember({
+      category: this.selectedCategory(),
+      scope: this.scope(),
+      difficulty: this.difficulty(),
+      mode: isTrainingMode(mode) ? mode : this.lastSetup.setup().mode,
+    });
     void this.router.navigate(['/quiz', this.selectedCategory()], {
       queryParams: {
         scope: this.scope(),

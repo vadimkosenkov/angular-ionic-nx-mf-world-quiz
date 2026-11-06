@@ -11,7 +11,11 @@
   }
 }
 
-.category {
+// The two offers are the biggest thing on the page: a card the size of the
+// decision, with what it is, how far along you are, and the way in as a
+// pill. The quiz and the reference share the shape so they read as the two
+// doors out of Home.
+.offer {
   display: flex;
   flex-direction: column;
   gap: var(--wq-space-3);
@@ -29,12 +33,15 @@
   }
 }
 
-.category-header {
+.offer-header {
   display: flex;
   justify-content: space-between;
   gap: var(--wq-space-4);
 }
 
+// The card's own heading: the section it stands for, in small caps above
+// its name, instead of a separate title line over a card that is already
+// the only thing in its section.
 .eyebrow {
   margin: 0;
   font-size: 0.8125rem;
@@ -44,13 +51,12 @@
   color: var(--wq-color-primary-strong);
 }
 
-.description,
-.meta {
+.description {
   margin: 0;
   color: var(--wq-color-text-secondary);
 }
 
-.category-icon {
+.offer-icon {
   display: grid;
   flex: 0 0 auto;
   place-items: center;
@@ -62,7 +68,7 @@
   font-size: 30px;
 }
 
-.category-footer {
+.offer-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -70,7 +76,7 @@
   font-size: 0.875rem;
   color: var(--wq-color-text-secondary);
 
-  .play {
+  .go {
     --border-radius: var(--wq-radius-pill);
     --padding-start: 16px;
     --padding-end: 12px;

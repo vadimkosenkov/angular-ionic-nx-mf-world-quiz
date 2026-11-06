@@ -4,8 +4,16 @@ import { provideShellTesting } from '../../testing/shell-testing';
 import type { ManualClock } from '@world-quiz/shared/util';
 import { ProgressStore } from '@world-quiz/client/progress';
 import { finishedSession } from '@world-quiz/client/progress/testing';
+import {
+  LAST_SETUP_STORAGE_KEY,
+  LastSetupStore,
+} from '../core/last-setup.store';
 import { CLOCK } from '../core/tokens';
 import { HomePage } from './home.page';
+
+/** What the Play card says it is going to start. */
+const playSetup = () =>
+  screen.getByTestId('play-setup').textContent?.replace(/\s+/g, ' ').trim();
 
 describe('HomePage', () => {
   it('greets by time of day and shows real totals', async () => {
@@ -20,12 +28,6 @@ describe('HomePage', () => {
       name: 'Overall progress',
     });
     expect(overall.getAttribute('aria-valuetext')).toBe('0 of 390');
-    expect(screen.getByTestId('category-capitals').textContent).toContain(
-      '195 countries · 6 regions',
-    );
-    expect(screen.getByTestId('category-flags').textContent).toContain(
-      '0/195 mastered',
-    );
   });
 
   it('refreshes the greeting whenever the tab is entered again', async () => {
@@ -75,7 +77,7 @@ describe('HomePage', () => {
   });
 
   it('uses Russian plural forms', async () => {
-    await render(HomePage, {
+    const { fixture } = await render(HomePage, {
       providers: provideShellTesting({
         locale: 'ru',
         now: new Date(2026, 8, 17, 8),
@@ -85,19 +87,66 @@ describe('HomePage', () => {
     expect((await screen.findByTestId('greeting')).textContent?.trim()).toBe(
       'Доброе утро',
     );
-    expect(screen.getByTestId('category-capitals').textContent).toContain(
-      '195 стран · 6 регионов',
+
+    TestBed.inject(ProgressStore).recordSession(
+      finishedSession([
+        { code: 'fr', correct: false },
+        { code: 'de', correct: false },
+      ]),
+    );
+    fixture.detectChanges();
+
+    expect(
+      screen
+        .getByTestId('practice-capitals')
+        .textContent?.replace(/\s+/g, ' ')
+        .trim(),
+    ).toBe('Столицы 2 страны для повторения Повторить');
+  });
+
+  // One way into the quiz, and it says what it is going to start: the
+  // player chose it last time and does not have to choose again here.
+  it('opens the quiz setup, showing the setup the player last played', async () => {
+    await render(HomePage, { providers: provideShellTesting() });
+
+    expect((await screen.findByTestId('play-quiz')).getAttribute('href')).toBe(
+      '/quiz/setup',
+    );
+    expect(playSetup()).toBe('Capitals · World · Easy · Quick round');
+    // And how far the player is in the category it would start.
+    expect(screen.getByTestId('play-card').textContent).toContain(
+      '0/195 mastered',
     );
   });
 
-  it('opens the quiz setup with the category of the card preselected', async () => {
+  it('offers the countries reference beside it', async () => {
     await render(HomePage, { providers: provideShellTesting() });
 
-    for (const category of ['capitals', 'flags']) {
-      expect(
-        (await screen.findByTestId(`play-${category}`)).getAttribute('href'),
-      ).toBe(`/quiz/setup?category=${category}`);
-    }
+    expect(
+      (await screen.findByTestId('learn-countries')).getAttribute('href'),
+    ).toBe('/countries');
+    expect(screen.getByTestId('learn-card').textContent).toContain(
+      '195 countries · 6 regions',
+    );
+  });
+
+  it('shows the remembered setup once the device has one', async () => {
+    const { fixture } = await render(HomePage, {
+      providers: provideShellTesting({
+        storage: {
+          [LAST_SETUP_STORAGE_KEY]: JSON.stringify({
+            category: 'flags',
+            scope: 'europe',
+            difficulty: 'hard',
+            mode: 'timed',
+          }),
+        },
+      }),
+    });
+    await TestBed.inject(LastSetupStore).load();
+    fixture.detectChanges();
+
+    expect(playSetup()).toBe('Flags · Europe · Hard · Time attack');
   });
 
   it('previews three achievements with accessible progress', async () => {

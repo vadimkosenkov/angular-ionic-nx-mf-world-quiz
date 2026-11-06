@@ -41,9 +41,9 @@ describe('settings', () => {
     cy.get('[data-testid="tab-settings"]').should('contain.text', 'Настройки');
 
     cy.get('[data-testid="tab-home"]').click();
-    cy.get('[data-testid="category-capitals"]').should(
+    cy.get('[data-testid="play-setup"]').should(
       'contain.text',
-      '195 стран · 6 регионов',
+      'Столицы · Весь мир · Лёгкий · Быстрый раунд',
     );
   });
 
