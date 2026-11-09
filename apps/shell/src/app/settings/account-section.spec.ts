@@ -119,16 +119,15 @@ describe('AccountSection', () => {
     expect(auth.status()).toBe('signed-in');
   });
 
-  it('shows the signed-in player and whether their results are saved', async () => {
+  it('shows the signed-in player, and says only what is still waiting', async () => {
     const { progress, fixture } = await renderSection(signedIn());
 
     expect(screen.getByTestId('account-name').textContent).toContain('Ann');
     expect(screen.getByTestId('account').textContent).toContain(
       'Signed in with Google',
     );
-    expect(screen.getByTestId('sync-status').textContent).toContain(
-      'All your results are saved to your account.',
-    );
+    // Everything saved is the normal state, so the card says nothing.
+    expect(screen.queryByTestId('sync-status')).toBeNull();
 
     progress.recordSession(finishedSession([{ code: 'fr', correct: true }]));
     progress.recordSession(finishedSession([{ code: 'de', correct: true }]));
@@ -151,9 +150,9 @@ describe('AccountSection', () => {
     expect(screen.getByTestId('sync-rejected').textContent).toContain(
       '1 result could not be verified by the server',
     );
-    expect(screen.getByTestId('account').textContent).not.toContain(
-      'All your results are saved',
-    );
+    // A refused result is not "waiting": it has its own row and nothing is
+    // on its way to the account.
+    expect(screen.queryByTestId('sync-status')).toBeNull();
   });
 
   it('saves what is left, signs out and deletes the data on this device', async () => {

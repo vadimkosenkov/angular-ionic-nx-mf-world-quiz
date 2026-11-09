@@ -358,7 +358,6 @@ export const en = {
         dev: 'a development account',
       },
       sync: {
-        saved: 'All your results are saved to your account.',
         saving: 'Saving your results…',
         pending: {
           one: '{{count}} result is waiting to be saved to your account.',

@@ -14,13 +14,15 @@ import {
   controlQuizTime,
 } from '../support/quiz';
 
-/** Every result reached the account: the server graded and kept it. */
+/**
+ * Every result reached the account: nothing is waiting any more. The card
+ * says so by saying nothing — a row appears only while something is still
+ * on its way (account-section.html).
+ */
 const expectSavedToAccount = () => {
   cy.visit('/settings');
-  byTestId('sync-status').should(
-    'contain.text',
-    'All your results are saved to your account.',
-  );
+  byTestId('account').should('be.visible');
+  byTestId('sync-status').should('not.exist');
 };
 
 describe('game modes', () => {

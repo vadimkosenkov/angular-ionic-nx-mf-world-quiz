@@ -1,27 +1,57 @@
+// The account card is a list of rows, not a stack of paragraphs
+// (design-system.md). The card itself has no padding: every row and panel
+// carries its own, which is what lets a hairline run the full width.
 .account {
   display: flex;
   flex-direction: column;
-  gap: var(--wq-space-3);
-  padding: var(--wq-space-4);
+  padding: 0;
 }
 
 p {
   margin: 0;
 }
 
-.muted {
+.row,
+.panel {
+  border-top: 1px solid var(--wq-color-border);
+}
+
+.panel {
+  padding: var(--wq-space-3) var(--wq-space-4);
+}
+
+// The first row sits against the top of the card, so it needs no line above
+// it. `@switch` renders its branch straight into the card, so the row that
+// happens to come first is a child of the card either way.
+.account > :first-child {
+  border-top: 0;
+}
+
+// One height for every row on this screen: the other cards in Settings are
+// `ion-item`s at 56px with 16px of side padding (settings.page.scss), and a
+// card whose rows are a little taller than those next to it reads as a
+// different kind of thing. The padding only matters to a row of two lines;
+// a single line is held at 56px by the minimum.
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--wq-space-3);
+  min-height: 56px;
+  padding: var(--wq-space-2) var(--wq-space-4);
+}
+
+// What a row says about itself, under its own name or on its own.
+.note {
   font-size: var(--wq-font-size-caption);
   color: var(--wq-color-text-secondary);
 }
 
 .identity {
-  display: flex;
-  align-items: center;
-  gap: var(--wq-space-3);
-
+  // Large enough to read as a portrait, small enough to leave the row at
+  // the same height as every other one.
   ion-icon {
     flex: none;
-    font-size: 44px;
+    font-size: 32px;
     color: var(--wq-color-primary);
   }
 }
@@ -30,25 +60,20 @@ p {
   font-weight: 700;
 }
 
-// The two commands of the card: one row each, the same shape, separated by
-// hairlines that run the full width of the card. They used to be an
-// `ion-button` and a clear `ion-button`, which gave two different-looking
-// controls for two things that do the same kind of job.
-.actions {
-  display: flex;
-  flex-direction: column;
-  margin: var(--wq-space-2) calc(-1 * var(--wq-space-4))
-    calc(-1 * var(--wq-space-4));
+// A row of two lines — a name over what it is, or a nickname under its
+// label — only fits the card's 56px if the lines sit close together; at the
+// page's own line height the row grew past every other one.
+.identity p,
+.nickname p {
+  line-height: 1.3;
 }
 
+// A command: the same shape as a row, plus the icon tile, the growing label
+// and the chevron that says it leads somewhere.
 .account-action {
-  display: flex;
-  align-items: center;
-  gap: var(--wq-space-3);
   width: 100%;
-  min-height: var(--wq-touch-target);
-  padding: var(--wq-space-3) var(--wq-space-4);
   border: 0;
+  // `.row` draws the line above; the button's own border is reset first.
   border-top: 1px solid var(--wq-color-border);
   background: none;
   color: var(--wq-color-text);
@@ -103,14 +128,18 @@ p {
   }
 }
 
-// The destructive step: explained in words, in the error colour.
-.confirm {
+// A panel is a row's opposite: something to read or fill in, laid out
+// downwards, with the same padding so its edges line up with the rows.
+.panel {
   display: flex;
   flex-direction: column;
   gap: var(--wq-space-2);
-  padding: var(--wq-space-4);
-  border: 1px solid color-mix(in srgb, var(--wq-color-error) 35%, transparent);
-  border-radius: var(--wq-radius-md);
+}
+
+// The destructive step: explained in words, in the error colour. It keeps the
+// card's full width and tints the whole strip rather than drawing a box
+// inside a box.
+.confirm {
   background: color-mix(
     in srgb,
     var(--wq-color-error-vivid) 10%,
@@ -129,10 +158,7 @@ ion-button.danger {
 }
 
 .nickname {
-  display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: var(--wq-space-3);
 
   // "Change" is a quiet link beside the nickname; at Ionic's default button
   // size it read as loud as the heading next to it.
@@ -140,12 +166,16 @@ ion-button.danger {
     --padding-start: 0;
     --padding-end: 0;
     margin: 0;
+    // Ionic gives a button `min-height: 3.1em` (46.5px here), which would
+    // make this the only row taller than 56px.
+    min-height: 0;
+    height: 36px;
     font-size: var(--wq-font-size-control);
     font-weight: 600;
   }
 }
 
-.nickname-form {
+.form-actions {
   display: flex;
   flex-direction: column;
   gap: var(--wq-space-2);
