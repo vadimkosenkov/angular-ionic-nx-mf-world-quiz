@@ -12,6 +12,7 @@ import {
   type RememberedSetup,
 } from '../core/last-setup.store';
 import { TIPS_STORAGE_KEY, type TipId, TipsStore } from '../core/tips.store';
+import { type FeedbackEvent, TONES } from '@world-quiz/client/feedback';
 
 /**
  * Renders the screen as a player who has already been through its guided
@@ -29,26 +30,50 @@ async function renderSetup({
   /** The setup this device remembers, as if a quiz had been started. */
   lastSetup?: RememberedSetup;
 } = {}) {
+  // What the screen played, so a test can check that starting a quiz sounds
+  // like starting something.
+  const played: FeedbackEvent[] = [];
   const view = await render(QuizSetupPage, {
     inputs,
-    providers: provideShellTesting({
-      storage: {
-        [TIPS_STORAGE_KEY]: JSON.stringify(seenTips),
-        ...(lastSetup
-          ? { [LAST_SETUP_STORAGE_KEY]: JSON.stringify(lastSetup) }
-          : {}),
+    providers: [
+      {
+        provide: TONES,
+        useValue: {
+          play: (event: FeedbackEvent) => {
+            played.push(event);
+            return Promise.resolve();
+          },
+        },
       },
-    }),
+      ...provideShellTesting({
+        storage: {
+          [TIPS_STORAGE_KEY]: JSON.stringify(seenTips),
+          ...(lastSetup
+            ? { [LAST_SETUP_STORAGE_KEY]: JSON.stringify(lastSetup) }
+            : {}),
+        },
+      }),
+    ],
   });
   await TestBed.inject(TipsStore).load();
   await TestBed.inject(LastSetupStore).load();
   view.fixture.detectChanges();
   const router = TestBed.inject(Router);
   const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-  return { ...view, navigate };
+  return { ...view, navigate, played };
 }
 
 describe('QuizSetupPage', () => {
+  // Sound is the only sign that the press did something: the quiz screen
+  // takes a moment to arrive, and in the app it comes with a taptic tap.
+  it('sounds like starting something when a quiz starts', async () => {
+    const { played } = await renderSetup();
+
+    fireEvent.click(await screen.findByTestId('setup-start'));
+
+    expect(played).toEqual(['start']);
+  });
+
   it('offers every region, difficulty and mode from the domain', async () => {
     await renderSetup();
 

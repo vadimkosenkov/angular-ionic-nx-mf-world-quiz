@@ -16,6 +16,7 @@ import {
   type ViewDidLeave,
 } from '@ionic/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { Feedback } from '@world-quiz/client/feedback';
 import {
   COUNTRY_DATASET,
   QUIZ_PROGRESS_READER,
@@ -145,6 +146,7 @@ export class QuizPage implements ViewDidLeave {
   private readonly progress = inject(QUIZ_PROGRESS_READER);
   private readonly dataset = inject(COUNTRY_DATASET);
   private readonly engine = createQuizEngine(this.dataset);
+  private readonly feedback = inject(Feedback);
 
   constructor() {
     // A phone keyboard shrinks the visible page, and opening it scrolls the
@@ -311,6 +313,7 @@ export class QuizPage implements ViewDidLeave {
       });
       return;
     }
+    this.feedback.play('start');
     this.reset();
   }
 

@@ -17,6 +17,10 @@ export function capacitorHaptics(): Haptics {
   return {
     tap(event: FeedbackEvent) {
       switch (event) {
+        // A press that changes the screen: firmer than an answer, because
+        // what follows is a whole quiz.
+        case 'start':
+          return CapacitorHaptics.impact({ style: ImpactStyle.Medium });
         case 'correct':
           return CapacitorHaptics.impact({ style: ImpactStyle.Light });
         case 'incorrect':
