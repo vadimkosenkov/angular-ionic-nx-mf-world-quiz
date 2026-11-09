@@ -123,14 +123,37 @@ typos). The app has no custom speech-recognition UI and no external AI/LLM judgi
 | 19  | `feat/toasts`                | One way to say something went well or wrong                                              | ✅ merged      |
 | 20  | `feat/first-run-tips`        | A guided tour of the quiz setup on the first run: every choice is the player's           | ✅ merged      |
 | 21a | `feat/countries-reference`   | A browsable list of every country by region: flag, country, capital                      | ✅ merged      |
-| 21b | `feat/home-play-card`        | One Play card on Home, a setup that remembers, region sketches and square category tiles | 🚧 this branch |
-| 22  | `feat/share-sounds`          | Sharing a result; a sound on the actions that start something                            | planned        |
-| 23  | `feat/leaderboards-v2`       | Boards per mode, region and difficulty; top 100 plus the player's own row                | planned        |
-| 24  | `feat/friends`               | Friends, their achievements, and a board of you and your friends                         | planned        |
-| 25  | `feat/auth-fixes`            | Google sign-in: straight to Home after signing in, and no surprise sign-outs             | planned        |
-| 26  | `feat/voice-answers`         | Hard mode answered out loud: the Web Speech API on the web, a decision on iOS after      | planned        |
+| 21b | `feat/home-play-card`        | One Play card on Home, a setup that remembers, region sketches and square category tiles | ✅ merged      |
+| 22  | `feat/share-sounds`          | Sharing a result; a sound on the actions that start something; the account card restyled | 🚧 this branch |
+| 23  | `feat/share-image`           | A result shared as a picture: a card drawn on a canvas, the text kept as the fallback    | planned        |
+| 24  | `feat/leaderboards-v2`       | Boards per mode, region and difficulty; top 100 plus the player's own row                | planned        |
+| 25  | `feat/friends`               | Friends, their achievements, and a board of you and your friends                         | planned        |
+| 26  | `feat/auth-fixes`            | Google sign-in: straight to Home after signing in, and no surprise sign-outs             | planned        |
+| 27  | `feat/voice-answers`         | Hard mode answered out loud: the Web Speech API on the web, a decision on iOS after      | planned        |
+| 28  | `feat/template-formatting`   | Control flow printed as the Angular docs write it, with no formatting workaround         | planned        |
 
-Phase 23 replaces the earlier plan for separate regional boards: region and
+Phase 28 removes a workaround rather than adding a feature. Prettier collapses
+Angular control flow into a paragraph, where `}` and `@case` land mid-line,
+because it picks its `html` parser for our templates: it uses the `angular`
+parser only for files named `*.component.html`, and ours are not. The `angular`
+parser prints exactly the form the Angular documentation uses — one block per
+line, bodies indented — so the phase is a `parser: angular` override for
+template files in `.prettierrc`, a reformat of the ten templates it changes
+(the three `index.html` files come out unchanged), and the convention written
+down. `<!-- prettier-ignore -->` is explicitly not the answer: in HTML it
+protects only the next node, so it holds only while a block's body is bare
+text and silently stops working as soon as the body contains an element.
+
+Phase 23 continues the sharing of phase 22. A chat shows a picture, not a
+line of text, so a finished run and a personal record are drawn as a card on
+a `<canvas>` — the app's own system font, the score, accuracy and time, what
+was played, and the address of this deployment — and handed to the share
+sheet as a `File` (`navigator.share({ files })`). The text stays as the
+fallback: desktop Safari and Firefox share no files. Screenshotting the page
+with a library is not the way — the results card is glass over a blurred
+backdrop, which those libraries cannot draw.
+
+Phase 24 replaces the earlier plan for separate regional boards: region and
 difficulty become part of every board, Quick round is ranked by time and Time
 attack by correct answers, and a challenge is started from Home rather than
 from the leaderboard screen.

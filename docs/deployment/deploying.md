@@ -56,7 +56,7 @@ Set these as **variables** of the GitHub Environment (`staging`,
 | Variable                                                                     | Example (staging)                  | Used by                             |
 | ---------------------------------------------------------------------------- | ---------------------------------- | ----------------------------------- |
 | `API_URL`                                                                    | `https://api.staging.example`      | shell `config.json`, site, checks   |
-| `APP_URL`                                                                    | `https://app.staging.example`      | site links, checks                  |
+| `APP_URL`                                                                    | `https://app.staging.example`      | site links, checks, shared links    |
 | `SITE_URL`                                                                   | `https://staging.example`          | canonical and `hreflang` links      |
 | `CAPITALS_URL`, `FLAGS_URL`                                                  | `https://capitals.staging.example` | federation manifest                 |
 | `GOOGLE_CLIENT_ID`                                                           | `…apps.googleusercontent.com`      | Google sign-in in the shell         |
@@ -64,6 +64,12 @@ Set these as **variables** of the GitHub Environment (`staging`,
 | `RENDER_API_SERVICE_ID`, `RENDER_SITE_SERVICE_ID`                            | `srv-…`                            | the deploy job (Render services)    |
 | `NETLIFY_SHELL_SITE_ID`, `NETLIFY_CAPITALS_SITE_ID`, `NETLIFY_FLAGS_SITE_ID` | `1a2b…`                            | the deploy job (Netlify sites)      |
 | `DEPLOY_ENABLED`                                                             | `true` once the hosting exists     | switches the deploy job on          |
+
+`APP_URL` also reaches the shell's `config.json` as `appUrl`, the address a
+shared result links to. It is optional there: without it the app shares the
+origin it is served from, which is the right answer for a web deployment.
+The iPhone app has no such origin, so its bundle always carries one
+([ios.md](ios.md)).
 
 **Secrets** of the environment: `RENDER_API_KEY`, `NETLIFY_AUTH_TOKEN`.
 Secrets of the **API service itself** (set in Render, not in GitHub):
