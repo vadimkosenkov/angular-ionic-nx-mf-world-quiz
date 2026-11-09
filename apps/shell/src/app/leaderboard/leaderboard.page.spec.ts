@@ -7,7 +7,13 @@ import { NavController } from '@ionic/angular';
 import { fireEvent, render, screen } from '@testing-library/angular';
 import { signal } from '@angular/core';
 import { SyncService } from '@world-quiz/client/progress';
-import { Toasts } from '@world-quiz/client/ui';
+import {
+  SHARE_TARGET,
+  type SharePayload,
+  type ShareOutcome,
+  Toasts,
+} from '@world-quiz/client/ui';
+import { APP_URL } from '@world-quiz/client/quiz-ports';
 import type { Leaderboard, MyRecords } from '@world-quiz/shared/contracts';
 import { provideShellTesting, TEST_API_URL } from '../../testing/shell-testing';
 import { LeaderboardPage } from './leaderboard.page';
@@ -51,10 +57,22 @@ async function renderPage({
 } = {}) {
   const roots: { url: string; extras: unknown }[] = [];
   const lastSyncedAt = signal<number | null>(null);
+  const shared: SharePayload[] = [];
+  let shareOutcome: ShareOutcome = 'shared';
   const view = await render(LeaderboardPage, {
     providers: [
       ...provideShellTesting(),
       { provide: SyncService, useValue: { lastSyncedAt } },
+      { provide: APP_URL, useValue: 'https://play.example.test' },
+      {
+        provide: SHARE_TARGET,
+        useValue: {
+          share: (payload: SharePayload) => {
+            shared.push(payload);
+            return Promise.resolve(shareOutcome);
+          },
+        },
+      },
       {
         provide: NavController,
         useValue: {
@@ -96,6 +114,10 @@ async function renderPage({
     answer,
     roots,
     lastSyncedAt,
+    shared,
+    shareWillBe: (outcome: ShareOutcome) => {
+      shareOutcome = outcome;
+    },
     toasts: TestBed.inject(Toasts),
   };
 }
@@ -177,6 +199,37 @@ describe('LeaderboardPage', () => {
     expect(screen.getByTestId('record-flags-hard').textContent).toContain(
       'No perfect run yet',
     );
+  });
+
+  it('shares a record as the board, the time and the place', async () => {
+    const { fixture, shared } = await renderPage();
+
+    emit('leaderboard-view', 'mine');
+    fixture.detectChanges();
+    fireEvent.click(screen.getByTestId('share-record-capitals-easy'));
+    await settle();
+
+    expect(shared).toEqual([
+      {
+        title: 'World Quiz',
+        text: 'World Quiz — Capitals · Easy\nPerfect run in 4:07.3 · #2 of 3',
+        url: 'https://play.example.test',
+      },
+    ]);
+    // A board the player has never finished has nothing to share.
+    expect(screen.queryByTestId('share-record-flags-hard')).toBeNull();
+  });
+
+  it('says so when the record was copied rather than shared', async () => {
+    const { fixture, shareWillBe, toasts } = await renderPage();
+    shareWillBe('copied');
+
+    emit('leaderboard-view', 'mine');
+    fixture.detectChanges();
+    fireEvent.click(screen.getByTestId('share-record-capitals-easy'));
+    await settle();
+
+    expect(toasts.current()).toMatchObject({ tone: 'success' });
   });
 
   it("starts a challenge and opens the board's quiz with its id and seed", async () => {

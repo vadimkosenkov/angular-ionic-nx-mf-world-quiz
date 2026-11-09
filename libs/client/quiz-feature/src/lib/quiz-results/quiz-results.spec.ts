@@ -1,5 +1,16 @@
 import { fireEvent, render, screen } from '@testing-library/angular';
-import type { QuizSessionOutcome } from '@world-quiz/client/quiz-ports';
+import type { Provider } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import {
+  APP_URL,
+  type QuizSessionOutcome,
+} from '@world-quiz/client/quiz-ports';
+import {
+  SHARE_TARGET,
+  type SharePayload,
+  type ShareOutcome,
+  Toasts,
+} from '@world-quiz/client/ui';
 import type { QuizConfig, SessionSummary } from '@world-quiz/quiz/domain';
 import { provideQuizTesting } from '../../testing/quiz-testing';
 import { QuizResults } from './quiz-results';
@@ -112,5 +123,98 @@ describe('QuizResults', () => {
     fireEvent.click(screen.getByTestId('results-exit'));
 
     expect(events).toEqual(['play-again', 'exit']);
+  });
+
+  describe('sharing the run', () => {
+    /** Records what was handed over and answers with the given outcome. */
+    function shareTarget(outcome: ShareOutcome) {
+      const shared: SharePayload[] = [];
+      return {
+        shared,
+        provider: {
+          provide: SHARE_TARGET,
+          useValue: {
+            share: (payload: SharePayload) => {
+              shared.push(payload);
+              return Promise.resolve(outcome);
+            },
+          },
+        },
+      };
+    }
+
+    const renderWith = (target: { provider: Provider }, appUrl = '') =>
+      render(QuizResults, {
+        inputs: { config, summary: summary(), outcome: null },
+        providers: [
+          provideQuizTesting(),
+          { provide: APP_URL, useValue: appUrl },
+          target.provider,
+        ],
+      });
+
+    it('hands over the run as text and a link to the app', async () => {
+      const target = shareTarget('shared');
+      await renderWith(target, 'https://play.example.test');
+
+      fireEvent.click(await screen.findByTestId('results-share'));
+      await Promise.resolve();
+
+      expect(target.shared).toEqual([
+        {
+          title: 'World Quiz',
+          text: 'World Quiz — Capitals, World\n8/10 correct · 80% · 1:35',
+          url: 'https://play.example.test',
+        },
+      ]);
+      // The sheet opening is its own confirmation.
+      expect(TestBed.inject(Toasts).current()).toBeNull();
+    });
+
+    // The iPhone app has no address of its own to send anyone to.
+    it('shares the text alone when the app has no address', async () => {
+      const target = shareTarget('shared');
+      await renderWith(target);
+
+      fireEvent.click(await screen.findByTestId('results-share'));
+      await Promise.resolve();
+
+      expect(target.shared[0]).not.toHaveProperty('url');
+    });
+
+    it('says so when the message was copied instead', async () => {
+      const target = shareTarget('copied');
+      await renderWith(target);
+
+      fireEvent.click(await screen.findByTestId('results-share'));
+      await Promise.resolve();
+
+      expect(TestBed.inject(Toasts).current()).toMatchObject({
+        tone: 'success',
+      });
+    });
+
+    it('reports a share this browser could not do', async () => {
+      const target = shareTarget('failed');
+      await renderWith(target);
+
+      fireEvent.click(await screen.findByTestId('results-share'));
+      await Promise.resolve();
+
+      expect(TestBed.inject(Toasts).current()).toMatchObject({
+        tone: 'error',
+      });
+    });
+
+    // Closing the sheet is an answer, not a failure.
+    it('says nothing when the player closes the sheet', async () => {
+      const target = shareTarget('cancelled');
+      await renderWith(target);
+
+      fireEvent.click(await screen.findByTestId('results-share'));
+      await Promise.resolve();
+
+      expect(TestBed.inject(Toasts).current()).toBeNull();
+    });
   });
 });

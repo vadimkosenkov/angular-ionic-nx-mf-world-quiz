@@ -42,6 +42,20 @@ export const CLOCK = new InjectionToken<Clock>('CLOCK', {
   factory: () => monotonicClock ?? systemClock,
 });
 
+/**
+ * Where this deployment of the app lives, for a link a player can share —
+ * the empty string when it is not known.
+ *
+ * It belongs to the host: the shell reads it from `config.json` (ADR-012)
+ * and a remote cannot know it. A remote's own origin is the wrong answer in
+ * the iPhone app, where every page is served from the bundle, so an unset
+ * value means "share the text without a link" rather than a guess.
+ */
+export const APP_URL = new InjectionToken<string>('APP_URL', {
+  providedIn: 'root',
+  factory: () => '',
+});
+
 const monotonicClock: Clock | null =
   typeof performance !== 'undefined' && typeof performance.now === 'function'
     ? { now: () => Math.floor(performance.timeOrigin + performance.now()) }

@@ -88,7 +88,9 @@
 
 .records li {
   display: grid;
-  grid-template-columns: 1fr auto;
+  // Board, time, and the control that shares the record; a board without a
+  // record has only the first column and the line below it.
+  grid-template-columns: 1fr auto auto;
   gap: 0 var(--wq-space-3);
   padding: var(--wq-space-3) 0;
   border-bottom: 1px solid var(--wq-color-border);
@@ -104,5 +106,23 @@
   .place {
     grid-column: 1 / -1;
     font-size: var(--wq-font-size-caption);
+  }
+
+  // Quiet by default: the record is the point of the row, and this only
+  // passes it on. It is a plain button because an `ion-button` brings its
+  // own height and margins into a grid cell.
+  .share-record {
+    display: grid;
+    place-items: center;
+    width: var(--wq-touch-target);
+    height: var(--wq-touch-target);
+    margin: calc(-1 * var(--wq-space-2)) 0;
+    padding: 0;
+    border: 0;
+    border-radius: var(--wq-radius-pill);
+    background: none;
+    color: var(--wq-color-primary);
+    font-size: 20px;
+    cursor: pointer;
   }
 }

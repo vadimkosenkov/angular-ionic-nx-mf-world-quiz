@@ -306,6 +306,23 @@ export const ru: TranslationShape = {
       },
     },
   },
+  share: {
+    title: 'World Quiz',
+    action: 'Поделиться результатом',
+    result: {
+      heading: 'World Quiz — {{category}}, {{region}}',
+      score: '{{correct}}/{{answered}} верно · {{accuracy}}% · {{time}}',
+      rank: '{{rank}}-е место в рейтинге',
+    },
+    record: {
+      action: 'Поделиться рекордом: {{board}}',
+      heading: 'World Quiz — {{board}}',
+      score: 'Забег без ошибок за {{time}} · {{place}}',
+    },
+    copied: 'Скопировано — вставьте, куда нужно.',
+    failed:
+      'Этот браузер не может ни поделиться результатом, ни скопировать его.',
+  },
   settings: {
     title: 'Настройки',
     info: 'Подробнее: {{name}}',
@@ -332,7 +349,6 @@ export const ru: TranslationShape = {
         dev: 'аккаунт разработчика',
       },
       sync: {
-        saved: 'Все результаты сохранены в аккаунте.',
         saving: 'Сохраняем результаты…',
         pending: {
           one: '{{count}} результат ждёт сохранения в аккаунте.',

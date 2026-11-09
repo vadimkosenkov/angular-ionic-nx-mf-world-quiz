@@ -19,6 +19,12 @@ export interface RuntimeConfig {
    * (docs/deployment/deploying.md).
    */
   readonly apiUrl: string;
+  /**
+   * The app's own public address, used for the link in a shared result —
+   * empty means "this origin" on the web, and no link in the iPhone app,
+   * where the pages come from the bundle instead of from a site.
+   */
+  readonly appUrl: string;
   /** Google Identity Services client id; `null` disables Google sign-in. */
   readonly googleClientId: string | null;
   /**
@@ -43,6 +49,7 @@ export const RUNTIME_CONFIG = new InjectionToken<RuntimeConfig>(
 /** Used when `config.json` cannot be read: local development values. */
 export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
   apiUrl: 'http://localhost:3333',
+  appUrl: '',
   googleClientId:
     // "World Quiz Web" in Google Auth Platform (origins: localhost:4200).
     '294520908592-vhhkau8mlstl3s1d105i3efqnopuu0nm.apps.googleusercontent.com',
@@ -76,6 +83,10 @@ export async function loadRuntimeConfig(
     const candidate = value as unknown as Record<string, unknown>;
     return {
       apiUrl: value.apiUrl.replace(/\/$/, ''),
+      appUrl:
+        typeof candidate['appUrl'] === 'string'
+          ? candidate['appUrl'].replace(/\/$/, '')
+          : '',
       googleClientId: value.googleClientId || null,
       googleIosClientId:
         typeof candidate['googleIosClientId'] === 'string' &&
@@ -88,4 +99,20 @@ export async function loadRuntimeConfig(
     console.error('[shell] falling back to the default configuration', error);
     return DEFAULT_RUNTIME_CONFIG;
   }
+}
+
+/**
+ * The address to put in a shared result.
+ *
+ * `config.json` decides it, because one build is deployed to every
+ * environment. Without it the web can still answer honestly with its own
+ * origin; the iPhone app cannot — there the origin is the bundle, which
+ * means nothing to whoever receives the message — so it shares no link.
+ */
+export function shareableAppUrl(
+  config: RuntimeConfig,
+  origin: string = typeof location === 'undefined' ? '' : location.origin,
+): string {
+  if (config.appUrl) return config.appUrl;
+  return /^https?:\/\//.test(origin) ? origin.replace(/\/$/, '') : '';
 }

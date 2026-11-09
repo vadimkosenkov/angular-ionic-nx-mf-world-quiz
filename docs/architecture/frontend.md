@@ -155,6 +155,32 @@ Rules: [leaderboard.md](../domain/leaderboard.md).
   validated with the API's own `nicknameSchema` before sending (`PATCH
 /v1/me` through `AuthStore.setNickname`).
 
+## Sharing a result
+
+`SHARE_TARGET` (`client/ui/share.ts`) is the one way out of the app: it
+tries `navigator.share` (the system sheet, which phones and Safari have),
+falls back to the clipboard where there is no sheet — or where the sheet
+refused for any reason other than the player cancelling — and answers
+`shared` / `copied` / `cancelled` / `failed`. It defaults to the browser, so
+no screen needs a provider, and a test or a server render replaces it. The
+screens report only `copied` and `failed`, in a toast: the sheet opening is
+its own confirmation, and the player closing it was an answer.
+
+Two screens share: the results of a finished run (the hero's corner) and a
+personal record on the leaderboard (the row's right end). Both build the
+message from **translated lines** — `client/ui` holds no translations, so
+`shareLines()` only joins what it is given and drops what the run has
+nothing to say about (no rank, no address).
+
+The link is the **address of this deployment**, which the app cannot work
+out for itself: `appUrl` in `config.json` decides it (ADR-012), and
+`shareableAppUrl()` falls back to the origin the page was served from when
+it is empty. In the iPhone app that origin is the bundle, which means
+nothing to whoever receives the message, so the native build sets `appUrl`
+explicitly and an unset value shares the text with no link at all. Since a
+remote cannot know any of this, the host passes it as `APP_URL`
+(`client/quiz-ports`), beside the other things only the shell knows.
+
 ## Start-up sequence
 
 1. `provideAppSettings()` registers an **app initializer**:

@@ -38,6 +38,12 @@ The API the app talks to comes from the environment of the bundle step:
 API_URL=http://192.168.1.10:3333 npx nx run shell:ios-sync
 ```
 
+`APP_URL` travels the same way and ends up in the bundle's `config.json` as
+`appUrl`: the address a shared result links to. The app's own pages come
+from the bundle, so unlike the web build it cannot fall back to its origin —
+it defaults to the published web app, and an empty value shares the result
+as text with no link.
+
 - The **simulator** shares the Mac's network, so the default
   `http://localhost:3333` works with `npm run start:api`.
 - A **real device** cannot reach `localhost`: use the Mac's address on the

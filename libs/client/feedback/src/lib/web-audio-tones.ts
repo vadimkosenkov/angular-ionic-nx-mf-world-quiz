@@ -2,6 +2,9 @@ import type { FeedbackEvent, Tones } from './feedback';
 
 /** Frequencies in hertz, played in order; `null` is a rest. */
 const MELODIES: Record<FeedbackEvent, readonly number[]> = {
+  // A rising fourth, a register below the answer sounds: "here we go" has to
+  // be recognisable without being mistaken for "right".
+  start: [392, 523],
   // A rising major third: short, friendly, unmistakably "yes".
   correct: [660, 880],
   // A single low note, not a buzz: a wrong answer is information, not a

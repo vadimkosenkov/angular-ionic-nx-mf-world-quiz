@@ -49,13 +49,15 @@ export class AccountSection {
   );
 
   /**
-   * What the player should know about their results. "All saved" is not
-   * claimed while some result was refused (that is said separately).
+   * What is worth saying about the results that have not reached the account
+   * yet — `null` when there is nothing to say. The card used to carry a
+   * permanent "all your results are saved" row, which is the normal state
+   * and therefore no news; silence says it, and a refused result is said in
+   * its own row.
    */
   protected readonly syncState = computed(() => {
     if (this.sync.status() === 'syncing') return 'saving';
-    if (this.progress.pendingCount() > 0) return 'pending';
-    return this.progress.rejectedCount() > 0 ? 'refused' : 'saved';
+    return this.progress.pendingCount() > 0 ? 'pending' : null;
   });
 
   protected editNickname(): void {

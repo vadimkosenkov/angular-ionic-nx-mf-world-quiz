@@ -3,6 +3,8 @@ import { SettingsStore } from '@world-quiz/client/settings';
 
 /** The moments the app answers with a sound and a tap. */
 export type FeedbackEvent =
+  /** Something the player pressed is starting: a quiz, a challenge. */
+  | 'start'
   /** The answer was right. */
   | 'correct'
   /** The answer was wrong. */

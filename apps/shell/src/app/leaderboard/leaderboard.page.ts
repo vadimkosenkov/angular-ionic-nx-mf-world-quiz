@@ -10,6 +10,7 @@ import {
 import {
   IonButton,
   IonContent,
+  IonIcon,
   IonLabel,
   IonSegment,
   IonSegmentButton,
@@ -19,12 +20,21 @@ import {
 } from '@ionic/angular';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AUTH_CONFIG } from '@world-quiz/client/auth';
+import { Feedback } from '@world-quiz/client/feedback';
 import { PluralPipe } from '@world-quiz/client/i18n';
 import { ProgressStore, SyncService } from '@world-quiz/client/progress';
-import { EmptyState, PageHeader, Toasts } from '@world-quiz/client/ui';
+import {
+  EmptyState,
+  PageHeader,
+  SHARE_TARGET,
+  shareLines,
+  Toasts,
+} from '@world-quiz/client/ui';
+import { APP_URL } from '@world-quiz/client/quiz-ports';
 import {
   challengeSchema,
   leaderboardSchema,
+  type MyRecords,
   myRecordsSchema,
 } from '@world-quiz/shared/contracts';
 import {
@@ -62,6 +72,7 @@ function isLeaderboardView(value: unknown): value is LeaderboardView {
     IonSegmentButton,
     IonLabel,
     IonButton,
+    IonIcon,
     TranslocoPipe,
     PluralPipe,
     EmptyState,
@@ -76,6 +87,10 @@ export class LeaderboardPage implements ViewWillEnter {
   protected readonly progress = inject(ProgressStore);
   private readonly sync = inject(SyncService);
   private readonly toasts = inject(Toasts);
+  private readonly feedback = inject(Feedback);
+  private readonly shareTarget = inject(SHARE_TARGET);
+  /** Where this deployment lives, for the link in a shared record. */
+  private readonly appUrl = inject(APP_URL);
   private readonly transloco = inject(TranslocoService);
 
   protected readonly boards = LEADERBOARD_BOARDS;
@@ -151,6 +166,10 @@ export class LeaderboardPage implements ViewWillEnter {
   protected async startChallenge(): Promise<void> {
     const board = this.boards.find((entry) => entry.id === this.board());
     if (!board || this.starting()) return;
+    // The press, not the server's answer: asking for a challenge is a round
+    // trip, and a sound that arrives a second late no longer belongs to the
+    // press. A challenge that cannot be started says so in a toast.
+    this.feedback.play('start');
     this.starting.set(true);
     try {
       const challenge = challengeSchema.parse(
@@ -172,6 +191,38 @@ export class LeaderboardPage implements ViewWillEnter {
       this.toasts.failure(this.transloco.translate('leaderboard.startFailed'));
     } finally {
       this.starting.set(false);
+    }
+  }
+
+  /**
+   * Hands a personal record to the device's share sheet, or to the clipboard
+   * where there is none. The board and the place are translated here, in the
+   * player's language, because what is shared is a sentence, not data.
+   */
+  protected async shareRecord(
+    board: LeaderboardBoardId,
+    record: MyRecords['records'][number],
+  ): Promise<void> {
+    const outcome = await this.shareTarget.share({
+      title: this.transloco.translate('share.title'),
+      text: shareLines(
+        this.transloco.translate('share.record.heading', {
+          board: this.transloco.translate(`leaderboard.boards.${board}`),
+        }),
+        this.transloco.translate('share.record.score', {
+          time: formatRunTime(record.completionTimeMs),
+          place: this.transloco.translate('leaderboard.place', {
+            rank: record.rank,
+            players: record.players,
+          }),
+        }),
+      ),
+      ...(this.appUrl ? { url: this.appUrl } : {}),
+    });
+    if (outcome === 'copied') {
+      this.toasts.success(this.transloco.translate('share.copied'));
+    } else if (outcome === 'failed') {
+      this.toasts.failure(this.transloco.translate('share.failed'));
     }
   }
 }

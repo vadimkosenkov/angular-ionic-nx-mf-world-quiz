@@ -64,6 +64,11 @@ describe('translations', () => {
       'settings.about.flagsValue',
       'settings.account.providers.google',
       'settings.account.providers.apple',
+      // A shared message names the app and then the board or the category,
+      // both of which arrive as placeholders.
+      'share.title',
+      'share.result.heading',
+      'share.record.heading',
     ]);
     const latinOnly = [...languages.ru]
       .map(([key, text]) => [key, text.replace(/{{\s*\w+\s*}}/g, '')] as const)

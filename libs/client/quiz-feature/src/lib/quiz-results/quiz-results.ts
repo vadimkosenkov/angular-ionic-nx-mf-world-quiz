@@ -5,12 +5,14 @@ import {
   inject,
   input,
   output,
+  signal,
 } from '@angular/core';
 import { IonButton, IonIcon } from '@ionic/angular';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import type { QuizSessionOutcome } from '@world-quiz/client/quiz-ports';
 import type { ChallengeOutcome } from '@world-quiz/shared/contracts';
-import { COUNTRY_DATASET } from '@world-quiz/client/quiz-ports';
+import { APP_URL, COUNTRY_DATASET } from '@world-quiz/client/quiz-ports';
+import { SHARE_TARGET, shareLines, Toasts } from '@world-quiz/client/ui';
 import { Feedback } from '@world-quiz/client/feedback';
 import { SettingsStore } from '@world-quiz/client/settings';
 import {
@@ -61,6 +63,12 @@ export class QuizResults {
 
   private readonly settings = inject(SettingsStore);
   private readonly feedback = inject(Feedback);
+  private readonly shareTarget = inject(SHARE_TARGET);
+  private readonly toasts = inject(Toasts);
+  private readonly transloco = inject(TranslocoService);
+  /** Where this deployment lives; empty in the app, which has no address. */
+  private readonly appUrl = inject(APP_URL);
+  protected readonly sharing = signal(false);
   private readonly countries = indexCountriesByCode(inject(COUNTRY_DATASET));
 
   protected readonly formatRunTime = formatRunTime;
@@ -93,4 +101,54 @@ export class QuizResults {
       };
     });
   });
+
+  /**
+   * Hands the run to whatever the device shares with: the system sheet on a
+   * phone, the clipboard on a desktop browser that has no sheet. Only the
+   * two outcomes the player cannot see for themselves are reported — the
+   * sheet opening is its own confirmation, and closing it was their choice.
+   */
+  protected async share(): Promise<void> {
+    if (this.sharing()) return;
+    this.sharing.set(true);
+    try {
+      const outcome = await this.shareTarget.share({
+        title: this.translate('share.title'),
+        text: shareLines(
+          this.translate('share.result.heading', {
+            category: this.translate(`categories.${this.config().category}`),
+            region: this.translate(`regions.${this.config().scope}`),
+          }),
+          this.translate('share.result.score', {
+            correct: this.summary().correct,
+            answered: this.summary().answered,
+            accuracy: this.accuracyPercent(),
+            time: this.duration(),
+          }),
+          this.shareRank(),
+        ),
+        ...(this.appUrl ? { url: this.appUrl } : {}),
+      });
+      if (outcome === 'copied') {
+        this.toasts.success(this.translate('share.copied'));
+      } else if (outcome === 'failed') {
+        this.toasts.failure(this.translate('share.failed'));
+      }
+    } finally {
+      this.sharing.set(false);
+    }
+  }
+
+  /** A challenge the server ranked is worth a line of its own. */
+  private shareRank(): string | null {
+    const challenge = this.challenge();
+    if (challenge?.status !== 'done' || !challenge.outcome.ranked) return null;
+    return this.translate('share.result.rank', {
+      rank: challenge.outcome.rank,
+    });
+  }
+
+  private translate(key: string, params?: Record<string, unknown>): string {
+    return this.transloco.translate(key, params);
+  }
 }

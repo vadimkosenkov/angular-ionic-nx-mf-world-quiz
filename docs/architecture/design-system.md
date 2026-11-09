@@ -358,6 +358,57 @@ Learn and Practice mistakes, the countries reference — start on the same
 line. A card that sets its own padding instead drifts from the rest by a
 few pixels, which is exactly what happened to the reference list.
 
+### A card of rows, separated by hairlines
+
+The account card in Settings is a list, not a stack of paragraphs: who you
+are, what you are called and the two commands — all of one kind, so they are
+rows of one card divided by hairlines, the way iOS settings are. A gap
+between paragraphs says nothing about where one thing ends and the next
+begins; a line does.
+
+The card itself therefore has **no padding** (`.account { padding: 0 }`) and
+every row carries its own, which is what lets a hairline run the full width
+of the card. A row is **56 px** tall with 16 px of side padding — the same as
+the `ion-item` rows of the Language, Sound and About cards
+(`settings.page.scss`), because a card whose rows are taller than the ones
+beside it reads as a different kind of thing. A row that is a command
+(`.account-action`) keeps the icon tile, the growing label and the chevron; a
+row's own explanation is `.note`, in caption size and secondary colour.
+Something to read or fill in rather than scan — the nickname form, a
+confirmation, the retry button of an account that cannot be checked — is a
+`.panel` instead, laid out downwards with a little more padding. The
+confirmation tints the whole strip rather than drawing a box inside the card.
+
+The card says **only what is news**: there is no permanent "all your results
+are saved" row, because that is the normal state, and a row that is always
+there is one more line to read past every time Settings is opened. A sync row
+appears while results are on their way (`saving`) or waiting (`pending`, plus
+"you are offline"), and a refused result keeps its own row; silence means
+everything is saved. The E2E suite therefore asserts that `sync-status` does
+**not** exist once a run has reached the account.
+
+The first child of the card drops its top line (`.account > :first-child`),
+which works whichever branch of the `@switch` rendered it.
+
+### Sharing a result
+
+The player can hand a finished run, or one of their records, to whatever the
+device shares with. The control is a **quiet round icon button**, in the
+corner of the results hero and at the right end of a record's row — not in
+the `.wq-action-bar`, which is for what the player does next (play again, go
+home). It is a plain `<button>`, because an `ion-button` brings its own
+height and margins and will not sit in a corner or a grid cell.
+
+An icon alone says nothing to a screen reader, so each one carries an
+`aria-label`; a record's label names its board ("Share the Capitals · Easy
+record"), or four rows would all offer the same thing. The message itself is
+two or three translated lines plus the address of this deployment, and what
+comes back is reported only when the player cannot see it for themselves:
+"copied" when the browser had no share sheet, a failure when it could do
+neither. A sheet that opened is its own confirmation, and a sheet the player
+closed was their decision — both say nothing (`client/ui/share.ts`,
+[frontend.md](frontend.md)).
+
 ### The mark sits on the fact, not beside it
 
 The countries reference lists two facts per row — the capital in words and
@@ -741,10 +792,19 @@ punishment), a short fanfare for a perfect run, an achievement or a record.
 Quiet by design (`0.12` peak gain, 90 ms per note) and faded in and out so
 the speaker does not click.
 
+A press that **starts** something — Start on the quiz setup, Start challenge
+on the leaderboard, Play again on the results — has a sound of its own: a
+rising fourth, a register below the answer tones, so it cannot be mistaken
+for "right". It plays on the press rather than when the quiz appears: asking
+the API for a challenge is a round trip, and a sound that arrives a second
+later no longer belongs to the press. A press that only opens a screen (the
+Play card on Home, a Practise row) is silent — it starts nothing.
+
 **Haptics.** The iPhone only: iOS separates an _impact_ (something was
 touched) from a _notification_ (something succeeded or failed), and the app
 follows that — a light tap for a correct answer, a warning for a wrong one,
-a success pattern at the end of a perfect run. A browser has no taptic
+a medium one when a quiz starts, a success pattern at the end of a perfect
+run. A browser has no taptic
 engine, so there is nothing there and the setting is hidden.
 
 **The player decides.** Settings → Sound and feel has a switch for each

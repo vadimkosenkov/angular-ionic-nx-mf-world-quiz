@@ -19,11 +19,16 @@
  *   without it the app has no way to sign in and says so.
  * - `DEV_SIGN_IN=true` — offer the API's development sign-in in this build.
  *   For development only, against an API that enables it.
+ * - `APP_URL` — the web address a shared result links to. The app's own
+ *   pages come from the bundle, so without this a result is shared as text
+ *   with no link.
  */
 import { cp, mkdir, rm, writeFile, access } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const REMOTES = ['capitals', 'flags'];
+/** Where the web app lives, for the link in a shared result. */
+const WEB_APP_URL = 'https://world-quiz-shell.netlify.app';
 const SOURCE = (app) => join('dist', 'apps', app, 'browser');
 const TARGET = join('dist', 'apps', 'shell', 'ios-www');
 
@@ -66,6 +71,9 @@ async function main() {
       /\/$/,
       '',
     ),
+    // Where a shared result sends the reader. The app is not a web page, so
+    // it cannot work this out for itself the way the browser build does.
+    appUrl: (process.env['APP_URL'] ?? WEB_APP_URL).replace(/\/$/, ''),
     // Google's web sign-in cannot run in a web view, so the app never has a
     // web client; it signs in through the system with the iOS client.
     googleClientId: null,

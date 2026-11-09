@@ -3,39 +3,49 @@
     {{ 'settings.account.title' | transloco }}
   </h2>
 
+  <!-- The card is a list of rows separated by hairlines, the way iOS settings
+       are: what it holds is all of one kind — who you are, what you are
+       called, whether your results are saved, and the two commands — and a
+       stack of paragraphs with gaps between them said nothing about where one
+       ended and the next began. Every row carries its own padding, so a
+       hairline can run the full width of the card. -->
   <div
     class="wq-card account"
     data-testid="account"
     [attr.aria-busy]="auth.busy() || signingOut()"
   >
     @switch (auth.status()) { @case ('restoring') {
-    <p class="muted">{{ 'settings.account.checking' | transloco }}</p>
+    <p class="row note">{{ 'settings.account.checking' | transloco }}</p>
     } @case ('unverified') {
-    <p class="muted" data-testid="account-unverified">
+    <p class="row note" data-testid="account-unverified">
       {{ 'settings.account.unverified' | transloco }}
     </p>
     @if (progress.pendingCount() > 0) {
-    <p class="muted" data-testid="sync-status">
+    <p class="row note" data-testid="sync-status">
       {{ 'settings.account.sync.pending' | wqPlural: progress.pendingCount() }}
     </p>
     }
-    <ion-button
-      class="wq-glass-button secondary"
-      expand="block"
-      data-testid="retry-restore"
-      (click)="retry()"
-    >
-      {{ 'settings.account.retry' | transloco }}
-    </ion-button>
+    <!-- Not a quiet row: here the card is a problem to fix, and trying
+             again is the one thing to do about it. -->
+    <div class="panel">
+      <ion-button
+        class="wq-glass-button secondary"
+        expand="block"
+        data-testid="retry-restore"
+        (click)="retry()"
+      >
+        {{ 'settings.account.retry' | transloco }}
+      </ion-button>
+    </div>
     } @case ('signed-in') { @let user = auth.user();
-    <div class="identity">
+    <div class="row identity">
       <ion-icon name="person-circle" aria-hidden="true" />
       <div>
         <p class="name" data-testid="account-name">
           {{ user?.displayName ?? user?.email ?? ('settings.account.player' |
           transloco) }}
         </p>
-        <p class="muted">
+        <p class="note">
           {{ 'settings.account.signedInWith' | transloco : { provider:
           'settings.account.providers.' + provider() | transloco, } }}
         </p>
@@ -43,7 +53,7 @@
     </div>
 
     @if (editingNickname()) {
-    <form class="nickname-form" (submit)="saveNickname($event)">
+    <form class="panel nickname-form" (submit)="saveNickname($event)">
       <ion-input
         data-testid="nickname-input"
         labelPlacement="stacked"
@@ -53,8 +63,8 @@
         [value]="nicknameDraft()"
         (ionInput)="onNicknameInput($event)"
       />
-      <p class="muted">{{ 'settings.account.nickname.rules' | transloco }}</p>
-      <div class="actions">
+      <p class="note">{{ 'settings.account.nickname.rules' | transloco }}</p>
+      <div class="form-actions">
         <ion-button
           class="wq-glass-button"
           expand="block"
@@ -75,9 +85,9 @@
       </div>
     </form>
     } @else {
-    <div class="nickname">
+    <div class="row nickname">
       <div>
-        <p class="muted">{{ 'settings.account.nickname.label' | transloco }}</p>
+        <p class="note">{{ 'settings.account.nickname.label' | transloco }}</p>
         <p class="name" data-testid="account-nickname">{{ user?.nickname }}</p>
       </div>
       <ion-button
@@ -91,27 +101,29 @@
     </div>
     }
 
+    <!-- Only when something is still on its way: everything saved is the
+         normal state, and a row that always says so is one more line to
+         read past every time the screen is opened. -->
+    @if (syncState(); as state) {
     <p
-      class="muted sync"
+      class="row note sync"
       role="status"
       data-testid="sync-status"
-      [attr.data-state]="syncState()"
+      [attr.data-state]="state"
     >
-      @switch (syncState()) { @case ('saving') { {{
-      'settings.account.sync.saving' | transloco }} } @case ('pending') { {{
-      'settings.account.sync.pending' | wqPlural: progress.pendingCount() }} @if
-      (sync.status() === 'offline') { {{ 'settings.account.sync.offline' |
-      transloco }} } } @case ('saved') { {{ 'settings.account.sync.saved' |
-      transloco }} } }
+      @switch (state) { @case ('saving') { {{ 'settings.account.sync.saving' |
+      transloco }} } @case ('pending') { {{ 'settings.account.sync.pending' |
+      wqPlural: progress.pendingCount() }} @if (sync.status() === 'offline') {
+      {{ 'settings.account.sync.offline' | transloco }} } } }
     </p>
-    @if (progress.rejectedCount() > 0) {
-    <p class="muted" data-testid="sync-rejected">
+    } @if (progress.rejectedCount() > 0) {
+    <p class="row note" data-testid="sync-rejected">
       {{ 'settings.account.sync.rejected' | wqPlural: progress.rejectedCount()
       }}
     </p>
     } @switch (confirming()) { @case ('sign-out') {
     <div
-      class="confirm"
+      class="panel confirm"
       role="alertdialog"
       aria-labelledby="sign-out-title"
       aria-describedby="sign-out-text"
@@ -144,7 +156,7 @@
     </div>
     } @case ('delete') {
     <div
-      class="confirm"
+      class="panel confirm"
       role="alertdialog"
       aria-labelledby="delete-title"
       aria-describedby="delete-text"
@@ -174,49 +186,47 @@
       </ion-button>
     </div>
     } @default {
-    <!-- Both commands are the same kind of thing — a row that leads to a
-         confirmation — so they look the same; only the colour says which one
-         is destructive. -->
-    <div class="actions">
-      <button
-        type="button"
-        class="account-action"
-        data-testid="sign-out"
-        [disabled]="auth.busy() || signingOut()"
-        (click)="signOut()"
-      >
-        <span class="action-icon" aria-hidden="true">
-          <ion-icon name="log-out-outline" />
-        </span>
-        <span class="action-label">
-          {{ 'settings.account.signOut' | transloco }}
-        </span>
-        <ion-icon
-          class="action-chevron"
-          name="chevron-forward"
-          aria-hidden="true"
-        />
-      </button>
-      <button
-        type="button"
-        class="account-action danger"
-        data-testid="delete-account"
-        [disabled]="auth.busy() || signingOut()"
-        (click)="confirming.set('delete')"
-      >
-        <span class="action-icon" aria-hidden="true">
-          <ion-icon name="trash-outline" />
-        </span>
-        <span class="action-label">
-          {{ 'settings.account.delete' | transloco }}
-        </span>
-        <ion-icon
-          class="action-chevron"
-          name="chevron-forward"
-          aria-hidden="true"
-        />
-      </button>
-    </div>
+    <!-- Both commands are the same kind of thing — a row that leads to
+                 a confirmation — so they look the same; only the colour says
+                 which one is destructive. -->
+    <button
+      type="button"
+      class="row account-action"
+      data-testid="sign-out"
+      [disabled]="auth.busy() || signingOut()"
+      (click)="signOut()"
+    >
+      <span class="action-icon" aria-hidden="true">
+        <ion-icon name="log-out-outline" />
+      </span>
+      <span class="action-label">
+        {{ 'settings.account.signOut' | transloco }}
+      </span>
+      <ion-icon
+        class="action-chevron"
+        name="chevron-forward"
+        aria-hidden="true"
+      />
+    </button>
+    <button
+      type="button"
+      class="row account-action danger"
+      data-testid="delete-account"
+      [disabled]="auth.busy() || signingOut()"
+      (click)="confirming.set('delete')"
+    >
+      <span class="action-icon" aria-hidden="true">
+        <ion-icon name="trash-outline" />
+      </span>
+      <span class="action-label">
+        {{ 'settings.account.delete' | transloco }}
+      </span>
+      <ion-icon
+        class="action-chevron"
+        name="chevron-forward"
+        aria-hidden="true"
+      />
+    </button>
     } } } }
   </div>
 </section>

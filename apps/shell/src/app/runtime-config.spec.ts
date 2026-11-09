@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { DEFAULT_RUNTIME_CONFIG, loadRuntimeConfig } from './runtime-config';
+import {
+  DEFAULT_RUNTIME_CONFIG,
+  loadRuntimeConfig,
+  shareableAppUrl,
+} from './runtime-config';
 
 const respondWith = (body: unknown, ok = true) =>
   vi.fn(async () =>
@@ -25,6 +29,7 @@ describe('loadRuntimeConfig', () => {
     // A trailing slash would make every request URL contain `//`.
     expect(config).toEqual({
       apiUrl: 'https://api.example.test',
+      appUrl: '',
       googleClientId: 'client-id',
       googleIosClientId: null,
       devSignIn: false,
@@ -43,6 +48,18 @@ describe('loadRuntimeConfig', () => {
 
     expect(config.googleIosClientId).toBe('ios-client-id');
     expect(config.devSignIn).toBe(true);
+  });
+
+  it('reads the address the app shares, without its trailing slash', async () => {
+    const config = await loadRuntimeConfig(
+      respondWith({
+        apiUrl: 'https://api.example.test',
+        appUrl: 'https://play.example.test/',
+        googleClientId: null,
+      }),
+    );
+
+    expect(config.appUrl).toBe('https://play.example.test');
   });
 
   it('accepts a configuration without a Google client', async () => {
@@ -71,5 +88,28 @@ describe('loadRuntimeConfig', () => {
     expect(config).toEqual(DEFAULT_RUNTIME_CONFIG);
     expect(reported).toHaveBeenCalled();
     reported.mockRestore();
+  });
+});
+
+describe('shareableAppUrl', () => {
+  const config = (appUrl: string) => ({ ...DEFAULT_RUNTIME_CONFIG, appUrl });
+
+  it('uses the configured address', () => {
+    expect(
+      shareableAppUrl(config('https://play.example.test'), 'http://localhost'),
+    ).toBe('https://play.example.test');
+  });
+
+  it('falls back to the page the app is served from', () => {
+    expect(shareableAppUrl(config(''), 'https://play.example.test/')).toBe(
+      'https://play.example.test',
+    );
+  });
+
+  // In the iPhone app the pages come from the bundle, and that address means
+  // nothing to whoever receives the message: better no link than a dead one.
+  it('shares no link when the origin is not a web address', () => {
+    expect(shareableAppUrl(config(''), 'capacitor://localhost')).toBe('');
+    expect(shareableAppUrl(config(''), '')).toBe('');
   });
 });

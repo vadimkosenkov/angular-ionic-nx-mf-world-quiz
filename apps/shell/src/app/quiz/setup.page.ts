@@ -21,6 +21,7 @@ import {
   trackRect,
   whenArrived,
 } from '@world-quiz/client/ui';
+import { Feedback } from '@world-quiz/client/feedback';
 import { ProgressStore } from '@world-quiz/client/progress';
 import { LastSetupStore } from '../core/last-setup.store';
 import { regionOptions } from '../core/region-options';
@@ -78,6 +79,7 @@ export class QuizSetupPage {
   protected readonly progress = inject(ProgressStore);
   private readonly tips = inject(TipsStore);
   private readonly lastSetup = inject(LastSetupStore);
+  private readonly feedback = inject(Feedback);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   /**
@@ -259,6 +261,7 @@ export class QuizSetupPage {
 
   protected start(): void {
     if (!this.canStart()) return;
+    this.feedback.play('start');
     // Practice Mistakes is an action rather than a preference, so what is
     // remembered is the training mode the player would come back to.
     const mode = this.selectedMode();

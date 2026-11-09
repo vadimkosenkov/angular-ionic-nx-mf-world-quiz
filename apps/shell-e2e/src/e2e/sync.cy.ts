@@ -31,10 +31,10 @@ describe('sync', () => {
       mistakes().should('contain.text', '1 country to review');
 
       cy.visit('/settings');
-      cy.get('[data-testid="sync-status"]').should(
-        'contain.text',
-        'All your results are saved to your account.',
-      );
+      // Nothing is waiting: the card shows a sync row only while something
+      // still has to reach the account.
+      cy.get('[data-testid="account"]').should('be.visible');
+      cy.get('[data-testid="sync-status"]').should('not.exist');
       // History lists a session only once its 5-second settle window has
       // passed (HISTORY_SETTLE_MS on the API): a real rule, not a guess.
       // eslint-disable-next-line cypress/no-unnecessary-waiting
@@ -92,10 +92,7 @@ describe('sync', () => {
       'contain.text',
       'Back online: 1 result is saved to your account.',
     );
-    cy.get('[data-testid="sync-status"]').should(
-      'contain.text',
-      'All your results are saved to your account.',
-    );
+    cy.get('[data-testid="sync-status"]').should('not.exist');
   });
 
   it("does not show another player's results on a shared device", () => {

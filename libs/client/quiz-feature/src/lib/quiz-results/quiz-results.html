@@ -1,6 +1,19 @@
 @let result = summary();
 
 <section class="hero wq-glass" data-testid="results-hero">
+  <!-- Sharing is an afterthought to the run, not the next step, so it sits
+       in the corner of the score rather than in the action bar, where the
+       two things the player actually does next already are. -->
+  <button
+    type="button"
+    class="share"
+    data-testid="results-share"
+    [attr.aria-label]="'share.action' | transloco"
+    [disabled]="sharing()"
+    (click)="share()"
+  >
+    <ion-icon name="share-outline" aria-hidden="true" />
+  </button>
   <div class="icon" aria-hidden="true">
     <ion-icon [name]="result.perfect ? 'trophy' : 'sparkles-outline'" />
   </div>
