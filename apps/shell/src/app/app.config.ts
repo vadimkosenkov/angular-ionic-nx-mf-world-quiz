@@ -19,6 +19,7 @@ import {
   REFRESH_TOKEN_STORE,
 } from '@world-quiz/client/auth';
 import { provideFeedback } from '@world-quiz/client/feedback';
+import { APP_URL } from '@world-quiz/client/quiz-ports';
 import { provideAppI18n } from '@world-quiz/client/i18n';
 import { provideProgress } from '@world-quiz/client/progress';
 import { provideAppSettings } from '@world-quiz/client/settings';
@@ -26,7 +27,11 @@ import { provideLastSetup } from './core/last-setup.store';
 import { isNativePlatform } from './core/platform';
 import { provideSyncNotices } from './core/sync-notices';
 import { provideTips } from './core/tips.store';
-import { RUNTIME_CONFIG, type RuntimeConfig } from './runtime-config';
+import {
+  RUNTIME_CONFIG,
+  type RuntimeConfig,
+  shareableAppUrl,
+} from './runtime-config';
 import { appRoutes } from './app.routes';
 import { provideSignInFlow } from './auth/sign-in.providers';
 import { registerIcons } from './icons';
@@ -42,6 +47,9 @@ export const appConfig = (runtime: RuntimeConfig): ApplicationConfig => ({
   providers: [
     provideBrowserGlobalErrorListeners(),
     { provide: RUNTIME_CONFIG, useValue: runtime },
+    // The remotes' results screen shares a link to the app, and only the
+    // host knows where the app lives.
+    { provide: APP_URL, useValue: shareableAppUrl(runtime) },
     // iOS look on every platform: the product is an iPhone app first, and one
     // consistent style keeps web and native screenshots identical.
     provideIonicAngular({ mode: 'ios' }),

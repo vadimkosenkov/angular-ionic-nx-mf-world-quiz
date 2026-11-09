@@ -82,3 +82,27 @@ export const askedCountryKey = () =>
       return country as CountryKey;
     }),
   );
+
+type ShareWindow = Cypress.AUTWindow & { sharedPayloads?: ShareData[] };
+
+/**
+ * For `cy.visit(path, { onBeforeLoad: recordShares })`: the system share
+ * sheet cannot be driven from a test, so `navigator.share` is replaced by
+ * one that records what the app handed over. Without it the app would find
+ * no sheet in a desktop browser and copy to the clipboard instead, which
+ * needs a permission the runner does not always give.
+ *
+ * What was shared is read back with `cy.window().its('sharedPayloads')`, so
+ * the assertion retries while the share is still in flight.
+ */
+export const recordShares = (win: Cypress.AUTWindow) => {
+  const shared: ShareData[] = [];
+  (win as ShareWindow).sharedPayloads = shared;
+  Object.defineProperty(win.navigator, 'share', {
+    configurable: true,
+    value: (data: ShareData) => {
+      shared.push(data);
+      return Promise.resolve();
+    },
+  });
+};

@@ -8,6 +8,16 @@ export type { ProgressTone } from './lib/progress-bar/progress-bar';
 export { ProgressCard } from './lib/progress-card/progress-card';
 export { RegionOptions } from './lib/region-options/region-options';
 export type { RegionOption } from './lib/region-options/region-options';
+export {
+  browserShareTarget,
+  SHARE_TARGET,
+  shareLines,
+} from './lib/share/share';
+export type {
+  SharePayload,
+  ShareOutcome,
+  ShareTarget,
+} from './lib/share/share';
 export { ToastHost } from './lib/toast/toast-host';
 export { TOAST_DURATION_MS, TOAST_SCHEDULER, Toasts } from './lib/toast/toasts';
 export type { Toast, ToastScheduler, ToastTone } from './lib/toast/toasts';

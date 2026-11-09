@@ -121,6 +121,22 @@
           >
           {{ ' ' }} @if (entry.record; as record) {
           <span class="time">{{ formatRunTime(record.completionTimeMs) }}</span>
+          <!-- Before the place, not after it: the row is a grid whose last
+               line spans both columns, so a control placed after it would
+               land on a line of its own. -->
+          <button
+            type="button"
+            class="share-record"
+            [attr.data-testid]="'share-record-' + entry.board"
+            [attr.aria-label]="
+              'share.record.action'
+                | transloco
+                  : { board: 'leaderboard.boards.' + entry.board | transloco }
+            "
+            (click)="shareRecord(entry.board, record)"
+          >
+            <ion-icon name="share-outline" aria-hidden="true" />
+          </button>
           {{ ' ' }}
           <span class="wq-text-secondary place">
             {{ 'leaderboard.place' | transloco: { rank: record.rank, players:

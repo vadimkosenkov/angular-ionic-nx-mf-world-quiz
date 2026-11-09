@@ -40,6 +40,7 @@
 }
 
 .hero {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -148,5 +149,32 @@
   .record {
     font-weight: 700;
     color: var(--wq-color-success);
+  }
+}
+
+// The share control: a round, quiet button in the hero's corner. It is a
+// plain button rather than an `ion-button`, which brings its own min-height
+// and margins and would sit off the corner.
+.hero .share {
+  position: absolute;
+  top: var(--wq-space-3);
+  right: var(--wq-space-3);
+  display: grid;
+  place-items: center;
+  width: var(--wq-touch-target);
+  height: var(--wq-touch-target);
+  padding: 0;
+  border: 0;
+  border-radius: var(--wq-radius-pill);
+  background: none;
+  // Secondary text is the quietest colour that still passes AA against the
+  // glass, and this control must not compete with the score.
+  color: var(--wq-color-text-secondary);
+  font-size: 22px;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
   }
 }

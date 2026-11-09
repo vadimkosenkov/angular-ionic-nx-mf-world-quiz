@@ -4,6 +4,7 @@ import {
   chevronForward,
   close,
   closeCircle,
+  shareOutline,
   sparklesOutline,
   trophy,
 } from 'ionicons/icons';
@@ -21,6 +22,7 @@ export function registerQuizIcons(): void {
     'chevron-forward': chevronForward,
     close,
     'close-circle': closeCircle,
+    'share-outline': shareOutline,
     'sparkles-outline': sparklesOutline,
     trophy,
   });

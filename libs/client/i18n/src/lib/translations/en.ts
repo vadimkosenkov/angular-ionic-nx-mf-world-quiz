@@ -314,6 +314,23 @@ export const en = {
       },
     },
   },
+  share: {
+    // The sheet's own heading; some targets use it as the subject line.
+    title: 'World Quiz',
+    action: 'Share the result',
+    result: {
+      heading: 'World Quiz — {{category}}, {{region}}',
+      score: '{{correct}}/{{answered}} correct · {{accuracy}}% · {{time}}',
+      rank: 'Ranked #{{rank}} on the leaderboard',
+    },
+    record: {
+      action: 'Share the {{board}} record',
+      heading: 'World Quiz — {{board}}',
+      score: 'Perfect run in {{time}} · {{place}}',
+    },
+    copied: 'Copied — paste it wherever you like.',
+    failed: 'This browser can neither share nor copy the result.',
+  },
   settings: {
     title: 'Settings',
     /** The "i" beside a setting: "About Sounds". */

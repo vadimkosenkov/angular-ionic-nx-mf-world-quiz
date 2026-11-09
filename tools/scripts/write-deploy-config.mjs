@@ -12,7 +12,9 @@
  *
  * Required environment variables: API_URL, CAPITALS_URL, FLAGS_URL.
  * Optional: GOOGLE_CLIENT_ID (empty disables Google sign-in),
- * API_UPSTREAM (see below).
+ * API_UPSTREAM (see below), APP_URL (the address a shared result links to;
+ * without it the app shares the origin it is served from, which is the right
+ * answer for every deployment that is a web site).
  *
  * **The sign-in cookie decides the shape of this.** The API sets an
  * httpOnly `SameSite=Strict` cookie, which a browser only sends back when
@@ -53,6 +55,9 @@ export function deployConfig(env) {
   const files = {
     'config.json': {
       apiUrl,
+      ...(env['APP_URL']
+        ? { appUrl: withoutTrailingSlash(env['APP_URL']) }
+        : {}),
       googleClientId: env['GOOGLE_CLIENT_ID'] || null,
     },
     'federation.manifest.json': {
