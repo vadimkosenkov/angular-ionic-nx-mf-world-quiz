@@ -1,6 +1,6 @@
 {
   "name": "@world-quiz/source",
-  "version": "0.0.0",
+  "version": "0.3.0",
   "license": "MIT",
   "private": true,
   "engines": {
@@ -14,6 +14,8 @@
     "start:flags": "nx serve flags",
     "start:api": "nx serve api",
     "deploy:web": "node tools/scripts/deploy-web.mjs",
+    "version:minor": "npm version minor --no-git-tag-version",
+    "version:major": "npm version major --no-git-tag-version",
     "deploy:check": "node tools/scripts/check-deployed.mjs",
     "ios:sync": "nx run shell:ios-sync",
     "ios:open": "nx run shell:ios-open",

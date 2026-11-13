@@ -30,6 +30,11 @@ const NETLIFY = 'netlify-cli@23';
 const environment = {
   // `/` means the app calls its own origin; Netlify proxies /v1 to the API.
   API_URL: process.env['API_URL'] ?? '/',
+  // The address a shared result links to. It is written down rather than
+  // left to the origin the app happens to be served from: a Netlify deploy
+  // preview or a branch alias has an origin of its own, and a link to one
+  // of those stops working when it expires.
+  APP_URL: process.env['APP_URL'] ?? 'https://world-quiz-shell.netlify.app',
   API_UPSTREAM:
     process.env['API_UPSTREAM'] ??
     'https://world-quiz-api-staging.onrender.com',
