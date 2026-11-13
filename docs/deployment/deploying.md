@@ -20,6 +20,18 @@ is serving; `npm run deploy:check` reads all three and says whether they
 agree — they are published one after another, and a run that stops halfway
 leaves a new shell in front of an old quiz.
 
+The same stamping writes the app's **version** into a
+`<meta name="wq-version">`, which Settings → About shows beside the build.
+It is `major.minor` from `package.json` plus the number of commits as the
+patch, so `0.3.0` and 107 commits are version `0.3.107`: every deployment
+publishes a number nobody had to remember to raise, and nothing is committed
+at deploy time — a bump made during a deploy would dirty the tree and the
+build stamp would say `-dirty`. The two leading numbers are raised by hand,
+once, in the pull request that finishes something worth a new one:
+`npm run version:minor` (or `version:major`). Both only edit `package.json`
+and the lockfile — no commit and, deliberately, **no tag**, because a `v*`
+tag is what starts the production pipeline.
+
 Images are built and published by
 [`.github/workflows/release.yml`](../../.github/workflows/release.yml) on
 every push to `main` (environment **staging**) and on every `v*` tag
@@ -67,9 +79,12 @@ Set these as **variables** of the GitHub Environment (`staging`,
 
 `APP_URL` also reaches the shell's `config.json` as `appUrl`, the address a
 shared result links to. It is optional there: without it the app shares the
-origin it is served from, which is the right answer for a web deployment.
-The iPhone app has no such origin, so its bundle always carries one
-([ios.md](ios.md)).
+origin it is served from, which is the right answer for a web deployment
+served under its own address — but not behind a preview or alias URL, which
+is why `npm run deploy:web` writes the project's own address by default
+(`tools/scripts/deploy-web.mjs`, overridden by `APP_URL` like every other
+value there). The iPhone app has no origin to share at all, so its bundle
+always carries one ([ios.md](ios.md)).
 
 **Secrets** of the environment: `RENDER_API_KEY`, `NETLIFY_AUTH_TOKEN`.
 Secrets of the **API service itself** (set in Render, not in GitHub):

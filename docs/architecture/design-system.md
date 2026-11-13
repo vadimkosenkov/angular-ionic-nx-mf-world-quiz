@@ -151,16 +151,44 @@ UI components are **i18n-free**: they receive already translated strings.
 Ionic components (tabs, segments, lists, radios, badges) are used directly
 where they already fit; nothing is rebuilt from scratch.
 
-### Type scale for controls
+### Type scale
 
-Every choice control uses one size, `--wq-font-size-control` (15 px, iOS
-"subheadline"): segments across the app and the option lists on the quiz
-setup page. Secondary lines under or inside a control use
-`--wq-font-size-caption` (13 px, iOS "footnote"). Ionic's iOS segments default
-to 13 px, which made them look smaller than neighbouring option buttons.
+Four sizes, and every one of them is a token — a number written into a
+stylesheet is a fifth size nobody can find again:
 
-A note **under** a group of settings is a caption, not a heading: at body
-size it reads as the next section's title (the sound hint in Settings did).
+| Token                     | Size            | What it is                                                                      |
+| ------------------------- | --------------- | ------------------------------------------------------------------------------- |
+| `--wq-font-size-heading`  | 17 px, headline | the name of a card, a page or a dialog; the page header's title; a glass button |
+| body                      | 16 px           | what is read: the words of a dialog, a question in the quiz                     |
+| `--wq-font-size-subtitle` | 14 px           | the second line of a row: what the line above it is, or what it holds           |
+| `--wq-font-size-control`  | 15 px           | every choice control: segments, the option lists on the quiz setup page         |
+| `--wq-font-size-caption`  | 13 px, footnote | a secondary line under or inside a control                                      |
+
+Ionic's iOS segments default to 13 px, which made them look smaller than
+neighbouring option buttons. A note **under** a group of settings is a
+caption, not a heading: at body size it reads as the next section's title
+(the sound hint in Settings did). A title must never be smaller than the
+words under it — a dialog whose title was control-sized read as a label over
+a paragraph.
+
+### Which radius
+
+There are four, and they are two scales doing two different jobs. A
+**surface** takes its radius from how deep it sits; anything the player
+**presses** is a pill:
+
+| Token              | What it is                                                             |
+| ------------------ | ---------------------------------------------------------------------- |
+| `--wq-radius-lg`   | a card, a dialog, floating chrome                                      |
+| `--wq-radius-md`   | a block inside a card: a home tile, an empty state, the quiz's answer  |
+| `--wq-radius-sm`   | a field or a tile inside a block: an input, a setup tile, an icon tile |
+| `--wq-radius-pill` | anything that is pressed, and the floating bars                        |
+
+A pill inside a 24 px card is not an inconsistency: it is how iOS draws a
+control on a surface, and the eye reads it as "a thing on a thing". Where
+two surfaces do nest, they follow the concentric rule — the inner radius is
+the outer radius minus the padding between them (the segment indicator does
+this exactly, see below).
 
 ### The round chrome button
 
@@ -371,13 +399,29 @@ every row carries its own, which is what lets a hairline run the full width
 of the card. A row is **56 px** tall with 16 px of side padding — the same as
 the `ion-item` rows of the Language, Sound and About cards
 (`settings.page.scss`), because a card whose rows are taller than the ones
-beside it reads as a different kind of thing. A row that is a command
-(`.account-action`) keeps the icon tile, the growing label and the chevron; a
-row's own explanation is `.note`, in caption size and secondary colour.
-Something to read or fill in rather than scan — the nickname form, a
-confirmation, the retry button of an account that cannot be checked — is a
-`.panel` instead, laid out downwards with a little more padding. The
-confirmation tints the whole strip rather than drawing a box inside the card.
+beside it reads as a different kind of thing.
+
+Two kinds of row live there. One **tells you something**: an icon, what the
+row is, and under it what it holds — the identity row leads with the mark of
+whatever the player signed in through (`logo-google`, `logo-apple`, a tool
+for the development sign-in), the nickname row with a portrait. The other
+**is a command** (`.account-action`): the icon tile, the growing label and
+the chevron that says it leads somewhere. In both, the first line is 16 px
+at weight 600 and the second is `.note` — `--wq-font-size-subtitle` in the
+secondary colour, the same size as the second line of a language row,
+because two rows that look alike on one screen must not be a pixel apart.
+
+An `wq-info-button` on such a line shrinks to `--wq-info-size: 24px`, WCAG
+2.2's smallest allowed target, or this row alone would grow past 56 px. The
+size travels as a custom property **on the host**: the button it scales
+lives inside that component, where a rule written outside cannot reach it.
+
+What the card asks — a new name, signing out, deleting the account — is a
+`wq-dialog` over the screen, not a panel inside the card: the card used to
+grow a row taller as one opened, and the consequence of a destructive action
+was spelled out in a strip the eye had already learned to skip. A `.panel`
+is left for the one thing that is neither a row nor a question: the retry
+button of an account that could not be checked.
 
 The card says **only what is news**: there is no permanent "all your results
 are saved" row, because that is the normal state, and a row that is always
@@ -389,6 +433,73 @@ everything is saved. The E2E suite therefore asserts that `sync-status` does
 
 The first child of the card drops its top line (`.account > :first-child`),
 which works whichever branch of the `@switch` rendered it.
+
+### A dialog in the middle of the screen
+
+`wq-dialog` (`client/ui`) is one small task over the page: a dimmed backdrop
+and a card centred on the screen, with a title, the projected content and
+the ways out. It is used for every question Settings asks.
+
+**Centred, not pinned to the foot.** A sheet against the bottom edge is the
+usual shape on a phone, but on a wide screen it reads as something that slid
+off the page — and on iOS the on-screen keyboard is invisible to CSS (the
+layout viewport does not shrink), so a field held against the bottom is the
+first thing the keyboard covers. When the keyboard does open, the card is
+nudged up by exactly as much of it as the keyboard would take and no more:
+re-centring it in the room that is left threw it halfway up the screen the
+moment the keyboard appeared. The measurement comes from `visualViewport`,
+and the lift iOS performs on the document itself is undone, or the card
+drifts upwards on its own.
+
+**It leaves the page it was written in.** After the first render the host
+element is moved to `document.body`, because `ion-router-outlet` is its own
+stacking context **below** the floating tab bar: no `z-index` written inside
+a page can put anything over that bar, so a dialog left in the page leaves
+the tabs lit and clickable behind its own backdrop. Angular keeps the
+component and its bindings; the node is also removed by hand on destroy, or
+a page left with a dialog open would leave it standing over what comes next.
+A message is the one thing that still floats over it (`wq-toast-host` is
+`z-index: 30` against the dialog's 20): the action a message answers is
+often the one taken inside the dialog, and a failure the player can neither
+read nor put away is worse than no message at all.
+
+**`closeLabel` draws the round close button, and nothing else does.** A
+dialog that offers a cancel of its own does not pass one, or the same way
+out stands on the screen twice. Escape and the backdrop always work. The
+card takes the focus when it opens (a screen reader then reads the dialog's
+name before its content, and on iOS focusing a field by script opens no
+keyboard anyway), Tab stays inside, and the focus goes back to whatever
+opened it. `tone="danger"` makes it an `alertdialog` and colours the title —
+only the title, because a card tinted end to end shouts at a question the
+player is still deciding about.
+
+It is built here rather than with `ion-modal` because Ionic's overlays do
+not upgrade in jsdom, and what these dialogs are for — what they save and
+what they refuse — is worth testing without a browser
+([testing/strategy.md](../testing/strategy.md)).
+
+### Held, not pressed
+
+Deleting the account is the one action in the app that cannot be undone, and
+it is the one control that has to be **held**: `wq-hold-button` fills with a
+sweep over 1.6 s and acts only when the press has lasted. A second
+confirmation dialog would have been easier, but a question asked twice in a
+row is one people learn to click through without reading, while a press that
+has to last cannot happen by accident — a mis-touch is short by definition.
+
+Letting go runs the fill backwards, so nothing has to be read to know that
+the hold was abandoned. Holding Space or Enter is the same gesture, because
+a control that only answers a finger answers nobody using a keyboard or a
+switch. The line under it says so in the colour of the action itself
+(`--wq-hold-hint-color`), and is the button's `aria-describedby`; it was
+tried **inside** the button and turned it into a block half a screen tall on
+a phone. Colours come from the caller through `--wq-hold-*`, as `client/ui`
+holds no opinion about which action is destructive.
+
+A development build shows a second, identical button beside it that deletes
+nothing (`rehearse-delete`, gated on the deployment's `devSignIn`), so the
+hold can be tried as often as it takes without losing the account it is
+tried on.
 
 ### Sharing a result
 
@@ -408,6 +519,15 @@ comes back is reported only when the player cannot see it for themselves:
 neither. A sheet that opened is its own confirmation, and a sheet the player
 closed was their decision — both say nothing (`client/ui/share.ts`,
 [frontend.md](frontend.md)).
+
+What is shared is a **picture** wherever the device takes files: a 1080px
+square drawn on a canvas, with the app's name over the brand gradient, what
+was played, the score (or a record's time) in the size it deserves, two
+figures with labels under it and the address at the foot. Its colours are
+the `--wq-*` tokens read from `<html>`, so a dark-theme player shares a dark
+card, and its letters are the app's own system font stack — the app loads no
+web font, so nothing has to be embedded. The text message stays the fallback
+for the browsers that share no files.
 
 ### The mark sits on the fact, not beside it
 

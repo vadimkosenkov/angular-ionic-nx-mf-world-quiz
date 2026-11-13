@@ -94,43 +94,56 @@ typos). The app has no custom speech-recognition UI and no external AI/LLM judgi
 
 ## Delivery phases
 
-| #   | Branch                       | Scope                                                                                    | Status         |
-| --- | ---------------------------- | ---------------------------------------------------------------------------------------- | -------------- |
-| 1   | `feat/project-foundation`    | Nx, apps/libs skeleton, boundaries, CI, ADR-001/002/007                                  | ✅ merged      |
-| 2   | `feat/domain-model`          | 195-country dataset + flags, engine, matching, scoring, mastery, achievements, ranking   | ✅ merged      |
-| 3   | `feat/shell-design-system`   | Ionic shell, tokens, Liquid Glass, themes, i18n, Settings                                | ✅ merged      |
-| 4   | `feat/capitals-mfe`          | Native Federation host/remote, setup, play, results                                      | ✅ merged      |
-| 5   | `feat/flags-mfe`             | Flags remote                                                                             | ✅ merged      |
-| 6   | `feat/backend-database`      | Express, Drizzle, migrations, API tests                                                  | ✅ merged      |
-| 7a  | `feat/auth-server`           | Sign-in (Apple, Google ID tokens), tokens, account deletion — API                        | ✅ merged      |
-| 7b  | `feat/auth-client`           | Sign-in, sign-out and account deletion in the app                                        | ✅ merged      |
-| 8a  | `feat/sync-server`           | A player's history for sync (`GET /v1/sessions`, keyset pages) — API                     | ✅ merged      |
-| 8b  | `feat/sync-client`           | Sign-in first, local store (IndexedDB), outbox, sync                                     | ✅ merged      |
-| 9a  | `feat/leaderboard-server`    | Challenges with a server seed, ranked runs, public boards, records, nicknames — API      | ✅ merged      |
-| 9b  | `feat/leaderboard-client`    | Challenges and the leaderboard screen in the app                                         | ✅ merged      |
-| 9c  | `feat/site-ssr`              | `apps/site` SSR: legal pages, public leaderboard; SSR-in-shell spike, ADR-003            | ✅ merged      |
-| 10  | `feat/achievements-mistakes` | Achievements, practice mistakes                                                          | ✅ merged      |
-| 11  | `feat/e2e`                   | Full Cypress journeys                                                                    | ✅ merged      |
-| 12  | `feat/ci-cd`                 | Deployment pipelines                                                                     | ✅ merged      |
-| 13a | `feat/ios-app`               | Capacitor iOS app, remotes bundled in, simulator                                         | ✅ merged      |
-| 13b | `feat/ios-auth`              | Native sign-in on iOS, refresh token in the Keychain                                     | ✅ merged      |
-| 14a | `feat/polish-quality`        | Accessibility checks, security headers and CSP, performance review                       | ✅ merged      |
-| 14b | `feat/polish-feel`           | Animation, sound and haptics                                                             | ✅ merged      |
-| 15  | `feat/pwa`                   | Installable web app: manifest, icons, offline service worker                             | ✅ merged      |
-| 16  | `feat/polish-details`        | Region sizes, the vibration setting on the web, the account card                         | ✅ merged      |
-| 17  | `feat/page-header`           | The header as floating controls: a round back button and a title pill, off `ion-header`  | ✅ merged      |
-| 18  | `feat/answer-feedback`       | The verdict card continues the quiz and repeats the answer; one card style on Home       | ✅ merged      |
-| 19  | `feat/toasts`                | One way to say something went well or wrong                                              | ✅ merged      |
-| 20  | `feat/first-run-tips`        | A guided tour of the quiz setup on the first run: every choice is the player's           | ✅ merged      |
-| 21a | `feat/countries-reference`   | A browsable list of every country by region: flag, country, capital                      | ✅ merged      |
-| 21b | `feat/home-play-card`        | One Play card on Home, a setup that remembers, region sketches and square category tiles | ✅ merged      |
-| 22  | `feat/share-sounds`          | Sharing a result; a sound on the actions that start something; the account card restyled | 🚧 this branch |
-| 23  | `feat/share-image`           | A result shared as a picture: a card drawn on a canvas, the text kept as the fallback    | planned        |
-| 24  | `feat/leaderboards-v2`       | Boards per mode, region and difficulty; top 100 plus the player's own row                | planned        |
-| 25  | `feat/friends`               | Friends, their achievements, and a board of you and your friends                         | planned        |
-| 26  | `feat/auth-fixes`            | Google sign-in: straight to Home after signing in, and no surprise sign-outs             | planned        |
-| 27  | `feat/voice-answers`         | Hard mode answered out loud: the Web Speech API on the web, a decision on iOS after      | planned        |
-| 28  | `feat/template-formatting`   | Control flow printed as the Angular docs write it, with no formatting workaround         | planned        |
+| #   | Branch                       | Scope                                                                                                                         | Status         |
+| --- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| 1   | `feat/project-foundation`    | Nx, apps/libs skeleton, boundaries, CI, ADR-001/002/007                                                                       | ✅ merged      |
+| 2   | `feat/domain-model`          | 195-country dataset + flags, engine, matching, scoring, mastery, achievements, ranking                                        | ✅ merged      |
+| 3   | `feat/shell-design-system`   | Ionic shell, tokens, Liquid Glass, themes, i18n, Settings                                                                     | ✅ merged      |
+| 4   | `feat/capitals-mfe`          | Native Federation host/remote, setup, play, results                                                                           | ✅ merged      |
+| 5   | `feat/flags-mfe`             | Flags remote                                                                                                                  | ✅ merged      |
+| 6   | `feat/backend-database`      | Express, Drizzle, migrations, API tests                                                                                       | ✅ merged      |
+| 7a  | `feat/auth-server`           | Sign-in (Apple, Google ID tokens), tokens, account deletion — API                                                             | ✅ merged      |
+| 7b  | `feat/auth-client`           | Sign-in, sign-out and account deletion in the app                                                                             | ✅ merged      |
+| 8a  | `feat/sync-server`           | A player's history for sync (`GET /v1/sessions`, keyset pages) — API                                                          | ✅ merged      |
+| 8b  | `feat/sync-client`           | Sign-in first, local store (IndexedDB), outbox, sync                                                                          | ✅ merged      |
+| 9a  | `feat/leaderboard-server`    | Challenges with a server seed, ranked runs, public boards, records, nicknames — API                                           | ✅ merged      |
+| 9b  | `feat/leaderboard-client`    | Challenges and the leaderboard screen in the app                                                                              | ✅ merged      |
+| 9c  | `feat/site-ssr`              | `apps/site` SSR: legal pages, public leaderboard; SSR-in-shell spike, ADR-003                                                 | ✅ merged      |
+| 10  | `feat/achievements-mistakes` | Achievements, practice mistakes                                                                                               | ✅ merged      |
+| 11  | `feat/e2e`                   | Full Cypress journeys                                                                                                         | ✅ merged      |
+| 12  | `feat/ci-cd`                 | Deployment pipelines                                                                                                          | ✅ merged      |
+| 13a | `feat/ios-app`               | Capacitor iOS app, remotes bundled in, simulator                                                                              | ✅ merged      |
+| 13b | `feat/ios-auth`              | Native sign-in on iOS, refresh token in the Keychain                                                                          | ✅ merged      |
+| 14a | `feat/polish-quality`        | Accessibility checks, security headers and CSP, performance review                                                            | ✅ merged      |
+| 14b | `feat/polish-feel`           | Animation, sound and haptics                                                                                                  | ✅ merged      |
+| 15  | `feat/pwa`                   | Installable web app: manifest, icons, offline service worker                                                                  | ✅ merged      |
+| 16  | `feat/polish-details`        | Region sizes, the vibration setting on the web, the account card                                                              | ✅ merged      |
+| 17  | `feat/page-header`           | The header as floating controls: a round back button and a title pill, off `ion-header`                                       | ✅ merged      |
+| 18  | `feat/answer-feedback`       | The verdict card continues the quiz and repeats the answer; one card style on Home                                            | ✅ merged      |
+| 19  | `feat/toasts`                | One way to say something went well or wrong                                                                                   | ✅ merged      |
+| 20  | `feat/first-run-tips`        | A guided tour of the quiz setup on the first run: every choice is the player's                                                | ✅ merged      |
+| 21a | `feat/countries-reference`   | A browsable list of every country by region: flag, country, capital                                                           | ✅ merged      |
+| 21b | `feat/home-play-card`        | One Play card on Home, a setup that remembers, region sketches and square category tiles                                      | ✅ merged      |
+| 22  | `feat/share-sounds`          | Sharing a result; a sound on the actions that start something; the account card restyled                                      | ✅ merged      |
+| 23  | `feat/share-image`           | A result shared as a picture: a card drawn on a canvas, the text kept as the fallback                                         | 🚧 this branch |
+| 24  | `feat/leaderboards-v2`       | Boards per mode, region and difficulty; top 100 plus the player's own row                                                     | planned        |
+| 25  | `feat/friends`               | Friends, their achievements, and a board of you and your friends                                                              | planned        |
+| 26  | `feat/auth-fixes`            | Google sign-in: straight to Home after signing in, no surprise sign-outs, and the player's Google picture on the account card | planned        |
+| 27  | `feat/voice-answers`         | Hard mode answered out loud: the Web Speech API on the web, a decision on iOS after                                           | planned        |
+| 28  | `feat/template-formatting`   | Control flow printed as the Angular docs write it, with no formatting workaround                                              | planned        |
+| 29  | `feat/sound-design`          | Sounds worth hearing: richer tones for the answers, the start and the finish                                                  | planned        |
+| 30  | `feat/glass-polish`          | The glass material taken further: depth, edges and how it answers what scrolls under it                                       | planned        |
+| 31  | `feat/ios-pass`              | A pass over the iPhone app on the simulator: everything built since 13b, checked there                                        | planned, last  |
+
+Phase 30 is about the material rather than any screen. The glass today is one
+mixin — a translucent surface, a blur and a light top edge — applied to the tab
+bar, the floating header and a few cards. What it does not yet do is behave
+like glass: the edge does not pick up what passes under it, the blur is the
+same whatever is behind it, and a bright photograph or a dark region block
+underneath changes nothing about the surface over it. The phase is a pass over
+`_materials.scss` and the handful of places that include it, judged by eye on a
+real screen, with the opaque fallback and the reduced-transparency rule kept
+intact — the effect is an enhancement, and nothing may come to depend on it.
 
 Phase 28 removes a workaround rather than adding a feature. Prettier collapses
 Angular control flow into a paragraph, where `}` and `@case` land mid-line,
@@ -143,6 +156,22 @@ template files in `.prettierrc`, a reformat of the ten templates it changes
 down. `<!-- prettier-ignore -->` is explicitly not the answer: in HTML it
 protects only the next node, so it holds only while a block's body is bare
 text and silently stops working as soon as the body contains an element.
+
+Phase 29 is about how the app sounds. The tones of 14b are oscillator beeps
+— two or three notes of a triangle wave, 90 ms each — and a test group's
+complaint about them is that they grate. The phase reworks what every event
+plays (and how loud): a softer envelope, more than one voice per note, and
+tones that read as approval and as information rather than as a buzzer. It
+is judged by ear, so it starts with a page that plays the candidates side by
+side rather than with a commit.
+
+Phase 30 is deliberately last. The iPhone app is built from the same code
+as the web, but a WKWebView is not a browser: whether its share sheet
+accepts a file, how the on-screen keyboard behaves, what the Keychain does
+on a cold start — each has to be seen on the simulator, and seeing them
+once at the end costs less than a build per phase. Everything added since
+13b is checked there in one pass, starting with the picture of a result,
+and whatever turns out not to work is fixed inside that phase.
 
 Phase 23 continues the sharing of phase 22. A chat shows a picture, not a
 line of text, so a finished run and a personal record are drawn as a card on
