@@ -39,7 +39,7 @@
     </div>
     } @case ('signed-in') { @let user = auth.user();
     <div class="row identity">
-      <ion-icon name="person-circle" aria-hidden="true" />
+      <ion-icon [name]="providerIcon()" aria-hidden="true" />
       <div>
         <p class="name" data-testid="account-name">
           {{ user?.displayName ?? user?.email ?? ('settings.account.player' |
@@ -52,43 +52,25 @@
       </div>
     </div>
 
-    @if (editingNickname()) {
-    <form class="panel nickname-form" (submit)="saveNickname($event)">
-      <ion-input
-        data-testid="nickname-input"
-        labelPlacement="stacked"
-        maxlength="24"
-        autocomplete="nickname"
-        [label]="'settings.account.nickname.label' | transloco"
-        [value]="nicknameDraft()"
-        (ionInput)="onNicknameInput($event)"
-      />
-      <p class="note">{{ 'settings.account.nickname.rules' | transloco }}</p>
-      <div class="form-actions">
-        <ion-button
-          class="wq-glass-button"
-          expand="block"
-          type="submit"
-          data-testid="nickname-save"
-          [disabled]="auth.busy() || !nicknameValid()"
-        >
-          {{ 'settings.account.nickname.save' | transloco }}
-        </ion-button>
-        <ion-button
-          fill="clear"
-          expand="block"
-          data-testid="nickname-cancel"
-          (click)="editingNickname.set(false)"
-        >
-          {{ 'settings.account.cancel' | transloco }}
-        </ion-button>
-      </div>
-    </form>
-    } @else {
+    <!-- The same shape as the row above it and as the language rows on
+         this screen: an icon, what the row is, and under it what it holds.
+         The name the row is about is the quiet line, because "Публичное
+         имя" is what the reader is looking for. -->
     <div class="row nickname">
+      <ion-icon name="person-circle" aria-hidden="true" />
       <div>
-        <p class="note">{{ 'settings.account.nickname.label' | transloco }}</p>
-        <p class="name" data-testid="account-nickname">{{ user?.nickname }}</p>
+        <p class="name label">
+          {{ 'settings.account.nickname.label' | transloco }}
+          <wq-info-button
+            data-testid="nickname-info"
+            [label]="
+              'settings.info'
+                | transloco: { name: 'settings.account.nickname.label' | transloco }
+            "
+            [text]="'settings.account.nickname.about' | transloco"
+          />
+        </p>
+        <p class="note" data-testid="account-nickname">{{ user?.nickname }}</p>
       </div>
       <ion-button
         fill="clear"
@@ -99,7 +81,6 @@
         {{ 'settings.account.nickname.edit' | transloco }}
       </ion-button>
     </div>
-    }
 
     <!-- Only when something is still on its way: everything saved is the
          normal state, and a row that always says so is one more line to
@@ -121,71 +102,7 @@
       {{ 'settings.account.sync.rejected' | wqPlural: progress.rejectedCount()
       }}
     </p>
-    } @switch (confirming()) { @case ('sign-out') {
-    <div
-      class="panel confirm"
-      role="alertdialog"
-      aria-labelledby="sign-out-title"
-      aria-describedby="sign-out-text"
-      data-testid="sign-out-confirmation"
-    >
-      <p id="sign-out-title" class="confirm-title">
-        {{ 'settings.account.signOutPendingTitle' | transloco }}
-      </p>
-      <p id="sign-out-text">
-        {{ 'settings.account.signOutPendingText' | wqPlural:
-        progress.pendingCount() }}
-      </p>
-      <ion-button
-        class="wq-glass-button danger"
-        expand="block"
-        data-testid="confirm-sign-out"
-        [disabled]="auth.busy()"
-        (click)="signOutAndForget()"
-      >
-        {{ 'settings.account.signOutAnyway' | transloco }}
-      </ion-button>
-      <ion-button
-        fill="clear"
-        expand="block"
-        data-testid="cancel-sign-out"
-        (click)="confirming.set(null)"
-      >
-        {{ 'settings.account.staySignedIn' | transloco }}
-      </ion-button>
-    </div>
-    } @case ('delete') {
-    <div
-      class="panel confirm"
-      role="alertdialog"
-      aria-labelledby="delete-title"
-      aria-describedby="delete-text"
-      data-testid="delete-confirmation"
-    >
-      <p id="delete-title" class="confirm-title">
-        {{ 'settings.account.deleteTitle' | transloco }}
-      </p>
-      <p id="delete-text">{{ 'settings.account.deleteText' | transloco }}</p>
-      <ion-button
-        class="wq-glass-button danger"
-        expand="block"
-        data-testid="confirm-delete"
-        [disabled]="auth.busy()"
-        (click)="deleteAccount()"
-      >
-        {{ 'settings.account.deleteConfirm' | transloco }}
-      </ion-button>
-      <ion-button
-        fill="clear"
-        expand="block"
-        data-testid="cancel-delete"
-        [disabled]="auth.busy()"
-        (click)="confirming.set(null)"
-      >
-        {{ 'settings.account.cancel' | transloco }}
-      </ion-button>
-    </div>
-    } @default {
+    }
     <!-- Both commands are the same kind of thing — a row that leads to
                  a confirmation — so they look the same; only the colour says
                  which one is destructive. -->
@@ -227,6 +144,119 @@
         aria-hidden="true"
       />
     </button>
-    } } } }
+    } }
   </div>
+
+  <!-- Each of the three is one small task over the screen, not a panel
+       that pushes the card around: the card below stops jumping, and the
+       dialog holds exactly one thing to do and the ways out of it
+       (design-system.md). -->
+  @if (editingNickname()) {
+  <wq-dialog
+    data-testid="nickname-dialog"
+    [title]="'settings.account.nickname.label' | transloco"
+    [closeLabel]="'settings.account.cancel' | transloco"
+    (dismissed)="editingNickname.set(false)"
+  >
+    <form class="nickname-form" (submit)="saveNickname($event)">
+      <p class="note">{{ 'settings.account.nickname.about' | transloco }}</p>
+      <ion-input
+        data-testid="nickname-input"
+        fill="outline"
+        maxlength="24"
+        autocomplete="nickname"
+        [attr.aria-label]="'settings.account.nickname.label' | transloco"
+        [attr.aria-describedby]="nicknameValid() ? null : 'nickname-rules'"
+        [value]="nicknameDraft()"
+        (ionInput)="onNicknameInput($event)"
+      />
+      @if (!nicknameValid()) {
+      <p id="nickname-rules" class="note invalid" data-testid="nickname-rules">
+        {{ 'settings.account.nickname.invalid' | transloco }}
+      </p>
+      }
+      <ion-button
+        class="wq-glass-button"
+        expand="block"
+        type="submit"
+        data-testid="nickname-save"
+        [disabled]="auth.busy() || !nicknameValid()"
+      >
+        {{ 'settings.account.nickname.save' | transloco }}
+      </ion-button>
+    </form>
+  </wq-dialog>
+  }
+
+  <!-- All three carry the same way out: the close button in the corner,
+       the backdrop and Escape. A quiet "cancel" row under the red button
+       said the same thing a second time and left the card half empty. -->
+  @if (confirming() === 'sign-out') {
+  <wq-dialog
+    tone="danger"
+    describedBy="sign-out-text"
+    data-testid="sign-out-confirmation"
+    [closeLabel]="'settings.account.staySignedIn' | transloco"
+    [title]="
+      (progress.pendingCount() > 0
+        ? 'settings.account.signOutPendingTitle'
+        : 'settings.account.signOutTitle'
+      ) | transloco
+    "
+    (dismissed)="confirming.set(null)"
+  >
+    <p id="sign-out-text" class="note">
+      @if (progress.pendingCount() > 0) { {{
+      'settings.account.signOutPendingText' | wqPlural: progress.pendingCount()
+      }} } @else { {{ 'settings.account.signOutText' | transloco }} }
+    </p>
+    <ion-button
+      class="wq-glass-button danger"
+      expand="block"
+      data-testid="confirm-sign-out"
+      [disabled]="auth.busy()"
+      (click)="signOutAndForget()"
+    >
+      @if (progress.pendingCount() > 0) { {{ 'settings.account.signOutAnyway' |
+      transloco }} } @else { {{ 'settings.account.signOut' | transloco }} }
+    </ion-button>
+  </wq-dialog>
+  } @else if (confirming() === 'delete') {
+  <wq-dialog
+    tone="danger"
+    describedBy="delete-text"
+    data-testid="delete-confirmation"
+    [closeLabel]="'settings.account.cancel' | transloco"
+    [title]="'settings.account.deleteTitle' | transloco"
+    (dismissed)="confirming.set(null)"
+  >
+    <p id="delete-text" class="note">
+      {{ 'settings.account.deleteText' | transloco }}
+    </p>
+    <!-- Held, not pressed: the one thing in the app that cannot be undone
+         (hold-button.ts). A mis-touch is short, so it cannot start it. -->
+    <wq-hold-button
+      class="danger"
+      data-testid="confirm-delete"
+      [disabled]="auth.busy()"
+      [hint]="'settings.account.deleteHint' | transloco"
+      (held)="deleteAccount()"
+    >
+      {{ 'settings.account.deleteConfirm' | transloco }}
+    </wq-hold-button>
+    <!-- A build being worked on gets a second one that deletes nothing, so
+         the hold itself can be tried as often as it takes to get it right
+         without losing the account it is tried on. -->
+    @if (rehearsing) {
+    <wq-hold-button
+      class="danger"
+      data-testid="rehearse-delete"
+      [hint]="'settings.account.deleteRehearsalHint' | transloco"
+      (held)="rehearseDelete()"
+    >
+      {{ 'settings.account.deleteRehearsal' | transloco }}
+    </wq-hold-button>
+    }
+  </wq-dialog>
+  }
 </section>

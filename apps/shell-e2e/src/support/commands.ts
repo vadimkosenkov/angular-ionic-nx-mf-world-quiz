@@ -35,6 +35,18 @@ export const API = 'http://localhost:3333';
  */
 export const TIPS_KEY = 'CapacitorStorage.world-quiz.tips.seen';
 
+/**
+ * Signs out through the Settings screen. Signing out is always confirmed
+ * (account-section.html), so the row only opens the question and the dialog's
+ * own button is the one that ends the session.
+ */
+export const signOutFromSettings = (): void => {
+  cy.get('[data-testid="sign-out"]').click({ scrollBehavior: 'center' });
+  cy.get('[data-testid="confirm-sign-out"]').click({
+    scrollBehavior: 'center',
+  });
+};
+
 export interface SignedIn {
   readonly userId: string;
   /** For calling the API directly from a test. */

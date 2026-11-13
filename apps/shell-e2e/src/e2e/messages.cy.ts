@@ -5,7 +5,7 @@
  * said about a screen the app immediately leaves.
  */
 import { expectAccessible } from '../support/accessibility';
-import { API } from '../support/commands';
+import { API, signOutFromSettings } from '../support/commands';
 
 const toast = () => cy.get('[data-testid="toast"]');
 
@@ -75,7 +75,7 @@ describe('messages', () => {
 
   it('is still there after the screen it was said on has gone', () => {
     cy.visit('/settings');
-    cy.get('[data-testid="sign-out"]').click({ scrollBehavior: 'center' });
+    signOutFromSettings();
 
     cy.location('pathname').should('eq', '/welcome');
     toast().should('contain.text', 'You are signed out.');

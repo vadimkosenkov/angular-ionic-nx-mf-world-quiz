@@ -2,7 +2,7 @@
  * Progress on the device and in the account: the outbox, sync with the real
  * API, and the device's data following the account (ADR-006).
  */
-import { API } from '../support/commands';
+import { API, signOutFromSettings } from '../support/commands';
 
 /** One Easy question, answered wrongly: a mistake to find again later. */
 const playOneMistake = () => {
@@ -46,7 +46,7 @@ describe('sync', () => {
         .its('body.sessions')
         .should('have.length', 1);
 
-      cy.get('[data-testid="sign-out"]').click({ scrollBehavior: 'center' });
+      signOutFromSettings();
       cy.location('pathname').should('eq', '/welcome');
 
       // A new sign-in on this (now empty) device pulls the history back.
@@ -79,7 +79,9 @@ describe('sync', () => {
       'contain.text',
       'has not been saved to your account yet',
     );
-    cy.get('[data-testid="cancel-sign-out"]').click({
+    cy.get(
+      '[data-testid="sign-out-confirmation"] [data-testid="dialog-close"]',
+    ).click({
       scrollBehavior: 'center',
     });
 

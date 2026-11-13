@@ -40,24 +40,29 @@ p {
   padding: var(--wq-space-2) var(--wq-space-4);
 }
 
-// What a row says about itself, under its own name or on its own.
+// What a row says about itself, under its own name or on its own. The
+// same size as the second line of a language row (settings.page.scss):
+// two rows that look alike on one screen read as two different kinds of
+// thing when their text is a pixel apart.
 .note {
-  font-size: var(--wq-font-size-caption);
+  font-size: var(--wq-font-size-subtitle);
   color: var(--wq-color-text-secondary);
 }
 
-.identity {
-  // Large enough to read as a portrait, small enough to leave the row at
-  // the same height as every other one.
-  ion-icon {
-    flex: none;
-    font-size: 32px;
-    color: var(--wq-color-primary);
-  }
+// The icon a row leads with. Named row by row rather than as "the row's
+// own icon": a command row's chevron is a direct child too, and it is not
+// one of these.
+.identity > ion-icon,
+.nickname > ion-icon {
+  flex: none;
+  font-size: 32px;
+  color: var(--wq-color-primary);
 }
 
+// The line that says what the row is. The weight the language rows use:
+// bold enough to lead, quiet enough not to shout across the card.
 .name {
-  font-weight: 700;
+  font-weight: 600;
 }
 
 // A row of two lines — a name over what it is, or a nickname under its
@@ -136,30 +141,37 @@ p {
   gap: var(--wq-space-2);
 }
 
-// The destructive step: explained in words, in the error colour. It keeps the
-// card's full width and tints the whole strip rather than drawing a box
-// inside a box.
-.confirm {
-  background: color-mix(
-    in srgb,
-    var(--wq-color-error-vivid) 10%,
-    var(--wq-color-surface)
-  );
+// The held button that deletes the account, in the same colours as the
+// pressed one it replaced.
+wq-hold-button.danger {
+  --wq-hold-background: var(--wq-color-error);
+  --wq-hold-color: var(--wq-color-on-primary);
+  --wq-hold-fill: rgb(0 0 0 / 22%);
+  // The line under the button is the button's own voice, not the card's.
+  --wq-hold-hint-color: var(--wq-color-error);
 }
 
-.confirm-title {
-  font-weight: 700;
-  color: var(--wq-color-error);
-}
-
+// The one destructive button on the screen. Ionic mixes its hover and
+// focus tints from the primary colour, so under a pointer the button that
+// deletes an account turned blue.
 ion-button.danger {
   --background: var(--wq-color-error);
   --background-activated: var(--wq-color-error);
+  --background-hover: var(--wq-color-error);
+  --background-focused: var(--wq-color-error);
+  --color-hover: var(--wq-color-on-primary);
+  --color-focused: var(--wq-color-on-primary);
+}
+
+// What the row says fills the width between the icon and "Change"; left to
+// `space-between` the heading drifted into the middle of the row.
+.identity > div,
+.nickname > div {
+  flex: 1;
+  min-width: 0;
 }
 
 .nickname {
-  justify-content: space-between;
-
   // "Change" is a quiet link beside the nickname; at Ionic's default button
   // size it read as loud as the heading next to it.
   ion-button {
@@ -175,8 +187,45 @@ ion-button.danger {
   }
 }
 
-.form-actions {
+// The dialog lays its own children out; the form inside it is one child,
+// so it repeats the spacing for what it holds.
+.nickname-form {
   display: flex;
   flex-direction: column;
-  gap: var(--wq-space-2);
+  gap: var(--wq-space-3);
+}
+
+// A field has to look like one: an unstyled `ion-input` on a white card is
+// the text it replaced, and nothing says it can be typed in. The same
+// outline the quiz's answer field uses, in the card's own colours.
+.nickname-form ion-input {
+  --background: var(--wq-color-surface-secondary);
+  --border-color: var(--wq-color-border);
+  --border-width: 1px;
+  --border-radius: var(--wq-radius-sm);
+  --padding-start: var(--wq-space-3);
+  --padding-end: var(--wq-space-3);
+}
+
+// The rules, shown only when what is typed breaks them; the rest of the
+// time they live behind the "i" beside the label.
+.note.invalid {
+  color: var(--wq-color-error);
+}
+
+// The name of the row and the "i" that explains it sit on one line; what
+// the row holds goes under them.
+.nickname .label {
+  display: flex;
+  align-items: center;
+  gap: var(--wq-space-1);
+  line-height: 1.2;
+
+  // Trimmed to WCAG 2.2's smallest allowed target and allowed to bleed
+  // into the line's own height, so the "i" stays pressable without
+  // growing the row past the 56px every other row keeps.
+  wq-info-button {
+    --wq-info-size: 24px;
+    margin-block: -2px;
+  }
 }

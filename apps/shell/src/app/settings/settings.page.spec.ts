@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/angular';
 import { SettingsStore } from '@world-quiz/client/settings';
 import { NATIVE_PLATFORM } from '../core/platform';
 import { provideShellTesting } from '../../testing/shell-testing';
-import { APP_VERSION } from '../app-info';
+import { DEV_VERSION } from '../app-info';
 import { TIPS_STORAGE_KEY, TipsStore } from '../core/tips.store';
 import { SettingsPage } from './settings.page';
 
@@ -89,9 +89,12 @@ describe('SettingsPage', () => {
   it('shows the app version and data sources', async () => {
     await render(SettingsPage, { providers: provideShellTesting() });
 
+    // The test page carries no stamp, so there is no version to name and
+    // no build row at all: both come from the published build.
     expect((await screen.findByTestId('app-version')).textContent?.trim()).toBe(
-      APP_VERSION,
+      DEV_VERSION,
     );
+    expect(screen.queryByTestId('app-build')).toBeNull();
     expect(screen.getByText('Wikidata, UN M49')).toBeTruthy();
     expect(screen.getByText('flag-icons (MIT)')).toBeTruthy();
   });

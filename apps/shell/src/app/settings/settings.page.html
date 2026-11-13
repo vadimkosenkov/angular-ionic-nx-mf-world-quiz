@@ -9,7 +9,7 @@
         {{ 'settings.appearance.title' | transloco }}
       </h2>
       <ion-segment
-        class="theme-segment wq-glass"
+        class="theme-segment wq-card"
         data-testid="theme-segment"
         aria-labelledby="appearance-title"
         [value]="settings.theme()"
@@ -162,6 +162,14 @@
             >{{ version }}</ion-note
           >
         </ion-item>
+        <!-- Shown only where it means something: a development server
+             serves an unstamped page, and "development" is not news. -->
+        @if (build) {
+        <ion-item>
+          <ion-label>{{ 'settings.about.build' | transloco }}</ion-label>
+          <ion-note slot="end" data-testid="app-build">{{ build }}</ion-note>
+        </ion-item>
+        }
         <ion-item>
           <ion-label>{{ 'settings.about.data' | transloco }}</ion-label>
           <ion-note slot="end"

@@ -5,7 +5,7 @@
  * everything after the provider — the welcome screen, cookie, restore on
  * reload, sign-out and account deletion.
  */
-import { API, TIPS_KEY } from '../support/commands';
+import { API, signOutFromSettings, TIPS_KEY } from '../support/commands';
 
 describe('account', () => {
   it('opens on the welcome screen until the player signs in', () => {
@@ -40,7 +40,7 @@ describe('account', () => {
     cy.reload();
     cy.get('[data-testid="account-name"]').should('contain.text', 'E2E Ann');
 
-    cy.get('[data-testid="sign-out"]').click({ scrollBehavior: 'center' });
+    signOutFromSettings();
     cy.location('pathname').should('eq', '/welcome');
     cy.reload();
     cy.location('pathname').should('eq', '/welcome');
@@ -61,11 +61,14 @@ describe('account', () => {
         'contain.text',
         'deleted permanently',
       );
-      cy.get('[data-testid="confirm-delete"]').click({
+      // Held, not clicked: the button acts on its own once the press has
+      // lasted (`wq-hold-button`), so the finger stays down and what is
+      // waited for is the account being gone, not a number of seconds.
+      cy.get('[data-testid="confirm-delete"] button').trigger('pointerdown', {
         scrollBehavior: 'center',
       });
 
-      cy.location('pathname').should('eq', '/welcome');
+      cy.location('pathname', { timeout: 10_000 }).should('eq', '/welcome');
       // Gone on the server too: the same provider account now gets a new user.
       cy.request('POST', `${API}/v1/auth/dev`, { subject: 'e2e-leaving' })
         .its('body.user.id')
