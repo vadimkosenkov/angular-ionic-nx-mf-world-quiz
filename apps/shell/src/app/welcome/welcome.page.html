@@ -64,15 +64,6 @@
       <p class="wq-text-secondary note" data-testid="native-sign-in-pending">
         {{ 'settings.account.signInNotConfigured' | transloco }}
       </p>
-      } @if (devSignIn) {
-      <ion-button
-        class="wq-glass-button secondary"
-        expand="block"
-        data-testid="dev-sign-in"
-        (click)="signInForDevelopment()"
-      >
-        {{ 'settings.account.devSignIn' | transloco }}
-      </ion-button>
       }
       <p class="apple wq-text-secondary" data-testid="apple-unavailable">
         <ion-icon name="logo-apple" aria-hidden="true" />
@@ -88,6 +79,20 @@
         <ion-icon name="logo-apple" aria-hidden="true" />
         {{ 'settings.account.appleOnIos' | transloco }}
       </p>
+      }
+      <!-- The development sign-in belongs to neither platform in particular:
+           it is on whenever the deployment's config.json says so, which is
+           how the app is worked on in a browser, in an installed web app and
+           in the iOS build alike. -->
+      @if (devSignIn) {
+      <ion-button
+        class="wq-glass-button secondary"
+        expand="block"
+        data-testid="dev-sign-in"
+        (click)="signInForDevelopment()"
+      >
+        {{ 'settings.account.devSignIn' | transloco }}
+      </ion-button>
       } }
     </div>
   </main>
