@@ -125,8 +125,14 @@
 
   // Type scale for controls. Every choice control (segments, option lists)
   // uses the same size; secondary lines under or inside them are smaller.
+  // The name of a card, a page or a dialog: the largest size that is still
+  // text rather than a figure, and the only one a heading uses.
+  --wq-font-size-heading: 1.0625rem; // 17 px, iOS "headline"
   --wq-font-size-control: 0.9375rem; // 15 px, iOS "subheadline"
   --wq-font-size-caption: 0.8125rem; // 13 px, iOS "footnote"
+  // The second line of a row: what the line above it is, or what it holds.
+  // Bigger than a caption, because it is read rather than glanced at.
+  --wq-font-size-subtitle: 0.875rem; // 14 px, iOS "subheadline"
 
   // Space reserved at the bottom of tab pages for the floating tab bar
   // How far the floating chrome (tab bar, action bar) sits above the bottom

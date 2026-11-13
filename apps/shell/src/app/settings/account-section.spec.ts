@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import {
   HttpTestingController,
   type TestRequest,
@@ -32,6 +33,37 @@ const signedIn = (
 });
 
 const settle = () => new Promise((resolve) => setTimeout(resolve));
+
+/**
+ * Deleting the account is held, not pressed (`wq-hold-button`): the press
+ * starts it, and nothing happens until the hold has lasted. The clock is
+ * faked so the test does not really wait for it, while everything else —
+ * the HTTP mock, the microtasks — keeps running on real time.
+ */
+async function holdToDelete(fixture: { detectChanges(): void }): Promise<void> {
+  const button = screen
+    .getByTestId('confirm-delete')
+    .querySelector('button') as HTMLElement;
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  try {
+    fireEvent.pointerDown(button);
+    await vi.advanceTimersByTimeAsync(2_000);
+  } finally {
+    vi.useRealTimers();
+  }
+  fixture.detectChanges();
+}
+
+/** The way out of a dialog: the round button in its corner. */
+function closeButtonOf(dialog: string): HTMLElement {
+  const close = screen
+    .getByTestId(dialog)
+    .querySelector<HTMLElement>('[data-testid="dialog-close"]');
+  if (!close) {
+    throw new Error(`${dialog} has no close button`);
+  }
+  return close;
+}
 
 async function renderSection(state: 'offline' | AuthResponse) {
   const view = await render(AccountSection, {
@@ -155,7 +187,7 @@ describe('AccountSection', () => {
     expect(screen.queryByTestId('sync-status')).toBeNull();
   });
 
-  it('saves what is left, signs out and deletes the data on this device', async () => {
+  it('saves what is left, asks, then signs out and deletes the data on this device', async () => {
     const { answer, emptyHistory, progress, auth, toasts } =
       await renderSection(signedIn());
     progress.recordSession(finishedSession([{ code: 'fr', correct: true }]));
@@ -168,6 +200,16 @@ describe('AccountSection', () => {
       }),
     );
     await answer('GET', '/v1/sessions', emptyHistory);
+
+    // Signing out is asked about even when everything is saved: it deletes
+    // this account's results from the device, and the row sits a finger
+    // away from the rest of Settings.
+    expect(screen.getByTestId('sign-out-confirmation').textContent).toContain(
+      'Sign out?',
+    );
+    expect(auth.status()).toBe('signed-in');
+
+    fireEvent.click(screen.getByTestId('confirm-sign-out'));
     await answer('POST', '/v1/auth/logout', (request) =>
       request.flush(null, { status: 204, statusText: 'No Content' }),
     );
@@ -192,7 +234,7 @@ describe('AccountSection', () => {
     expect(confirmation.textContent).toContain(
       '1 result played on this device has not been saved to your account yet.',
     );
-    fireEvent.click(screen.getByTestId('cancel-sign-out'));
+    fireEvent.click(closeButtonOf('sign-out-confirmation'));
     expect(auth.status()).toBe('signed-in');
     expect(progress.mistakeCount()).toBe(1);
 
@@ -220,13 +262,13 @@ describe('AccountSection', () => {
     expect(confirmation.textContent).toContain('deleted permanently');
     http.expectNone(`${TEST_API_URL}/v1/me`);
 
-    fireEvent.click(screen.getByTestId('cancel-delete'));
+    fireEvent.click(closeButtonOf('delete-confirmation'));
     fixture.detectChanges();
     expect(screen.queryByRole('alertdialog')).toBeNull();
 
     fireEvent.click(screen.getByTestId('delete-account'));
     fixture.detectChanges();
-    fireEvent.click(screen.getByTestId('confirm-delete'));
+    await holdToDelete(fixture);
     await answer('DELETE', '/v1/me', (request) =>
       request.flush(null, { status: 204, statusText: 'No Content' }),
     );

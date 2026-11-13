@@ -1,5 +1,9 @@
+// A card in a list of cards, not a piece of floating chrome: the glass
+// material is for what floats over a page (design-system.md), and beside
+// the bordered cards of every other section it read as a hole.
 .theme-segment {
   --background: transparent;
+  overflow: hidden;
 
   ion-segment-button {
     min-height: 72px;
@@ -48,7 +52,7 @@ ion-item {
 
 .language-translation {
   display: block;
-  font-size: 0.875rem;
+  font-size: var(--wq-font-size-subtitle);
   color: var(--wq-color-text-secondary);
 }
 

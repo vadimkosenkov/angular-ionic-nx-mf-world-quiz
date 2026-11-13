@@ -55,7 +55,7 @@ describe('settings', () => {
 
     cy.get('[data-testid="info-note"]').should(
       'contain.text',
-      'Short tones when an answer lands',
+      'Short tones in answer to what you do',
     );
     // The backdrop lives in the popover's shadow root, out of reach of a
     // test; Escape is the other way out.

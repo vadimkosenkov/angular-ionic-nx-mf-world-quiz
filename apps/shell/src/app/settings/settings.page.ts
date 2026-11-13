@@ -24,7 +24,7 @@ import {
 } from '@world-quiz/client/settings';
 import { flagAssetPath } from '@world-quiz/quiz/countries';
 import { isLocale, type Locale } from '@world-quiz/quiz/domain';
-import { APP_VERSION } from '../app-info';
+import { appBuild, appVersion } from '../app-info';
 import { NATIVE_PLATFORM } from '../core/platform';
 import { TipsStore } from '../core/tips.store';
 import { AccountSection } from './account-section';
@@ -65,7 +65,9 @@ interface LanguageOption {
 })
 export class SettingsPage {
   protected readonly settings = inject(SettingsStore);
-  protected readonly version = APP_VERSION;
+  /** Both come from the build itself; `dev` and `null` without one. */
+  protected readonly version = appVersion();
+  protected readonly build = appBuild();
   /** Haptics exist only on the device, so the toggle does too. */
   protected readonly nativePlatform = inject(NATIVE_PLATFORM);
   protected readonly tips = inject(TipsStore);

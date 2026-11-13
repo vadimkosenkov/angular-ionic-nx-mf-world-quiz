@@ -97,3 +97,102 @@ describe('browserShareTarget', () => {
     await expect(target.share(payload)).resolves.toBe('failed');
   });
 });
+
+describe('sharing a picture', () => {
+  const picture = () =>
+    Promise.resolve(new File(['png'], 'world-quiz.png', { type: 'image/png' }));
+
+  it('sends the picture where the device takes files', async () => {
+    const shared: ShareData[] = [];
+    const target = browserShareTarget({
+      canShare: () => true,
+      share: (data) => {
+        shared.push(data);
+        return Promise.resolve();
+      },
+    });
+
+    await expect(target.share({ ...payload, image: picture })).resolves.toBe(
+      'shared',
+    );
+    expect(shared[0]?.files?.[0]?.type).toBe('image/png');
+    // A sheet carrying a file may drop a separate address, so it travels
+    // inside the text.
+    expect(shared[0]?.text).toBe(`${payload.text}\n${payload.url}`);
+    expect(shared[0]).not.toHaveProperty('url');
+  });
+
+  it('sends the text where files are refused, and paints nothing', async () => {
+    const shared: ShareData[] = [];
+    let painted = 0;
+    const target = browserShareTarget({
+      canShare: () => false,
+      share: (data) => {
+        shared.push(data);
+        return Promise.resolve();
+      },
+    });
+
+    await target.share({
+      ...payload,
+      image: () => {
+        painted += 1;
+        return picture();
+      },
+    });
+
+    expect(painted).toBe(0);
+    expect(shared[0]).toEqual({
+      title: payload.title,
+      text: payload.text,
+      url: payload.url,
+    });
+  });
+
+  it('sends the text when the picture cannot be drawn', async () => {
+    const shared: ShareData[] = [];
+    const target = browserShareTarget({
+      canShare: () => true,
+      share: (data) => {
+        shared.push(data);
+        return Promise.resolve();
+      },
+    });
+
+    await expect(
+      target.share({ ...payload, image: () => Promise.resolve(null) }),
+    ).resolves.toBe('shared');
+    expect(shared[0]?.files).toBeUndefined();
+  });
+
+  // Some engines throw from `canShare` rather than answering it.
+  it('sends the text when asking about files throws', async () => {
+    const shared: ShareData[] = [];
+    const target = browserShareTarget({
+      canShare: () => {
+        throw new TypeError('illegal invocation');
+      },
+      share: (data) => {
+        shared.push(data);
+        return Promise.resolve();
+      },
+    });
+
+    await expect(target.share({ ...payload, image: picture })).resolves.toBe(
+      'shared',
+    );
+    expect(shared[0]?.files).toBeUndefined();
+  });
+
+  it('says cancelled when the player closes a sheet holding the picture', async () => {
+    const abort = Object.assign(new Error('cancelled'), { name: 'AbortError' });
+    const target = browserShareTarget({
+      canShare: () => true,
+      share: () => Promise.reject(abort),
+    });
+
+    await expect(target.share({ ...payload, image: picture })).resolves.toBe(
+      'cancelled',
+    );
+  });
+});

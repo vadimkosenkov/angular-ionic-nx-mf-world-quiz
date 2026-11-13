@@ -1,0 +1,62 @@
+:host {
+  display: block;
+}
+
+// The same shape and weight as the action bar's own button
+// (`ion-button.wq-glass-button`), so a held button reads as the page's next
+// step rather than as a different kind of control.
+.hold {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 var(--wq-space-4);
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--wq-radius-pill);
+  background: var(--wq-hold-background, var(--wq-color-primary));
+  box-shadow: var(--wq-shadow-floating);
+  color: var(--wq-hold-color, var(--wq-color-on-primary));
+  font: inherit;
+  font-size: var(--wq-font-size-heading);
+  font-weight: 700;
+  cursor: pointer;
+  // The press belongs to the button for as long as it lasts: without this
+  // the first millimetre of movement hands it to the page as a scroll.
+  touch-action: none;
+  user-select: none;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+// How far the hold has got. It sweeps rather than ticks, so there is
+// nothing to read — and it runs backwards the moment the finger lifts.
+.fill {
+  position: absolute;
+  inset: 0;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: var(--wq-hold-fill, rgb(255 255 255 / 30%));
+  transition: transform 160ms linear;
+}
+
+.hold.holding .fill {
+  transform: scaleX(1);
+}
+
+.label {
+  position: relative;
+}
+
+// It belongs to the button above it, and says so by sharing its colour.
+.hint {
+  margin: var(--wq-space-2) 0 0;
+  color: var(--wq-hold-hint-color, var(--wq-color-text-secondary));
+  font-size: var(--wq-font-size-subtitle);
+  text-align: center;
+}

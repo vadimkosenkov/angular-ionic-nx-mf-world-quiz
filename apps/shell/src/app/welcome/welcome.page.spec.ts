@@ -179,4 +179,12 @@ describe('WelcomePage', () => {
 
     expect(screen.getByTestId('dev-sign-in')).toBeTruthy();
   });
+
+  // It used to live inside the native branch of the template, so the app was
+  // worked on in a browser and in an installed web app with no way in.
+  it('offers the development sign-in in a browser too', async () => {
+    await renderWelcome('en', false, { devSignIn: true });
+
+    expect(screen.getByTestId('dev-sign-in')).toBeTruthy();
+  });
 });

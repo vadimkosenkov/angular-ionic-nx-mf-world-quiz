@@ -160,13 +160,16 @@ describe('QuizResults', () => {
       fireEvent.click(await screen.findByTestId('results-share'));
       await Promise.resolve();
 
-      expect(target.shared).toEqual([
-        {
-          title: 'World Quiz',
-          text: 'World Quiz — Capitals, World\n8/10 correct · 80% · 1:35',
-          url: 'https://play.example.test',
-        },
-      ]);
+      expect(target.shared).toHaveLength(1);
+      expect(target.shared[0]).toMatchObject({
+        title: 'World Quiz',
+        text: 'World Quiz — Capitals, World, Easy\n8/10 correct · 80% · 1:35',
+        url: 'https://play.example.test',
+      });
+      // The picture goes with it, for the devices that take one; what it
+      // says is `runShareCard`'s own test, and jsdom has no canvas to draw
+      // it on.
+      expect(target.shared[0]?.image).toBeTypeOf('function');
       // The sheet opening is its own confirmation.
       expect(TestBed.inject(Toasts).current()).toBeNull();
     });

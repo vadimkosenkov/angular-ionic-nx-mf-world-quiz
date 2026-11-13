@@ -5,13 +5,19 @@
 // ~100 px of an installed web app (CLAUDE.md), which is exactly what a card
 // of glass is.
 //
-// `position: fixed` and not inside a page: the host lives in `ion-app`, so a
-// message is not carried away by the page transition that may follow it.
+// `position: fixed` and not inside a page: the host is rendered outside the
+// router outlet and moved to `document.body` (toast-host.ts), so a message is
+// not carried away by the page transition that may follow it.
+//
+// It sits above everything else that floats, a dialog included: the action a
+// message answers is often the one taken inside a dialog, and a failure the
+// player cannot read or put away because a backdrop covers it is worse than
+// no message at all.
 :host {
   position: fixed;
   inset-inline: var(--wq-content-gutter);
   bottom: var(--wq-toast-inset);
-  z-index: 20;
+  z-index: 30;
   display: flex;
   justify-content: center;
   // The same column as everything else that floats over a page.

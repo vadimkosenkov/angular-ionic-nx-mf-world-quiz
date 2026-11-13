@@ -4,8 +4,10 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthStore } from '@world-quiz/client/auth';
 import { PluralPipe } from '@world-quiz/client/i18n';
 import { ProgressStore, SyncService } from '@world-quiz/client/progress';
+import { Dialog, HoldButton, InfoButton } from '@world-quiz/client/ui';
 import { nicknameSchema } from '@world-quiz/shared/contracts';
 import { AccountNotices } from '../auth/account-notices';
+import { RUNTIME_CONFIG } from '../runtime-config';
 
 /**
  * Settings → Account: who is signed in, whether their results are saved to
@@ -16,15 +18,25 @@ import { AccountNotices } from '../auth/account-notices';
  * not yet sent are tried once more first; if they still cannot be sent, the
  * player is told how many would be lost and decides.
  *
- * Confirmations are inline rather than modal alerts, so the consequence is
- * spelled out next to the button that causes it. How an action **turned
- * out** is a toast instead (`AccountNotices`): the card is long, and a line
- * of text appearing at its bottom went unnoticed next to the field that
- * caused it.
+ * Each of the three questions this card asks — a new name, signing out,
+ * deleting the account — is a `wq-dialog` in the middle of the screen. They
+ * used to be panels inside the card: it jumped a row taller as one opened,
+ * and the consequence of a destructive action was spelled out in a strip
+ * the eye had already learned to skip. How an action **turned out** is a
+ * toast instead (`AccountNotices`).
  */
 @Component({
   selector: 'wq-account-section',
-  imports: [IonButton, IonIcon, IonInput, TranslocoPipe, PluralPipe],
+  imports: [
+    IonButton,
+    IonIcon,
+    IonInput,
+    Dialog,
+    HoldButton,
+    InfoButton,
+    TranslocoPipe,
+    PluralPipe,
+  ],
   templateUrl: './account-section.html',
   styleUrl: './account-section.scss',
 })
@@ -33,6 +45,13 @@ export class AccountSection {
   protected readonly progress = inject(ProgressStore);
   protected readonly sync = inject(SyncService);
   private readonly notices = inject(AccountNotices);
+
+  /**
+   * Whether this build shows the rehearsal button beside the real one. It
+   * follows the development sign-in, which is what marks a build that is
+   * being worked on rather than one a player has.
+   */
+  protected readonly rehearsing = inject(RUNTIME_CONFIG).devSignIn;
 
   protected readonly confirming = signal<'delete' | 'sign-out' | null>(null);
   protected readonly signingOut = signal(false);
@@ -43,10 +62,37 @@ export class AccountSection {
     () => nicknameSchema.safeParse(this.nicknameDraft()).success,
   );
 
+  /**
+   * The rehearsal: everything the real hold does except the deleting, so
+   * the way it looks and feels can be tried without an account to lose.
+   */
+  protected rehearseDelete(): void {
+    console.log(1);
+  }
+
   /** The provider of the current sign-in, for "Signed in with …". */
   protected readonly provider = computed(
     () => this.auth.user()?.providers[0] ?? 'google',
   );
+
+  /**
+   * The icon the identity row leads with: the mark of whatever the player
+   * signed in through, because that is what the row is about. The
+   * development sign-in has no mark of its own, so it keeps the generic
+   * portrait.
+   */
+  protected readonly providerIcon = computed(() => {
+    switch (this.provider()) {
+      case 'google':
+        return 'logo-google';
+      case 'apple':
+        return 'logo-apple';
+      default:
+        // The development sign-in. A mark of its own, or this row and the
+        // one under it would lead with the same portrait.
+        return 'construct';
+    }
+  });
 
   /**
    * What is worth saying about the results that have not reached the account
@@ -90,18 +136,23 @@ export class AccountSection {
     void this.notices.retryRestore();
   }
 
+  /**
+   * Always asks first. Signing out deletes this account's results from the
+   * device (ADR-006), which is as irreversible as deleting the account for
+   * anything that has not reached the server — and the row sits one finger
+   * away from the rest of Settings.
+   *
+   * What is waiting is sent once more before the question is asked, so the
+   * warning about unsaved results is the truth at the moment it is read.
+   */
   protected async signOut(): Promise<void> {
     this.signingOut.set(true);
     try {
       await this.sync.sync();
-      if (this.progress.pendingCount() > 0) {
-        this.confirming.set('sign-out');
-        return;
-      }
-      await this.signOutAndForget();
     } finally {
       this.signingOut.set(false);
     }
+    this.confirming.set('sign-out');
   }
 
   protected async signOutAndForget(): Promise<void> {

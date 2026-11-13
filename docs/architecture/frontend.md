@@ -97,6 +97,14 @@ may know about each other, is described in
   the iPhone app — web Sign in with Apple needs a registered HTTPS domain.
 - **When a sign-in ends** (sign-out, deletion, refresh refused),
   `provideSignInFlow()` returns to `/welcome` with a new navigation root.
+  Signing out always asks first: it deletes this account's results from the
+  device (ADR-006), which for anything not yet sent is as irreversible as
+  deleting the account, and the row sits one finger away from the rest of
+  Settings.
+- **The development sign-in** appears on the welcome screen whenever this
+  deployment's `config.json` says `devSignIn`, on **either** platform. It
+  used to be written inside the native branch of the template, so a browser
+  and an installed web app had no way in, and only the iPhone build did.
 - **Google's button is Google's page** (an iframe): a white "Sign in with
   Google" in both themes (black is left to Apple), drawn again when the
   language changes. Its shape, font and padding
@@ -180,6 +188,50 @@ nothing to whoever receives the message, so the native build sets `appUrl`
 explicitly and an unset value shares the text with no link at all. Since a
 remote cannot know any of this, the host passes it as `APP_URL`
 (`client/quiz-ports`), beside the other things only the shell knows.
+
+### The picture
+
+A chat shows a picture, not a line of text, so a run and a record are also
+**drawn** as a card (`client/ui/share/share-card.ts`): the app's name over
+the brand gradient, what was played — category, region and difficulty, with
+the training mode on a line of its own under it — the one figure the card is
+about, and two figures with labels beneath. It is a 1080px square, which
+every chat shows whole. The address is **not** on the picture: it is a card
+to look at, and the link belongs in the message beside it.
+
+It is drawn on a `<canvas>`, not screenshotted. The results card on screen
+is glass over a blurred backdrop, which the libraries that rasterise the DOM
+cannot draw at all (and Ionic's components live in shadow roots they do not
+reach); drawing it also makes the picture the same everywhere, whatever the
+phone decided to scroll or scale. The app loads no web font, so the card is
+drawn in the same letters the player is looking at, and its colours are read
+from the `--wq-*` tokens on `<html>` — the picture follows the theme the
+player shared it from, and a token the document does not define falls back
+to the light theme.
+
+The layout is a **pure function** of the card and the palette
+(`shareCardPlan`), so what ends up on the picture is tested without a
+canvas; `drawShareCard` only executes the plan, and each piece of text
+carries the width it may take, which `fillText` condenses it into — a long
+region name cannot run over the card's edge. The words themselves come from
+`runShareCard` (`client/quiz-feature`) and `recordShareCard` (the shell's
+leaderboard), built outside their components for the same reason.
+
+The picture is offered **only where the device takes files**:
+`SHARE_TARGET` asks `canShare({ files })` first and paints nothing when the
+answer is no (desktop Safari and Firefox), so the fallback is the text that
+was already there. Where a file does travel, the address goes inside the
+text — a sheet carrying a file may drop a separate `url` — and a canvas the
+browser refuses (an old WebView without `roundRect`) simply means no
+picture, never a failed share.
+
+### Which version is running
+
+Settings → About shows the version and, when the bundle was stamped, the
+build it came from. Both are read from `<meta>` tags in `index.html`
+(`app-info.ts`): a development build says so rather than inventing a number,
+because a version nobody stamped is not a version. How they are produced is
+in [deploying.md](../deployment/deploying.md).
 
 ## Start-up sequence
 

@@ -1,5 +1,12 @@
 :host {
   display: inline-flex;
+
+  // The size of the target, as a custom property because the button it
+  // scales lives inside this component: a rule written outside reaches the
+  // host element but never the `.info` in here (view encapsulation), so a
+  // row with no space for 32px beside a caption shrinks it through this.
+  // WCAG 2.2 asks for 24px, which is the smallest value allowed.
+  --wq-info-size: 32px;
 }
 
 // The app's own blue, like every other thing on a page that answers a tap:
@@ -9,13 +16,16 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: var(--wq-info-size);
+  height: var(--wq-info-size);
   padding: 0;
   border: 0;
   border-radius: var(--wq-radius-pill);
   background: transparent;
   color: var(--wq-color-primary);
+  // The glyph does **not** follow the target: a smaller target is the same
+  // "i" with less room around it, and an "i" drawn smaller than the ones
+  // beside it reads as a different, lesser control.
   font-size: 1.25rem;
   cursor: pointer;
 }

@@ -140,6 +140,10 @@ jobs:
           # published `_redirects` proxies `/v1/*` — which keeps the sign-in
           # cookie first-party (docs/deployment/deploying.md).
           API_UPSTREAM: ${{ vars.API_UPSTREAM }}
+          # The address a shared result links to. Unset, the app shares the
+          # origin it is served from, which is right for a plain web
+          # deployment but wrong behind a preview or alias URL.
+          APP_URL: ${{ vars.APP_URL }}
           GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
           CAPITALS_URL: ${{ vars.CAPITALS_URL }}
           FLAGS_URL: ${{ vars.FLAGS_URL }}
