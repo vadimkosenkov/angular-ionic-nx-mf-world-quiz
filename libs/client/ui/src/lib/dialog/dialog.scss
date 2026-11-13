@@ -1,0 +1,90 @@
+// The whole screen, with the card in the middle of it. The host is the
+// layer, so there is nothing between the backdrop and the card to catch a
+// tap meant for either.
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: var(--wq-content-gutter);
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgb(0 0 0 / 40%);
+}
+
+.dialog {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--wq-space-3);
+  // The page's own column, so a dialog lines up with the cards behind it.
+  width: 100%;
+  max-width: var(--wq-content-width);
+  // Taller than the screen on a small phone in landscape: the words scroll
+  // rather than the actions falling off the bottom edge.
+  max-height: 100%;
+  padding: var(--wq-space-4);
+  overflow-y: auto;
+  border-radius: var(--wq-radius-lg);
+  background: var(--wq-color-surface);
+  box-shadow: var(--wq-shadow-floating);
+  // The card moves only when the keyboard takes the room it was standing
+  // in; sliding there reads as making way, while arriving there in one
+  // frame reads as a glitch.
+  transition: transform var(--wq-duration-base) ease-out;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+
+  // It takes the focus when it opens, which a frame around the whole card
+  // would announce louder than the dialog itself.
+  &:focus {
+    outline: none;
+  }
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wq-space-3);
+}
+
+// The dialog's name is a heading, which on this screen means the size
+// every other heading uses — and it has to be bigger than the words under
+// it, not smaller, which is what a control-sized title looked like.
+.title {
+  margin: 0;
+  font-size: var(--wq-font-size-heading);
+  font-weight: 700;
+}
+
+// Only the title is coloured: a card tinted end to end shouts at a question
+// the player is still deciding about.
+.dialog.danger .title {
+  color: var(--wq-color-error);
+}
+
+// The way out: a quiet round button in the corner, the same shape as the
+// share button on a result.
+.close {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--wq-radius-pill);
+  background: var(--wq-color-surface-secondary);
+  color: var(--wq-color-text-secondary);
+  font-size: 18px;
+  cursor: pointer;
+}
