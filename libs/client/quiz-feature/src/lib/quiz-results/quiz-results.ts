@@ -12,9 +12,16 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import type { QuizSessionOutcome } from '@world-quiz/client/quiz-ports';
 import type { ChallengeOutcome } from '@world-quiz/shared/contracts';
 import { APP_URL, COUNTRY_DATASET } from '@world-quiz/client/quiz-ports';
-import { SHARE_TARGET, shareLines, Toasts } from '@world-quiz/client/ui';
+import {
+  SHARE_TARGET,
+  shareCardFile,
+  shareLines,
+  Toasts,
+  type ShareCard,
+} from '@world-quiz/client/ui';
 import { Feedback } from '@world-quiz/client/feedback';
 import { SettingsStore } from '@world-quiz/client/settings';
+import { runShareCard, type SharedQuizMode } from './result-share-card';
 import {
   displayAnswer,
   formatRunTime,
@@ -103,10 +110,12 @@ export class QuizResults {
   });
 
   /**
-   * Hands the run to whatever the device shares with: the system sheet on a
-   * phone, the clipboard on a desktop browser that has no sheet. Only the
-   * two outcomes the player cannot see for themselves are reported — the
-   * sheet opening is its own confirmation, and closing it was their choice.
+   * Hands the run to whatever the device shares with: a picture of the run
+   * through the system sheet on a phone, the same run as text where files
+   * cannot be shared, the clipboard where there is no sheet at all. Only
+   * the two outcomes the player cannot see for themselves are reported —
+   * the sheet opening is its own confirmation, and closing it was their
+   * choice.
    */
   protected async share(): Promise<void> {
     if (this.sharing()) return;
@@ -118,6 +127,9 @@ export class QuizResults {
           this.translate('share.result.heading', {
             category: this.translate(`categories.${this.config().category}`),
             region: this.translate(`regions.${this.config().scope}`),
+            difficulty: this.translate(
+              `difficulty.${this.config().difficulty}`,
+            ),
           }),
           this.translate('share.result.score', {
             correct: this.summary().correct,
@@ -128,6 +140,7 @@ export class QuizResults {
           this.shareRank(),
         ),
         ...(this.appUrl ? { url: this.appUrl } : {}),
+        image: () => shareCardFile(this.shareCard()),
       });
       if (outcome === 'copied') {
         this.toasts.success(this.translate('share.copied'));
@@ -137,6 +150,38 @@ export class QuizResults {
     } finally {
       this.sharing.set(false);
     }
+  }
+
+  /** The words of the picture; the layout is `runShareCard`'s business. */
+  private shareCard(): ShareCard {
+    const summary = this.summary();
+    const config = this.config();
+    return runShareCard(
+      {
+        category: config.category,
+        scope: config.scope,
+        difficulty: config.difficulty,
+        mode: this.sharedMode(),
+        correct: summary.correct,
+        answered: summary.answered,
+        accuracyPercent: this.accuracyPercent(),
+        duration: this.duration(),
+        perfect: summary.perfect,
+        rank: this.shareRank(),
+      },
+      (key, params) => this.translate(key, params),
+    );
+  }
+
+  /**
+   * How the run was played, in the player's terms. Practice Mistakes runs
+   * as a Quick round over a fixed set of countries, which is the only
+   * configuration that carries `countryCodes`; calling it a Quick round on
+   * the picture would name something the player did not choose.
+   */
+  private sharedMode(): SharedQuizMode {
+    const config = this.config();
+    return config.countryCodes?.length ? 'practice' : config.mode;
   }
 
   /** A challenge the server ranked is worth a line of its own. */

@@ -86,23 +86,34 @@ export const askedCountryKey = () =>
 type ShareWindow = Cypress.AUTWindow & { sharedPayloads?: ShareData[] };
 
 /**
- * For `cy.visit(path, { onBeforeLoad: recordShares })`: the system share
+ * For `cy.visit(path, { onBeforeLoad: recordShares() })`: the system share
  * sheet cannot be driven from a test, so `navigator.share` is replaced by
  * one that records what the app handed over. Without it the app would find
  * no sheet in a desktop browser and copy to the clipboard instead, which
  * needs a permission the runner does not always give.
  *
+ * `canShare` is replaced too, and deliberately: whether a real browser
+ * accepts a file decides which of the two messages the app builds, and a
+ * test should not depend on the runner's own answer. `files: false` is the
+ * desktop Safari case — a sheet that takes text only.
+ *
  * What was shared is read back with `cy.window().its('sharedPayloads')`, so
  * the assertion retries while the share is still in flight.
  */
-export const recordShares = (win: Cypress.AUTWindow) => {
-  const shared: ShareData[] = [];
-  (win as ShareWindow).sharedPayloads = shared;
-  Object.defineProperty(win.navigator, 'share', {
-    configurable: true,
-    value: (data: ShareData) => {
-      shared.push(data);
-      return Promise.resolve();
-    },
-  });
-};
+export const recordShares =
+  ({ files = true }: { readonly files?: boolean } = {}) =>
+  (win: Cypress.AUTWindow) => {
+    const shared: ShareData[] = [];
+    (win as ShareWindow).sharedPayloads = shared;
+    Object.defineProperty(win.navigator, 'canShare', {
+      configurable: true,
+      value: (data: ShareData) => (data.files?.length ? files : true),
+    });
+    Object.defineProperty(win.navigator, 'share', {
+      configurable: true,
+      value: (data: ShareData) => {
+        shared.push(data);
+        return Promise.resolve();
+      },
+    });
+  };

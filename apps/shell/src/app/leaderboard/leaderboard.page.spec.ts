@@ -209,13 +209,15 @@ describe('LeaderboardPage', () => {
     fireEvent.click(screen.getByTestId('share-record-capitals-easy'));
     await settle();
 
-    expect(shared).toEqual([
-      {
-        title: 'World Quiz',
-        text: 'World Quiz — Capitals · Easy\nPerfect run in 4:07.3 · #2 of 3',
-        url: 'https://play.example.test',
-      },
-    ]);
+    expect(shared).toHaveLength(1);
+    expect(shared[0]).toMatchObject({
+      title: 'World Quiz',
+      text: 'World Quiz — Capitals · Easy\nPerfect run in 4:07.3 · #2 of 3',
+      url: 'https://play.example.test',
+    });
+    // The picture travels with it where the device takes files; its words
+    // are tested in `record-share-card.spec.ts`.
+    expect(shared[0]?.image).toBeTypeOf('function');
     // A board the player has never finished has nothing to share.
     expect(screen.queryByTestId('share-record-flags-hard')).toBeNull();
   });

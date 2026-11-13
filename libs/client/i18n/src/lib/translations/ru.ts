@@ -36,6 +36,7 @@ export const ru: TranslationShape = {
     endless: 'Бесконечный',
     timed: 'На время',
     practice: 'Работа над ошибками',
+    challenge: 'Забег за рекорд',
   },
   regions: {
     world: 'Весь мир',
@@ -310,7 +311,8 @@ export const ru: TranslationShape = {
     title: 'World Quiz',
     action: 'Поделиться результатом',
     result: {
-      heading: 'World Quiz — {{category}}, {{region}}',
+      heading: 'World Quiz — {{category}}, {{region}}, {{difficulty}}',
+      subject: '{{category}} · {{region}} · {{difficulty}}',
       score: '{{correct}}/{{answered}} верно · {{accuracy}}% · {{time}}',
       rank: '{{rank}}-е место в рейтинге',
     },
@@ -318,6 +320,9 @@ export const ru: TranslationShape = {
       action: 'Поделиться рекордом: {{board}}',
       heading: 'World Quiz — {{board}}',
       score: 'Забег без ошибок за {{time}} · {{place}}',
+      perfect: 'Забег без ошибок',
+      place: 'Место',
+      players: 'Игроков',
     },
     copied: 'Скопировано — вставьте, куда нужно.',
     failed:
@@ -375,10 +380,11 @@ export const ru: TranslationShape = {
       nickname: {
         label: 'Публичное имя',
         edit: 'Изменить',
-        save: 'Сохранить имя',
+        save: 'Сохранить',
         saved: 'Публичное имя сохранено.',
-        rules:
-          'Показывается в рейтингах вместо вашего имени: от 3 до 24 букв, цифр, пробелов, «_», «-» или «.».',
+        about: 'Так вас видят другие игроки в рейтингах.',
+        invalid:
+          'Такое имя не подойдёт: от 3 до 24 букв, цифр, пробелов, «_», «-» или «.».',
       },
       signOut: 'Выйти',
       delete: 'Удалить аккаунт',
@@ -386,7 +392,13 @@ export const ru: TranslationShape = {
       deleteText:
         'Аккаунт и всё, что хранится с ним на нашем сервере, будут удалены навсегда. Отменить это нельзя.',
       deleteConfirm: 'Удалить навсегда',
+      deleteHint: 'Нажмите и удерживайте, пока полоса не заполнится.',
+      deleteRehearsal: 'Удалить навсегда (проверка)',
+      deleteRehearsalHint: 'Проверка: ничего не удаляется.',
       cancel: 'Отмена',
+      signOutTitle: 'Выйти из аккаунта?',
+      signOutText:
+        'Результаты этого аккаунта будут удалены с этого устройства. В аккаунте они останутся и вернутся при следующем входе.',
       signOutPendingTitle: 'Выйти без сохранения?',
       signOutPendingText: {
         one: '{{count}} результат, сыгранный на этом устройстве, ещё не сохранён в аккаунте. При выходе он будет удалён с устройства.',
@@ -403,7 +415,7 @@ export const ru: TranslationShape = {
         'sign-in-failed': 'Войти не получилось. Попробуйте ещё раз.',
         unreachable: 'Сервер World Quiz недоступен. Проверьте соединение.',
         'delete-failed': 'Не удалось удалить аккаунт. Попробуйте ещё раз.',
-        'nickname-invalid': 'Такое имя не подходит. Правила — под полем.',
+        'nickname-invalid': 'Такое имя не подходит.',
         'nickname-failed': 'Не удалось сохранить имя. Попробуйте ещё раз.',
       },
     },
@@ -417,8 +429,8 @@ export const ru: TranslationShape = {
       title: 'Звук и отклик',
       sound: 'Звуки',
       haptics: 'Вибрация',
-      soundHint: 'Короткие сигналы на ответ и в конце раунда.',
-      hapticsHint: 'Лёгкий тактильный отклик на ответ и в конце раунда.',
+      soundHint: 'Короткие звуки в ответ на ваши действия.',
+      hapticsHint: 'Лёгкий тактильный отклик на ваши действия.',
       hapticsOnIos:
         'Вибрация работает только в приложении для iPhone: из браузера нет доступа к тактильному отклику.',
     },
@@ -435,6 +447,7 @@ export const ru: TranslationShape = {
     about: {
       title: 'О приложении',
       version: 'Версия',
+      build: 'Сборка',
       data: 'Данные о странах',
       dataValue: 'Wikidata, UN M49',
       flags: 'Флаги',

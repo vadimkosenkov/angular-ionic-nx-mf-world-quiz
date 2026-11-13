@@ -27,8 +27,10 @@ import {
   EmptyState,
   PageHeader,
   SHARE_TARGET,
+  shareCardFile,
   shareLines,
   Toasts,
+  type ShareCard,
 } from '@world-quiz/client/ui';
 import { APP_URL } from '@world-quiz/client/quiz-ports';
 import {
@@ -44,6 +46,7 @@ import {
   type LeaderboardBoardId,
 } from '@world-quiz/quiz/domain';
 import { firstValueFrom } from 'rxjs';
+import { recordShareCard } from './record-share-card';
 
 const LEADERBOARD_VIEWS = ['global', 'mine'] as const;
 type LeaderboardView = (typeof LEADERBOARD_VIEWS)[number];
@@ -218,11 +221,28 @@ export class LeaderboardPage implements ViewWillEnter {
         }),
       ),
       ...(this.appUrl ? { url: this.appUrl } : {}),
+      image: () => shareCardFile(this.recordCard(board, record)),
     });
     if (outcome === 'copied') {
       this.toasts.success(this.transloco.translate('share.copied'));
     } else if (outcome === 'failed') {
       this.toasts.failure(this.transloco.translate('share.failed'));
     }
+  }
+
+  /** The words of the picture; the layout is `recordShareCard`'s business. */
+  private recordCard(
+    board: LeaderboardBoardId,
+    record: MyRecords['records'][number],
+  ): ShareCard {
+    return recordShareCard(
+      {
+        board,
+        time: formatRunTime(record.completionTimeMs),
+        rank: record.rank,
+        players: record.players,
+      },
+      (key, params) => this.transloco.translate(key, params),
+    );
   }
 }

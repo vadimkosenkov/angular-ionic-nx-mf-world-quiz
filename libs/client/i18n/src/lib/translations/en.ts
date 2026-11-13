@@ -48,6 +48,7 @@ export const en = {
     endless: 'Endless',
     timed: 'Time attack',
     practice: 'Practice mistakes',
+    challenge: 'Leaderboard challenge',
   },
   regions: {
     world: 'World',
@@ -319,7 +320,10 @@ export const en = {
     title: 'World Quiz',
     action: 'Share the result',
     result: {
-      heading: 'World Quiz — {{category}}, {{region}}',
+      heading: 'World Quiz — {{category}}, {{region}}, {{difficulty}}',
+      // The picture's band already says World Quiz, so the card names only
+      // what was played.
+      subject: '{{category}} · {{region}} · {{difficulty}}',
       score: '{{correct}}/{{answered}} correct · {{accuracy}}% · {{time}}',
       rank: 'Ranked #{{rank}} on the leaderboard',
     },
@@ -327,6 +331,11 @@ export const en = {
       action: 'Share the {{board}} record',
       heading: 'World Quiz — {{board}}',
       score: 'Perfect run in {{time}} · {{place}}',
+      // The picture lays the same record out as a card, so the place and
+      // the size of the board become figures with labels of their own.
+      perfect: 'Perfect run',
+      place: 'Place',
+      players: 'Players',
     },
     copied: 'Copied — paste it wherever you like.',
     failed: 'This browser can neither share nor copy the result.',
@@ -385,10 +394,13 @@ export const en = {
       nickname: {
         label: 'Public name',
         edit: 'Change',
-        save: 'Save name',
+        save: 'Save',
         saved: 'Your public name is saved.',
-        rules:
-          'Shown on leaderboards instead of your name: 3 to 24 letters, digits, spaces, "_", "-" or ".".',
+        // What the name is for. The rules are not repeated here: they are
+        // the error under the field, and nowhere else.
+        about: 'This is how other players see you on the leaderboards.',
+        invalid:
+          'That name will not do: 3 to 24 letters, digits, spaces, "_", "-" or ".".',
       },
       signOut: 'Sign out',
       delete: 'Delete account',
@@ -396,7 +408,13 @@ export const en = {
       deleteText:
         'Your account and everything stored with it on our server are deleted permanently. This cannot be undone.',
       deleteConfirm: 'Delete permanently',
+      deleteHint: 'Press and hold until the bar is full.',
+      deleteRehearsal: 'Delete permanently (rehearsal)',
+      deleteRehearsalHint: 'Rehearsal: nothing is deleted.',
       cancel: 'Cancel',
+      signOutTitle: 'Sign out?',
+      signOutText:
+        'The results of this account are deleted from this device. They stay in the account, and signing in again brings them back.',
       signOutPendingTitle: 'Sign out without saving?',
       signOutPendingText: {
         one: '{{count}} result played on this device has not been saved to your account yet. Signing out deletes it from this device.',
@@ -414,8 +432,7 @@ export const en = {
         unreachable:
           'The World Quiz server cannot be reached. Check your connection.',
         'delete-failed': 'Your account could not be deleted. Please try again.',
-        'nickname-invalid':
-          'This name is not allowed. The rules are under the field.',
+        'nickname-invalid': 'This name is not allowed.',
         'nickname-failed': 'The name could not be saved. Please try again.',
       },
     },
@@ -429,8 +446,10 @@ export const en = {
       title: 'Sound and feel',
       sound: 'Sounds',
       haptics: 'Vibration',
-      soundHint: 'Short tones when an answer lands and when a round ends.',
-      hapticsHint: 'A light tap when an answer lands and when a round ends.',
+      // Deliberately names no screen: which presses make a sound is free
+      // to change, and a hint that lists them goes stale silently.
+      soundHint: 'Short tones in answer to what you do.',
+      hapticsHint: 'A light tap in answer to what you do.',
       hapticsOnIos:
         'Vibration needs the iPhone app: a browser cannot reach the taptic engine.',
     },
@@ -447,6 +466,8 @@ export const en = {
     about: {
       title: 'About',
       version: 'Version',
+      // The commit and the time these files were built from.
+      build: 'Build',
       data: 'Country data',
       dataValue: 'Wikidata, UN M49',
       flags: 'Flags',

@@ -1,4 +1,7 @@
+export { Dialog } from './lib/dialog/dialog';
+export type { DialogTone } from './lib/dialog/dialog';
 export { EmptyState } from './lib/empty-state/empty-state';
+export { HoldButton } from './lib/hold-button/hold-button';
 export { InfoButton } from './lib/info/info-button';
 export { FadesWithPage } from './lib/page-chrome/fades-with-page';
 export { PageChromeState } from './lib/page-chrome/page-chrome-state';
@@ -18,6 +21,22 @@ export type {
   ShareOutcome,
   ShareTarget,
 } from './lib/share/share';
+export {
+  DEFAULT_SHARE_CARD_PALETTE,
+  drawShareCard,
+  paintShareCard,
+  readShareCardPalette,
+  shareCardFile,
+  shareCardPlan,
+} from './lib/share/share-card';
+export type {
+  ShareCard,
+  ShareCardOp,
+  TranslateFn,
+  ShareCardPalette,
+  ShareCardPlan,
+  ShareCardStat,
+} from './lib/share/share-card';
 export { ToastHost } from './lib/toast/toast-host';
 export { TOAST_DURATION_MS, TOAST_SCHEDULER, Toasts } from './lib/toast/toasts';
 export type { Toast, ToastScheduler, ToastTone } from './lib/toast/toasts';
