@@ -41,11 +41,23 @@ publishes it, and builds the three static bundles as a workflow artefact
 when the GitHub environment has `DEPLOY_ENABLED=true` and the Netlify and
 Render credentials.
 
+**Cut the release first.** A deploy is a release: it publishes the lines
+waiting in the app's own release notes and moves the version
+([releasing.md](./releasing.md)). `deploy:web` refuses to run while lines
+are waiting.
+
+```bash
+npm run release          # the waiting lines become a dated version
+git add apps/shell/src/app/release-notes/releases.json package.json
+git commit -m "chore(release): 0.5"
+```
+
 **One command**, which is how it is published today:
 
 ```bash
 npm run deploy:web                 # build, configure, publish all three
 npm run deploy:web -- --skip-build # when the build is already current
+npm run deploy:web:no-note       # a deploy that is not news
 ```
 
 It writes the environment's files into the shell's bundle and then runs the

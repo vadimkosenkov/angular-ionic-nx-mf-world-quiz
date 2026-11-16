@@ -125,15 +125,16 @@ typos). The app has no custom speech-recognition UI and no external AI/LLM judgi
 | 21a | `feat/countries-reference`   | A browsable list of every country by region: flag, country, capital                                                           | ✅ merged      |
 | 21b | `feat/home-play-card`        | One Play card on Home, a setup that remembers, region sketches and square category tiles                                      | ✅ merged      |
 | 22  | `feat/share-sounds`          | Sharing a result; a sound on the actions that start something; the account card restyled                                      | ✅ merged      |
-| 23  | `feat/share-image`           | A result shared as a picture: a card drawn on a canvas, the text kept as the fallback                                         | 🚧 this branch |
-| 24  | `feat/leaderboards-v2`       | Boards per mode, region and difficulty; top 100 plus the player's own row                                                     | planned        |
-| 25  | `feat/friends`               | Friends, their achievements, and a board of you and your friends                                                              | planned        |
-| 26  | `feat/auth-fixes`            | Google sign-in: straight to Home after signing in, no surprise sign-outs, and the player's Google picture on the account card | planned        |
-| 27  | `feat/voice-answers`         | Hard mode answered out loud: the Web Speech API on the web, a decision on iOS after                                           | planned        |
-| 28  | `feat/template-formatting`   | Control flow printed as the Angular docs write it, with no formatting workaround                                              | planned        |
-| 29  | `feat/sound-design`          | Sounds worth hearing: richer tones for the answers, the start and the finish                                                  | planned        |
-| 30  | `feat/glass-polish`          | The glass material taken further: depth, edges and how it answers what scrolls under it                                       | planned        |
-| 31  | `feat/ios-pass`              | A pass over the iPhone app on the simulator: everything built since 13b, checked there                                        | planned, last  |
+| 23  | `feat/share-image`           | A result shared as a picture: a card drawn on a canvas, the text kept as the fallback                                         | ✅ merged      |
+| 24  | `feat/release-notes`         | What changed in this release: a bell on Home, a page of notes, and a release cut per deploy                                   | 🚧 this branch |
+| 25  | `feat/leaderboards-v2`       | Boards per mode, region and difficulty; top 100 plus the player's own row                                                     | planned        |
+| 26  | `feat/friends`               | Friends, their achievements, and a board of you and your friends                                                              | planned        |
+| 27  | `feat/auth-fixes`            | Google sign-in: straight to Home after signing in, no surprise sign-outs, and the player's Google picture on the account card | planned        |
+| 28  | `feat/voice-answers`         | Hard mode answered out loud: the Web Speech API on the web, a decision on iOS after                                           | planned        |
+| 29  | `feat/template-formatting`   | Control flow printed as the Angular docs write it, with no formatting workaround                                              | planned        |
+| 30  | `feat/sound-design`          | Sounds worth hearing: richer tones for the answers, the start and the finish                                                  | planned        |
+| 31  | `feat/glass-polish`          | The glass material taken further: depth, edges and how it answers what scrolls under it                                       | planned        |
+| 32  | `feat/ios-pass`              | A pass over the iPhone app on the simulator: everything built since 13b, checked there                                        | planned, last  |
 
 Phase 30 is about the material rather than any screen. The glass today is one
 mixin — a translucent surface, a blur and a light top edge — applied to the tab

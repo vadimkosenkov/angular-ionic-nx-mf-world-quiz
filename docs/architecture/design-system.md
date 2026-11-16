@@ -218,10 +218,16 @@ countries") — "(44)" on its own tells a screen reader nothing.
 ### Two offers, card-sized
 
 Home's point is the two things a player came to do: play, or look something
-up. Each is a card the size of that decision — `.offer`, with the section's
-name as an `.eyebrow` heading, what it is in large type, a line saying what
-pressing it would start, an icon in a filled tile, and the way in as a pill
-in `.offer-footer`. The Play card also carries the progress bar of the
+up. Each is a card the size of that decision — `.offer`, with what the
+player came to do in large type (`.offer-title`, 24 px, the card's `h2`),
+what that is here in small caps **above** it (`.offer-kind`, 13 px: the
+quiz, the reference), a line saying what pressing it would start, an icon in
+a filled tile, and the way in as a pill in `.offer-footer`. The label is a
+`p`, not a heading: it comes before the card's `h2`, and a smaller heading
+above a larger one is a heading order axe rejects and a screen reader reads
+as a step down into a subsection that is not there. The large type is
+the verb, not the noun: "Play" is what the card is for, and "Quiz" is only
+which of the two it happens to be. The Play card also carries the progress bar of the
 category it would start, because how far along you are is part of deciding.
 
 There used to be one such card per category (Capitals, Flags), which asked
@@ -231,7 +237,7 @@ it is what made the two cards read as the page's main controls rather than
 as list items.
 
 A card that is the only thing in its section does not need a
-`.wq-section-title` above it as well — its eyebrow is the `h2`.
+`.wq-section-title` above it as well — its own title is the `h2`.
 
 ### A choice that shows what it is
 
@@ -314,6 +320,15 @@ other end of the screen, so the two read as one system, and it replaces
   attribute on the action bar — reads it; the state flips on Angular's
   `NavigationStart`. Measured in the running app: 80 ms after the tap both are
   at opacity 0.
+  `PageChromeState` is a provider a page has to add, and a page that forgets
+  it shows the bug: the countries reference and the release notes both left
+  their pill and back button lit over the screen they were leaving until they
+  provided it.
+- **The far corner takes one action**, projected into the header's third
+  column by the global class `.wq-header-action` (Home's bell). The class is
+  global because the projected element belongs to the page, where a style
+  written inside `wq-page-header` cannot reach it; it also carries the round
+  glass material of the back button, so the two corners match.
 - A page leaves room for it through `wq-page-header + ion-content`, a rule
   that follows the markup rather than a class, so a new page cannot forget
   it. Sizes come from `--wq-page-header-inset` / `-height` / `-clearance`.

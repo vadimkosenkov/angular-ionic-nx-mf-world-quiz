@@ -233,6 +233,44 @@ build it came from. Both are read from `<meta>` tags in `index.html`
 because a version nobody stamped is not a version. How they are produced is
 in [deploying.md](../deployment/deploying.md).
 
+### What changed in this release
+
+A player who does not look for a change does not find one, so the app says
+what changed in the build they are running.
+
+**The notes are in the bundle**
+(`apps/shell/src/app/release-notes/releases.json`, read by
+`release-notes.ts`), not served by the API: they describe the code they ship
+with, so a release can never claim a change the running build does not have,
+and the page works offline, in the iPhone bundle and on a deployment with no
+API. They are JSON rather than TypeScript because `npm run release` rewrites
+them (releasing.md) — a script editing a TypeScript literal would be a regex
+away from breaking the app — and what types cannot check about hand-written
+data (the same number of lines in both languages, one entry per version) a
+test over the real file does.
+
+**The bell on Home** (`notification-bell.ts`, `NotificationsStore`) is what
+the app has to say, as opposed to the outcome of something the player just
+did — that is a toast. It is a **list**, not a sentence: today the only
+message is an unread release, and a friend's challenge is the next thing to
+belong there. It does not disappear when there is nothing in it; it says so,
+because a control that comes and goes is one nobody learns. It sits in the
+far corner of the floating header, which projects it into the third column
+of its grid through the global class `.wq-header-action` (design-system.md).
+
+**The mark is a dot in two places**: on the bell and on Settings → What's
+new, for a player who never presses the bell. Both read the same stored
+value, and **opening the page** is what clears them — pressing the bell does
+not, or the mark would go while the page it points at was never seen. The
+value lives in `KEY_VALUE_STORAGE` beside the tours and the last quiz setup:
+having read what changed belongs to the device, not to the account, so
+signing out does not make it unread again.
+
+**A device with nothing stored is level with the build it starts on.** A new
+player is not behind on a release they have never seen. The cost is that the
+first release after this screen shipped goes unannounced, and every release
+after it does not.
+
 ## Start-up sequence
 
 1. `provideAppSettings()` registers an **app initializer**:
