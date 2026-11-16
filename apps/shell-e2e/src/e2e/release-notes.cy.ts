@@ -42,6 +42,33 @@ describe('release notes', () => {
     cy.get('[data-testid="whats-new-dot"]').should('not.exist');
   });
 
+  it('opens the list below the bell, wherever the bell was pressed', () => {
+    // The mark sits in the bell's top corner. Anchored to the press rather
+    // than to the button, the list opened a dozen pixels higher and covered
+    // the bell — which only a real browser can show: Ionic's popover is
+    // never laid out in jsdom.
+    visitHome();
+    cy.get('[data-testid="notifications-dot"]').should('exist');
+    // Pressed where the mark is, in the button's own coordinates: the mark
+    // itself takes no presses, so this is what a finger on it really does.
+    // (A forced click on the mark would be dispatched to the mark, which no
+    // press can be.)
+    cy.get('[data-testid="notifications"]').click(30, 14);
+
+    cy.get('[data-testid="notification-release"]').should('be.visible');
+    cy.get('[data-testid="notifications"]').then((bell) => {
+      const button = bell.get(0).getBoundingClientRect();
+      cy.get('ion-popover')
+        .shadow()
+        .find('.popover-content')
+        .then((content) => {
+          expect(content.get(0).getBoundingClientRect().top).to.be.at.least(
+            button.bottom,
+          );
+        });
+    });
+  });
+
   it('stays read after a reload, and the bell still answers', () => {
     visitHome();
     cy.get('[data-testid="notifications"]').click();

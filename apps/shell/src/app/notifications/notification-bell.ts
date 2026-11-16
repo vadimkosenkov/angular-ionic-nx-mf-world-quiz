@@ -38,6 +38,10 @@ import { NotificationsStore } from '../core/notifications.store';
     <!-- Ionic marks the popover aria-modal but gives it no role, which axe
          reports as an attribute the element may not carry; it is a dialog,
          so it says so, and can then be named. -->
+    <!-- The list hangs from whatever element the press landed on, which is
+         why the mark takes no presses of its own (notification-bell.scss):
+         anchored to a 10 px dot in the bell's top corner, the card opened
+         over the bell. The gap below the button is the popover's offset. -->
     <ion-popover
       role="dialog"
       class="notifications"
