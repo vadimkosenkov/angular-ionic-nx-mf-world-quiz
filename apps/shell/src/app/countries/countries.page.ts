@@ -4,7 +4,11 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { PluralPipe } from '@world-quiz/client/i18n';
 import { ProgressStore } from '@world-quiz/client/progress';
 import { SettingsStore } from '@world-quiz/client/settings';
-import { PageHeader, RegionOptions } from '@world-quiz/client/ui';
+import {
+  PageChromeState,
+  PageHeader,
+  RegionOptions,
+} from '@world-quiz/client/ui';
 import {
   isQuizScope,
   type QuizCategory,
@@ -31,6 +35,7 @@ import { countryRows, type CountryRow } from './country-rows';
     RegionOptions,
     TranslocoPipe,
   ],
+  providers: [PageChromeState],
   templateUrl: './countries.page.html',
   styleUrl: './countries.page.scss',
 })
