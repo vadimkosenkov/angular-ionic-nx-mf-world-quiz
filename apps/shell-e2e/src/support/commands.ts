@@ -47,6 +47,13 @@ export const signOutFromSettings = (): void => {
   });
 };
 
+/**
+ * Where the app remembers the release the player has read about. A device
+ * with nothing stored is level with the build it starts on
+ * (notifications.store.ts), so a spec about the bell seeds an older one.
+ */
+export const RELEASE_SEEN_KEY = 'CapacitorStorage.world-quiz.release.seen';
+
 export interface SignedIn {
   readonly userId: string;
   /** For calling the API directly from a test. */

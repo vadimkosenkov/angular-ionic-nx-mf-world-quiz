@@ -34,6 +34,12 @@ import { FadesWithPage } from '../page-chrome/fades-with-page';
       </button>
     }
     <h1 class="heading">{{ heading() }}</h1>
+    <!-- The corner opposite the back button, for a page that has one thing to
+         offer up here (Home's bell). Whatever is projected takes the grid's
+         third column through the global class wq-header-action, which also
+         gives it the material of the back button; the header itself stays
+         ignorant of what the page puts there. -->
+    <ng-content />
   `,
   styleUrl: './page-header.scss',
 })

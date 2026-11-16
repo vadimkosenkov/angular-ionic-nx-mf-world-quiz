@@ -17,6 +17,7 @@ import {
 import { practiceCandidates, QUIZ_CATEGORIES } from '@world-quiz/quiz/domain';
 import { greetingFor } from '../core/greeting';
 import { LastSetupStore } from '../core/last-setup.store';
+import { NotificationBell } from '../notifications/notification-bell';
 import { ProgressStore } from '@world-quiz/client/progress';
 import { CLOCK } from '../core/tokens';
 
@@ -33,6 +34,7 @@ import { CLOCK } from '../core/tokens';
     ProgressBar,
     ProgressCard,
     EmptyState,
+    NotificationBell,
   ],
   templateUrl: './home.page.html',
   styleUrl: './home.page.scss',

@@ -23,6 +23,24 @@ export const en = {
   toast: {
     dismiss: 'Close message',
   },
+  // The bell on Home: what the app has to say, as opposed to the outcome of
+  // something the player just did (that is a toast).
+  notifications: {
+    title: 'Messages',
+    label: 'Messages',
+    labelUnread: 'Messages, one unread',
+    empty: 'Nothing new right now.',
+    release: {
+      title: 'Update {{version}}',
+      action: 'See what changed',
+    },
+  },
+  releaseNotes: {
+    title: "What's new",
+    version: 'Version {{version}}',
+    empty:
+      'The notes start with the next update: nothing was written down before this screen existed.',
+  },
   tabs: {
     label: 'Main navigation',
     home: 'Home',
@@ -472,6 +490,7 @@ export const en = {
       dataValue: 'Wikidata, UN M49',
       flags: 'Flags',
       flagsValue: 'flag-icons (MIT)',
+      whatsNew: "What's new",
     },
   },
 } as const;

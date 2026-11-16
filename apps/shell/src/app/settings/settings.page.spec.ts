@@ -4,8 +4,16 @@ import { SettingsStore } from '@world-quiz/client/settings';
 import { NATIVE_PLATFORM } from '../core/platform';
 import { provideShellTesting } from '../../testing/shell-testing';
 import { DEV_VERSION } from '../app-info';
+import {
+  NotificationsStore,
+  RELEASE_SEEN_STORAGE_KEY,
+} from '../core/notifications.store';
 import { TIPS_STORAGE_KEY, TipsStore } from '../core/tips.store';
+import { latestRelease, RELEASES } from '../release-notes/release-notes';
 import { SettingsPage } from './settings.page';
+
+/** The release this build is: what the row can be behind on. */
+const current = latestRelease(RELEASES)?.version ?? '';
 
 function emitIonChange(element: Element, value: unknown) {
   element.dispatchEvent(new CustomEvent('ionChange', { detail: { value } }));
@@ -97,6 +105,33 @@ describe('SettingsPage', () => {
     expect(screen.queryByTestId('app-build')).toBeNull();
     expect(screen.getByText('Wikidata, UN M49')).toBeTruthy();
     expect(screen.getByText('flag-icons (MIT)')).toBeTruthy();
+  });
+
+  it('leads to the release notes, and marks the row while they are unread', async () => {
+    // The second place the bell's mark appears: a player who never presses
+    // the bell still finds out there is something to read.
+    await render(SettingsPage, {
+      providers: provideShellTesting({
+        storage: { [RELEASE_SEEN_STORAGE_KEY]: '0.0' },
+      }),
+    });
+    await TestBed.inject(NotificationsStore).load();
+
+    const row = await screen.findByTestId('whats-new');
+    expect(row.getAttribute('href')).toBe('/release-notes');
+    expect(screen.getByTestId('whats-new-dot')).toBeTruthy();
+  });
+
+  it('keeps the row quiet once the notes have been read', async () => {
+    await render(SettingsPage, {
+      providers: provideShellTesting({
+        storage: { [RELEASE_SEEN_STORAGE_KEY]: current },
+      }),
+    });
+    await TestBed.inject(NotificationsStore).load();
+
+    await screen.findByTestId('whats-new');
+    expect(screen.queryByTestId('whats-new-dot')).toBeNull();
   });
 
   it('uses decorative flag images with the bundled asset paths', async () => {

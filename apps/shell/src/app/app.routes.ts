@@ -65,6 +65,16 @@ export const appRoutes: Route[] = [
       import('./countries/countries.page').then((m) => m.CountriesPage),
   },
   {
+    // Reached from the bell on Home and from Settings, and pushed over the
+    // tabs like the reference: a page to read, not a tab to come back to.
+    path: 'release-notes',
+    canActivate: [signedInGuard],
+    loadComponent: () =>
+      import('./release-notes/release-notes.page').then(
+        (m) => m.ReleaseNotesPage,
+      ),
+  },
+  {
     path: 'quiz/setup',
     canActivate: [signedInGuard],
     loadComponent: () =>

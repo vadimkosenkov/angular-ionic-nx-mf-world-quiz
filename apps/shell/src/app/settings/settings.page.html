@@ -176,11 +176,30 @@
             >{{ 'settings.about.dataValue' | transloco }}</ion-note
           >
         </ion-item>
-        <ion-item lines="none">
+        <ion-item>
           <ion-label>{{ 'settings.about.flags' | transloco }}</ion-label>
           <ion-note slot="end"
             >{{ 'settings.about.flagsValue' | transloco }}</ion-note
           >
+        </ion-item>
+        <!-- The one row here that leads somewhere, and the second place the
+             bell's mark appears: a player who never presses the bell still
+             finds out there is something to read. -->
+        <ion-item
+          button
+          lines="none"
+          detail="true"
+          data-testid="whats-new"
+          routerLink="/release-notes"
+        >
+          <ion-label>{{ 'settings.about.whatsNew' | transloco }}</ion-label>
+          @if (notifications.unread()) {
+          <span class="unread" data-testid="whats-new-dot" slot="end">
+            <span class="wq-visually-hidden">
+              {{ 'notifications.labelUnread' | transloco }}
+            </span>
+          </span>
+          }
         </ion-item>
       </ion-list>
     </section>

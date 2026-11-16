@@ -1,0 +1,82 @@
+// The host adds nothing to the layout: the button itself is the grid child
+// of `wq-page-header`, which is what `.wq-header-action` is written for.
+:host {
+  display: contents;
+}
+
+.wq-header-action {
+  position: relative;
+}
+
+// A mark, not a number: there is never a useful count up here, and a digit
+// in a 44 px circle is unreadable anyway. It carries the page background as
+// a ring, so it reads as a dot on the glass rather than a smudge in it.
+.dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--wq-color-surface);
+  border-radius: 50%;
+  background: var(--wq-color-error);
+}
+
+// Ionic sizes a popover like a menu of short commands; a message is a
+// sentence and the thing to do about it, and at the default width every
+// line broke after two words.
+ion-popover.notifications {
+  --width: 280px;
+  --max-width: calc(100vw - 2 * var(--wq-content-gutter));
+}
+
+.empty {
+  margin: 0;
+  color: var(--wq-color-text-secondary);
+  font-size: var(--wq-font-size-subtitle);
+}
+
+// One message: an icon, what it is with what to do about it under it, and a
+// chevron. The same two lines as a row of the account card, because a row
+// that leads somewhere looks the same wherever it is.
+.message {
+  display: flex;
+  align-items: center;
+  gap: var(--wq-space-3);
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: var(--wq-color-text-primary);
+  text-align: start;
+  cursor: pointer;
+
+  > ion-icon {
+    flex-shrink: 0;
+    font-size: 24px;
+    color: var(--wq-color-primary);
+  }
+
+  // The chevron is the quiet one: it says "this leads somewhere", nothing more.
+  > ion-icon:last-child {
+    font-size: 16px;
+    color: var(--wq-color-text-secondary);
+  }
+}
+
+.words {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name {
+  font-weight: 600;
+}
+
+.note {
+  color: var(--wq-color-text-secondary);
+  font-size: var(--wq-font-size-subtitle);
+}

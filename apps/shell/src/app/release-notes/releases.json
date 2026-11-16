@@ -1,0 +1,24 @@
+{
+  "unreleased": {
+    "en": [],
+    "ru": []
+  },
+  "releases": [
+    {
+      "version": "0.4",
+      "date": "2026-11-13",
+      "lines": {
+        "en": [
+          "A finished run and a personal record can be shared as a picture.",
+          "Changing your public name, signing out and deleting an account are confirmed in a window in the middle of the screen, and deleting is held down rather than pressed.",
+          "Settings says which version of the app is running, and the bell on Home points at what changed in it."
+        ],
+        "ru": [
+          "Законченный раунд и личный рекорд можно отправить картинкой.",
+          "Смена публичного имени, выход и удаление аккаунта подтверждаются в окне по центру экрана, а кнопку удаления нужно удерживать, а не нажимать.",
+          "Настройки показывают версию приложения, а колокольчик на главной — что в ней изменилось."
+        ]
+      }
+    }
+  ]
+}

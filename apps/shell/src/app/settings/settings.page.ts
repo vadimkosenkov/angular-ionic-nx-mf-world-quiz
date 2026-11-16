@@ -15,6 +15,7 @@ import {
   type SegmentCustomEvent,
   type ToggleCustomEvent,
 } from '@ionic/angular';
+import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { InfoButton, PageHeader } from '@world-quiz/client/ui';
 import {
@@ -25,6 +26,7 @@ import {
 import { flagAssetPath } from '@world-quiz/quiz/countries';
 import { isLocale, type Locale } from '@world-quiz/quiz/domain';
 import { appBuild, appVersion } from '../app-info';
+import { NotificationsStore } from '../core/notifications.store';
 import { NATIVE_PLATFORM } from '../core/platform';
 import { TipsStore } from '../core/tips.store';
 import { AccountSection } from './account-section';
@@ -57,6 +59,7 @@ interface LanguageOption {
     IonRadio,
     IonNote,
     InfoButton,
+    RouterLink,
     TranslocoPipe,
     AccountSection,
   ],
@@ -71,6 +74,7 @@ export class SettingsPage {
   /** Haptics exist only on the device, so the toggle does too. */
   protected readonly nativePlatform = inject(NATIVE_PLATFORM);
   protected readonly tips = inject(TipsStore);
+  protected readonly notifications = inject(NotificationsStore);
 
   protected readonly themes: readonly ThemeOption[] = [
     { value: 'light', icon: 'sunny-outline' },
