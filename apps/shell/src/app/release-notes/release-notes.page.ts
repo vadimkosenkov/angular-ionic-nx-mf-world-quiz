@@ -4,7 +4,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { SettingsStore } from '@world-quiz/client/settings';
 import { PageChromeState, PageHeader } from '@world-quiz/client/ui';
 import { NotificationsStore } from '../core/notifications.store';
-import { releaseLines, RELEASES } from './release-notes';
+import { releaseDate, releaseLines, RELEASES } from './release-notes';
 
 /** One release as the page shows it: a version, a day, and what changed. */
 interface ReleaseRow {
@@ -36,12 +36,11 @@ export class ReleaseNotesPage {
 
   protected readonly releases = computed<readonly ReleaseRow[]>(() => {
     const locale = this.settings.locale();
-    // The day is written the way the player's language writes a date; the
-    // stored value is an ISO day, which no language reads out loud.
-    const date = new Intl.DateTimeFormat(locale, { dateStyle: 'long' });
     return RELEASES.map((release) => ({
       version: release.version,
-      date: date.format(new Date(`${release.date}T00:00:00Z`)),
+      // The day is written the way the player's language writes a date; the
+      // stored value is an ISO day, which no language reads out loud.
+      date: releaseDate(release.date, locale),
       lines: releaseLines(release, locale),
     }));
   });

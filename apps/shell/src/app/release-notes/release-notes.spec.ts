@@ -5,6 +5,7 @@ import {
   parseReleases,
   type Release,
   RELEASES,
+  releaseDate,
   releaseLines,
 } from './release-notes';
 import notes from './releases.json';
@@ -121,6 +122,20 @@ describe('release notes', () => {
     it('name every release once', () => {
       const versions = RELEASES.map((entry) => entry.version);
       expect(new Set(versions).size).toBe(versions.length);
+    });
+
+    it('are dated the day they were cut, wherever the player is', () => {
+      // The stored value is a calendar day read as UTC midnight. Formatted
+      // in the device's own zone it would slip to the day before for every
+      // player west of UTC, which is what the pinned zone prevents — here
+      // the same date written in Honolulu's zone is the 12th.
+      expect(releaseDate('2026-11-13', 'en')).toBe('November 13, 2026');
+      expect(
+        new Intl.DateTimeFormat('en', {
+          dateStyle: 'long',
+          timeZone: 'Pacific/Honolulu',
+        }).format(new Date('2026-11-13T00:00:00Z')),
+      ).toBe('November 12, 2026');
     });
 
     it('have nothing waiting that a release has already said', () => {

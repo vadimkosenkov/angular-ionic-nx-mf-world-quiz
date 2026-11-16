@@ -138,6 +138,22 @@ export function hasUnreadRelease(
   return compareVersions(latest.version, seen) > 0;
 }
 
+/**
+ * The day a release is dated, written the way the language writes a date.
+ *
+ * `timeZone: 'UTC'` is the whole point: the stored value is a calendar day,
+ * not a moment, and it is read as UTC midnight. Formatted in the device's
+ * own zone, a release dated the 13th would be shown as the 12th to every
+ * player west of UTC — the release did not happen on a different day for
+ * them.
+ */
+export function releaseDate(date: string, locale: Locale): string {
+  return new Intl.DateTimeFormat(locale, {
+    dateStyle: 'long',
+    timeZone: 'UTC',
+  }).format(new Date(`${date}T00:00:00Z`));
+}
+
 /** The lines of a release in one language; English is the fallback. */
 export function releaseLines(
   release: Release,
