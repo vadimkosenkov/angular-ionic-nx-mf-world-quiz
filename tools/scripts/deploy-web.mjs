@@ -6,7 +6,7 @@
  * ```
  * npm run deploy:web            # build, configure, publish all three
  * npm run deploy:web -- --skip-build
- * npm run deploy:web -- --no-release-note   # a deploy that is not news
+ * npm run deploy:web:no-note    # a deploy that is not news
  * ```
  *
  * The addresses below are the project's own deployment and are public
@@ -76,7 +76,7 @@ async function main() {
       throw new Error(
         `${count} release note line(s) are still waiting in ${NOTES_FILE}.\n` +
           'Cut the release first (npm run release), or deploy without one:\n' +
-          '  npm run deploy:web -- --no-release-note',
+          '  npm run deploy:web:no-note',
       );
     }
   }

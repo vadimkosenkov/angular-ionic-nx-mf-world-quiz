@@ -14,6 +14,7 @@
     "start:flags": "nx serve flags",
     "start:api": "nx serve api",
     "deploy:web": "node tools/scripts/deploy-web.mjs",
+    "deploy:web:no-note": "node tools/scripts/deploy-web.mjs --no-release-note",
     "release": "node tools/scripts/cut-release.mjs",
     "version:minor": "npm version minor --no-git-tag-version",
     "version:major": "npm version major --no-git-tag-version",

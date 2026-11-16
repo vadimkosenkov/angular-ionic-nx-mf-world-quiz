@@ -66,5 +66,5 @@ A deploy that changes nothing the player sees does not get a release. Tell
 the user to deploy with:
 
 ```bash
-npm run deploy:web -- --no-release-note
+npm run deploy:web:no-note
 ```
