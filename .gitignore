@@ -40,6 +40,9 @@ dist/cypress/
 # Claude Code local files
 .claude/settings.local.json
 .claude/worktrees
+# The preview launcher's configuration: its entries carry absolute paths of
+# the machine that wrote them.
+.claude/launch.json
 
 # Logs
 npm-debug.log*
