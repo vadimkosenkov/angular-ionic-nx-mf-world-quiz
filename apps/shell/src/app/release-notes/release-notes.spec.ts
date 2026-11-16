@@ -102,6 +102,18 @@ describe('release notes', () => {
       expect(parseReleases(broken).map((r) => r.version)).toEqual(['0.6']);
       expect(parseReleases('not a list')).toEqual([]);
     });
+
+    it('leaves out a day that is shaped like one but is not a day', () => {
+      // `2026-13-01` passes a shape check and reaches `Intl.format` as an
+      // invalid date, which throws — one typed entry would take the whole
+      // page down with it.
+      const impossible = [
+        release('0.4', { date: '2026-13-01' }),
+        release('0.5', { date: '2026-02-30' }),
+        release('0.6'),
+      ];
+      expect(parseReleases(impossible).map((r) => r.version)).toEqual(['0.6']);
+    });
   });
 
   // What types cannot check about hand-written data, this does: the file the

@@ -66,8 +66,23 @@ function isRelease(value: unknown): value is Release {
     typeof entry['version'] === 'string' &&
     /^\d+\.\d+$/.test(entry['version']) &&
     typeof entry['date'] === 'string' &&
-    /^\d{4}-\d{2}-\d{2}$/.test(entry['date']) &&
+    isCalendarDay(entry['date']) &&
     isLines(lines)
+  );
+}
+
+/**
+ * A day that exists, not merely one shaped like a day. `2026-13-01` has
+ * the right shape and is not a date: it would reach `Intl.format` as an
+ * invalid `Date`, which throws, and the whole page would fail to render
+ * over one hand-typed entry. Round-tripping is the check — a `Date` built
+ * from a real day prints that same day back.
+ */
+function isCalendarDay(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const day = new Date(`${value}T00:00:00Z`);
+  return (
+    !Number.isNaN(day.getTime()) && day.toISOString().startsWith(`${value}T`)
   );
 }
 

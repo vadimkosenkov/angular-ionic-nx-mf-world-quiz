@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { KEY_VALUE_STORAGE } from '@world-quiz/client/settings';
 import {
+  compareVersions,
   hasUnreadRelease,
   latestRelease,
   RELEASES,
@@ -88,7 +89,14 @@ export class NotificationsStore {
    */
   async markReleasesRead(): Promise<void> {
     const current = latestRelease(RELEASES);
-    if (!current || current.version === this.seenState()) return;
+    if (!current) return;
+    // Never backwards. The same device can meet an older build than the one
+    // it has already read about — an installed web app still serving the
+    // previous deployment, the iPhone bundle behind the web — and writing
+    // that build's release over the stored one would make the bell announce
+    // an already-read release again after the upgrade.
+    const seen = this.seenState();
+    if (seen && compareVersions(current.version, seen) <= 0) return;
     await this.markReleaseRead(current.version);
   }
 

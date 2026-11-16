@@ -91,6 +91,23 @@ describe('NotificationsStore', () => {
     expect(writes).toEqual([]);
   });
 
+  it('never records a release older than the one already read', async () => {
+    // The same device can meet an older build than the one it has read
+    // about — an installed web app still on the previous deployment, the
+    // iPhone bundle behind the web. Writing that build's release over the
+    // stored one would announce an already-read release after the upgrade.
+    const ahead = '99.0';
+    const { notifications, storage } = setup({
+      [RELEASE_SEEN_STORAGE_KEY]: ahead,
+    });
+    await notifications.load();
+
+    await notifications.markReleasesRead();
+
+    expect(storage.snapshot()[RELEASE_SEEN_STORAGE_KEY]).toBe(ahead);
+    expect(notifications.unread()).toBe(false);
+  });
+
   it('reports storage it cannot read and shows nothing', async () => {
     const { notifications, reported } = setup(undefined, {
       async get() {
