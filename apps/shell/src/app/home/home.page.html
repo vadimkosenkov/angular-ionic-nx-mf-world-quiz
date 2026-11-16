@@ -41,10 +41,10 @@
       <article class="offer" data-testid="play-card">
         <div class="offer-header">
           <div>
-            <h2 id="play-title" class="eyebrow">
+            <p class="offer-kind">{{ 'home.play.quiz.title' | transloco }}</p>
+            <h2 id="play-title" class="offer-title">
               {{ 'home.play.title' | transloco }}
             </h2>
-            <h3>{{ 'home.play.quiz.title' | transloco }}</h3>
             <p class="description" data-testid="play-setup">
               {{ 'categories.' + setup.category | transloco }} · {{ 'regions.' +
               setup.scope | transloco }} · {{ 'difficulty.' + setup.difficulty |
@@ -92,10 +92,12 @@
       <article class="offer" data-testid="learn-card">
         <div class="offer-header">
           <div>
-            <h2 id="learn-title" class="eyebrow">
+            <p class="offer-kind">
+              {{ 'home.learn.countries.title' | transloco }}
+            </p>
+            <h2 id="learn-title" class="offer-title">
               {{ 'home.learn.title' | transloco }}
             </h2>
-            <h3>{{ 'home.learn.countries.title' | transloco }}</h3>
             <p class="description">
               {{ 'home.learn.countries.description' | transloco }}
             </p>

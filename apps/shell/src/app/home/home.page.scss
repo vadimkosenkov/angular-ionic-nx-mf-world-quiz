@@ -24,13 +24,6 @@
   background: var(--wq-color-surface);
   border: 1px solid var(--wq-color-border);
   box-shadow: var(--wq-shadow-card);
-
-  h3 {
-    margin: var(--wq-space-1) 0;
-    font-size: 1.5rem;
-    font-weight: 800;
-    letter-spacing: -0.01em;
-  }
 }
 
 .offer-header {
@@ -39,10 +32,24 @@
   gap: var(--wq-space-4);
 }
 
-// The card's own heading: the section it stands for, in small caps above
-// its name, instead of a separate title line over a card that is already
-// the only thing in its section.
-.eyebrow {
+// The card's own heading, and the biggest words on it: what the player
+// came to do. It stands in for a section title, because a card that is the
+// only thing in its section does not need a line above it as well.
+.offer-title {
+  // Enough to separate it from the line that says what pressing the card
+  // would start; the label above it stays tight, as a label of this title.
+  margin: 0 0 var(--wq-space-1);
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+// What that is, here: the quiz, the reference. It reads as the label of the
+// card rather than its name — small caps above the title, the way the rest
+// of the app labels a group of things. It is deliberately not a heading: it
+// sits before the card's `h2`, and a smaller heading above a larger one is
+// a heading order axe rejects and a screen reader reads as a step down.
+.offer-kind {
   margin: 0;
   font-size: 0.8125rem;
   font-weight: 700;
