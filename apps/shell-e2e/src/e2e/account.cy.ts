@@ -5,7 +5,12 @@
  * everything after the provider — the welcome screen, cookie, restore on
  * reload, sign-out and account deletion.
  */
-import { API, signOutFromSettings, TIPS_KEY } from '../support/commands';
+import {
+  API,
+  RELEASE_SEEN_KEY,
+  signOutFromSettings,
+  TIPS_KEY,
+} from '../support/commands';
 
 describe('account', () => {
   it('opens on the welcome screen until the player signs in', () => {
@@ -30,10 +35,14 @@ describe('account', () => {
     cy.get('[data-testid="account-name"]').should('contain.text', 'E2E Ann');
     cy.window().then((window) => {
       // The app never keeps tokens where scripts could read them later.
-      // The suite's own seed (the hints the device has been through) is the
-      // only thing in there.
+      // What is in there belongs to the device, not to the account: the
+      // hints it has been through (the suite's own seed) and the release it
+      // has read about.
+      const deviceKeys = [TIPS_KEY, RELEASE_SEEN_KEY];
       const stored = Object.keys({ ...window.localStorage });
-      expect(stored.filter((key) => key !== TIPS_KEY)).to.deep.equal([]);
+      expect(stored.filter((key) => !deviceKeys.includes(key))).to.deep.equal(
+        [],
+      );
       expect(window.document.cookie).not.to.contain('wq_refresh');
     });
 

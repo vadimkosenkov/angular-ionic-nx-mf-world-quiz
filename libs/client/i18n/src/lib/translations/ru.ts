@@ -11,6 +11,22 @@ export const ru: TranslationShape = {
   toast: {
     dismiss: 'Закрыть сообщение',
   },
+  notifications: {
+    title: 'Сообщения',
+    label: 'Сообщения',
+    labelUnread: 'Сообщения, одно непрочитанное',
+    empty: 'Пока ничего нового.',
+    release: {
+      title: 'Обновление {{version}}',
+      action: 'Посмотреть, что изменилось',
+    },
+  },
+  releaseNotes: {
+    title: 'Что нового',
+    version: 'Версия {{version}}',
+    empty:
+      'Заметки начинаются со следующего обновления: до этого экрана их никто не вёл.',
+  },
   tabs: {
     label: 'Основная навигация',
     home: 'Главная',
@@ -452,6 +468,7 @@ export const ru: TranslationShape = {
       dataValue: 'Wikidata, UN M49',
       flags: 'Флаги',
       flagsValue: 'flag-icons (MIT)',
+      whatsNew: 'Что нового',
     },
   },
 };

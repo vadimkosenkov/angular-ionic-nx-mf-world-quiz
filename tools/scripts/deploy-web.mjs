@@ -6,6 +6,7 @@
  * ```
  * npm run deploy:web            # build, configure, publish all three
  * npm run deploy:web -- --skip-build
+ * npm run deploy:web:no-note    # a deploy that is not news
  * ```
  *
  * The addresses below are the project's own deployment and are public
@@ -24,6 +25,7 @@ import { deployConfig } from './write-deploy-config.mjs';
 import { buildIdentity, stampHtml } from './stamp-build.mjs';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { NOTES_FILE, readNotes, unreleasedLines } from './release-notes.mjs';
 
 const NETLIFY = 'netlify-cli@23';
 
@@ -63,6 +65,21 @@ const run = (command, args) =>
 
 async function main() {
   const skipBuild = process.argv.includes('--skip-build');
+
+  // A deploy is a release (docs/deployment/releasing.md): lines still
+  // waiting mean the app is about to ship changes its own notes do not
+  // mention, and the version it shows will not have moved either. A deploy
+  // that is genuinely not news — docs, CI, infrastructure — says so.
+  if (!process.argv.includes('--no-release-note')) {
+    const { count } = unreleasedLines(await readNotes());
+    if (count > 0) {
+      throw new Error(
+        `${count} release note line(s) are still waiting in ${NOTES_FILE}.\n` +
+          'Cut the release first (npm run release), or deploy without one:\n' +
+          '  npm run deploy:web:no-note',
+      );
+    }
+  }
 
   if (!skipBuild) {
     run('npx', [

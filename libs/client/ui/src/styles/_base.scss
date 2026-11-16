@@ -1,3 +1,5 @@
+@use 'materials' as materials;
+
 // Page background, typography helpers and global accessibility rules.
 
 // Soft "aurora" behind content, so translucent surfaces have something to show.
@@ -280,4 +282,17 @@ wq-region-options {
   body {
     height: 100dvh;
   }
+}
+
+// The action a page header may carry in its far corner (Home's bell). It is
+// the same round glass button as the back arrow at the other end of the
+// header, and it has to be a global rule: the button belongs to the page
+// that projects it, and a style written inside `wq-page-header` cannot
+// reach into projected content.
+.wq-header-action {
+  grid-column: 3;
+  justify-self: end;
+  pointer-events: auto;
+
+  @include materials.chrome-button;
 }

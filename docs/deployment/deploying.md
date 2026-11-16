@@ -32,6 +32,11 @@ once, in the pull request that finishes something worth a new one:
 and the lockfile — no commit and, deliberately, **no tag**, because a `v*`
 tag is what starts the production pipeline.
 
+In practice the minor is raised by `npm run release`, which cuts the release
+notes the app shows at the same time: a deploy is a release, and one that is
+not news says so with `deploy:web:no-note`. See
+[releasing.md](./releasing.md).
+
 Images are built and published by
 [`.github/workflows/release.yml`](../../.github/workflows/release.yml) on
 every push to `main` (environment **staging**) and on every `v*` tag

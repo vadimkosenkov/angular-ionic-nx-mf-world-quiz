@@ -38,6 +38,12 @@ describe('accessibility', () => {
       expectAccessible();
     });
 
+    it('checks the release notes', () => {
+      cy.visit('/release-notes');
+      byTestId('release', { timeout: 20_000 }).should('exist');
+      expectAccessible();
+    });
+
     it('checks the Leaderboard tab', () => {
       cy.visit('/leaderboard');
       byTestId('leaderboard-board', { timeout: 20_000 }).should('exist');

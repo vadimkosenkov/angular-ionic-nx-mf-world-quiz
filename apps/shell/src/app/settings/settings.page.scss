@@ -63,3 +63,12 @@ ion-item {
 .unavailable {
   opacity: 0.5;
 }
+
+// The same mark the bell on Home carries, on the one row here that leads
+// somewhere. It is a dot and a hidden sentence, never colour alone.
+.unread {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--wq-color-error);
+}

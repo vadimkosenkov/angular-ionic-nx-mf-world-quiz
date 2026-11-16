@@ -1,0 +1,32 @@
+<wq-page-header
+  backHref="/home"
+  [heading]="'releaseNotes.title' | transloco"
+  [backLabel]="'nav.back' | transloco"
+/>
+
+<ion-content [fullscreen]="true" class="wq-aurora">
+  <div class="wq-page">
+    @if (releases().length === 0) {
+    <!-- Honest until there is something to show: the notes start with the
+         first release cut after this screen shipped, and inventing entries
+         for the releases before it would describe a history nobody read. -->
+    <p class="empty wq-text-secondary" data-testid="release-notes-empty">
+      {{ 'releaseNotes.empty' | transloco }}
+    </p>
+    } @for (release of releases(); track release.version) {
+    <section class="wq-card release" data-testid="release">
+      <header>
+        <h2 data-testid="release-version">
+          {{ 'releaseNotes.version' | transloco: { version: release.version } }}
+        </h2>
+        <p class="wq-text-secondary">{{ release.date }}</p>
+      </header>
+      <ul>
+        @for (line of release.lines; track line) {
+        <li>{{ line }}</li>
+        }
+      </ul>
+    </section>
+    }
+  </div>
+</ion-content>
