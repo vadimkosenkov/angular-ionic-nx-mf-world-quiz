@@ -164,15 +164,8 @@ export class ProgressStore {
    * Records a session finished on this device: progress updates at once, and
    * the session joins the outbox. Returns it, as stored.
    */
-  recordSession(
-    session: QuizSession,
-    context: { readonly challengeId?: string } = {},
-  ): LocalSession {
-    const played = playedSession(
-      session,
-      crypto.randomUUID(),
-      context.challengeId,
-    );
+  recordSession(session: QuizSession): LocalSession {
+    const played = playedSession(session, crypto.randomUUID());
     this.update([played]);
     this.persist(() => this.local.putSessions([played]));
     return played;

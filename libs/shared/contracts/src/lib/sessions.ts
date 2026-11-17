@@ -6,12 +6,12 @@ import {
 } from '@world-quiz/quiz/domain';
 import { z } from 'zod';
 import { countryCodeSchema, epochMillisSchema, uuidSchema } from './common';
-import { challengeOutcomeSchema } from './leaderboard';
+import { rankedOutcomeSchema } from './leaderboard';
 
 /**
- * Upper bound for answers in one session. Fixed and challenge sessions are at
- * most 195 questions; Endless is unbounded in the domain, so the API caps what
- * it accepts in one request.
+ * Upper bound for answers in one session. A fixed round is at most 195
+ * questions; Endless is unbounded in the domain, so the API caps what it
+ * accepts in one request.
  */
 export const MAX_SUBMISSIONS_PER_SESSION = 1000;
 
@@ -64,12 +64,6 @@ export const submitSessionRequestSchema = z.strictObject({
       }),
     )
     .max(MAX_SUBMISSIONS_PER_SESSION),
-  /**
-   * Challenge sessions only: the challenge issued by `POST /v1/challenges`
-   * whose seed this session was played with. Optional without a default, so
-   * the request hash of sessions that do not carry it is unchanged.
-   */
-  challengeId: uuidSchema.optional(),
 });
 
 export type SubmitSessionRequest = z.infer<typeof submitSessionRequestSchema>;
@@ -90,8 +84,13 @@ export const sessionResultSchema = z.object({
   }),
   /** When the server stored the session (ISO 8601). */
   recordedAt: z.iso.datetime(),
-  /** Challenge sessions only: whether the run is ranked, and where. */
-  challenge: challengeOutcomeSchema.optional(),
+  /**
+   * Where the run landed on a public board, when it earned a place: a run in
+   * a ranked mode that was flawless (docs/domain/leaderboard.md). Absent
+   * otherwise — the player can see for themselves that an answer was wrong,
+   * and the client re-checks the rules with `evaluateRankedRun`.
+   */
+  ranked: rankedOutcomeSchema.optional(),
 });
 
 export type SessionResult = z.infer<typeof sessionResultSchema>;

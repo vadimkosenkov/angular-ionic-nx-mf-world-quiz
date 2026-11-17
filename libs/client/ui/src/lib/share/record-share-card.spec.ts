@@ -6,19 +6,25 @@ const translate = (key: string, params?: Record<string, unknown>): string =>
   params ? `${key}(${Object.values(params).join(',')})` : key;
 
 const record: RecordShareFacts = {
-  board: 'capitals-easy',
-  time: '4:07.3',
+  board: 'Capitals · Europe · Easy · Quick round',
+  score: '4:07.3',
   rank: 2,
   players: 3,
 };
 
 describe('recordShareCard', () => {
-  it('leads with the time, because that is what the board ranks on', () => {
+  it('leads with what the board ranks by, under the board it is on', () => {
     const card = recordShareCard(record, translate);
 
     expect(card.headline).toBe('4:07.3');
-    expect(card.subject).toBe('leaderboard.boards.capitals-easy');
+    expect(card.subject).toBe('Capitals · Europe · Easy · Quick round');
     expect(card.note).toBe('share.record.perfect');
+  });
+
+  it('leads with the answers on a board that counts them', () => {
+    const card = recordShareCard({ ...record, score: '21 correct' }, translate);
+
+    expect(card.headline).toBe('21 correct');
   });
 
   it('shows the place and how many players it is out of', () => {

@@ -4,7 +4,6 @@
  * Quiz sessions are generated from a string seed. The same seed always
  * produces the same question order and the same Easy-mode choices, which:
  *  - makes tests reproducible,
- *  - makes leaderboard challenge runs comparable,
  *  - lets the server regenerate the exact questions a client saw and
  *    re-grade the submitted answers instead of trusting the client.
  *

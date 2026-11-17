@@ -13,6 +13,7 @@ import { IonButton, IonContent, IonIcon } from '@ionic/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
   FadesWithPage,
+  InfoButton,
   PageChromeState,
   PageHeader,
   RegionOptions,
@@ -33,22 +34,38 @@ import {
   type Difficulty,
   isDifficulty,
   isQuizCategory,
+  isQuizMode,
   isQuizScope,
-  isTrainingMode,
+  isRankedMode,
+  RANKED_MODES,
   practiceCandidates,
   QUIZ_CATEGORIES,
   type QuizCategory,
   type QuizScope,
-  TRAINING_MODES,
+  QUIZ_MODES,
 } from '@world-quiz/quiz/domain';
 
 /** The tour walks the screen's choices in the order they are shown. */
 export const TOUR_STEPS = ['category', 'scope', 'difficulty', 'mode'] as const;
 export type TourStepId = (typeof TOUR_STEPS)[number];
 
-/** Training modes, and Practice Mistakes (a Quick round over the mistakes). */
-const SETUP_MODES = [...TRAINING_MODES, 'practice'] as const;
+/**
+ * Every mode the setup offers: the quiz's own, plus Practice Mistakes (a
+ * Quick round over the mistakes).
+ *
+ * **The ranked ones come first.** They are what the rows are marked with,
+ * and a list whose marked rows are the 1st and the 3rd reads as two facts
+ * scattered through it rather than as one group; in this order the mark is
+ * read once, at the top. The order is derived rather than written out, so a
+ * mode added to the domain cannot quietly fall off this screen.
+ */
+const SETUP_MODES = [
+  ...RANKED_MODES,
+  ...QUIZ_MODES.filter((mode) => !isRankedMode(mode)),
+  'practice',
+] as const;
 type SetupMode = (typeof SETUP_MODES)[number];
+
 const isSetupMode = (value: unknown): value is SetupMode =>
   (SETUP_MODES as readonly unknown[]).includes(value);
 
@@ -66,6 +83,7 @@ const isSetupMode = (value: unknown): value is SetupMode =>
     IonIcon,
     IonButton,
     TranslocoPipe,
+    InfoButton,
     RegionOptions,
     TourSpotlight,
     TourStep,
@@ -215,6 +233,14 @@ export class QuizSetupPage {
     practice: 'refresh-outline',
   };
 
+  /**
+   * Which modes play against everyone else. It is a mark on the row rather
+   * than a heading over a group: four equal rows stay one list to scan, and
+   * the fact belongs on the row it is true of.
+   */
+  protected readonly isRanked = (mode: SetupMode): boolean =>
+    isRankedMode(mode);
+
   protected readonly modeHintParams = computed(() => ({
     count: this.defaultQuestionCount,
     mistakes: this.mistakes(),
@@ -269,7 +295,7 @@ export class QuizSetupPage {
       category: this.selectedCategory(),
       scope: this.scope(),
       difficulty: this.difficulty(),
-      mode: isTrainingMode(mode) ? mode : this.lastSetup.setup().mode,
+      mode: isQuizMode(mode) ? mode : this.lastSetup.setup().mode,
     });
     void this.router.navigate(['/quiz', this.selectedCategory()], {
       queryParams: {

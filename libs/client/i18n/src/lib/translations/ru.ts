@@ -52,7 +52,6 @@ export const ru: TranslationShape = {
     endless: 'Бесконечный',
     timed: 'На время',
     practice: 'Работа над ошибками',
-    challenge: 'Забег за рекорд',
   },
   regions: {
     world: 'Весь мир',
@@ -166,31 +165,33 @@ export const ru: TranslationShape = {
     },
   },
   leaderboard: {
-    title: 'Рейтинг',
+    title: 'Рейтинги',
     views: {
-      global: 'Общий',
+      global: 'Рейтинг',
       mine: 'Мои рекорды',
     },
-    boardsLabel: 'Категория рейтинга',
-    boards: {
-      'capitals-easy': 'Столицы · Лёгкий',
-      'capitals-hard': 'Столицы · Сложный',
-      'flags-easy': 'Флаги · Лёгкий',
-      'flags-hard': 'Флаги · Сложный',
+    boardName: '{{category}} · {{region}} · {{difficulty}} · {{mode}}',
+    // The same four settings in the ranking dialog, as two deliberate
+    // lines: what is asked and where, then how it is played. On a phone
+    // the one line wrapped after the third setting, which reads as an
+    // accident; these two are a grouping.
+    boardTitle: 'Рейтинг',
+    boardSubject: '{{category}} · {{region}}',
+    boardStyle: '{{difficulty}} · {{mode}}',
+    metric: {
+      fixed:
+        'Ответьте правильно на {{count}} случайных вопросов быстрее остальных.',
+      timed:
+        'Ответьте правильно на рекордное количество вопросов за 60 секунд.',
     },
-    rules:
-      'Правильно ответьте на вопросы обо всех странах ({{count}}). Побеждает самый быстрый забег без ошибок.',
-    online:
-      'Играйте онлайн: время считается от первого вопроса до последнего ответа, и результат должен сразу попасть на сервер.',
-    start: 'Начать челлендж · {{board}}',
-    startFailed:
-      'Не удалось начать челлендж. Проверьте соединение и попробуйте ещё раз.',
+    show: 'Показать рейтинг',
+    close: 'Закрыть',
     loading: 'Загружаем рейтинг…',
     loadFailed: {
       title: 'Рейтинг не загружается',
-      message: 'Для рейтинга нужна связь с сервером World Quiz.',
+      message: 'Для рейтингов нужно соединение с сервером World Quiz.',
     },
-    retry: 'Повторить',
+    retry: 'Попробовать снова',
     empty: {
       title: 'Пока нет безошибочных забегов',
       message: 'Станьте первым в этом рейтинге.',
@@ -200,10 +201,14 @@ export const ru: TranslationShape = {
       one: 'В рейтинге {{count}} игрок',
       few: 'В рейтинге {{count}} игрока',
       many: 'В рейтинге {{count}} игроков',
-      other: 'В рейтинге {{count}} игрока',
+      other: 'В рейтинге {{count}} игроков',
     },
-    place: '{{rank}}-е место из {{players}}',
-    noRecord: 'Пока нет безошибочного забега',
+    place: '#{{rank}} из {{players}}',
+    correct: '{{correct}} верных',
+    noRecords: {
+      title: 'Рекордов пока нет',
+      message: 'Сыграйте быстрый раунд или забег на время без единой ошибки.',
+    },
   },
   achievements: {
     title: 'Достижения',
@@ -236,6 +241,12 @@ export const ru: TranslationShape = {
       hard: 'Ввод или диктовка ответа',
     },
     mode: 'Режим игры',
+    modeInfo:
+      'Быстрый раунд и забег на время идут в рейтинг: безошибочный забег встаёт в рейтинг тех четырёх настроек, с которыми вы играли, а вопросы каждый раз выпадают свои — двум игрокам не достаётся один и тот же набор. Бесконечный режим и работа над ошибками — только для учёбы.',
+    modeInfoLabel: 'О режимах игры',
+    // The mark on the two modes that play against everyone else. It sits
+    // on the row rather than over a group of rows.
+    rankedBadge: 'Рейтинг',
     modeHint: {
       fixed: 'Вопросов: {{count}}',
       endless: 'Игра до остановки',
@@ -301,26 +312,18 @@ export const ru: TranslationShape = {
     review: 'Повторить',
     playAgain: 'Играть ещё',
     backHome: 'На главную',
-    newChallenge: 'Новый челлендж',
-    challenge: {
+    board: {
       title: 'Рейтинг',
-      checking: 'Сервер проверяет ваш забег…',
+      checking: 'Проверяем рейтинг…',
       unsent:
-        'Не отправлено: нет сети. Забег сохранён и будет отправлен позже, но челленджи, отправленные с опозданием, в рейтинг не попадают.',
-      ranked: 'Место в рейтинге: {{rank}}',
+        'Пока не в рейтинге: вы офлайн. Забег сохранён и попадёт в рейтинг при следующей синхронизации.',
+      ranked: '#{{rank}} из {{players}}',
       time: 'Время: {{time}}',
+      correct: '{{correct}} верных за {{time}}',
+      // The two figures a record card shows under its headline.
+      place: 'Место',
+      answers: 'Верных',
       record: 'Новый личный рекорд!',
-      reasons: {
-        'not-finished': 'Не в рейтинге: забег не закончен.',
-        incomplete: 'Не в рейтинге: нужно ответить на все страны.',
-        'has-incorrect-answers':
-          'Не в рейтинге: все ответы должны быть правильными.',
-        'invalid-question-set': 'Не в рейтинге: забег не охватил весь мир.',
-        expired: 'Не в рейтинге: челлендж истёк до того, как пришёл результат.',
-        late: 'Не в рейтинге: результат пришёл на сервер слишком долго после забега.',
-        'implausible-time':
-          'Не в рейтинге: забег длился дольше, чем сервер может засчитать.',
-      },
     },
   },
   share: {
@@ -330,12 +333,12 @@ export const ru: TranslationShape = {
       heading: 'World Quiz — {{category}}, {{region}}, {{difficulty}}',
       subject: '{{category}} · {{region}} · {{difficulty}}',
       score: '{{correct}}/{{answered}} верно · {{accuracy}}% · {{time}}',
-      rank: '{{rank}}-е место в рейтинге',
+      rank: '#{{rank}} из {{players}} в рейтинге',
     },
     record: {
       action: 'Поделиться рекордом: {{board}}',
       heading: 'World Quiz — {{board}}',
-      score: 'Забег без ошибок за {{time}} · {{place}}',
+      score: '{{score}} · {{place}}',
       perfect: 'Забег без ошибок',
       place: 'Место',
       players: 'Игроков',

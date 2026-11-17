@@ -7,7 +7,7 @@ import { SiteLayout } from './layout/site-layout';
 const languageMatches = (_route: Route, segments: UrlSegment[]) =>
   isSiteLanguage(segments[0]?.path);
 
-/** `canMatch` for `leaderboard/:board`: only the four boards. */
+/** `canMatch` for `leaderboard/:board`: only a real board id. */
 const boardMatches = (_route: Route, segments: UrlSegment[]) =>
   isLeaderboardBoardId(segments[1]?.path);
 
@@ -31,7 +31,7 @@ export const siteRoutes: Route[] = [
       {
         path: 'leaderboard',
         pathMatch: 'full',
-        redirectTo: 'leaderboard/capitals-easy',
+        redirectTo: 'leaderboard/capitals-easy-world-fixed',
       },
       {
         path: 'leaderboard/:board',

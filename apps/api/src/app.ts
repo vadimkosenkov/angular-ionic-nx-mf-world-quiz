@@ -9,10 +9,7 @@ import { requireAuth } from './auth/require-auth';
 import { cors } from './http/cors';
 import { sendProblem } from './http/problem';
 import { securityHeaders } from './http/security-headers';
-import {
-  challengesRouter,
-  leaderboardsRouter,
-} from './leaderboard/leaderboard.routes';
+import { leaderboardsRouter } from './leaderboard/leaderboard.routes';
 import type { LeaderboardService } from './leaderboard/leaderboard-service';
 import type { SessionService } from './sessions/session-service';
 import { sessionsRouter } from './sessions/sessions.routes';
@@ -109,7 +106,6 @@ export function createApp({
     meRouter(auth, leaderboard, { secureCookies: options.secureCookies }),
   );
   app.use('/v1/sessions', signedIn, sessionsRouter(sessions));
-  app.use('/v1/challenges', signedIn, challengesRouter(leaderboard));
   app.use('/v1/leaderboards', leaderboardsRouter(leaderboard));
 
   // Unknown routes answer with an RFC 9457 problem-details body.

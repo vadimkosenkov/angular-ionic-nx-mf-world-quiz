@@ -3,19 +3,11 @@ import type {
   SessionResult,
   SubmitSessionRequest,
 } from '@world-quiz/shared/contracts';
-import {
-  CHALLENGE_MODE,
-  leaderboardBoardFor,
-  type QuizEngine,
-  type ReplayError,
-} from '@world-quiz/quiz/domain';
+import type { QuizEngine, ReplayError } from '@world-quiz/quiz/domain';
 import type { Clock } from '@world-quiz/shared/util';
-import { judgeChallengeRun } from '../leaderboard/challenge-rules';
-import type {
-  LeaderboardRepository,
-  StoredChallenge,
-} from '../leaderboard/leaderboard-repository';
+import type { LeaderboardRepository } from '../leaderboard/leaderboard-repository';
 import type { LeaderboardService } from '../leaderboard/leaderboard-service';
+import { rankedRunOf, verdictOf } from '../leaderboard/ranked-run-rules';
 import { encodeHistoryCursor, type HistoryPosition } from './history-cursor';
 import { requestHash } from './request-hash';
 import type {
@@ -45,17 +37,7 @@ export type SessionRejection =
   | ReplayError['kind']
   | 'finished-in-the-future'
   | 'finished-before-start'
-  | 'too-long'
-  /** A challenge session without `challengeId`. */
-  | 'challenge-missing'
-  /** `challengeId` on a training session. */
-  | 'not-a-challenge'
-  /** No such challenge for this player. */
-  | 'unknown-challenge'
-  /** The session's board or seed is not the challenge's. */
-  | 'challenge-mismatch'
-  /** Another session already played this challenge. */
-  | 'challenge-used';
+  | 'too-long';
 
 export type SubmitSessionOutcome =
   | { readonly kind: 'created'; readonly result: SessionResult }
@@ -91,7 +73,7 @@ export interface SessionServiceDependencies {
   readonly repository: SessionRepository;
   readonly engine: QuizEngine;
   readonly clock: Clock;
-  readonly challenges: LeaderboardRepository;
+  readonly boards: LeaderboardRepository;
   readonly leaderboard: LeaderboardService;
 }
 
@@ -108,47 +90,21 @@ export function createSessionService({
   repository,
   engine,
   clock,
-  challenges,
+  boards,
   leaderboard,
 }: SessionServiceDependencies): SessionService {
-  /** The stored result, with the challenge outcome as it stands now. */
-  const withOutcome = async (stored: StoredSession) =>
-    stored.challenge
-      ? {
-          ...stored.result,
-          challenge: await leaderboard.outcome(stored.userId, stored.challenge),
-        }
-      : stored.result;
+  /** The stored result, with the run's place as it stands now. */
+  const withOutcome = async (stored: StoredSession): Promise<SessionResult> => {
+    if (!stored.ranked) return stored.result;
+    const ranked = await leaderboard.outcome(stored.userId, stored.ranked);
+    return ranked ? { ...stored.result, ranked } : stored.result;
+  };
 
-  /** The challenge a session plays, if the session may play it. */
-  const challengeFor = async (
-    request: SubmitSessionRequest,
-    userId: string,
-  ): Promise<
-    | { readonly ok: true; readonly challenge: StoredChallenge | null }
-    | { readonly ok: false; readonly reason: SessionRejection }
-  > => {
-    const isChallenge = request.config.mode === CHALLENGE_MODE;
-    if (!isChallenge) {
-      return request.challengeId
-        ? { ok: false, reason: 'not-a-challenge' }
-        : { ok: true, challenge: null };
-    }
-    if (!request.challengeId) return { ok: false, reason: 'challenge-missing' };
-
-    const challenge = await challenges.findChallenge(request.challengeId);
-    if (!challenge || challenge.userId !== userId) {
-      return { ok: false, reason: 'unknown-challenge' };
-    }
-    if (challenge.sessionId) return { ok: false, reason: 'challenge-used' };
-    const board = leaderboardBoardFor(
-      request.config.category,
-      request.config.difficulty,
-    );
-    if (board.id !== challenge.board || request.seed !== challenge.seed) {
-      return { ok: false, reason: 'challenge-mismatch' };
-    }
-    return { ok: true, challenge };
+  /** The `ranked` field of a result, if the run is on a board. */
+  const placeOf = async (userId: string, ranked: NewSession['ranked']) => {
+    if (!ranked) return {};
+    const outcome = await leaderboard.outcome(userId, ranked);
+    return outcome ? { ranked: outcome } : {};
   };
 
   /**
@@ -184,9 +140,6 @@ export function createSessionService({
         return { kind: 'rejected', reason: 'too-long' };
       }
 
-      const played = await challengeFor(request, userId);
-      if (!played.ok) return { kind: 'rejected', reason: played.reason };
-
       const replayed = engine.replay(request);
       if (!replayed.ok) {
         return { kind: 'rejected', reason: replayed.error.kind };
@@ -195,25 +148,13 @@ export function createSessionService({
       const session = replayed.value;
       const summary = engine.summarize(session);
 
-      let challenge: NewSession['challenge'];
-      if (played.challenge) {
-        const previousBest = await challenges.playerRank(
-          userId,
-          played.challenge.board,
-        );
-        challenge = {
-          id: played.challenge.id,
-          board: played.challenge.board,
-          ...judgeChallengeRun({
-            session,
-            summary,
-            dataset: engine.dataset,
-            issuedAt: played.challenge.issuedAt,
-            receivedAt: now,
-            previousBestMs: previousBest?.completionMs ?? null,
-          }),
-        };
-      }
+      // Every ordinary game in a ranked mode competes: the board a run goes
+      // to is its four settings, and being flawless is what puts it there
+      // (docs/domain/leaderboard.md).
+      const run = rankedRunOf(session, summary);
+      const ranked = run
+        ? verdictOf(run, await boards.playerBest(userId, run.board.id))
+        : undefined;
       const graded: NewSession = {
         id: request.id,
         userId,
@@ -236,21 +177,11 @@ export function createSessionService({
           judgement: answer.judgement,
           answeredAt: answer.answeredAt,
         })),
-        ...(challenge ? { challenge } : {}),
+        ...(ranked ? { ranked } : {}),
       };
 
       const stored = await repository.insert(graded);
       if (stored === 'owner-missing') return { kind: 'owner-missing' };
-      if (stored === 'challenge-used') {
-        // Another session played the challenge meanwhile, unless it was
-        // this very session sent twice at once.
-        return (
-          (await resolveExisting(request.id, hash, userId)) ?? {
-            kind: 'rejected',
-            reason: 'challenge-used',
-          }
-        );
-      }
       if (stored === 'exists') {
         // Lost a race against an identical (or conflicting) request.
         return (
@@ -276,9 +207,7 @@ export function createSessionService({
             perfect: summary.perfect,
           },
           recordedAt: new Date(now).toISOString(),
-          ...(challenge
-            ? { challenge: await leaderboard.outcome(userId, challenge) }
-            : {}),
+          ...(await placeOf(userId, ranked)),
         },
       };
     },

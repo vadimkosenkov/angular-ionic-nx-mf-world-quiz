@@ -23,24 +23,26 @@ export type QuizCategory = (typeof QUIZ_CATEGORIES)[number];
 export const DIFFICULTIES = ['easy', 'hard'] as const;
 export type Difficulty = (typeof DIFFICULTIES)[number];
 
-/**
- * Training modes are optimised for learning and are never ranked globally.
- * (The competitive "perfect run" challenge is a separate concept, see
- * `LEADERBOARD_BOARDS`.)
- */
-export const TRAINING_MODES = ['fixed', 'endless', 'timed'] as const;
-export type TrainingMode = (typeof TRAINING_MODES)[number];
-
-/**
- * The competitive mode behind the global leaderboards: the complete World
- * country set, every answer must be correct, completion time is the score.
- */
-export const CHALLENGE_MODE = 'challenge';
-export type ChallengeMode = typeof CHALLENGE_MODE;
-
 /** Every way a quiz session can be played. */
-export const QUIZ_MODES = [...TRAINING_MODES, CHALLENGE_MODE] as const;
+export const QUIZ_MODES = ['fixed', 'endless', 'timed'] as const;
 export type QuizMode = (typeof QUIZ_MODES)[number];
+
+/**
+ * The modes a public board ranks (docs/domain/leaderboard.md). A run in one
+ * of them competes by being flawless; Endless has no end to compare and
+ * Practice Mistakes asks a set only one player has.
+ */
+export const RANKED_MODES = ['fixed', 'timed'] as const;
+export type RankedMode = (typeof RANKED_MODES)[number];
+
+/**
+ * What a board ranks by. A quick round is a fixed number of questions, so
+ * the time it took is the score; a timed round is a fixed amount of time,
+ * so how far the player got in it is the score.
+ */
+export const LEADERBOARD_METRICS = { fixed: 'time', timed: 'correct' } as const;
+export type LeaderboardMetric =
+  (typeof LEADERBOARD_METRICS)[keyof typeof LEADERBOARD_METRICS];
 
 /** Default number of questions in Fixed mode. */
 export const DEFAULT_FIXED_QUESTION_COUNT = 10;
@@ -99,43 +101,66 @@ export const QUIZ_SCOPES = ['world', ...REGIONS] as const;
 export type QuizScope = (typeof QUIZ_SCOPES)[number];
 
 export interface LeaderboardBoard {
-  readonly id: `${QuizCategory}-${Difficulty}`;
+  readonly id: `${QuizCategory}-${Difficulty}-${QuizScope}-${RankedMode}`;
   readonly category: QuizCategory;
   readonly difficulty: Difficulty;
-  /** Leaderboard challenges always cover the complete World country set. */
-  readonly scope: 'world';
+  readonly scope: QuizScope;
+  readonly mode: RankedMode;
+  readonly metric: LeaderboardMetric;
 }
 
 /**
- * The global leaderboards: one per category × difficulty, exactly four.
+ * The public boards: one per category × difficulty × scope × ranked mode,
+ * 56 of them.
  *
- * A board is a "perfect run" challenge: every country in the World scope must
- * be answered correctly and completion time is the ranking metric. Regions and
- * training modes intentionally do not create additional boards.
+ * A board is a question ("the capitals of Europe, typed, in a quick round")
+ * and one way to answer it well. The four dimensions are the four choices
+ * the quiz setup already asks for, so a player who has just played knows
+ * exactly which board their run went to.
  */
 export const LEADERBOARD_BOARDS: readonly LeaderboardBoard[] =
   QUIZ_CATEGORIES.flatMap((category) =>
-    DIFFICULTIES.map((difficulty): LeaderboardBoard => ({
-      id: `${category}-${difficulty}`,
-      category,
-      difficulty,
-      scope: 'world',
-    })),
+    DIFFICULTIES.flatMap((difficulty) =>
+      QUIZ_SCOPES.flatMap((scope) =>
+        RANKED_MODES.map((mode): LeaderboardBoard => ({
+          id: `${category}-${difficulty}-${scope}-${mode}`,
+          category,
+          difficulty,
+          scope,
+          mode,
+          metric: LEADERBOARD_METRICS[mode],
+        })),
+      ),
+    ),
   );
 
 export type LeaderboardBoardId = LeaderboardBoard['id'];
 
-/** The board a challenge run with this category and difficulty competes on. */
+/** The board with this id. */
+export function leaderboardBoardById(id: LeaderboardBoardId): LeaderboardBoard {
+  const board = LEADERBOARD_BOARDS.find((candidate) => candidate.id === id);
+  if (!board) throw new Error(`No leaderboard board ${id}`);
+  return board;
+}
+
+/** The board a run with these four choices competes on. */
 export function leaderboardBoardFor(
   category: QuizCategory,
   difficulty: Difficulty,
+  scope: QuizScope,
+  mode: RankedMode,
 ): LeaderboardBoard {
   const board = LEADERBOARD_BOARDS.find(
     (candidate) =>
-      candidate.category === category && candidate.difficulty === difficulty,
+      candidate.category === category &&
+      candidate.difficulty === difficulty &&
+      candidate.scope === scope &&
+      candidate.mode === mode,
   );
   if (!board) {
-    throw new Error(`No leaderboard board for ${category}/${difficulty}`);
+    throw new Error(
+      `No leaderboard board for ${category}/${difficulty}/${scope}/${mode}`,
+    );
   }
   return board;
 }
@@ -143,8 +168,8 @@ export function leaderboardBoardFor(
 export const isLocale = createMembershipGuard(LOCALES);
 export const isQuizCategory = createMembershipGuard(QUIZ_CATEGORIES);
 export const isDifficulty = createMembershipGuard(DIFFICULTIES);
-export const isTrainingMode = createMembershipGuard(TRAINING_MODES);
 export const isQuizMode = createMembershipGuard(QUIZ_MODES);
+export const isRankedMode = createMembershipGuard(RANKED_MODES);
 export const isRegion = createMembershipGuard(REGIONS);
 export const isSubregion = createMembershipGuard(
   Object.keys(SUBREGIONS) as Subregion[],

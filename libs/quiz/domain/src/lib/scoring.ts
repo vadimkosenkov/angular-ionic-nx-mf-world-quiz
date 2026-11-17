@@ -5,7 +5,7 @@ import type { QuizSession, SessionEndReason } from './session';
  * Result of a session, derived only from its recorded answers.
  *
  * How the UI presents the score depends on the mode:
- * - Fixed / Challenge: `correct / totalQuestions` (e.g. 9/10)
+ * - Fixed: `correct / totalQuestions` (e.g. 9/10)
  * - Timed: `correct` (e.g. "17 correct answers")
  * - Endless: `correct / answered`
  */

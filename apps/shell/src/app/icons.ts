@@ -42,6 +42,7 @@ import {
   timeOutline,
   timerOutline,
   trashOutline,
+  trophy,
   trophyOutline,
 } from 'ionicons/icons';
 
@@ -99,6 +100,7 @@ export function registerIcons(): void {
     'time-outline': timeOutline,
     'timer-outline': timerOutline,
     'trash-outline': trashOutline,
+    trophy,
     'trophy-outline': trophyOutline,
   });
 }

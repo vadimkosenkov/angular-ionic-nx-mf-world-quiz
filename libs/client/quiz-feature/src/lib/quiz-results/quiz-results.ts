@@ -10,9 +10,10 @@ import {
 import { IonButton, IonIcon } from '@ionic/angular';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import type { QuizSessionOutcome } from '@world-quiz/client/quiz-ports';
-import type { ChallengeOutcome } from '@world-quiz/shared/contracts';
+import type { RankedOutcome } from '@world-quiz/shared/contracts';
 import { APP_URL, COUNTRY_DATASET } from '@world-quiz/client/quiz-ports';
 import {
+  recordShareCard,
   SHARE_TARGET,
   shareCardFile,
   shareLines,
@@ -26,17 +27,20 @@ import {
   displayAnswer,
   formatRunTime,
   indexCountriesByCode,
+  leaderboardBoardById,
+  leaderboardMetricOf,
   type QuizConfig,
   type SessionSummary,
 } from '@world-quiz/quiz/domain';
 
 /**
- * A challenge run's verdict as it arrives: being checked by the server, the
- * server's answer, or not sent (offline: it waits in the outbox).
+ * The place a run earned on a public board, as it arrives: being graded by
+ * the API, its answer, or nothing (offline: the run waits in the outbox and
+ * reaches the board with the next sync).
  */
-export type ChallengeResult =
+export type BoardPlace =
   | { readonly status: 'checking' }
-  | { readonly status: 'done'; readonly outcome: ChallengeOutcome }
+  | { readonly status: 'ranked'; readonly outcome: RankedOutcome }
   | { readonly status: 'unsent' };
 
 /** Result screen of a finished session: score, accuracy, time and what to review. */
@@ -54,7 +58,7 @@ export class QuizResults {
       const worthCelebrating =
         this.summary().perfect ||
         (this.outcome()?.newlyUnlocked.length ?? 0) > 0 ||
-        this.challenge()?.status === 'done';
+        this.place()?.status === 'ranked';
       this.feedback.play(worthCelebrating ? 'celebrate' : 'finished');
     });
   }
@@ -62,8 +66,8 @@ export class QuizResults {
   readonly config = input.required<QuizConfig>();
   readonly summary = input.required<SessionSummary>();
   readonly outcome = input<QuizSessionOutcome | null>(null);
-  /** Leaderboard challenges only. */
-  readonly challenge = input<ChallengeResult | null>(null);
+  /** Where the run landed on a public board, when it can reach one. */
+  readonly place = input<BoardPlace | null>(null);
 
   readonly playAgain = output<void>();
   readonly exited = output<void>();
@@ -79,9 +83,43 @@ export class QuizResults {
   private readonly countries = indexCountriesByCode(inject(COUNTRY_DATASET));
 
   protected readonly formatRunTime = formatRunTime;
-  protected readonly isChallenge = computed(
-    () => this.config().mode === 'challenge',
-  );
+
+  /** What the board of a ranked run counts: a time, or correct answers. */
+  protected readonly metric = computed(() => {
+    const place = this.place();
+    return place?.status === 'ranked'
+      ? leaderboardMetricOf(place.outcome.board)
+      : null;
+  });
+
+  /** The run beat the player's own best on this board: the loud case. */
+  protected readonly personalRecord = computed(() => {
+    const place = this.place();
+    return place?.status === 'ranked' && place.outcome.personalRecord;
+  });
+
+  /**
+   * A place in the first three, which the card marks with a medal. Below
+   * that the number speaks for itself, and a medal for #47 would be a lie.
+   */
+  protected readonly medal = computed(() => {
+    const place = this.place();
+    if (place?.status !== 'ranked' || place.outcome.rank > 3) return null;
+    return place.outcome.rank;
+  });
+
+  /** The four settings the board stands for, in the player's language. */
+  protected readonly boardName = computed(() => {
+    const place = this.place();
+    if (place?.status !== 'ranked') return '';
+    const board = leaderboardBoardById(place.outcome.board);
+    return this.translate('leaderboard.boardName', {
+      category: this.translate(`categories.${board.category}`),
+      region: this.translate(`regions.${board.scope}`),
+      difficulty: this.translate(`difficulty.${board.difficulty}`),
+      mode: this.translate(`modes.${board.mode}`),
+    });
+  });
 
   protected readonly accuracyPercent = computed(() =>
     Math.round(this.summary().accuracy * 100),
@@ -152,6 +190,60 @@ export class QuizResults {
     }
   }
 
+  /**
+   * Hands the **record** to the share sheet: the same picture "My records"
+   * shares, because what the player wants to show is the record, not the
+   * run that happened to set it. The run's own share stays in the hero's
+   * corner, and the two are deliberately different pictures.
+   */
+  protected async shareRecord(): Promise<void> {
+    const place = this.place();
+    if (this.sharing() || place?.status !== 'ranked') return;
+    this.sharing.set(true);
+    try {
+      const facts = {
+        board: this.boardName(),
+        score: this.recordScore(place.outcome),
+        rank: place.outcome.rank,
+        players: place.outcome.players,
+      };
+      const outcome = await this.shareTarget.share({
+        title: this.translate('share.title'),
+        text: shareLines(
+          this.translate('share.record.heading', { board: facts.board }),
+          this.translate('share.record.score', {
+            score: facts.score,
+            place: this.translate('leaderboard.place', {
+              rank: facts.rank,
+              players: facts.players,
+            }),
+          }),
+        ),
+        ...(this.appUrl ? { url: this.appUrl } : {}),
+        image: () =>
+          shareCardFile(
+            recordShareCard(facts, (key, params) =>
+              this.translate(key, params),
+            ),
+          ),
+      });
+      if (outcome === 'copied') {
+        this.toasts.success(this.translate('share.copied'));
+      } else if (outcome === 'failed') {
+        this.toasts.failure(this.translate('share.failed'));
+      }
+    } finally {
+      this.sharing.set(false);
+    }
+  }
+
+  /** What the board ranks by, as the record card says it. */
+  private recordScore(outcome: RankedOutcome): string {
+    return leaderboardMetricOf(outcome.board) === 'time'
+      ? formatRunTime(outcome.score)
+      : this.translate('leaderboard.correct', { correct: outcome.score });
+  }
+
   /** The words of the picture; the layout is `runShareCard`'s business. */
   private shareCard(): ShareCard {
     const summary = this.summary();
@@ -184,12 +276,13 @@ export class QuizResults {
     return config.countryCodes?.length ? 'practice' : config.mode;
   }
 
-  /** A challenge the server ranked is worth a line of its own. */
+  /** A place on a public board is worth a line of its own. */
   private shareRank(): string | null {
-    const challenge = this.challenge();
-    if (challenge?.status !== 'done' || !challenge.outcome.ranked) return null;
+    const place = this.place();
+    if (place?.status !== 'ranked') return null;
     return this.translate('share.result.rank', {
-      rank: challenge.outcome.rank,
+      rank: place.outcome.rank,
+      players: place.outcome.players,
     });
   }
 

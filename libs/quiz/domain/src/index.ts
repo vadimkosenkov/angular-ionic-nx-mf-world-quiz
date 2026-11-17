@@ -1,6 +1,5 @@
 // Vocabulary
 export {
-  CHALLENGE_MODE,
   DEFAULT_FIXED_QUESTION_COUNT,
   DIFFICULTIES,
   EASY_CHOICE_COUNT,
@@ -9,11 +8,14 @@ export {
   isLocale,
   isQuizCategory,
   isQuizMode,
+  isRankedMode,
   isQuizScope,
   isRegion,
   isSubregion,
-  isTrainingMode,
   LEADERBOARD_BOARDS,
+  LEADERBOARD_METRICS,
+  RANKED_MODES,
+  leaderboardBoardById,
   leaderboardBoardFor,
   LOCALES,
   QUIZ_CATEGORIES,
@@ -22,20 +24,19 @@ export {
   REGIONS,
   SUBREGIONS,
   TIMED_MODE_DURATION_MS,
-  TRAINING_MODES,
 } from './lib/vocabulary';
 export type {
-  ChallengeMode,
   Difficulty,
   LeaderboardBoard,
   LeaderboardBoardId,
+  LeaderboardMetric,
   Locale,
   QuizCategory,
   QuizMode,
+  RankedMode,
   QuizScope,
   Region,
   Subregion,
-  TrainingMode,
 } from './lib/vocabulary';
 
 // Countries
@@ -147,15 +148,18 @@ export type {
 // Leaderboard
 export {
   compareLeaderboardEntries,
-  evaluateChallengeRun,
+  evaluateRankedRun,
   formatRunTime,
   isNewPersonalRecord,
+  leaderboardMetricOf,
   personalBests,
+  rankingKey,
   rankLeaderboard,
 } from './lib/leaderboard';
 export type {
-  ChallengeEvaluation,
-  ChallengeIneligibility,
   LeaderboardEntry,
   RankedLeaderboardEntry,
+  RankedScore,
+  RunEvaluation,
+  RunIneligibility,
 } from './lib/leaderboard';

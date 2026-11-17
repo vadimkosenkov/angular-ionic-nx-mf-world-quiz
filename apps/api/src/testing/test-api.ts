@@ -57,11 +57,8 @@ export async function createTestApi(
   const provider = await createFakeIdentityProvider(() => clock.now());
   const accessTokens = createAccessTokens(TEST_JWT_SECRET);
 
-  const challenges = createLeaderboardRepository(database.db);
-  const leaderboard = createLeaderboardService({
-    repository: challenges,
-    clock,
-  });
+  const boards = createLeaderboardRepository(database.db);
+  const leaderboard = createLeaderboardService({ repository: boards });
 
   const express = createApp({
     clock,
@@ -71,7 +68,7 @@ export async function createTestApi(
       repository: createSessionRepository(database.db),
       engine,
       clock,
-      challenges,
+      boards,
       leaderboard,
     }),
     auth: createAuthService({

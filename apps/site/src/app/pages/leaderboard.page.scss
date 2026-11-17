@@ -7,11 +7,27 @@ h1 {
   max-width: 72ch;
 }
 
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wq-space-2);
+  margin: var(--wq-space-4) 0;
+}
+
 .boards {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--wq-space-2);
-  margin: var(--wq-space-4) 0;
+
+  // The setting this row of links changes, read as a label beside them.
+  .group {
+    flex: 0 0 7rem;
+    margin: 0;
+    font-size: var(--wq-font-size-caption);
+    font-weight: 600;
+    color: var(--wq-color-text-secondary);
+  }
 
   a {
     padding: var(--wq-space-2) var(--wq-space-4);
@@ -53,13 +69,17 @@ th {
 }
 
 .rank,
-.time {
+.score {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
-.time {
+.score {
   text-align: right;
+}
+
+th.score {
+  font-weight: 600;
 }
 
 .note {

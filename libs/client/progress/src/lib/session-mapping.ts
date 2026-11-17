@@ -12,14 +12,11 @@ import type { LocalSession } from './local-store';
 /**
  * A session finished on this device, ready for the outbox: its progress
  * events (graded here, exactly as the server will grade them) and the
- * request that records it. The request carries only what the player did,
- * and — for a leaderboard challenge — which challenge it played.
+ * request that records it. The request carries only what the player did —
+ * the server grades it, and decides for itself whether the run reached a
+ * public board.
  */
-export function playedSession(
-  session: QuizSession,
-  id: string,
-  challengeId?: string,
-): LocalSession {
+export function playedSession(session: QuizSession, id: string): LocalSession {
   if (session.finishedAt === null || session.endReason === null) {
     throw new Error('Only finished sessions are recorded');
   }
@@ -34,7 +31,6 @@ export function playedSession(
       answer,
       answeredAt,
     })),
-    ...(challengeId ? { challengeId } : {}),
   };
   return {
     id,

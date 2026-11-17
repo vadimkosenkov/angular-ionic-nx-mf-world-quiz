@@ -36,24 +36,38 @@ export const en = {
     leaderboard: 'See the leaderboards',
   },
   leaderboard: {
-    title: 'Leaderboard',
+    title: 'Leaderboards',
     description:
-      'The fastest perfect runs through all 195 countries, for capitals and flags, easy and hard.',
-    boardsLabel: 'Board',
-    boards: {
-      'capitals-easy': 'Capitals · Easy',
-      'capitals-hard': 'Capitals · Hard',
-      'flags-easy': 'Flags · Easy',
-      'flags-hard': 'Flags · Hard',
+      'The best flawless runs of World Quiz: capitals and flags, every region, easy and hard, a quick round or sixty seconds.',
+    boardsLabel: 'Choose a board',
+    pick: {
+      category: 'Quiz',
+      scope: 'Region',
+      difficulty: 'Difficulty',
+      mode: 'Mode',
     },
+    category: { capitals: 'Capitals', flags: 'Flags' },
+    scope: {
+      world: 'The whole world',
+      europe: 'Europe',
+      asia: 'Asia',
+      africa: 'Africa',
+      'north-america': 'North America',
+      'south-america': 'South America',
+      oceania: 'Oceania',
+    },
+    difficulty: { easy: 'Easy', hard: 'Hard' },
+    mode: { fixed: 'Quick round', timed: 'Time attack' },
     rules:
-      'A run counts only when every one of the 195 countries is answered correctly. The fastest time wins; each player appears once, with their best run.',
+      'A run counts only when every answer is right: one mistake and it does not reach the board. A quick round of ten questions is ranked by the time it took; sixty seconds of Time attack by how many answers it reached, and a tie by who got there first.',
+    luck: 'Every run draws its own questions at random, so two players are not asked the same ten countries. Luck is part of it.',
     rank: 'Rank',
     player: 'Player',
     time: 'Time',
+    correct: 'Correct',
     players: (count: number) =>
       count === 1 ? '1 player ranked' : `${count} players ranked`,
-    empty: 'No perfect runs yet. Be the first — play in the app.',
+    empty: 'No flawless runs yet. Be the first — play in the app.',
     unavailable:
       'The leaderboard cannot be loaded right now. Please try again later.',
     notFound: 'There is no such leaderboard.',
@@ -90,13 +104,13 @@ export const en = {
         heading: 'Your results',
         paragraphs: [
           'When you finish a quiz, the app sends what you did: the quiz settings, the answers you gave (including what you typed in Hard mode) and when. Our server checks and grades them and keeps them with your account, so your progress is the same on every device.',
-          'For leaderboard challenges we also keep the challenge, its time and whether it was ranked.',
+          'When a run earns a place on a leaderboard, we also keep which board it is on, its score and its time.',
         ],
       },
       {
         heading: 'What is public',
         paragraphs: [
-          'Leaderboards are public, on this site and in the app. They show a nickname you choose (until then an automatic one such as “Player 4821”), your time and your rank — never your name, e-mail address or account identifier.',
+          'Leaderboards are public, on this site and in the app. They show a nickname you choose (until then an automatic one such as “Player 4821”), your score and your rank — never your name, e-mail address or account identifier.',
         ],
       },
       {
@@ -116,7 +130,7 @@ export const en = {
       {
         heading: 'How long we keep it, and deleting it',
         paragraphs: [
-          'Your data is kept for as long as you have an account. In the app, Settings → Account → Delete account deletes your account together with your results, challenges and sign-ins immediately; your entries disappear from the leaderboards. The service keeps no other copy.',
+          'Your data is kept for as long as you have an account. In the app, Settings → Account → Delete account deletes your account together with your results, your ranked runs and your sign-ins immediately; your entries disappear from the leaderboards. The service keeps no other copy.',
         ],
       },
       {

@@ -1,20 +1,30 @@
 @let t = text().leaderboard;
 <h1>{{ t.title }}</h1>
 <p class="wq-text-secondary rules">{{ t.rules }}</p>
+<p class="wq-text-secondary rules">{{ t.luck }}</p>
 
-<nav class="boards" [attr.aria-label]="t.boardsLabel">
-  @for (item of boards; track item.id) {
-  <a
-    [routerLink]="['/', i18n.language(), 'leaderboard', item.id]"
-    routerLinkActive="active"
-    ariaCurrentWhenActive="page"
-    >{{ t.boards[item.id] }}</a
-  >
+<!-- A region rather than a plain div: an aria-label on an element with
+     no role of its own is ignored by screen readers (and flagged by axe). -->
+<section class="picker" [attr.aria-label]="t.boardsLabel">
+  @for (group of groups(); track group.label) {
+  <nav class="boards" [attr.aria-label]="group.label">
+    <!-- The nav carries the same words as its accessible name, so this is a
+         label, not a heading: the page outline is the board below. -->
+    <p class="group">{{ group.label }}</p>
+    @for (option of group.options; track option.board) {
+    <a
+      [routerLink]="['/', i18n.language(), 'leaderboard', option.board]"
+      [class.active]="option.active"
+      [attr.aria-current]="option.active ? 'page' : null"
+      >{{ option.name }}</a
+    >
+    }
+  </nav>
   }
-</nav>
+</section>
 
 <section class="wq-card ranking" data-testid="site-ranking">
-  <h2>{{ t.boards[board()] }}</h2>
+  <h2>{{ boardName() }}</h2>
   @if (ranking.error()) {
   <p role="alert" data-testid="site-ranking-unavailable">{{ t.unavailable }}</p>
   } @else if (ranking.hasValue()) { @let data = ranking.value(); @if
@@ -26,7 +36,12 @@
       <tr>
         <th scope="col">{{ t.rank }}</th>
         <th scope="col">{{ t.player }}</th>
-        <th scope="col" class="time">{{ t.time }}</th>
+        <th scope="col" class="score">
+          {{ metric() === 'time' ? t.time : t.correct }}
+        </th>
+        @if (metric() === 'correct') {
+        <th scope="col" class="score">{{ t.time }}</th>
+        }
       </tr>
     </thead>
     <tbody>
@@ -34,7 +49,12 @@
       <tr>
         <td class="rank">{{ entry.rank }}</td>
         <td>{{ entry.nickname }}</td>
-        <td class="time">{{ formatRunTime(entry.completionTimeMs) }}</td>
+        <td class="score">
+          {{ metric() === 'time' ? formatRunTime(entry.score) : entry.score }}
+        </td>
+        @if (metric() === 'correct') {
+        <td class="score">{{ formatRunTime(entry.timeMs) }}</td>
+        }
       </tr>
       }
     </tbody>

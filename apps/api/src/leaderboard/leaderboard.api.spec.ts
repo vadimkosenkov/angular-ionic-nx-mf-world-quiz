@@ -1,51 +1,46 @@
 import {
-  challengeSchema,
   leaderboardSchema,
   myRecordsSchema,
   sessionResultSchema,
   type SubmitSessionRequest,
 } from '@world-quiz/shared/contracts';
 import {
+  DEFAULT_FIXED_QUESTION_COUNT,
   type LeaderboardBoardId,
   type LeaderboardEntry,
-  type QuizConfig,
+  leaderboardMetricOf,
+  rankingKey,
   rankLeaderboard,
+  type QuizConfig,
+  TIMED_MODE_DURATION_MS,
 } from '@world-quiz/quiz/domain';
-import { count, eq, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import request from 'supertest';
 import { defaultNickname } from '../auth/nickname';
 import type { DatabaseHandle } from '../db/database';
-import { challenges, quizSessions } from '../db/schema';
+import { leaderboardRuns, quizSessions } from '../db/schema';
 import { playSession } from '../testing/play-session';
 import { createTestApi, TEST_START, type TestApi } from '../testing/test-api';
 import { createTestDatabase } from '../testing/test-database';
-import {
-  CHALLENGE_LIFETIME_MS,
-  CHALLENGE_TIME_TOLERANCE_MS,
-} from './challenge-rules';
+import { MIN_RANKED_ANSWER_MS } from './ranked-run-rules';
 
-const challengeConfig = (
-  board: LeaderboardBoardId = 'capitals-easy',
-): QuizConfig => {
-  const [category, difficulty] = board.split('-') as [
-    QuizConfig['category'],
-    QuizConfig['difficulty'],
-  ];
-  return { category, difficulty, mode: 'challenge', scope: 'world' };
+/** A quick round: ten questions, ranked by the time they took. */
+const QUICK: QuizConfig = {
+  category: 'capitals',
+  difficulty: 'easy',
+  mode: 'fixed',
+  scope: 'world',
 };
+const QUICK_BOARD: LeaderboardBoardId = 'capitals-easy-world-fixed';
+/** A Time attack round: sixty seconds, ranked by the answers reached. */
+const TIMED: QuizConfig = { ...QUICK, mode: 'timed' };
+const TIMED_BOARD: LeaderboardBoardId = 'capitals-easy-world-timed';
 
 describe('leaderboards', () => {
   let database: DatabaseHandle;
   let api: TestApi;
   let player: string;
   let playerId: string;
-  /** The dev subject behind each bearer header, to sign in again. */
-  const subjectOf = new Map<string, string>();
-  const signIn = async (subject: string, displayName?: string) => {
-    const signedIn = await api.signIn(subject, displayName);
-    subjectOf.set(signedIn.authorization, subject);
-    return signedIn;
-  };
 
   const as = (authorization: string) => ({
     post: (path: string, body: object) =>
@@ -62,53 +57,50 @@ describe('leaderboards', () => {
         .send(body),
   });
 
-  const startChallenge = async (
-    authorization = player,
-    board: LeaderboardBoardId = 'capitals-easy',
-  ) => {
-    const response = await as(authorization).post('/v1/challenges', { board });
-    expect(response.status).toBe(201);
-    return challengeSchema.parse(response.body);
-  };
+  interface PlayOptions {
+    readonly authorization?: string;
+    readonly wrong?: ReadonlySet<number>;
+    readonly step?: number;
+    /** Stop after this many answers (Endless and Time attack). */
+    readonly answers?: number;
+    readonly override?: Partial<SubmitSessionRequest>;
+  }
 
-  /**
-   * Plays a challenge the way the app does: it starts right after the
-   * challenge is issued, answers one question per second, and the result is
-   * received `sentAfterMs` after the last answer.
-   */
-  const playChallenge = async (
-    challenge: { id: string; seed: string; board: LeaderboardBoardId },
+  /** Plays an ordinary game and sends it, the way the app does. */
+  const play = async (
+    config: QuizConfig,
     {
       authorization = player,
       wrong = new Set<number>(),
       step = 1_000,
-      startDelayMs = 2_000,
-      sentAfterMs = 500,
-      override = {} as Partial<SubmitSessionRequest>,
-    } = {},
+      answers,
+      override = {},
+    }: PlayOptions = {},
   ) => {
-    let bearer = authorization;
-    const startedAt = api.clock.now() + startDelayMs;
-    const session = {
-      ...playSession(api.engine, challengeConfig(challenge.board), {
-        seed: challenge.seed,
-        startedAt,
-        step,
-        wrong,
-      }),
-      challengeId: challenge.id,
-      ...override,
-    };
-    api.clock.set(session.finishedAt + sentAfterMs);
-    if (sentAfterMs > 10 * 60 * 1000) {
-      // Access tokens last 15 minutes: the app would have renewed it.
-      bearer = (await api.signIn(subjectOf.get(authorization))).authorization;
-    }
-    const response = await as(bearer).post('/v1/sessions', session);
-    return { session, response };
+    const startedAt = api.clock.now();
+    const played = playSession(api.engine, config, {
+      startedAt,
+      step,
+      wrong,
+      answers,
+      seed: `seed-${crypto.randomUUID()}`,
+    });
+    // A timed round always ends with the clock, whatever the player reached.
+    const session: SubmitSessionRequest =
+      config.mode === 'timed'
+        ? {
+            ...played,
+            finishedAt: startedAt + TIMED_MODE_DURATION_MS,
+            endReason: 'time-up',
+            ...override,
+          }
+        : { ...played, ...override };
+    api.clock.set(session.finishedAt + 500);
+    const response = await as(authorization).post('/v1/sessions', session);
+    return { session, response, ranked: response.body.ranked };
   };
 
-  const board = async (board: LeaderboardBoardId = 'capitals-easy') =>
+  const board = async (board: LeaderboardBoardId) =>
     leaderboardSchema.parse(
       (await request(api.app).get(`/v1/leaderboards/${board}`)).body,
     );
@@ -120,7 +112,8 @@ describe('leaderboards', () => {
 
   beforeEach(async () => {
     api.clock.set(TEST_START + 60_000);
-    ({ authorization: player, userId: playerId } = await signIn('player-1'));
+    ({ authorization: player, userId: playerId } =
+      await api.signIn('player-1'));
   });
 
   afterEach(async () => {
@@ -131,210 +124,135 @@ describe('leaderboards', () => {
     await database.close();
   });
 
-  describe('POST /v1/challenges', () => {
-    it('issues a challenge with a fresh server seed, playable for three hours', async () => {
-      const first = await startChallenge();
-      const second = await startChallenge();
-
-      expect(first.seed).not.toBe(second.seed);
-      expect(first.seed).toMatch(/^[\w-]{22}$/);
-      expect(Date.parse(first.expiresAt) - Date.parse(first.issuedAt)).toBe(
-        CHALLENGE_LIFETIME_MS,
-      );
-    });
-
-    it('needs a signed-in player and a real board', async () => {
-      expect(
-        (
-          await request(api.app)
-            .post('/v1/challenges')
-            .send({ board: 'capitals-easy' })
-        ).status,
-      ).toBe(401);
-      expect(
-        (await as(player).post('/v1/challenges', { board: 'capitals-europe' }))
-          .status,
-      ).toBe(400);
-    });
-
-    it("clears the player's own challenges that can no longer be played", async () => {
-      await startChallenge();
-      const { authorization: other } = await api.signIn('player-2');
-      await startChallenge(other);
-
-      api.clock.advance(CHALLENGE_LIFETIME_MS + 1);
-      await startChallenge((await signIn('player-1')).authorization);
-
-      const left = await database.db
-        .select({ n: count() })
-        .from(challenges)
-        .where(eq(challenges.userId, playerId));
-      expect(left[0]?.n).toBe(1);
-      const total = await database.db.select({ n: count() }).from(challenges);
-      expect(total[0]?.n).toBe(2);
-    });
-  });
-
-  describe('recording a challenge run', () => {
-    it('ranks a perfect run by its own time and reports rank and record', async () => {
-      const challenge = await startChallenge();
-
-      const { session, response } = await playChallenge(challenge);
+  describe('recording a ranked run', () => {
+    it('puts a flawless quick round on the board of its own settings, ranked by time', async () => {
+      const { session, response } = await play(QUICK, { step: 1_000 });
 
       expect(response.status).toBe(201);
-      const { challenge: outcome } = sessionResultSchema.parse(response.body);
-      expect(outcome).toEqual({
-        board: 'capitals-easy',
-        ranked: true,
-        completionTimeMs: session.finishedAt - session.startedAt,
-        personalRecord: true,
+      const runTime = DEFAULT_FIXED_QUESTION_COUNT * 1_000;
+      expect(sessionResultSchema.parse(response.body).ranked).toEqual({
+        board: QUICK_BOARD,
+        score: runTime,
+        timeMs: runTime,
         rank: 1,
+        players: 1,
+        personalRecord: true,
       });
-      expect((await board()).entries).toEqual([
+      expect(session.finishedAt - session.startedAt).toBe(runTime);
+      expect((await board(QUICK_BOARD)).entries).toEqual([
         {
           rank: 1,
           nickname: defaultNickname(playerId),
-          completionTimeMs: session.finishedAt - session.startedAt,
-          recordedAt: new Date(api.clock.now()).toISOString(),
+          score: runTime,
+          timeMs: runTime,
+          recordedAt: expect.any(String),
         },
       ]);
     });
 
-    it.each([
-      ['has-incorrect-answers', { wrong: new Set([3]) }],
-      ['late', { sentAfterMs: CHALLENGE_TIME_TOLERANCE_MS + 1_000 }],
-      ['late', { startDelayMs: CHALLENGE_TIME_TOLERANCE_MS + 1_000 }],
-      ['implausible-time', { startDelayMs: -30_000 }],
-      ['expired', { sentAfterMs: CHALLENGE_LIFETIME_MS }],
-    ] as const)(
-      'records but does not rank a run that is %s',
-      async (reason, options) => {
-        const challenge = await startChallenge();
+    it('ranks a Time attack round by the answers it reached, timed to the last one', async () => {
+      const { ranked } = await play(TIMED, { step: 2_000, answers: 7 });
 
-        const { response } = await playChallenge(challenge, options);
-
-        expect(response.status).toBe(201);
-        expect(response.body.challenge).toMatchObject({
-          ranked: false,
-          reason,
-          personalRecord: false,
-          rank: null,
-        });
-        expect((await board()).players).toBe(0);
-      },
-    );
-
-    it('answers a retry with the same outcome, and refuses a second session for the challenge', async () => {
-      const challenge = await startChallenge();
-      const { session, response } = await playChallenge(challenge);
-
-      const retry = await as(player).post('/v1/sessions', session);
-      const another = await as(player).post('/v1/sessions', {
-        ...session,
-        id: crypto.randomUUID(),
+      // What counts is the seven answers; the time is when the seventh
+      // arrived, not the sixty seconds everyone spends.
+      expect(ranked).toMatchObject({
+        board: TIMED_BOARD,
+        score: 7,
+        timeMs: 7 * 2_000,
+        rank: 1,
       });
+    });
+
+    it('records a run with a wrong answer, and leaves it off the board', async () => {
+      const { response } = await play(QUICK, { wrong: new Set([4]) });
+
+      expect(response.status).toBe(201);
+      expect(response.body.ranked).toBeUndefined();
+      expect((await board(QUICK_BOARD)).players).toBe(0);
+    });
+
+    it('never ranks a training mode: Endless, or a round over chosen countries', async () => {
+      const endless = await play(
+        { ...QUICK, mode: 'endless' },
+        { answers: 5, override: { endReason: 'stopped' } },
+      );
+      const practice = await play({
+        ...QUICK,
+        countryCodes: ['fr', 'de', 'it'],
+        questionCount: 3,
+      });
+
+      expect(endless.response.status).toBe(201);
+      expect(endless.response.body.ranked).toBeUndefined();
+      expect(practice.response.status).toBe(201);
+      expect(practice.response.body.ranked).toBeUndefined();
+    });
+
+    it('refuses to rank a run nobody could have played that fast', async () => {
+      const { response } = await play(QUICK, { step: 1 });
+
+      expect(response.status).toBe(201);
+      expect(response.body.ranked).toBeUndefined();
+      // The floor is per answer, so a quick round has to take ten of them.
+      expect(DEFAULT_FIXED_QUESTION_COUNT * MIN_RANKED_ANSWER_MS).toBe(2_500);
+    });
+
+    it('answers a retry with the same place, and records both runs of a player once on the board', async () => {
+      const first = await play(QUICK, { step: 1_200 });
+      const retry = await as(player).post('/v1/sessions', first.session);
+      const faster = await play(QUICK, { step: 1_000 });
+      const slower = await play(QUICK, { step: 3_000 });
 
       expect(retry.status).toBe(200);
-      expect(retry.body.challenge).toEqual(response.body.challenge);
-      expect(another.status).toBe(422);
-      expect(another.body.type).toBe(
-        'urn:world-quiz:session-rejected:challenge-used',
-      );
-    });
-
-    it.each([
-      ['challenge-missing', { challengeId: undefined }],
-      ['unknown-challenge', { challengeId: crypto.randomUUID() }],
-      ['challenge-mismatch', { seed: 'not-the-challenge-seed' }],
-    ] as const)('rejects a run with %s', async (reason, override) => {
-      const challenge = await startChallenge();
-
-      const { response } = await playChallenge(challenge, {
-        override: override as Partial<SubmitSessionRequest>,
-      });
-
-      expect(response.status).toBe(422);
-      expect(response.body.type).toBe(
-        `urn:world-quiz:session-rejected:${reason}`,
-      );
-    });
-
-    it("rejects a run on another board, or on another player's challenge", async () => {
-      const easy = await startChallenge(player, 'capitals-easy');
-      const { authorization: other } = await api.signIn('player-2');
-      const theirs = await startChallenge(other);
-
-      const wrongBoard = await playChallenge(
-        { ...easy, board: 'flags-easy' },
-        {},
-      );
-      const stolen = await playChallenge(theirs);
-
-      expect(wrongBoard.response.body.type).toBe(
-        'urn:world-quiz:session-rejected:challenge-mismatch',
-      );
-      expect(stolen.response.body.type).toBe(
-        'urn:world-quiz:session-rejected:unknown-challenge',
-      );
-    });
-
-    it('rejects a challenge id on a training session', async () => {
-      const challenge = await startChallenge();
-      const training = {
-        ...playSession(api.engine, {
-          category: 'capitals',
-          difficulty: 'easy',
-          mode: 'fixed',
-          scope: 'europe',
-          questionCount: 2,
-        }),
-        challengeId: challenge.id,
-      };
-
-      const response = await as(player).post('/v1/sessions', training);
-
-      expect(response.body.type).toBe(
-        'urn:world-quiz:session-rejected:not-a-challenge',
+      expect(retry.body.ranked).toEqual(first.ranked);
+      expect(faster.ranked).toMatchObject({ rank: 1, personalRecord: true });
+      // A slower run is still recorded and still ranked; it is simply not
+      // the player's best, so the board keeps showing the faster one.
+      expect(slower.ranked).toMatchObject({ rank: 1, personalRecord: false });
+      const ranking = await board(QUICK_BOARD);
+      expect(ranking.players).toBe(1);
+      expect(ranking.entries).toHaveLength(1);
+      expect(ranking.entries[0]?.score).toBe(
+        DEFAULT_FIXED_QUESTION_COUNT * 1_000,
       );
     });
   });
 
   describe('rankings', () => {
-    it('keeps each player once, with their best run, fastest first', async () => {
-      const { authorization: bob } = await signIn('player-2', 'Bob');
+    it('keeps each player once, with their best run, the best first', async () => {
+      const { authorization: bob } = await api.signIn('player-2');
       await as(bob).patch('/v1/me', { nickname: 'Bob the Quick' });
 
-      await playChallenge(await startChallenge(player), { step: 1_500 });
-      await playChallenge(await startChallenge(bob), {
-        authorization: bob,
-        step: 1_200,
-      });
-      const faster = await playChallenge(await startChallenge(player), {
-        step: 1_000,
-      });
-      const slower = await playChallenge(await startChallenge(player), {
-        step: 2_000,
-      });
+      await play(QUICK, { step: 1_500 });
+      await play(QUICK, { authorization: bob, step: 1_200 });
 
-      expect(faster.response.body.challenge).toMatchObject({
-        personalRecord: true,
-        rank: 1,
-      });
-      expect(slower.response.body.challenge).toMatchObject({
-        ranked: true,
-        personalRecord: false,
-        rank: 1,
-      });
-      const ranking = await board();
+      const ranking = await board(QUICK_BOARD);
       expect(ranking.players).toBe(2);
       expect(ranking.entries.map((entry) => entry.nickname)).toEqual([
-        defaultNickname(playerId),
         'Bob the Quick',
+        defaultNickname(playerId),
       ]);
     });
 
-    it('orders exactly as the domain ranks, ties broken by recording time', async () => {
-      // Runs written straight to the tables: many players, equal times.
+    it('ranks a Time attack board by the most answers, a tie by who got there first', async () => {
+      const { authorization: bob } = await api.signIn('player-2');
+      await as(bob).patch('/v1/me', { nickname: 'Bob' });
+
+      // Bob answers as many as the player, but faster.
+      await play(TIMED, { step: 3_000, answers: 6 });
+      await play(TIMED, { authorization: bob, step: 2_000, answers: 6 });
+
+      const ranking = await board(TIMED_BOARD);
+      expect(
+        ranking.entries.map((entry) => [entry.nickname, entry.score]),
+      ).toEqual([
+        ['Bob', 6],
+        [defaultNickname(playerId), 6],
+      ]);
+    });
+
+    it('orders exactly as the domain ranks, on a board where more is better', async () => {
+      // Runs written straight to the tables: many players, equal scores.
       const entries: LeaderboardEntry[] = [];
       for (let i = 0; i < 12; i++) {
         const { userId } = await api.signIn(`ranked-${i}`);
@@ -342,8 +260,9 @@ describe('leaderboards', () => {
           const entry: LeaderboardEntry = {
             entryId: crypto.randomUUID(),
             userId,
-            boardId: 'flags-hard',
-            completionTimeMs: 60_000 + ((i * 7 + run * 3) % 5) * 1_000,
+            boardId: TIMED_BOARD,
+            score: 10 + ((i * 7 + run * 3) % 5),
+            timeMs: 40_000 + ((i * 3 + run) % 3) * 1_000,
             recordedAt: TEST_START + ((i * 5 + run) % 4) * 1_000,
           };
           entries.push(entry);
@@ -351,33 +270,24 @@ describe('leaderboards', () => {
         }
       }
 
-      const ranking = await board('flags-hard');
-      const expected = rankLeaderboard(entries, 'flags-hard');
+      const ranking = await board(TIMED_BOARD);
+      const expected = rankLeaderboard(entries, TIMED_BOARD);
 
       expect(ranking.players).toBe(12);
-      expect(ranking.entries.map((entry) => entry.rank)).toEqual(
-        expected.map((entry) => entry.rank),
-      );
       expect(
-        ranking.entries.map((entry) => [
-          entry.completionTimeMs,
-          entry.recordedAt,
-        ]),
+        ranking.entries.map((entry) => [entry.rank, entry.score, entry.timeMs]),
       ).toEqual(
-        expected.map((entry) => [
-          entry.completionTimeMs,
-          new Date(entry.recordedAt).toISOString(),
-        ]),
+        expected.map((entry) => [entry.rank, entry.score, entry.timeMs]),
       );
     });
 
     it('is public, always revalidated, and limited on request', async () => {
-      await playChallenge(await startChallenge());
-      const { authorization: bob } = await signIn('player-2');
-      await playChallenge(await startChallenge(bob), { authorization: bob });
+      const { authorization: bob } = await api.signIn('player-2');
+      await play(QUICK);
+      await play(QUICK, { authorization: bob });
 
       const response = await request(api.app).get(
-        '/v1/leaderboards/capitals-easy?limit=1',
+        `/v1/leaderboards/${QUICK_BOARD}?limit=1`,
       );
 
       expect(response.status).toBe(200);
@@ -389,37 +299,46 @@ describe('leaderboards', () => {
       expect(response.body.entries).toHaveLength(1);
       expect(JSON.stringify(response.body)).not.toContain(playerId);
       expect(
-        (await request(api.app).get('/v1/leaderboards/capitals-europe')).status,
+        (await request(api.app).get('/v1/leaderboards/capitals-easy')).status,
       ).toBe(404);
       expect(
-        (await request(api.app).get('/v1/leaderboards/capitals-easy?limit=0'))
+        (await request(api.app).get(`/v1/leaderboards/${QUICK_BOARD}?limit=0`))
           .status,
       ).toBe(400);
     });
   });
 
   describe('/v1/me', () => {
-    it("lists the player's records per board with rank and field size", async () => {
+    it("lists the player's records per board with the rank and the field size", async () => {
       expect((await as(player).get('/v1/me/records')).body).toEqual({
         records: [],
       });
-      const { authorization: bob } = await signIn('player-2');
-      await playChallenge(await startChallenge(bob), {
-        authorization: bob,
-        step: 900,
-      });
-      const run = await playChallenge(await startChallenge());
+      const { authorization: bob } = await api.signIn('player-2');
+      await play(QUICK, { authorization: bob, step: 900 });
+      const run = await play(QUICK, { step: 1_000 });
+      await play(TIMED, { step: 2_000, answers: 4 });
 
-      const records = myRecordsSchema.parse(
+      const { records } = myRecordsSchema.parse(
         (await as(player).get('/v1/me/records')).body,
       );
 
-      expect(records.records).toEqual([
+      expect(records).toEqual([
         {
-          board: 'capitals-easy',
+          board: QUICK_BOARD,
+          nickname: defaultNickname(playerId),
           rank: 2,
           players: 2,
-          completionTimeMs: run.session.finishedAt - run.session.startedAt,
+          score: run.session.finishedAt - run.session.startedAt,
+          timeMs: run.session.finishedAt - run.session.startedAt,
+          recordedAt: expect.any(String),
+        },
+        {
+          board: TIMED_BOARD,
+          nickname: defaultNickname(playerId),
+          rank: 1,
+          players: 1,
+          score: 4,
+          timeMs: 4 * 2_000,
           recordedAt: expect.any(String),
         },
       ]);
@@ -455,46 +374,42 @@ describe('leaderboards', () => {
   });
 });
 
-/** A ranked challenge run written directly: a session row and its challenge. */
+/** A ranked run written directly: a session row and its verdict. */
 async function insertRankedRun(
   database: DatabaseHandle,
   entry: LeaderboardEntry,
 ) {
   const recordedAt = new Date(entry.recordedAt);
+  const config: QuizConfig = {
+    category: 'capitals',
+    difficulty: 'easy',
+    mode: 'timed',
+    scope: 'world',
+  };
   await database.db.insert(quizSessions).values({
     id: entry.entryId,
     userId: entry.userId,
-    category: 'flags',
-    difficulty: 'hard',
-    mode: 'challenge',
-    scope: 'world',
-    config: {
-      category: 'flags',
-      difficulty: 'hard',
-      mode: 'challenge',
-      scope: 'world',
-    },
+    ...config,
+    config,
     seed: 'seed',
     startedAt: recordedAt,
     finishedAt: recordedAt,
-    endReason: 'completed',
-    answered: 0,
-    correct: 0,
-    durationMs: entry.completionTimeMs,
+    endReason: 'time-up',
+    answered: entry.score,
+    correct: entry.score,
+    durationMs: entry.timeMs,
     completed: true,
     perfect: true,
-    requestHash: 'hash',
+    requestHash: `hash-${entry.entryId}`,
     recordedAt,
   });
-  await database.db.insert(challenges).values({
-    id: crypto.randomUUID(),
+  await database.db.insert(leaderboardRuns).values({
+    sessionId: entry.entryId,
     userId: entry.userId,
     board: entry.boardId,
-    seed: 'seed',
-    issuedAt: recordedAt,
-    sessionId: entry.entryId,
-    outcome: 'ranked',
-    completionMs: entry.completionTimeMs,
+    score: entry.score,
+    timeMs: entry.timeMs,
+    rankKey: rankingKey(entry.score, leaderboardMetricOf(entry.boardId)),
     recordedAt,
     personalRecord: false,
   });

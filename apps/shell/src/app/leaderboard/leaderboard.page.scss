@@ -1,38 +1,56 @@
-.boards ion-segment-button {
-  min-width: max-content;
+.ranking {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wq-space-2);
 }
 
-.rules,
-.online,
+// Which board the list belongs to: a trophy over two lines, centred. The
+// dialog's own title says what the card is ("Leaderboard"); this says which
+// of the 56 boards it is, and says it as a grouping -- what is asked and
+// where, then how it is played -- instead of one line that wrapped wherever
+// the phone's width happened to end it.
+.board-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--wq-space-1);
+  margin-bottom: var(--wq-space-2);
+  text-align: center;
+}
+
+.board-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: var(--wq-space-1);
+  border-radius: var(--wq-radius-pill);
+  background: var(--wq-color-primary-container);
+  color: var(--wq-color-primary);
+  font-size: 26px;
+}
+
+.board-subject {
+  margin: 0;
+  font-size: var(--wq-font-size-control);
+  font-weight: 700;
+}
+
+.board-style {
+  margin: 0;
+  color: var(--wq-color-text-secondary);
+  font-size: var(--wq-font-size-subtitle);
+}
+
 .status,
 .players {
   margin: 0;
-  line-height: 1.45;
-}
-
-.challenge {
-  display: flex;
-  flex-direction: column;
-  gap: var(--wq-space-3);
-  padding: var(--wq-space-4);
-
-  .rules {
-    font-weight: 600;
-  }
-
-  .online {
-    font-size: var(--wq-font-size-caption);
-  }
-}
-
-.status,
-.players {
   padding: var(--wq-space-2) 0;
   text-align: center;
   font-size: var(--wq-font-size-caption);
+  line-height: 1.45;
 }
 
-.ranking,
 .records {
   padding: var(--wq-space-2) var(--wq-space-4);
 }
@@ -81,15 +99,31 @@
   font-weight: 700;
 }
 
-.time {
+.score {
+  display: flex;
+  align-items: baseline;
+  gap: var(--wq-space-2);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
+// Beside a score that counts answers: how long those answers took.
+.score .time {
+  font-size: var(--wq-font-size-caption);
+  font-weight: 600;
+  opacity: 0.75;
+}
+
+// The player's own row, pinned under a page that does not reach their place.
+.entries.mine {
+  margin-top: var(--wq-space-2);
+  border-top: 1px solid var(--wq-color-border);
+  padding-top: var(--wq-space-2);
+}
+
 .records li {
   display: grid;
-  // Board, time, and the control that shares the record; a board without a
-  // record has only the first column and the line below it.
+  // The board, what it ranks the run by, and the control that shares it.
   grid-template-columns: 1fr auto auto;
   gap: 0 var(--wq-space-3);
   padding: var(--wq-space-3) 0;

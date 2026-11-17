@@ -1,40 +1,10 @@
 import {
   leaderboardBoardIdSchema,
   leaderboardQuerySchema,
-  startChallengeRequestSchema,
 } from '@world-quiz/shared/contracts';
 import { Router } from 'express';
-import { currentUserId } from '../auth/require-auth';
 import { sendProblem, validationErrors } from '../http/problem';
 import type { LeaderboardService } from './leaderboard-service';
-
-/**
- * `/v1/challenges` — starting a perfect-run challenge. Mounted behind
- * `requireAuth`: a challenge belongs to the player who started it.
- */
-export function challengesRouter(leaderboard: LeaderboardService): Router {
-  const router = Router();
-
-  router.post('/', async (request, response) => {
-    const parsed = startChallengeRequestSchema.safeParse(request.body);
-    if (!parsed.success) {
-      sendProblem(response, {
-        status: 400,
-        title: 'Invalid challenge request',
-        errors: validationErrors(parsed.error),
-      });
-      return;
-    }
-    const challenge = await leaderboard.startChallenge(
-      currentUserId(response),
-      parsed.data.board,
-    );
-    response.setHeader('Cache-Control', 'no-store');
-    response.status(201).json(challenge);
-  });
-
-  return router;
-}
 
 /**
  * `/v1/leaderboards/:board` — public: the rankings are shown to everyone,

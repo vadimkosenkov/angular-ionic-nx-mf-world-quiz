@@ -1,5 +1,8 @@
+// The action is in the page now, under the last choice, so the page needs
+// no room kept free for a bar floating over it -- only the ordinary gap a
+// scrolling page leaves above the tab bar.
 .setup {
-  padding-bottom: var(--wq-action-bar-clearance);
+  padding-bottom: var(--wq-space-6);
 }
 
 // While the tour runs every section has to be able to reach the top of the
@@ -13,111 +16,44 @@
   }
 }
 
-// The quiz type and the difficulty as tiles, side by side: a tile has room
-// for what the choice actually means -- what the quiz asks for and how far
-// the player has got, or how an answer is given -- which is what makes the
-// choice, rather than the word "Capitals" or "Hard".
-//
-// The two tiles always share a height, so the mastery line of one sits level
-// with the other's. The row gives them that: the item stretches, and the
-// button fills it.
-.tiles li {
+// A section heading with an "i" beside it: the two sit on one line, and the
+// button keeps the heading's own line height rather than growing it.
+.wq-section-title {
   display: flex;
-}
+  align-items: center;
+  gap: var(--wq-space-1);
 
-.tiles .tile {
-  display: flex;
-  aspect-ratio: 1;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--wq-space-2);
-  padding: var(--wq-space-4);
-}
-
-// A square works on a phone, where half the width is about as wide as the
-// three lines in it are tall. A tile is always half the page's column, so
-// the square grows with the window: on a 600px one it is already 275px tall
-// and on the widest page 340px -- a panel with a hole in the middle. Past
-// phone width the tile takes the height its content asks for instead.
-//
-// The breakpoint is the phone's own width (the widest is 430px), not the
-// 768px the chrome uses, because what is too tall here is the column, and
-// the column outgrows the phone long before the layout changes.
-@media (min-width: 480px) {
-  .tiles .tile {
-    aspect-ratio: auto;
+  // The button it scales is inside that component, out of reach of a rule
+  // written outside, so the size travels as a custom property — and from a
+  // selector that beats the component's own `:host` (design-system.md).
+  wq-info-button {
+    --wq-info-size: 24px;
   }
 }
 
-.tile-icon {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--wq-radius-sm);
-  background: var(--wq-color-surface-secondary);
-  font-size: 20px;
-}
-
-.tile.selected .tile-icon {
-  background: var(--wq-color-primary);
-  color: var(--wq-color-on-primary);
-}
-
-.tile-note {
-  font-weight: 400;
-  font-size: var(--wq-font-size-caption);
-  color: var(--wq-color-text-secondary);
-}
-
-// Pushed to the foot of the tile, so the two tiles agree whatever the
-// length of the line above it.
-.tile-mastery {
-  margin-block-start: auto;
-  font-weight: 400;
-  font-size: var(--wq-font-size-caption);
-  color: var(--wq-color-text-secondary);
-}
-
-.tile.selected .tile-note,
-.tile.selected .tile-mastery {
-  color: inherit;
-  opacity: 0.85;
-}
-
-.mode {
+// The mode's name and, on the two that play against everyone else, the mark
+// that says so. A pill rather than a heading over a group of rows: the fact
+// belongs to the row it is true of, and four equal rows stay one list.
+.mode-name {
   display: flex;
   align-items: center;
-  gap: var(--wq-space-4);
+  gap: var(--wq-space-2);
 }
 
-.mode-icon {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--wq-radius-sm);
-  background: var(--wq-color-surface-secondary);
-  font-size: 20px;
+.mode-tag {
+  padding: 2px var(--wq-space-2);
+  border-radius: var(--wq-radius-pill);
+  background: var(--wq-color-primary-container);
+  color: var(--wq-color-on-primary-container);
+  font-size: var(--wq-font-size-caption);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
-.mode.selected .mode-icon {
+// On the chosen row the container colour is the row's own background, so
+// the pill would disappear into it; it takes the filled colours instead.
+.wq-option.selected .mode-tag {
   background: var(--wq-color-primary);
   color: var(--wq-color-on-primary);
-}
-
-.mode-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.mode-hint {
-  font-weight: 400;
-  font-size: var(--wq-font-size-caption);
-  color: var(--wq-color-text-secondary);
-}
-
-.mode.selected .mode-hint {
-  color: inherit;
-  opacity: 0.85;
 }

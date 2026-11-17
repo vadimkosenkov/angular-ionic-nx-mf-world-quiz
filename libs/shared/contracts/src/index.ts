@@ -44,9 +44,6 @@ export type {
   User,
 } from './lib/auth';
 export {
-  challengeOutcomeSchema,
-  challengeSchema,
-  CHALLENGE_UNRANKED_REASONS,
   DEFAULT_LEADERBOARD_SIZE,
   LEADERBOARD_BOARD_IDS,
   leaderboardBoardIdSchema,
@@ -54,17 +51,16 @@ export {
   leaderboardQuerySchema,
   leaderboardSchema,
   MAX_LEADERBOARD_SIZE,
+  myRecordSchema,
   myRecordsSchema,
   nicknameSchema,
-  startChallengeRequestSchema,
+  rankedOutcomeSchema,
   updateProfileRequestSchema,
 } from './lib/leaderboard';
 export type {
-  Challenge,
-  ChallengeOutcome,
-  ChallengeUnrankedReason,
   Leaderboard,
+  MyRecord,
   MyRecords,
-  StartChallengeRequest,
+  RankedOutcome,
   UpdateProfileRequest,
 } from './lib/leaderboard';

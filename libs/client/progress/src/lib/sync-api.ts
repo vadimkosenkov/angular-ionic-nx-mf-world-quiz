@@ -21,8 +21,8 @@ export class SyncApi {
 
   /**
    * Records a session; a retry of the same request is answered 200 with the
-   * stored result. The result carries the server's grading and, for a
-   * challenge, its verdict.
+   * stored result. The result carries the server's grading and, when the run
+   * earned one, its place on a public board.
    */
   async submit(request: SubmitSessionRequest): Promise<SessionResult> {
     const body = await firstValueFrom(

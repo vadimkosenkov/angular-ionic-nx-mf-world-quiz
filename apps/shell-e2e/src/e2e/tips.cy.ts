@@ -5,6 +5,16 @@
  */
 import { expectAccessible } from '../support/accessibility';
 
+/** Ionic scrolls inside `ion-content`'s shadow root, not the window. */
+const scrollPageToEnd = () =>
+  cy.get('ion-content:visible').then(([content]) =>
+    (
+      content as HTMLElement & {
+        scrollToBottom(duration: number): Promise<void>;
+      }
+    ).scrollToBottom(0),
+  );
+
 const tour = () => cy.get('[data-testid="tour-step"]');
 const next = () => cy.get('[data-testid="tour-next"]');
 const section = (step: string) => cy.get(`[data-tour="${step}"]`);
@@ -104,9 +114,11 @@ describe('first-run hints', () => {
 
     // The device remembers, so a new round does not start with the tour.
     cy.visit('/quiz/setup?category=flags');
-    cy.get('[data-testid="setup-start"]', { timeout: 20_000 }).should(
-      'be.visible',
-    );
+    cy.get('[data-testid="setup-start"]', { timeout: 20_000 }).should('exist');
+    // The action is in the page now, under the last choice, so reaching it
+    // means scrolling to the end of the page.
+    scrollPageToEnd();
+    cy.get('[data-testid="setup-start"]').should('be.visible');
     tour().should('not.exist');
   });
 
@@ -129,9 +141,9 @@ describe('first-run hints', () => {
     toggle().click({ scrollBehavior: 'center' });
 
     cy.visit('/quiz/setup?category=capitals');
-    cy.get('[data-testid="setup-start"]', { timeout: 20_000 }).should(
-      'be.visible',
-    );
+    cy.get('[data-testid="setup-start"]', { timeout: 20_000 }).should('exist');
+    scrollPageToEnd();
+    cy.get('[data-testid="setup-start"]').should('be.visible');
     tour().should('not.exist');
   });
 });

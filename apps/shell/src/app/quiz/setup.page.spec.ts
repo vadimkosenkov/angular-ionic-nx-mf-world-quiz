@@ -74,6 +74,30 @@ describe('QuizSetupPage', () => {
     expect(played).toEqual(['start']);
   });
 
+  it('marks the modes that play against everyone else, and lists them first', async () => {
+    await renderSetup();
+
+    // Marked rows scattered through the list read as two facts; at the top
+    // the mark is read once.
+    expect(
+      [...screen.getByTestId('setup-mode').querySelectorAll('button')].map(
+        (button) => button.getAttribute('data-testid'),
+      ),
+    ).toEqual([
+      'setup-mode-fixed',
+      'setup-mode-timed',
+      'setup-mode-endless',
+      'setup-mode-practice',
+    ]);
+
+    // The fact belongs on the row it is true of: four equal rows stay one
+    // list, and the two ranked ones say so.
+    expect(screen.getByTestId('ranked-fixed').textContent).toContain('Ranked');
+    expect(screen.getByTestId('ranked-timed').textContent).toContain('Ranked');
+    expect(screen.queryByTestId('ranked-endless')).toBeNull();
+    expect(screen.queryByTestId('ranked-practice')).toBeNull();
+  });
+
   it('offers every region, difficulty and mode from the domain', async () => {
     await renderSetup();
 

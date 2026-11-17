@@ -74,8 +74,8 @@ export interface QuestionSourceOptions {
 /**
  * Lazily generates the questions of one session from its seed.
  *
- * The pool is shuffled into a "cycle". Fixed sessions and challenges take
- * the first `length` questions of cycle 0, so no country repeats. Endless and
+ * The pool is shuffled into a "cycle". Fixed sessions take the first
+ * `length` questions of cycle 0, so no country repeats. Endless and
  * Timed sessions continue with a freshly shuffled cycle whenever the pool is
  * exhausted, and never ask the same country twice in a row across a boundary.
  */

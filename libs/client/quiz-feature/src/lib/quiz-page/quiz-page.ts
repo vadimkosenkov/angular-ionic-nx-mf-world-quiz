@@ -24,14 +24,13 @@ import {
   type QuizSessionOutcome,
 } from '@world-quiz/client/quiz-ports';
 import {
-  CHALLENGE_MODE,
   countriesInScope,
   type CountryCode,
   createQuizEngine,
   DEFAULT_FIXED_QUESTION_COUNT,
   isDifficulty,
+  isQuizMode,
   isQuizScope,
-  isTrainingMode,
   type QuizCategory,
   type QuizConfig,
   type QuizSession,
@@ -39,10 +38,7 @@ import {
 } from '@world-quiz/quiz/domain';
 
 import { QuizPlay } from '../quiz-play/quiz-play';
-import {
-  type ChallengeResult,
-  QuizResults,
-} from '../quiz-results/quiz-results';
+import { type BoardPlace, QuizResults } from '../quiz-results/quiz-results';
 
 /** The query value that starts Practice Mistakes. */
 export const PRACTICE_MODE = 'practice';
@@ -65,10 +61,10 @@ interface FinishedQuiz {
  * is deep-linkable and reloading replays the same configuration. The remote
  * owns the quiz; it does not know how progress is stored.
  *
- * A leaderboard challenge comes as `mode=challenge` with the `challenge` id
- * and the `seed` the server issued for it: the whole World set, played with
- * exactly that seed, and handed to the host with the challenge id. Without
- * both, `mode=challenge` falls back to a training quiz.
+ * Any game in a ranked mode can reach a public board — the board of its own
+ * four settings (docs/domain/leaderboard.md) — so there is nothing to ask the
+ * server for before playing: the API grades the session it is sent and
+ * answers with the place it earned, which this page shows on the results.
  *
  * Practice Mistakes is `mode=practice`: a Quick round over the countries the
  * player still has to review in this category (and scope), read from the
@@ -98,7 +94,7 @@ interface FinishedQuiz {
             [config]="config()"
             [summary]="result.summary"
             [outcome]="result.outcome"
-            [challenge]="challengeResult()"
+            [place]="boardPlace()"
             (playAgain)="playAgain()"
             (exited)="exit()"
           />
@@ -179,16 +175,6 @@ export class QuizPage implements ViewDidLeave {
   readonly difficulty = input('easy');
   readonly mode = input('fixed');
   readonly count = input<string | undefined>(undefined);
-  /** Leaderboard challenges: the server's challenge id and seed. */
-  readonly challenge = input<string | undefined>(undefined);
-  readonly seed = input<string | undefined>(undefined);
-
-  /** The challenge this page plays, if the URL describes a complete one. */
-  private readonly challengeRun = computed(() => {
-    const id = this.challenge();
-    const seed = this.seed();
-    return this.mode() === CHALLENGE_MODE && id && seed ? { id, seed } : null;
-  });
 
   /**
    * Practice Mistakes: the countries to review, taken when the round starts
@@ -222,20 +208,11 @@ export class QuizPage implements ViewDidLeave {
         countryCodes: practice,
       };
     }
-    if (this.challengeRun()) {
-      const difficulty = this.difficulty();
-      return {
-        category,
-        difficulty: isDifficulty(difficulty) ? difficulty : 'easy',
-        mode: CHALLENGE_MODE,
-        scope: 'world',
-      };
-    }
     const scope = this.scope();
     const difficulty = this.difficulty();
     const mode = this.mode();
     const requested = Number(this.count() ?? DEFAULT_FIXED_QUESTION_COUNT);
-    const resolvedMode = isTrainingMode(mode) ? mode : 'fixed';
+    const resolvedMode = isQuizMode(mode) ? mode : 'fixed';
 
     return {
       category,
@@ -255,36 +232,34 @@ export class QuizPage implements ViewDidLeave {
     };
   });
 
-  /** A new seed per training session: random questions, but reproducible. */
-  private readonly trainingSeed = signal(crypto.randomUUID());
-  protected readonly playSeed = computed(
-    () => this.challengeRun()?.seed ?? this.trainingSeed(),
-  );
+  /**
+   * A new seed per session: random questions, but reproducible — the server
+   * regenerates them from the seed to grade the run (quiz-engine.md). Every
+   * run draws its own, so two players are not asked the same questions, which
+   * is what the boards say of themselves (docs/domain/leaderboard.md).
+   */
+  private readonly runSeed = signal(crypto.randomUUID());
+  protected readonly playSeed = this.runSeed.asReadonly();
   protected readonly finished = signal<FinishedQuiz | null>(null);
-  /** The server's verdict on a challenge run, as it arrives. */
-  protected readonly challengeResult = signal<ChallengeResult | null>(null);
+  /** The place the run earned on a public board, as it arrives. */
+  protected readonly boardPlace = signal<BoardPlace | null>(null);
 
   protected onFinished(session: QuizSession): void {
     const summary = this.engine.summarize(session);
-    const challenge = this.challengeRun();
-    const outcome = this.results.submit(
-      session,
-      summary,
-      challenge ? { challengeId: challenge.id } : undefined,
-    );
+    const outcome = this.results.submit(session, summary);
     this.finished.set({ summary, outcome });
 
-    if (outcome.challenge) {
-      this.challengeResult.set({ status: 'checking' });
-      outcome.challenge
+    if (outcome.ranked) {
+      this.boardPlace.set({ status: 'checking' });
+      outcome.ranked
         .then((verdict) =>
-          this.challengeResult.set(
+          this.boardPlace.set(
             verdict
-              ? { status: 'done', outcome: verdict }
+              ? { status: 'ranked', outcome: verdict }
               : { status: 'unsent' },
           ),
         )
-        .catch(() => this.challengeResult.set({ status: 'unsent' }));
+        .catch(() => this.boardPlace.set({ status: 'unsent' }));
     }
   }
 
@@ -302,25 +277,16 @@ export class QuizPage implements ViewDidLeave {
     this.reset();
   }
 
-  /**
-   * A training quiz starts again with new questions. A challenge is played
-   * once: "again" means a new challenge, which the leaderboard starts.
-   */
+  /** Again means the same settings and new questions: a new seed. */
   protected playAgain(): void {
-    if (this.challengeRun()) {
-      void this.nav.navigateRoot('/leaderboard', {
-        animationDirection: 'back',
-      });
-      return;
-    }
     this.feedback.play('start');
     this.reset();
   }
 
   private reset(): void {
     this.finished.set(null);
-    this.challengeResult.set(null);
-    this.trainingSeed.set(crypto.randomUUID());
+    this.boardPlace.set(null);
+    this.runSeed.set(crypto.randomUUID());
     if (this.mode() === PRACTICE_MODE) {
       this.practiceCodes.set(
         this.mistakesToPractice(this.category(), this.scope()),

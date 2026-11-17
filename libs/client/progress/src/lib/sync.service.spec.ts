@@ -318,29 +318,26 @@ describe('SyncService', () => {
     const { sync, progress, http } = setup();
     const played = progress.recordSession(
       finishedSession([{ code: 'fr', correct: true }]),
-      { challengeId: 'b0e5c0de-0000-4000-8000-000000000009' },
     );
-    const verdict = {
-      board: 'capitals-easy' as const,
-      ranked: true,
-      completionTimeMs: 1_000,
-      personalRecord: true,
+    const place = {
+      board: 'capitals-easy-world-fixed' as const,
+      score: 10_000,
+      timeMs: 10_000,
       rank: 1,
+      players: 1,
+      personalRecord: true,
     };
 
     const answered = sync.resultOf(played.id);
     await answer(http, isPost, (request) => {
-      expect(request.request.body.challengeId).toBe(
-        'b0e5c0de-0000-4000-8000-000000000009',
-      );
-      request.flush(sessionResult(played.id, { challenge: verdict }), {
+      request.flush(sessionResult(played.id, { ranked: place }), {
         status: 201,
         statusText: 'Created',
       });
     });
     await answer(http, isHistory, (request) => request.flush(page([], null)));
 
-    expect((await answered)?.challenge).toEqual(verdict);
+    expect((await answered)?.ranked).toEqual(place);
 
     const offline = progress.recordSession(
       finishedSession([{ code: 'de', correct: true }]),

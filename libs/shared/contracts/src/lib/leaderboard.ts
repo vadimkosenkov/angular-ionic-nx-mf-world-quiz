@@ -1,90 +1,41 @@
-import type {
-  ChallengeIneligibility,
-  LeaderboardBoardId,
+import {
+  LEADERBOARD_BOARDS,
+  type LeaderboardBoardId,
 } from '@world-quiz/quiz/domain';
 import { z } from 'zod';
-import { uuidSchema } from './common';
 
 /**
- * The four boards (docs/domain/leaderboard.md). Written out because `z.enum`
- * needs a literal tuple; the check below fails to compile if the domain's
- * boards and this list ever differ.
+ * Every public board (docs/domain/leaderboard.md): category × difficulty ×
+ * region × ranked mode, 56 of them.
+ *
+ * Taken from the domain rather than written out: a list of 56 ids kept by hand
+ * would be a second source of truth, and the ids are generated from the four
+ * choices the quiz setup asks for anyway.
  */
-export const LEADERBOARD_BOARD_IDS = [
-  'capitals-easy',
-  'capitals-hard',
-  'flags-easy',
-  'flags-hard',
-] as const satisfies readonly LeaderboardBoardId[];
-
-type MissingBoards = Exclude<
-  LeaderboardBoardId,
-  (typeof LEADERBOARD_BOARD_IDS)[number]
->;
-const everyBoardListed: MissingBoards extends never ? true : never = true;
-void everyBoardListed;
+export const LEADERBOARD_BOARD_IDS: readonly LeaderboardBoardId[] =
+  LEADERBOARD_BOARDS.map((board) => board.id);
 
 export const leaderboardBoardIdSchema = z.enum(LEADERBOARD_BOARD_IDS);
 
-/** `POST /v1/challenges`: start a perfect-run challenge on a board. */
-export const startChallengeRequestSchema = z.strictObject({
-  board: leaderboardBoardIdSchema,
-});
-export type StartChallengeRequest = z.infer<typeof startChallengeRequestSchema>;
-
 /**
- * A challenge issued by the server. The client plays it with exactly this
- * `seed` and sends the session with `challengeId`; it can be played once,
- * until `expiresAt`.
+ * What a run achieved on its board, as part of the session's result.
+ *
+ * `score` is the board's metric — milliseconds on a quick-round board, correct
+ * answers on a Time attack board (`leaderboardMetricOf`) — and `timeMs` is the
+ * run's own length, which is the tie-break where the score is a count.
  */
-export const challengeSchema = z.object({
-  id: uuidSchema,
+export const rankedOutcomeSchema = z.object({
   board: leaderboardBoardIdSchema,
-  seed: z.string(),
-  issuedAt: z.iso.datetime(),
-  expiresAt: z.iso.datetime(),
-});
-export type Challenge = z.infer<typeof challengeSchema>;
-
-/**
- * Why a challenge run is not ranked: the domain's eligibility rules, and the
- * server's timing checks:
- * - `expired`: sent after the challenge's lifetime;
- * - `late`: the run's time and the server's window (issued → received)
- *   differ by more than the tolerance, e.g. the result was sent later;
- * - `implausible-time`: the run claims more time than has passed.
- */
-export const CHALLENGE_UNRANKED_REASONS = [
-  'not-finished',
-  'incomplete',
-  'has-incorrect-answers',
-  'invalid-question-set',
-  'expired',
-  'late',
-  'implausible-time',
-] as const satisfies readonly (
-  | Exclude<ChallengeIneligibility, 'not-a-challenge'>
-  | 'expired'
-  | 'late'
-  | 'implausible-time'
-)[];
-export type ChallengeUnrankedReason =
-  (typeof CHALLENGE_UNRANKED_REASONS)[number];
-
-/** What a recorded challenge run achieved, in the session result. */
-export const challengeOutcomeSchema = z.object({
-  board: leaderboardBoardIdSchema,
-  ranked: z.boolean(),
-  /** Why it is not ranked; absent when it is. */
-  reason: z.enum(CHALLENGE_UNRANKED_REASONS).optional(),
-  /** The run's time (first question to last answer), when it has one. */
-  completionTimeMs: z.int().nonnegative().nullable(),
-  /** The run beat the player's previous best on this board. */
+  score: z.int().nonnegative(),
+  timeMs: z.int().nonnegative(),
+  /** The player's rank on the board now, counting this run. */
+  rank: z.int().positive(),
+  /** How many players have a ranked run on the board. */
+  players: z.int().positive(),
+  /** The run beat the player's own previous best on this board. */
   personalRecord: z.boolean(),
-  /** The player's current rank on the board, if they have a ranked run. */
-  rank: z.int().positive().nullable(),
 });
-export type ChallengeOutcome = z.infer<typeof challengeOutcomeSchema>;
+export type RankedOutcome = z.infer<typeof rankedOutcomeSchema>;
 
 export const MAX_LEADERBOARD_SIZE = 100;
 export const DEFAULT_LEADERBOARD_SIZE = 50;
@@ -106,7 +57,10 @@ export const leaderboardQuerySchema = z.strictObject({
 export const leaderboardEntrySchema = z.object({
   rank: z.int().positive(),
   nickname: z.string(),
-  completionTimeMs: z.int().nonnegative(),
+  /** The board's metric: milliseconds, or correct answers. */
+  score: z.int().nonnegative(),
+  /** The run's own length, shown beside a score that counts answers. */
+  timeMs: z.int().nonnegative(),
   recordedAt: z.iso.datetime(),
 });
 
@@ -114,22 +68,30 @@ export const leaderboardSchema = z.object({
   board: leaderboardBoardIdSchema,
   /** Players with a ranked run on this board. */
   players: z.int().nonnegative(),
-  /** The fastest players first, one entry each. */
+  /** The best players first, one entry each. */
   entries: z.array(leaderboardEntrySchema),
 });
 export type Leaderboard = z.infer<typeof leaderboardSchema>;
 
-/** `GET /v1/me/records`: the player's best ranked run per board. */
+/**
+ * `GET /v1/me/records`: the player's best ranked run per board, with the rank
+ * it holds. This is also the player's own row on a board they are not high
+ * enough to appear in.
+ */
+export const myRecordSchema = z.object({
+  board: leaderboardBoardIdSchema,
+  /** The player's own public name, so their row reads like every other. */
+  nickname: z.string(),
+  rank: z.int().positive(),
+  players: z.int().positive(),
+  score: z.int().nonnegative(),
+  timeMs: z.int().nonnegative(),
+  recordedAt: z.iso.datetime(),
+});
+export type MyRecord = z.infer<typeof myRecordSchema>;
+
 export const myRecordsSchema = z.object({
-  records: z.array(
-    z.object({
-      board: leaderboardBoardIdSchema,
-      rank: z.int().positive(),
-      players: z.int().positive(),
-      completionTimeMs: z.int().nonnegative(),
-      recordedAt: z.iso.datetime(),
-    }),
-  ),
+  records: z.array(myRecordSchema),
 });
 export type MyRecords = z.infer<typeof myRecordsSchema>;
 

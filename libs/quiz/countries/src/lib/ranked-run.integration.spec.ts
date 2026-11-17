@@ -1,38 +1,40 @@
 import type { QuizConfig, SessionRecord } from '@world-quiz/quiz/domain';
 import {
   createQuizEngine,
-  evaluateChallengeRun,
+  DEFAULT_FIXED_QUESTION_COUNT,
+  evaluateRankedRun,
   indexCountriesByCode,
 } from '@world-quiz/quiz/domain';
 import { COUNTRIES } from './countries.data';
 
 /**
- * End-to-end domain scenario on the real dataset: a client plays a full
- * Hard "perfect run" in Russian, and the server re-validates the submitted
- * record from scratch before ranking it.
+ * End-to-end domain scenario on the real dataset: a player plays a flawless
+ * Hard quick round over Europe in Russian, and the server re-validates the
+ * uploaded record from scratch before putting it on a board.
  */
-describe('leaderboard challenge on the real dataset', () => {
+describe('a ranked run on the real dataset', () => {
   const engine = createQuizEngine(COUNTRIES);
   const countries = indexCountriesByCode(COUNTRIES);
   const config: QuizConfig = {
     category: 'flags',
     difficulty: 'hard',
-    mode: 'challenge',
-    scope: 'world',
+    mode: 'fixed',
+    scope: 'europe',
   };
   const T0 = Date.UTC(2026, 8, 16);
 
-  it('accepts a perfect 195-question run after server-side replay', () => {
+  it('ranks a flawless quick round after a server-side replay', () => {
     const started = engine.start(config, {
-      seed: 'challenge-2026-09-16',
+      seed: 'europe-fast',
       startedAt: T0,
     });
     if (!started.ok) throw new Error(started.error);
 
     let session = started.value;
     const submissions: SessionRecord['submissions'][number][] = [];
-    for (let i = 0; i < COUNTRIES.length; i++) {
-      const question = engine.currentQuestion(session)!;
+    for (let i = 0; i < DEFAULT_FIXED_QUESTION_COUNT; i++) {
+      const question = engine.currentQuestion(session);
+      if (!question) throw new Error('the round ended early');
       const answer = {
         kind: 'text',
         text: countries.get(question.countryCode)!.name.ru,
@@ -57,36 +59,41 @@ describe('leaderboard challenge on the real dataset', () => {
     // What the server does:
     const replayed = engine.replay(record);
     if (!replayed.ok) throw new Error(JSON.stringify(replayed.error));
-    const evaluation = evaluateChallengeRun(
+    const evaluation = evaluateRankedRun(
       replayed.value,
       engine.summarize(replayed.value),
-      COUNTRIES,
     );
 
     expect(evaluation).toEqual({
       eligible: true,
       board: {
-        id: 'flags-hard',
+        id: 'flags-hard-europe-fixed',
         category: 'flags',
         difficulty: 'hard',
-        scope: 'world',
+        scope: 'europe',
+        mode: 'fixed',
+        metric: 'time',
       },
-      completionTimeMs: 195 * 2_000,
+      score: {
+        value: DEFAULT_FIXED_QUESTION_COUNT * 2_000,
+        timeMs: DEFAULT_FIXED_QUESTION_COUNT * 2_000,
+      },
     });
   });
 
-  it('rejects the same run if one answer is wrong', () => {
+  it('keeps the same run off the board if one answer is wrong', () => {
     const started = engine.start(config, {
-      seed: 'challenge-wrong',
+      seed: 'europe-slip',
       startedAt: T0,
     });
     if (!started.ok) throw new Error(started.error);
 
     let session = started.value;
-    for (let i = 0; i < COUNTRIES.length; i++) {
-      const question = engine.currentQuestion(session)!;
+    for (let i = 0; i < DEFAULT_FIXED_QUESTION_COUNT; i++) {
+      const question = engine.currentQuestion(session);
+      if (!question) throw new Error('the round ended early');
       const text =
-        i === 100 ? 'Атлантида' : countries.get(question.countryCode)!.name.en;
+        i === 4 ? 'Атлантида' : countries.get(question.countryCode)!.name.en;
       const result = engine.submitAnswer(
         session,
         { kind: 'text', text },
@@ -96,9 +103,7 @@ describe('leaderboard challenge on the real dataset', () => {
       session = result.session;
     }
 
-    expect(
-      evaluateChallengeRun(session, engine.summarize(session), COUNTRIES),
-    ).toEqual({
+    expect(evaluateRankedRun(session, engine.summarize(session))).toEqual({
       eligible: false,
       reason: 'has-incorrect-answers',
     });

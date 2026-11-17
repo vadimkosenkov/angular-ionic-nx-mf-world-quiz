@@ -30,16 +30,16 @@
             [attr.data-testid]="'setup-category-' + item"
             (click)="selectCategory(item)"
           >
-            <span class="tile-icon" aria-hidden="true">
+            <span class="wq-option-icon" aria-hidden="true">
               <ion-icon [name]="categoryIcons[item]" />
             </span>
-            <span class="tile-name">
+            <span class="wq-option-name">
               {{ 'categories.' + item | transloco }}
             </span>
-            <span class="tile-note">
+            <span class="wq-option-note">
               {{ 'setup.categories.' + item | transloco }}
             </span>
-            <span class="tile-mastery">
+            <span class="wq-option-footnote">
               {{ 'achievements.progress' | transloco : { mastered:
               mastery.mastered, total: mastery.total } }}
             </span>
@@ -90,13 +90,13 @@
             [attr.data-testid]="'setup-difficulty-' + item"
             (click)="selectDifficulty(item)"
           >
-            <span class="tile-icon" aria-hidden="true">
+            <span class="wq-option-icon" aria-hidden="true">
               <ion-icon [name]="difficultyIcons[item]" />
             </span>
-            <span class="tile-name">
+            <span class="wq-option-name">
               {{ 'difficulty.' + item | transloco }}
             </span>
-            <span class="tile-note">
+            <span class="wq-option-note">
               {{ 'setup.difficultyHint.' + item | transloco }}
             </span>
           </button>
@@ -113,25 +113,45 @@
     >
       <h2 id="setup-mode" class="wq-section-title">
         {{ 'setup.mode' | transloco }}
+        <!-- Which modes are ranked belongs where a mode is chosen, not on
+             the leaderboard screen: by the time a player is looking at a
+             board, the run is already played. -->
+        <wq-info-button
+          data-testid="mode-info"
+          [label]="'setup.modeInfoLabel' | transloco"
+          [text]="'setup.modeInfo' | transloco"
+        />
       </h2>
+      <!-- Which modes are ranked is a mark on the two rows that are, not a
+           heading over them: four equal rows stay one list to scan, and the
+           fact belongs on the row it is true of. -->
       <ul class="wq-options" data-testid="setup-mode">
         @for (item of modes; track item) {
         <li>
           <button
             type="button"
-            class="wq-option mode"
+            class="wq-option row"
             [class.selected]="selectedMode() === item"
             [attr.aria-pressed]="selectedMode() === item"
             [attr.data-testid]="'setup-mode-' + item"
             [disabled]="item === 'practice' && mistakes() === 0"
             (click)="selectMode(item)"
           >
-            <span class="mode-icon" aria-hidden="true">
+            <span class="wq-option-icon" aria-hidden="true">
               <ion-icon [name]="modeIcons[item]" />
             </span>
-            <span class="mode-text">
-              <span class="mode-name">{{ 'modes.' + item | transloco }}</span>
-              <span class="mode-hint">
+            <span class="wq-option-text">
+              <span class="mode-name">
+                <span class="wq-option-name">
+                  {{ 'modes.' + item | transloco }}
+                </span>
+                @if (isRanked(item)) {
+                <span class="mode-tag" [attr.data-testid]="'ranked-' + item">
+                  {{ 'setup.rankedBadge' | transloco }}
+                </span>
+                }
+              </span>
+              <span class="wq-option-note">
                 {{ 'setup.modeHint.' + item | transloco: modeHintParams() }}
               </span>
             </span>
@@ -140,14 +160,32 @@
         }
       </ul>
     </section>
+
+    <!-- The action sits under the last choice, not in a bar pinned to the
+         foot of the screen: a button that is always on screen invites a
+         player to press it before they have scrolled past the choices it
+         uses. The leaderboard's "Show the board" is the same button in the
+         same place, for the same reason. It is hidden while the tour runs,
+         which is what keeps a quiz from starting mid-explanation. -->
+    @if (tourStep() === null) {
+    <ion-button
+      class="wq-glass-button"
+      expand="block"
+      data-testid="setup-start"
+      [disabled]="!canStart()"
+      (click)="start()"
+    >
+      {{ 'setup.start' | transloco }}
+    </ion-button>
+    }
   </div>
 </ion-content>
 
 @if (tourStep(); as step) {
 <!-- The screen is dimmed except the section this step is about, and the
      step's card stands next to it. Both are placed from one measurement of
-     that section, which follows it while the page scrolls. The card also
-     takes the place of the page's action: the quiz cannot start until the
+     that section, which follows it while the page scrolls. The page's own
+     Start button is hidden while it runs: the quiz cannot start until the
      player has been through the four choices it explains. Both leave with
      the page (`wqFadesWithPage`): Ionic keeps a page alive for the length
      of its transition, so without it the tour stayed on top of the screen
@@ -164,19 +202,4 @@
   [lastLabel]="'tips.gotIt' | transloco"
   (advanced)="advanceTour()"
 />
-} @else {
-<!-- The primary action floats above the content in the tab bar's glass
-     material. It is deliberately not inside an ion-toolbar: Ionic paints a
-     solid button there in the toolbar's own (here transparent) colour. -->
-<div class="wq-action-bar" wqFadesWithPage>
-  <ion-button
-    class="wq-glass-button"
-    expand="block"
-    data-testid="setup-start"
-    [disabled]="!canStart()"
-    (click)="start()"
-  >
-    {{ 'setup.start' | transloco }}
-  </ion-button>
-</div>
 }

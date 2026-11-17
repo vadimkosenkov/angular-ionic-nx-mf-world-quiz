@@ -15,7 +15,6 @@ import type {
   QuizScope,
 } from './vocabulary';
 import {
-  CHALLENGE_MODE,
   DEFAULT_FIXED_QUESTION_COUNT,
   TIMED_MODE_DURATION_MS,
 } from './vocabulary';
@@ -27,7 +26,7 @@ export interface QuizConfig {
   readonly scope: QuizScope;
   /** Fixed mode only. Defaults to 10; capped at the number of available countries. */
   readonly questionCount?: number;
-  /** Restricts the pool to these countries (e.g. Practice Mistakes). Training modes only. */
+  /** Restricts the pool to these countries (Practice Mistakes). Never ranked. */
   readonly countryCodes?: readonly CountryCode[];
 }
 
@@ -35,9 +34,7 @@ export type QuizConfigError =
   | 'empty-pool'
   | 'invalid-question-count'
   | 'question-count-requires-fixed-mode'
-  | 'unknown-country'
-  | 'challenge-requires-world-scope'
-  | 'challenge-cannot-be-restricted';
+  | 'unknown-country';
 
 export type SubmittedAnswer =
   | { readonly kind: 'choice'; readonly countryCode: CountryCode }
@@ -207,11 +204,6 @@ export function createQuizEngine(dataset: CountryDataset): QuizEngine {
     { pool: readonly Country[]; length: number | null },
     QuizConfigError
   > => {
-    if (config.mode === CHALLENGE_MODE) {
-      if (config.scope !== 'world')
-        return err('challenge-requires-world-scope');
-      if (config.countryCodes) return err('challenge-cannot-be-restricted');
-    }
     if (config.questionCount !== undefined && config.mode !== 'fixed') {
       return err('question-count-requires-fixed-mode');
     }
@@ -235,8 +227,6 @@ export function createQuizEngine(dataset: CountryDataset): QuizEngine {
         }
         return ok({ pool, length: Math.min(requested, pool.length) });
       }
-      case CHALLENGE_MODE:
-        return ok({ pool, length: pool.length });
       case 'endless':
       case 'timed':
         return ok({ pool, length: null });

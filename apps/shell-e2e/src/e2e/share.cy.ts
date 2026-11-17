@@ -15,10 +15,12 @@ const RECORD_CARD_FILE = 'dist/share-card/record-card.png';
 const RECORDS = {
   records: [
     {
-      board: 'capitals-easy',
+      board: 'capitals-easy-world-fixed',
+      nickname: 'Ann the Explorer',
       rank: 2,
       players: 3,
-      completionTimeMs: 247_300,
+      score: 247_300,
+      timeMs: 247_300,
       recordedAt: '2026-11-09T10:05:00.000Z',
     },
   ],
@@ -98,7 +100,9 @@ describe('sharing', () => {
       .find('ion-segment-button')
       .last()
       .click({ scrollBehavior: 'center' });
-    byTestId('share-record-capitals-easy').click({ scrollBehavior: 'center' });
+    byTestId('share-record-capitals-easy-world-fixed').click({
+      scrollBehavior: 'center',
+    });
 
     cy.window().its('sharedPayloads').should('have.length', 1);
     cy.window()
@@ -109,8 +113,7 @@ describe('sharing', () => {
       });
     cy.window()
       .its('sharedPayloads.0.text')
-      .should('contain', 'Perfect run in 4:07.3')
-      .and('contain', '#2 of 3');
+      .should('contain', '4:07.3 · #2 of 3');
 
     cy.window()
       .its('sharedPayloads.0.files.0')
