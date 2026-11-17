@@ -21,7 +21,10 @@ matter. It cannot tell whether the reading order makes sense, whether a
 label describes what the control does, or whether a quiz is playable with
 VoiceOver. Those are checked by hand, and the app is built for them:
 
-- one action per screen in the same place (`.wq-action-bar`);
+- one action per screen, and always the same button: in the page under the
+  last choice on a screen the player answers questions on (the quiz setup,
+  the leaderboard), in `.wq-action-bar` on a screen with nothing to read
+  first (the quiz, the results);
 - every icon-only control has an `aria-label`, every decorative image an
   empty `alt`;
 - the answer feedback is a `role="status"`, so it is announced without

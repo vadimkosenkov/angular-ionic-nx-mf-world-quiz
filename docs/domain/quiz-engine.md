@@ -23,16 +23,16 @@ code to re-validate submitted sessions.
 
 ## Modes
 
-| Mode              | Length                                                                                | Ends when                                       | Ranked                                    |
-| ----------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------- | ----------------------------------------- |
-| **Fixed**         | `questionCount` (default 10), capped at the pool size, no repeats                     | last answer (`completed`) or `stop` (`stopped`) | no                                        |
-| **Endless**       | unlimited; the pool is reshuffled each cycle and never repeats a country back-to-back | `stop` (`stopped`)                              | no                                        |
-| **Timed**         | unlimited, like Endless                                                               | 60 s after start (`time-up`) or `stop`          | no                                        |
-| **Challenge**     | every country of the World scope exactly once                                         | last answer (`completed`) or `stop` (abandoned) | yes, see [leaderboard.md](leaderboard.md) |
-| Practice Mistakes | any training mode with `countryCodes` = the player's mistakes                         | as above                                        | no                                        |
+| Mode              | Length                                                                                | Ends when                                       | Ranked                                                |
+| ----------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------- | ----------------------------------------------------- |
+| **Fixed**         | `questionCount` (default 10), capped at the pool size, no repeats                     | last answer (`completed`) or `stop` (`stopped`) | yes when flawless and ten questions long, by its time |
+| **Endless**       | unlimited; the pool is reshuffled each cycle and never repeats a country back-to-back | `stop` (`stopped`)                              | no — no end to compare                                |
+| **Timed**         | unlimited, like Endless                                                               | 60 s after start (`time-up`) or `stop`          | yes when flawless, by how many answers it reached     |
+| Practice Mistakes | any mode with `countryCodes` = the player's mistakes                                  | as above                                        | no — a set only this player is asked                  |
 
-Invalid configurations are rejected with a typed error (for example
-`challenge-requires-world-scope`, `question-count-requires-fixed-mode`,
+What a board does with a finished run is [leaderboard.md](leaderboard.md); the
+engine itself knows nothing about boards. Invalid configurations are rejected
+with a typed error (for example `question-count-requires-fixed-mode`,
 `empty-pool`, `unknown-country`).
 
 ## Lifecycle
@@ -41,7 +41,7 @@ Invalid configurations are rejected with a typed error (for example
 stateDiagram-v2
   [*] --> active: start(config, seed, startedAt)
   active --> active: submitAnswer (not last)
-  active --> finished: submitAnswer (last of Fixed/Challenge) → completed
+  active --> finished: submitAnswer (last of Fixed) → completed
   active --> finished: stop(now) → stopped
   active --> finished: expire(now ≥ deadline) → time-up (Timed)
   finished --> [*]
@@ -77,9 +77,9 @@ Why it matters:
    re-grades every answer and re-applies the ending. A mismatch (a choice that
    was never offered, an answer after the timer, a "completed" session with
    missing answers) is rejected.
-3. **Comparable challenge runs:** runs with the same seed get the same questions
-   and choices. The server issues a fresh seed for every leaderboard challenge
-   ([leaderboard.md](leaderboard.md#comparability-server-issued-challenges)).
+3. **Every run draws its own seed**, so two players are never asked the same
+   questions — including on a public board, which says so plainly
+   ([leaderboard.md](leaderboard.md#luck-is-part-of-it-and-the-screen-says-so)).
 
 The generator is not cryptographically secure. Seeds are not secrets; see
 the trust model in [leaderboard.md](leaderboard.md).

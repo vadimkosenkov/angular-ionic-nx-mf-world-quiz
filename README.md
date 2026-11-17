@@ -16,12 +16,13 @@ Capacitor (iOS), Express 5, PostgreSQL** and a multi-level test strategy.
 > app). Every finished quiz is **stored on the device** (IndexedDB) and sent
 > to the account through an outbox; the API **re-grades it on the server**,
 > and every device of the player rebuilds the same progress from the
-> account's history. The API issues **perfect-run challenges** with its own
-> seed, ranks eligible runs by their checked time, and serves public boards
-> (nicknames only) and personal records. In the app, players start a
-> challenge from the Leaderboard tab, see their rank and personal record on
-> the results, browse the boards and their records, and choose their public
-> nickname. A separate **server-rendered site** (`apps/site`, English and
+> account's history. **Any flawless game competes**: a quick round or a time
+> attack reaches the public board of the four settings it was played with (56
+> boards), ranked by the server from the run it replayed itself, and the
+> results screen says which place it earned. The boards show nicknames only;
+> players browse them with the same four controls the quiz setup uses, see
+> their own row pinned wherever they stand, keep a record per board and
+> choose their public nickname. A separate **server-rendered site** (`apps/site`, English and
 > Russian) publishes the Privacy Policy, the Terms and the public
 > leaderboards. Countries answered wrongly can be practised from Home or the
 > quiz setup. Cypress journeys cover every mode, sign-in, sync, achievements,
@@ -52,7 +53,7 @@ How to operate it: [docs/deployment/runbook.md](docs/deployment/runbook.md).
 - **Easy:** choose from four options. **Hard:** type the answer or dictate it with the iOS keyboard. Answers are matched locally, typo-tolerant, in English and Russian.
 - **Training modes:** Fixed, Endless, Timed (60 s), Practice Mistakes, by region or worldwide.
 - **Mastery and achievements** track real learning progress per region.
-- **Global leaderboards** are _perfect-run challenges_: answer all 195 correctly, fastest time wins (4 boards).
+- **Global leaderboards** are fed by ordinary games: play a quick round or a time attack without a single mistake and it ranks on the board of its own category, region, difficulty and mode (56 boards).
 - **Offline-first:** play and progress work without a network; results sync later without duplicates.
 - **Sign in with Apple / Google**, light/dark themes, Liquid Glass-inspired UI.
 

@@ -8,16 +8,21 @@
 
 Pages that must be public, crawlable and readable without JavaScript:
 
-| URL                         | Render mode                     | Content                                         |
-| --------------------------- | ------------------------------- | ----------------------------------------------- |
-| `/`                         | server redirect                 | `302` to `/en` or `/ru` by `Accept-Language`    |
-| `/:lang`                    | **prerendered** (build time)    | what World Quiz is, links to the app and boards |
-| `/:lang/privacy`, `/terms`  | **prerendered**                 | Privacy Policy, Terms of Use                    |
-| `/:lang/leaderboard`        | redirect                        | → `/:lang/leaderboard/capitals-easy`            |
-| `/:lang/leaderboard/:board` | **server-rendered** per request | the board's ranking from the API                |
-| anything else               | server-rendered                 | `404` page                                      |
+| URL                         | Render mode                     | Content                                          |
+| --------------------------- | ------------------------------- | ------------------------------------------------ |
+| `/`                         | server redirect                 | `302` to `/en` or `/ru` by `Accept-Language`     |
+| `/:lang`                    | **prerendered** (build time)    | what World Quiz is, links to the app and boards  |
+| `/:lang/privacy`, `/terms`  | **prerendered**                 | Privacy Policy, Terms of Use                     |
+| `/:lang/leaderboard`        | redirect                        | → `/:lang/leaderboard/capitals-easy-world-fixed` |
+| `/:lang/leaderboard/:board` | **server-rendered** per request | the board's ranking from the API                 |
+| anything else               | server-rendered                 | `404` page                                       |
 
-`:lang` is `en` or `ru` (`canMatch`), `:board` one of the four boards.
+`:lang` is `en` or `ru` (`canMatch`), `:board` one of the 56 board ids
+(`<category>-<difficulty>-<region>-<mode>`). 56 links would be a wall, so the
+page carries four groups of links that change **one** setting at a time: every
+board keeps a real, crawlable URL, and the player moves between them the way
+they would move a control. The group labels are paragraphs, not headings —
+four headings for one picker read as four sections to a screen reader.
 
 ## Structure
 

@@ -17,11 +17,11 @@ client.
 | `random.ts`                 | Seeded PRNG, derived seeds, shuffling                                                                              | [quiz engine](../../../docs/domain/quiz-engine.md#determinism-seeds) |
 | `answer-matching.ts`        | Normalization, bounded edit distance, typo tolerance, ambiguity guard                                              | [answer matching](../../../docs/domain/answer-matching.md)           |
 | `questions.ts`              | Deterministic question order and Easy-mode choices                                                                 | [quiz engine](../../../docs/domain/quiz-engine.md)                   |
-| `session.ts`                | Immutable session engine for Fixed/Endless/Timed/Challenge, grading, server replay                                 | [quiz engine](../../../docs/domain/quiz-engine.md)                   |
+| `session.ts`                | Immutable session engine for Fixed/Endless/Timed, grading, server replay                                           | [quiz engine](../../../docs/domain/quiz-engine.md)                   |
 | `scoring.ts`                | Session summary                                                                                                    | [scoring](../../../docs/domain/scoring.md)                           |
 | `mastery.ts`, `progress.ts` | Mastery state machine, progress fold/rebuild, region progress, practice list                                       | [mastery](../../../docs/domain/mastery.md)                           |
 | `achievements.ts`           | 14 mastery achievements and unlock detection                                                                       | [achievements](../../../docs/domain/achievements.md)                 |
-| `leaderboard.ts`            | Challenge eligibility, ranking, personal bests                                                                     | [leaderboard](../../../docs/domain/leaderboard.md)                   |
+| `leaderboard.ts`            | Which runs reach a board, the one ranking key, ranking, personal bests                                             | [leaderboard](../../../docs/domain/leaderboard.md)                   |
 
 The dataset is **not** imported here; pass it in:
 

@@ -203,4 +203,5 @@ flowchart LR
 `quiz-domain` never imports the dataset: the engine receives it as a
 parameter (`createQuizEngine(COUNTRIES)`). This keeps the dependency acyclic,
 lets domain tests use a small fixture dataset, and lets the real 195-country
-dataset be tested in `quiz-countries`, including a full challenge replay.
+dataset be tested in `quiz-countries`, including a ranked run replayed
+end to end.

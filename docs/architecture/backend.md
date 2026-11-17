@@ -7,10 +7,11 @@
 > ✅ Phase 7b — the app signs in. ✅ Phase 8a — a player's history for
 > syncing progress between devices (`GET /v1/sessions`). ✅ Phase 8b — the
 > app sends its outbox and pulls the history ([ADR-006](../decisions/ADR-006-local-persistence.md)).
-> ✅ Phase 9a — leaderboard challenges with a server seed, ranked runs,
-> public boards, personal records and nicknames.
-> ✅ Phase 9b — the app plays challenges and shows boards and records.
-> 📐 The SSR site (Phase 9c).
+> ✅ Phase 9a/9b — public boards, personal records and nicknames.
+> ✅ Phase 9c — the SSR site reads the same boards.
+> ✅ Phase 25 — a board is the four settings a quiz is played with, and any
+> game in a ranked mode competes ([ADR-014](../decisions/ADR-014-ranked-boards.md));
+> `POST /v1/challenges` is gone.
 
 Why PostgreSQL, Drizzle and PGlite: [ADR-005](../decisions/ADR-005-database.md).
 Why this sign-in design: [ADR-010](../decisions/ADR-010-authentication.md).
@@ -47,10 +48,10 @@ apps/api/
       request-hash.ts      canonical JSON + SHA-256
       history-cursor.ts    opaque keyset cursor of the history
     leaderboard/
-      leaderboard.routes.ts  /v1/challenges, /v1/leaderboards/:board
-      leaderboard-service.ts issuing challenges, boards, records, a run's outcome
-      challenge-rules.ts     is a challenge run ranked (eligibility + timing)
-      leaderboard-repository.ts  challenges and the ranking queries
+      leaderboard.routes.ts  /v1/leaderboards/:board
+      leaderboard-service.ts boards, records, the place a run earned
+      ranked-run-rules.ts    does a replayed run belong on a board (domain + a plausibility floor)
+      leaderboard-repository.ts  the ranking queries
     testing/               test database, test API, fake identity provider, a helper that plays real sessions
 libs/shared/contracts/     Zod schemas of requests, responses and errors
 ```
@@ -156,44 +157,47 @@ GET /v1/sessions?after=<cursor>&limit=50
 - A page holds up to 100 sessions whatever their length; Endless sessions are
   capped at 1,000 answers each, so the worst page is large but bounded.
 
-## Leaderboards: challenges and records
+## Leaderboards: ranked runs and records
 
-Rules and the trust model: [leaderboard.md](../domain/leaderboard.md).
+Rules and the trust model: [leaderboard.md](../domain/leaderboard.md). A
+board is the four settings a quiz is played with — 56 of them — and there is
+nothing to start: an ordinary session in a ranked mode competes on the board
+of its own settings ([ADR-014](../decisions/ADR-014-ranked-boards.md)).
 
-| Endpoint                            | Auth   | Does                                                                                                                                                    |
-| ----------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `POST /v1/challenges {board}`       | Bearer | Issues a challenge: id, server seed (128 bits), `issuedAt`, `expiresAt` (3 h)                                                                           |
-| `POST /v1/sessions` + `challengeId` | Bearer | Records the challenge run; the result's `challenge` says ranked or why not, rank, record                                                                |
-| `GET /v1/leaderboards/:board`       | public | The fastest players (`limit` 1–100, default 50) and how many are ranked; `Cache-Control: public, max-age=0, must-revalidate` (always revalidated, ETag) |
-| `GET /v1/me/records`                | Bearer | The player's best ranked run per board, with rank and number of players                                                                                 |
-| `PATCH /v1/me {nickname}`           | Bearer | Sets the public name                                                                                                                                    |
+| Endpoint                      | Auth   | Does                                                                                                                                                           |
+| ----------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /v1/sessions`           | Bearer | Records any session; the result's `ranked` carries the board, score, time, rank, field size and whether it is a personal record — absent when it ranks nothing |
+| `GET /v1/leaderboards/:board` | public | The board's best players (`limit` 1–100, default 50) and how many are ranked; `Cache-Control: public, max-age=0, must-revalidate` (always revalidated, ETag)   |
+| `GET /v1/me/records`          | Bearer | The player's best ranked run per board, with their nickname, rank and the number of players                                                                    |
+| `PATCH /v1/me {nickname}`     | Bearer | Sets the public name                                                                                                                                           |
 
 ```mermaid
 sequenceDiagram
   participant C as App
   participant A as API
   participant DB as PostgreSQL
-  C->>A: POST /v1/challenges {board}
-  A->>DB: challenge (id, seed, issued_at)
-  A-->>C: {id, seed, expiresAt}
-  Note over C: plays the World set with that seed
-  C->>A: POST /v1/sessions {…, seed, challengeId}
-  A->>A: challenge is theirs, unplayed, same board and seed
-  A->>A: replay; eligible? run time within the server window?
-  A->>DB: session + answers + challenge verdict, one transaction
-  A-->>C: 201 {…, challenge: {ranked, rank, personalRecord}}
+  Note over C: plays a quick round or a time attack, with its own seed
+  C->>A: POST /v1/sessions {config, seed, timestamps, answers}
+  A->>A: replay and grade; evaluateRankedRun; refuse an impossible time
+  A->>DB: session + answers + the ranked run, one transaction
+  A->>DB: the player's place on that board (row_number over best-per-player)
+  A-->>C: 201 {…, ranked: {board, score, timeMs, rank, players, personalRecord}}
 ```
 
-- **One run per challenge.** The verdict is attached with
-  `UPDATE challenges … WHERE session_id IS NULL` inside the session's
-  transaction; a second session for the challenge rolls back and gets 422
-  `challenge-used`. A retry of the same session is idempotent and returns
-  the same outcome.
+- **One row per ranked run** (`leaderboard_runs`, keyed by the session), with
+  one ascending `rank_key` from the domain's `rankingKey()`: the time on a
+  board that ranks by time, the negated count on one that ranks by answers.
+  All 56 boards therefore share one `ORDER BY` and one index.
+- `personal_record` is decided against the player's best run at the time, and
+  stored, so the results screen can say "New personal record" without the
+  client working it out. The _current_ best is always a query.
 - **Unranked runs are still sessions**: they count for progress and history.
-- **Public board, private identities.** Entries carry rank, nickname, time
-  and the server's recording time — no user id.
-- Starting a challenge deletes the player's unplayed challenges that have
-  expired.
+  Nothing is written to `leaderboard_runs` for them.
+- **Public board, private identities.** Entries carry rank, nickname, score,
+  the run's time and the server's recording time — no user id. The board is
+  the same for everyone, which is what lets it be cached; the player's own
+  row comes from `/v1/me/records` and is matched by rank, which is unique.
+- A retry of the same session is idempotent and returns the same `ranked`.
 
 ## Signing in: `/v1/auth` and `/v1/me`
 
@@ -252,17 +256,17 @@ Every error is an [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) problem
 document (`application/problem+json`), described by `problemDetailsSchema` in
 `shared/contracts`:
 
-| Status | When                                                                                                                                                                                                                                                  |
-| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 400    | Body breaks the contract (with `errors: [{path, message}]`), malformed JSON, malformed id                                                                                                                                                             |
-| 401    | Missing, invalid or expired access token (`WWW-Authenticate: Bearer`); unverifiable ID token; invalid or reused refresh token; deleted account                                                                                                        |
-| 404    | Unknown session, leaderboard or route                                                                                                                                                                                                                 |
-| 409    | Session id already used by a different session                                                                                                                                                                                                        |
-| 413    | Body larger than 256 kB                                                                                                                                                                                                                               |
-| 422    | Well-formed session the server cannot verify; `type` names the reason, e.g. `urn:world-quiz:session-rejected:inconsistent-ending`; for challenges `challenge-missing`, `not-a-challenge`, `unknown-challenge`, `challenge-mismatch`, `challenge-used` |
-| 429    | Too many requests to `/v1/auth` from one client                                                                                                                                                                                                       |
-| 503    | Sign-in with a provider that has no client id configured                                                                                                                                                                                              |
-| 500    | Anything unexpected: logged on the server, generic message to the client                                                                                                                                                                              |
+| Status | When                                                                                                                                           |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| 400    | Body breaks the contract (with `errors: [{path, message}]`), malformed JSON, malformed id                                                      |
+| 401    | Missing, invalid or expired access token (`WWW-Authenticate: Bearer`); unverifiable ID token; invalid or reused refresh token; deleted account |
+| 404    | Unknown session, leaderboard or route                                                                                                          |
+| 409    | Session id already used by a different session                                                                                                 |
+| 413    | Body larger than 256 kB                                                                                                                        |
+| 422    | Well-formed session the server cannot verify; `type` names the reason, e.g. `urn:world-quiz:session-rejected:inconsistent-ending`              |
+| 429    | Too many requests to `/v1/auth` from one client                                                                                                |
+| 503    | Sign-in with a provider that has no client id configured                                                                                       |
+| 500    | Anything unexpected: logged on the server, generic message to the client                                                                       |
 
 ## Database
 
@@ -271,9 +275,9 @@ erDiagram
   users ||--o{ user_identities : "signs in with"
   users ||--o{ refresh_tokens : has
   users ||--o{ quiz_sessions : plays
-  users ||--o{ challenges : starts
+  users ||--o{ leaderboard_runs : ranks
   quiz_sessions ||--o{ quiz_answers : has
-  quiz_sessions |o--o| challenges : "plays (once)"
+  quiz_sessions |o--o| leaderboard_runs : "earns (at most one)"
   users {
     uuid id PK
     text display_name "from the provider; never public"
@@ -281,15 +285,13 @@ erDiagram
     text nickname "public name; null = default"
     timestamptz created_at
   }
-  challenges {
-    uuid id PK
+  leaderboard_runs {
+    uuid session_id PK, FK
     uuid user_id FK
-    text board
-    text seed "issued by the server"
-    timestamptz issued_at
-    uuid session_id FK, UK "null until played"
-    text outcome "ranked | why not"
-    int completion_ms
+    text board "the four settings"
+    int score "ms, or correct answers"
+    int time_ms "the run's own length"
+    int rank_key "one ascending key for every board"
     timestamptz recorded_at
     bool personal_record
   }

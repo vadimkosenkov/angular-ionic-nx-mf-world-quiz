@@ -103,7 +103,7 @@ type AnswerMatch = Exact | Typo | Incorrect;
 
 - **False accepts vs false rejects.** Tolerances are conservative; a player may
   occasionally see a near-miss rejected. That is preferred to accepting a wrong
-  country, especially for the perfect-run leaderboard.
+  country, especially where a single mistake costs a place on a board.
 - **Transliterations** such as "Moskva" are not accepted unless listed as aliases.
   Adding every transliteration would weaken the ambiguity guard.
 - **Aliases are curated data**, not algorithmic, so they can be reviewed.

@@ -63,15 +63,16 @@ Two details worth remembering:
 The remote knows three things about the world, and nothing else:
 
 1. **Its route** — it is mounted at whatever path the host chooses, and reads
-   its options from the query string (`scope`, `difficulty`, `mode`, `count`,
-   and for a leaderboard challenge `mode=challenge` with `challenge` and
-   `seed`; for Practice Mistakes `mode=practice`), bound to component inputs
-   by `withComponentInputBinding()`. A quiz is therefore a normal deep link.
+   its options from the query string (`scope`, `difficulty`, `mode`, `count`;
+   for Practice Mistakes `mode=practice`), bound to component inputs by
+   `withComponentInputBinding()`. A quiz is therefore a normal deep link.
 2. **The ports it injects** (`libs/client/quiz-ports`):
-   - `QUIZ_RESULT_SINK` — hand over a finished session (and, for a challenge,
-     `{ challengeId }`); get back what changed (newly unlocked achievements,
-     countries to practice) and, for a challenge, a promise of the server's
-     verdict (`ChallengeOutcome`, or `null` when it could not be sent now).
+   - `QUIZ_RESULT_SINK` — hand over a finished session and its summary; get
+     back what changed (newly unlocked achievements, countries to practice)
+     and, for a run that can reach a public board, a promise of the server's
+     `RankedOutcome` (`null` when it could not be sent now). The remote does
+     not decide whether a run ranks — the host does, with the same domain
+     function the API uses.
    - `QUIZ_PROGRESS_READER` — read-only progress; Practice Mistakes reads the
      countries to review from it when a round starts.
    - `COUNTRY_DATASET`, `CLOCK` — injected so tests can replace them.
@@ -96,9 +97,11 @@ So the remote cannot reach the shell's `ProgressStore`. Persistence
 (IndexedDB), the outbox and sync with server validation (Phase 8) were added
 behind the same two interfaces without touching the remotes: the shell's sink
 records the session on the device and asks `SyncService` to send it.
-Leaderboard challenges (Phase 9b) extended the contract the same way: the
-remote learns the challenge from its URL, passes its id to the sink and shows
-the verdict the sink promises; it never calls the API itself.
+Leaderboards extended the contract the same way: the remote shows the place
+the sink promises and never calls the API itself. Phase 25 could then turn
+every ordinary game into a ranked run by changing the host alone — the URL
+lost its `challenge` and `seed`, and the remote lost code rather than gaining
+any ([ADR-014](../decisions/ADR-014-ranked-boards.md)).
 
 There is deliberately **no shared mutable global state**, no event bus and no
 cross-remote imports: `scope:capitals` may only depend on `scope:client` and
