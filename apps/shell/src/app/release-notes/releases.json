@@ -1,7 +1,13 @@
 {
   "unreleased": {
-    "en": [],
-    "ru": []
+    "en": [
+      "Any flawless Quick round or Time attack competes: every category, region, difficulty and ranked mode has a leaderboard of its own.",
+      "A new personal record is celebrated on the results screen, and can be shared from there."
+    ],
+    "ru": [
+      "Любая безошибочная игра в быстром раунде или на время попадает в рейтинг: у каждой категории, региона, сложности и рейтингового режима свой рейтинг.",
+      "Новый личный рекорд отмечается на экране результатов, и его можно отправить оттуда."
+    ]
   },
   "releases": [
     {
