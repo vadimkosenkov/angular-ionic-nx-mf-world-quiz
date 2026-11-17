@@ -15,6 +15,11 @@
   position: absolute;
   top: 8px;
   right: 8px;
+  // The mark is something to see, never something to press. Ionic hangs
+  // the popover from the element the press landed on, so a press that
+  // reached this dot opened the list from a 10 px box in the bell's top
+  // corner — over the bell. A press here is a press on the bell.
+  pointer-events: none;
   width: 10px;
   height: 10px;
   border: 2px solid var(--wq-color-surface);
@@ -28,6 +33,10 @@
 ion-popover.notifications {
   --width: 280px;
   --max-width: calc(100vw - 2 * var(--wq-content-gutter));
+  // Ionic puts the card on the button's own bottom edge, where it covers
+  // its last two pixels. The gap is the one the floating pieces of the
+  // chrome keep from each other everywhere else.
+  --offset-y: var(--wq-space-2);
 }
 
 .empty {
