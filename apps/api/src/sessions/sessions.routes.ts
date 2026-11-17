@@ -1,6 +1,6 @@
 import {
+  parsePostedSession,
   sessionHistoryQuerySchema,
-  submitSessionRequestSchema,
   uuidSchema,
 } from '@world-quiz/shared/contracts';
 import { Router } from 'express';
@@ -18,8 +18,10 @@ export function sessionsRouter(sessions: SessionService): Router {
   const router = Router();
 
   router.post('/', async (request, response) => {
-    const parsed = submitSessionRequestSchema.safeParse(request.body);
-    if (!parsed.success) {
+    // A session still waiting in an old device's outbox may be a challenge,
+    // the mode ADR-014 removed; it is accepted and graded, never ranked.
+    const parsed = parsePostedSession(request.body);
+    if (!parsed.ok) {
       sendProblem(response, {
         status: 400,
         title: 'Invalid session',
@@ -29,7 +31,11 @@ export function sessionsRouter(sessions: SessionService): Router {
       return;
     }
 
-    const outcome = await sessions.submit(parsed.data, currentUserId(response));
+    const outcome = await sessions.submit(
+      parsed.request,
+      currentUserId(response),
+      { legacy: parsed.legacy },
+    );
     switch (outcome.kind) {
       case 'created':
         response

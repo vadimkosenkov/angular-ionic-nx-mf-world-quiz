@@ -255,7 +255,7 @@ export const en = {
     },
     mode: 'Game mode',
     modeInfo:
-      'Quick round and Time attack are ranked: a flawless run reaches the leaderboard of the four settings you played with, and every run draws its own questions, so no two players are asked the same ones. Endless and Practice mistakes are for learning only.',
+      'Quick round and Time attack are ranked.\n\nEndless and Practice mistakes are for learning only.',
     modeInfoLabel: 'About the game modes',
     // The mark on the two modes that play against everyone else. It sits
     // on the row rather than over a group of rows.

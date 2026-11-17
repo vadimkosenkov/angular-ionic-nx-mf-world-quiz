@@ -892,6 +892,13 @@ secondary text colour it read as a disabled control. Ionic's label grows to
 fill its row by itself, so the rows that carry a note hand that growth back
 (`.setting ion-label`).
 
+A note that makes two points is written as **two paragraphs**, separated by a
+blank line in the translation, and `wq-info-button` splits it into a `<p>`
+each: the game modes' note says which modes are ranked, and then that the
+other two are for learning. One sentence per point, not one block — the
+mode note used to explain the whole leaderboard in four lines, and nobody
+reads a popover that long.
+
 A **disabled** control is the exception: it has to say why without being
 asked, so the vibration toggle keeps its reason in a visually hidden
 paragraph it points at with `aria-describedby`, as well as behind the `i`.

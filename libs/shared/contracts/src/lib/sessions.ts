@@ -68,6 +68,98 @@ export const submitSessionRequestSchema = z.strictObject({
 
 export type SubmitSessionRequest = z.infer<typeof submitSessionRequestSchema>;
 
+/**
+ * The mode a leaderboard run used to be played in, before a board became the
+ * four settings of an ordinary game (ADR-014). The quiz domain no longer has
+ * it, and nothing in the app can produce it any more — but a device that
+ * finished a challenge **offline** still has that session in its outbox, and
+ * the request was written when it was played. Refusing it now would mark a
+ * real game as rejected and drop its answers from the player's progress.
+ */
+export const LEGACY_CHALLENGE_MODE = 'challenge';
+
+/**
+ * A challenge asked the whole World set in one run. The engine asks
+ * `min(questionCount, pool)` questions, so a quick round over the World with
+ * this count draws exactly the same questions from the same seed — which is
+ * what makes a legacy session replayable with the rules that are left.
+ */
+export const LEGACY_CHALLENGE_QUESTION_COUNT = 195;
+
+/**
+ * A challenge session as the app of the time wrote it: the World set, in a
+ * mode of its own, and the challenge it answered.
+ */
+export const legacySubmitSessionRequestSchema = submitSessionRequestSchema
+  .omit({ config: true })
+  .extend({
+    config: z.strictObject({
+      category: z.enum(QUIZ_CATEGORIES),
+      difficulty: z.enum(DIFFICULTIES),
+      mode: z.literal(LEGACY_CHALLENGE_MODE),
+      scope: z.literal('world'),
+    }),
+    /** The challenge whose seed it was played with; there is nothing to check it against any more. */
+    challengeId: uuidSchema.optional(),
+  });
+
+export type LegacySubmitSessionRequest = z.infer<
+  typeof legacySubmitSessionRequestSchema
+>;
+
+/**
+ * The same session, said in the vocabulary that is left: a quick round over
+ * the World set. The answers, the seed and the timestamps are untouched, so
+ * the server replays and grades it exactly as the client did.
+ */
+export function withoutLegacyChallengeMode(
+  request: LegacySubmitSessionRequest,
+): SubmitSessionRequest {
+  const { challengeId: _challengeId, config, ...rest } = request;
+  return {
+    ...rest,
+    config: {
+      category: config.category,
+      difficulty: config.difficulty,
+      scope: 'world',
+      mode: 'fixed',
+      questionCount: LEGACY_CHALLENGE_QUESTION_COUNT,
+    },
+  };
+}
+
+/** A body posted to `POST /v1/sessions`, current or legacy. */
+export type PostedSession =
+  | {
+      readonly ok: true;
+      readonly request: SubmitSessionRequest;
+      /** A session played in a mode that no longer exists: never ranked. */
+      readonly legacy: boolean;
+    }
+  | { readonly ok: false; readonly error: z.ZodError };
+
+/**
+ * Parses a posted session, accepting the legacy challenge body as well.
+ *
+ * The current contract is tried first and its error is the one reported, so
+ * an ordinary malformed body still says which of its own fields are wrong
+ * rather than why it is not a challenge either.
+ */
+export function parsePostedSession(body: unknown): PostedSession {
+  const current = submitSessionRequestSchema.safeParse(body);
+  if (current.success)
+    return { ok: true, request: current.data, legacy: false };
+
+  const legacy = legacySubmitSessionRequestSchema.safeParse(body);
+  return legacy.success
+    ? {
+        ok: true,
+        request: withoutLegacyChallengeMode(legacy.data),
+        legacy: true,
+      }
+    : { ok: false, error: current.error };
+}
+
 /** The server's own grading of a recorded session. */
 export const sessionResultSchema = z.object({
   id: uuidSchema,

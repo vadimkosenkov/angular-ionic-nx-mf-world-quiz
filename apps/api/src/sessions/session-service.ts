@@ -49,11 +49,28 @@ export type SubmitSessionOutcome =
   | { readonly kind: 'owner-missing' }
   | { readonly kind: 'rejected'; readonly reason: SessionRejection };
 
+/** What the request was, beyond what it says. */
+export interface SubmitOptions {
+  /**
+   * The body arrived in the vocabulary of a mode that no longer exists (the
+   * leaderboard challenge, ADR-014) and was translated into today's. Such a
+   * run is graded and kept like any other, and never put on a board: it was
+   * played under rules that are gone, over 195 questions, so its time means
+   * nothing beside a quick round's.
+   *
+   * The domain already refuses it — a quick round ranks only at its own
+   * length — so this says out loud what would otherwise be true by accident,
+   * and keeps being true if that length ever changes.
+   */
+  readonly legacy?: boolean;
+}
+
 export interface SessionService {
   /** Records a session for the signed-in player `userId`. */
   submit(
     request: SubmitSessionRequest,
     userId: string,
+    options?: SubmitOptions,
   ): Promise<SubmitSessionOutcome>;
   /** The player's own session; other players' sessions do not exist for them. */
   find(id: string, userId: string): Promise<SessionResult | null>;
@@ -124,7 +141,7 @@ export function createSessionService({
   };
 
   return {
-    async submit(request, userId) {
+    async submit(request, userId, options) {
       const hash = requestHash(request);
       const existing = await resolveExisting(request.id, hash, userId);
       if (existing) return existing;
@@ -150,8 +167,9 @@ export function createSessionService({
 
       // Every ordinary game in a ranked mode competes: the board a run goes
       // to is its four settings, and being flawless is what puts it there
-      // (docs/domain/leaderboard.md).
-      const run = rankedRunOf(session, summary);
+      // (docs/domain/leaderboard.md). A session written in the vocabulary of
+      // the mode that is gone is the one exception (`SubmitOptions`).
+      const run = options?.legacy ? null : rankedRunOf(session, summary);
       const ranked = run
         ? verdictOf(run, await boards.playerBest(userId, run.board.id))
         : undefined;

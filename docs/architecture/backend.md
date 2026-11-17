@@ -105,6 +105,19 @@ sequenceDiagram
   (200); a different body under the same id is a conflict (409). Two identical
   requests racing each other are resolved by the primary key and
   `ON CONFLICT DO NOTHING`: exactly one inserts.
+- **One body from before the boards changed is still accepted.** A device that
+  finished a leaderboard challenge **offline** holds that request in its
+  outbox, written in the `challenge` mode ADR-014 removed. `parsePostedSession`
+  (`shared/contracts`) tries today's contract first and then the legacy shape,
+  and says the same session in the vocabulary that is left: a quick round over
+  the World set of 195 questions, which draws the same questions from the same
+  seed, so it replays and grades exactly as it was played. The challenge id it
+  answered is dropped — nothing is left to check it against. Such a run is
+  **never ranked**: 195 questions is not a quick round's length, and the
+  service says so explicitly as well (`SubmitOptions.legacy`). Refusing the
+  body instead would mark a real game as rejected and drop its answers from
+  the player's progress. Nothing in any shipped app can produce such a body
+  any more, so this is a one-way door, not a second contract to keep.
 - **Plausibility.** `finishedAt` may be at most 5 minutes ahead of the server
   clock and at most 24 hours after `startedAt`. These bounds stop obviously
   forged timestamps; precise timing for leaderboards is decided in Phase 9.

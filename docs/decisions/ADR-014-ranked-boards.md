@@ -76,3 +76,12 @@ Playing it showed what the design cost:
   links (the site, which keeps every board a real, crawlable URL).
 - One table (`leaderboard_runs`), one ascending `rank_key` from
   `rankingKey()`, one index for all 56 boards.
+- **A challenge finished offline is not lost.** A device that played one and
+  never came back online before this change holds the request in its outbox,
+  in a mode the domain no longer has. The API keeps accepting that body and
+  translates it into a quick round over the World set — same seed, same
+  questions, same grading — so the session reaches the account and its answers
+  stay in the player's progress; it is never put on a board, because a time
+  over 195 questions cannot be compared with a quick round's (backend.md).
+  Refusing it would have been simpler, and the cost is a real game marked
+  `rejected` on the one device that played it.
