@@ -56,6 +56,15 @@ describe('release notes', () => {
     cy.get('[data-testid="notifications"]').click(30, 14);
 
     cy.get('[data-testid="notification-release"]').should('be.visible');
+    const firstOpening: { left: number; top: number } = { left: 0, top: 0 };
+    cy.get('ion-popover')
+      .shadow()
+      .find('.popover-content')
+      .then((content) => {
+        const { left, top } = content.get(0).getBoundingClientRect();
+        firstOpening.left = left;
+        firstOpening.top = top;
+      });
     cy.get('[data-testid="notifications"]').then((bell) => {
       const button = bell.get(0).getBoundingClientRect();
       cy.get('ion-popover')
@@ -67,6 +76,23 @@ describe('release notes', () => {
           );
         });
     });
+
+    // And the same press anywhere else on the button puts the card in
+    // exactly the same place: the icon inside it is not an anchor either.
+    // Escape, not a tap beside it, which Ionic's own backdrop takes. The
+    // popover is declared in the page, so it is never removed from the DOM:
+    // a closed one carries `overlay-hidden`.
+    cy.get('body').type('{esc}');
+    cy.get('ion-popover').should('have.class', 'overlay-hidden');
+    cy.get('[data-testid="notifications"]').click(22, 22);
+    cy.get('[data-testid="notification-release"]').should('be.visible');
+    cy.get('ion-popover')
+      .shadow()
+      .find('.popover-content')
+      .then((content) => {
+        const { left, top } = content.get(0).getBoundingClientRect();
+        cy.wrap({ left, top }).should('deep.equal', firstOpening);
+      });
   });
 
   it('stays read after a reload, and the bell still answers', () => {
