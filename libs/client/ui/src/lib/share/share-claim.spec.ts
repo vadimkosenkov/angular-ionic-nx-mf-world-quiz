@@ -18,6 +18,18 @@ describe('shareClaim', () => {
     expect(shareClaim({ rank: 248 })).toBe('ranked');
   });
 
+  it('claims no place on a board nobody else is on', () => {
+    // The picture writes "First result on this board" there, and a claim
+    // of being first of one beside it would invite laughter.
+    expect(shareClaim({ rank: 1, players: 1 })).toBe('plain');
+    expect(shareClaim({ rank: 1, players: 1, perfect: true })).toBe('perfect');
+    // The player's own best is still news, whoever else is on the board.
+    expect(shareClaim({ personalRecord: true, rank: 1, players: 1 })).toBe(
+      'record',
+    );
+    expect(shareClaim({ rank: 1, players: 2 })).toBe('first');
+  });
+
   it('still celebrates a flawless run that no board ranks', () => {
     // Endless and Practice Mistakes reach no board and can be played
     // perfectly.

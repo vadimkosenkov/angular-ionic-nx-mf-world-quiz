@@ -18,6 +18,12 @@ export interface ShareClaimFacts {
   readonly personalRecord?: boolean;
   /** The place the run holds, when it is on a board at all. */
   readonly rank?: number | null;
+  /**
+   * How many players that board holds. A board of one is nobody to have
+   * beaten, so a place on it is no claim; left out, the board is assumed
+   * to have others on it.
+   */
+  readonly players?: number | null;
   /** Every answer correct. */
   readonly perfect?: boolean;
 }
@@ -32,11 +38,17 @@ const TOP_THREE = 3;
  * second and has just beaten their own best would rather say so. Below the
  * board, a flawless run is still worth a sentence — Endless and Practice
  * Mistakes are never ranked, and they can be played perfectly.
+ *
+ * A place on a board nobody else is on claims nothing: "I'm #1 on the
+ * board!" when the board holds one player is the kind of boast that
+ * invites laughter, which is why the picture writes "First result on this
+ * board" there instead of a medal.
  */
 export function shareClaim(facts: ShareClaimFacts): ShareClaim {
   if (facts.personalRecord) return 'record';
   const rank = facts.rank ?? null;
-  if (rank !== null) {
+  const alone = (facts.players ?? Number.POSITIVE_INFINITY) <= 1;
+  if (rank !== null && !alone) {
     if (rank === 1) return 'first';
     if (rank <= TOP_THREE) return 'topThree';
     return 'ranked';

@@ -222,7 +222,11 @@ export class QuizResults {
     const place = this.place();
     return shareLines(
       this.translate(
-        `share.claim.${shareClaim({ personalRecord: true, rank: record.rank })}`,
+        `share.claim.${shareClaim({
+          personalRecord: true,
+          rank: record.rank,
+          players: record.players,
+        })}`,
       ),
       this.translate('share.record.score', {
         score:
@@ -244,6 +248,7 @@ export class QuizResults {
       this.translate(
         `share.claim.${shareClaim({
           rank: this.shareRank(),
+          players: this.sharePlayers(),
           perfect: this.summary().perfect,
         })}`,
       ),

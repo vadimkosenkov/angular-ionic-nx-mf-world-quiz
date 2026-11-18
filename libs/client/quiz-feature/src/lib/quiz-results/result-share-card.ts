@@ -47,8 +47,15 @@ export function runShareCard(
   run: RunShareFacts,
   translate: TranslateFn,
 ): ShareCard {
-  const claim = shareClaim({ rank: run.rank, perfect: run.perfect });
+  // A board nobody else is on is nobody to have beaten, and a board whose
+  // size the run never learned is read the same way: the card says "First
+  // result on this board" there, so the claim must not boast either.
   const alone = run.rank !== null && (run.players ?? 0) <= 1;
+  const claim = shareClaim({
+    rank: run.rank,
+    players: alone ? 1 : run.players,
+    perfect: run.perfect,
+  });
   return {
     title: translate('share.title'),
     claim: translate(`share.claim.${claim}`),

@@ -44,6 +44,7 @@ export function recordShareCard(
   const claim = shareClaim({
     personalRecord: record.fresh,
     rank: record.rank,
+    players: record.players,
   });
   const alone = record.players <= 1;
   return {

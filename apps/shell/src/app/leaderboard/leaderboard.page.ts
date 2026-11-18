@@ -387,7 +387,10 @@ export class LeaderboardPage implements ViewWillEnter {
       // the same order, starting with the claim the picture leads with.
       text: shareLines(
         this.transloco.translate(
-          `share.claim.${shareClaim({ rank: facts.rank })}`,
+          `share.claim.${shareClaim({
+            rank: facts.rank,
+            players: facts.players,
+          })}`,
         ),
         this.transloco.translate('share.record.score', {
           score: this.scoreText(record.score, metric),
