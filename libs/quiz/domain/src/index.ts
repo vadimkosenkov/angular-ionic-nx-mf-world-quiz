@@ -141,6 +141,7 @@ export {
 } from './lib/achievements';
 export type {
   AchievementDefinition,
+  AchievementId,
   AchievementProgress,
   AchievementStatus,
 } from './lib/achievements';

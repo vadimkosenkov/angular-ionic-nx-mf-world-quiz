@@ -51,6 +51,28 @@ export type {
   User,
 } from './lib/auth';
 export {
+  achievementIdSchema,
+  ACHIEVEMENT_IDS,
+  friendAchievementSchema,
+  friendProfileSchema,
+  friendRequestBodySchema,
+  friendRequestResultSchema,
+  friendSchema,
+  friendsSchema,
+  INVITE_CODE_ALPHABET,
+  INVITE_CODE_LENGTH,
+  inviteCodeSchema,
+  normaliseInviteCode,
+} from './lib/friends';
+export type {
+  Friend,
+  FriendAchievement,
+  FriendProfile,
+  FriendRequestBody,
+  FriendRequestResult,
+  Friends,
+} from './lib/friends';
+export {
   DEFAULT_LEADERBOARD_SIZE,
   LEADERBOARD_BOARD_IDS,
   leaderboardBoardIdSchema,

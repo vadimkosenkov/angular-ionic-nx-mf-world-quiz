@@ -22,6 +22,7 @@ export const ANN: User = {
   nickname: 'Ann the Explorer',
   email: 'ann@example.com',
   providers: ['google'],
+  inviteCode: 'ANN12345',
   createdAt: '2026-09-21T10:00:00.000Z',
 };
 
@@ -30,6 +31,7 @@ export const BOB: User = {
   id: '1f0e6b8f-0000-4000-8000-000000000002',
   displayName: 'Bob',
   email: 'bob@example.com',
+  inviteCode: 'B0B12345',
 };
 
 /** A finished session with one Easy answer per entry, answered 1 s apart. */

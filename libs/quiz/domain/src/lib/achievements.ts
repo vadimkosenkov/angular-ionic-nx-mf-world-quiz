@@ -4,13 +4,16 @@ import { scopeProgress } from './progress';
 import type { QuizCategory, QuizScope } from './vocabulary';
 import { QUIZ_CATEGORIES, REGIONS } from './vocabulary';
 
+/** One achievement: every country of a scope mastered in a category. */
+export type AchievementId = `${QuizCategory}-${QuizScope}-mastered`;
+
 /**
  * Achievements represent learning progress only: "every country of a scope is
  * mastered in a category". One per category × (six regions + World) = 14.
  * Totals always come from the dataset, never from hard-coded counts.
  */
 export interface AchievementDefinition {
-  readonly id: `${QuizCategory}-${QuizScope}-mastered`;
+  readonly id: AchievementId;
   readonly category: QuizCategory;
   readonly scope: QuizScope;
 }
