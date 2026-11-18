@@ -1,5 +1,5 @@
 import type { LeaderboardBoardId, RankedScore } from '@world-quiz/quiz/domain';
-import { and, asc, count, eq, sql } from 'drizzle-orm';
+import { and, asc, count, eq, inArray, sql } from 'drizzle-orm';
 import type { Database } from '../db/database';
 import { leaderboardRuns, users } from '../db/schema';
 
@@ -31,10 +31,17 @@ export interface PlayerRecord extends RankedPlace {
  * the number of answers.
  */
 export interface LeaderboardRepository {
-  /** The best players on a board, one run each, and how many there are. */
+  /**
+   * The best players on a board, one run each, and how many there are.
+   *
+   * `among` narrows the board to a set of players — the player and their
+   * friends. It is the same ranking over fewer rows, so a friends board
+   * numbers places from 1 and counts only the players on it.
+   */
   board(
     board: LeaderboardBoardId,
     limit: number,
+    among?: readonly string[],
   ): Promise<{ players: number; runs: RankedPlace[] }>;
   /** The player's best run on a board, with its rank. */
   playerPlace(
@@ -54,7 +61,7 @@ export function createLeaderboardRepository(
   db: Database,
 ): LeaderboardRepository {
   /** Every player's best run on each board (or on one board). */
-  const bestRuns = (board?: LeaderboardBoardId) =>
+  const bestRuns = (board?: LeaderboardBoardId, among?: readonly string[]) =>
     db
       .selectDistinctOn([leaderboardRuns.board, leaderboardRuns.userId], {
         board: leaderboardRuns.board,
@@ -66,7 +73,12 @@ export function createLeaderboardRepository(
         sessionId: leaderboardRuns.sessionId,
       })
       .from(leaderboardRuns)
-      .where(board ? eq(leaderboardRuns.board, board) : undefined)
+      .where(
+        and(
+          board ? eq(leaderboardRuns.board, board) : undefined,
+          among ? inArray(leaderboardRuns.userId, [...among]) : undefined,
+        ),
+      )
       .orderBy(
         leaderboardRuns.board,
         leaderboardRuns.userId,
@@ -78,8 +90,11 @@ export function createLeaderboardRepository(
       .as('best');
 
   /** The best runs with their rank and the number of players per board. */
-  const rankedRuns = (board?: LeaderboardBoardId) => {
-    const best = bestRuns(board);
+  const rankedRuns = (
+    board?: LeaderboardBoardId,
+    among?: readonly string[],
+  ) => {
+    const best = bestRuns(board, among);
     return db
       .select({
         board: best.board,
@@ -109,8 +124,10 @@ export function createLeaderboardRepository(
   }): RankedPlace => ({ ...row, recordedAt: row.recordedAt.getTime() });
 
   return {
-    async board(board, limit) {
-      const ranked = rankedRuns(board);
+    async board(board, limit, among) {
+      // Nobody at all is a board with no rows; `IN ()` is not valid SQL.
+      if (among && among.length === 0) return { players: 0, runs: [] };
+      const ranked = rankedRuns(board, among);
       const rows = await db
         .select({
           userId: ranked.userId,
@@ -127,7 +144,7 @@ export function createLeaderboardRepository(
         .limit(limit);
       const [total] = await db
         .select({ players: count() })
-        .from(bestRuns(board));
+        .from(bestRuns(board, among));
       return { players: total?.players ?? 0, runs: rows.map(toPlace) };
     },
 

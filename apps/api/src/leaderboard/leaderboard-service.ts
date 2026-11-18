@@ -12,7 +12,12 @@ import type {
 import type { StoredRankedRun } from './ranked-run-rules';
 
 export interface LeaderboardService {
-  board(board: LeaderboardBoardId, limit: number): Promise<Leaderboard>;
+  /** `among`, when given, ranks the board over those players only. */
+  board(
+    board: LeaderboardBoardId,
+    limit: number,
+    among?: readonly string[],
+  ): Promise<Leaderboard>;
   records(userId: string): Promise<MyRecords>;
   /**
    * A recorded run's place as it stands now: the rank is the player's own
@@ -37,8 +42,8 @@ export function createLeaderboardService({
     place.nickname ?? defaultNickname(place.userId);
 
   return {
-    async board(board, limit) {
-      const { players, runs } = await repository.board(board, limit);
+    async board(board, limit, among) {
+      const { players, runs } = await repository.board(board, limit, among);
       return {
         board,
         players,

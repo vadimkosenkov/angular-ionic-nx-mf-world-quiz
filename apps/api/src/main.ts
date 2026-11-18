@@ -14,6 +14,9 @@ import { createRefreshTokenStore } from './auth/refresh-tokens';
 import { createUserRepository } from './auth/user-repository';
 import { loadConfig } from './config';
 import { openPglite, openPostgres } from './db/database';
+import { createFriendRepository } from './friends/friend-repository';
+import { createFriendService } from './friends/friend-service';
+import { createProgressRepository } from './friends/progress-repository';
 import { createLeaderboardRepository } from './leaderboard/leaderboard-repository';
 import { createLeaderboardService } from './leaderboard/leaderboard-service';
 import { createSessionRepository } from './sessions/session-repository';
@@ -46,6 +49,13 @@ const leaderboard = createLeaderboardService({ repository: boards });
 const app = createApp({
   clock: systemClock,
   leaderboard,
+  friends: createFriendService({
+    repository: createFriendRepository(database.db),
+    progress: createProgressRepository(database.db),
+    leaderboard,
+    dataset: COUNTRIES,
+    clock: systemClock,
+  }),
   sessions: createSessionService({
     repository: createSessionRepository(database.db),
     engine: createQuizEngine(COUNTRIES),

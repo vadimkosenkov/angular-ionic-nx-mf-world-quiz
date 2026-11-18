@@ -4,6 +4,7 @@ import request from 'supertest';
 import { createApp } from './app';
 import { createAccessTokens } from './auth/access-tokens';
 import type { AuthService } from './auth/auth-service';
+import type { FriendService } from './friends/friend-service';
 import type { LeaderboardService } from './leaderboard/leaderboard-service';
 import type { SessionService } from './sessions/session-service';
 import { onLoopback } from './testing/loopback';
@@ -20,6 +21,14 @@ const unusedLeaderboard: LeaderboardService = {
   board: notUsed,
   records: notUsed,
   outcome: notUsed,
+};
+const unusedFriends: FriendService = {
+  friends: notUsed,
+  request: notUsed,
+  accept: notUsed,
+  remove: notUsed,
+  profile: notUsed,
+  boardMembers: notUsed,
 };
 const unusedAuth: AuthService = {
   signIn: notUsed,
@@ -41,6 +50,7 @@ describe('API app', () => {
     sessions: unusedSessions,
     auth: unusedAuth,
     leaderboard: unusedLeaderboard,
+    friends: unusedFriends,
     accessTokens,
   });
   let server: Server;
@@ -95,6 +105,7 @@ describe('API app', () => {
         },
         auth: unusedAuth,
         leaderboard: unusedLeaderboard,
+        friends: unusedFriends,
         accessTokens,
         logError: (error) => logged.push(error),
       });
