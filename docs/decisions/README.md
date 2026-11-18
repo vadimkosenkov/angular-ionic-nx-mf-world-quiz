@@ -19,6 +19,8 @@ decision. A new ADR supersedes the old one.
 | [ADR-011](ADR-011-sign-in-required.md)    | Sign-in is required before playing                                 | Accepted |
 | [ADR-012](ADR-012-environments.md)        | One build for every environment, configured at start-up            | Accepted |
 | [ADR-013](ADR-013-ios-bundled-remotes.md) | The iPhone app ships the quiz remotes inside its bundle            | Accepted |
+| [ADR-014](ADR-014-ranked-boards.md)       | Boards are fed by ordinary games, not server-issued challenges     | Accepted |
+| [ADR-015](ADR-015-friends.md)             | Friends found by invite code; mutual, with a narrowed board        | Accepted |
 
 Template:
 

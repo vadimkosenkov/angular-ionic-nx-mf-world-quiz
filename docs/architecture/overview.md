@@ -127,16 +127,29 @@ typos). The app has no custom speech-recognition UI and no external AI/LLM judgi
 | 22  | `feat/share-sounds`          | Sharing a result; a sound on the actions that start something; the account card restyled                                      | ✅ merged      |
 | 23  | `feat/share-image`           | A result shared as a picture: a card drawn on a canvas, the text kept as the fallback                                         | ✅ merged      |
 | 24  | `feat/release-notes`         | What changed in this release: a bell on Home, a page of notes, and a release cut per deploy                                   | ✅ merged      |
-| 25  | `feat/ranked-boards`         | A board per mode, region and difficulty, fed by ordinary games; the player's own row                                          | 🚧 this branch |
-| 26  | `feat/friends`               | Friends, their achievements, and a board of you and your friends                                                              | planned        |
-| 27  | `feat/auth-fixes`            | Google sign-in: straight to Home after signing in, no surprise sign-outs, and the player's Google picture on the account card | planned        |
-| 28  | `feat/voice-answers`         | Hard mode answered out loud: the Web Speech API on the web, a decision on iOS after                                           | planned        |
-| 29  | `feat/template-formatting`   | Control flow printed as the Angular docs write it, with no formatting workaround                                              | planned        |
-| 30  | `feat/sound-design`          | Sounds worth hearing: richer tones for the answers, the start and the finish, and a fanfare of its own for a personal record  | planned        |
-| 31  | `feat/glass-polish`          | The glass material taken further: depth, edges and how it answers what scrolls under it                                       | planned        |
-| 32  | `feat/ios-pass`              | A pass over the iPhone app on the simulator: everything built since 13b, checked there                                        | planned, last  |
+| 25  | `feat/ranked-boards`         | A board per mode, region and difficulty, fed by ordinary games; the player's own row                                          | ✅ merged      |
+| 26  | `feat/share-claim`           | What a shared picture claims: the record card, a trophy, the place as a medal                                                 | ✅ merged      |
+| 27a | `feat/friends-server`        | The API of friends: an invite code, mutual requests, a friend's page, a board of friends                                      | 🚧 this branch |
+| 27b | `feat/friends-client`        | The screens: the friends list, an invite to share, a friend's profile, "All / Friends" on a board                             | planned        |
+| 28  | `feat/auth-fixes`            | Google sign-in: straight to Home after signing in, no surprise sign-outs, and the player's Google picture on the account card | planned        |
+| 29  | `feat/voice-answers`         | Hard mode answered out loud: the Web Speech API on the web, a decision on iOS after                                           | planned        |
+| 30  | `feat/template-formatting`   | Control flow printed as the Angular docs write it, with no formatting workaround                                              | planned        |
+| 31  | `feat/sound-design`          | Sounds worth hearing: richer tones for the answers, the start and the finish, and a fanfare of its own for a personal record  | planned        |
+| 32  | `feat/glass-polish`          | The glass material taken further: depth, edges and how it answers what scrolls under it                                       | planned        |
+| 33  | `feat/ios-pass`              | A pass over the iPhone app on the simulator: everything built since 13b, checked there                                        | planned, last  |
 
-Phase 30 is about the material rather than any screen. The glass today is one
+Phase 27 is friends, split into the API (27a) and the screens (27b). A
+player is found **only** by the 8-character invite code they hand over
+themselves — there is no search and no directory — and a friendship is
+mutual: a request waits until the other player accepts it. What being friends
+grants is a board of you and your friends (the same 56 boards, ranked over
+fewer players) and a friend's page: their nickname, their best run per board,
+and their achievements, computed on the server from their stored answers with
+the same domain functions the device uses. Declining a request and ending a
+friendship are the same act, so there is no block list to maintain
+([ADR-015](../decisions/ADR-015-friends.md)).
+
+Phase 32 is about the material rather than any screen. The glass today is one
 mixin — a translucent surface, a blur and a light top edge — applied to the tab
 bar, the floating header and a few cards. What it does not yet do is behave
 like glass: the edge does not pick up what passes under it, the blur is the
@@ -146,7 +159,7 @@ underneath changes nothing about the surface over it. The phase is a pass over
 real screen, with the opaque fallback and the reduced-transparency rule kept
 intact — the effect is an enhancement, and nothing may come to depend on it.
 
-Phase 28 removes a workaround rather than adding a feature. Prettier collapses
+Phase 30 removes a workaround rather than adding a feature. Prettier collapses
 Angular control flow into a paragraph, where `}` and `@case` land mid-line,
 because it picks its `html` parser for our templates: it uses the `angular`
 parser only for files named `*.component.html`, and ours are not. The `angular`
@@ -158,7 +171,7 @@ down. `<!-- prettier-ignore -->` is explicitly not the answer: in HTML it
 protects only the next node, so it holds only while a block's body is bare
 text and silently stops working as soon as the body contains an element.
 
-Phase 30 is about how the app sounds. The tones of 14b are oscillator beeps
+Phase 31 is about how the app sounds. The tones of 14b are oscillator beeps
 — two or three notes of a triangle wave, 90 ms each — and a test group's
 complaint about them is that they grate. The phase reworks what every event
 plays (and how loud): a softer envelope, more than one voice per note, and
@@ -173,7 +186,7 @@ achievement. The phase adds an event heard nowhere else — a short fanfare,
 with its own haptic — so a record is recognised before the card is read; the
 existing `celebrate` stays for everything else.
 
-Phase 32 is deliberately last. The iPhone app is built from the same code
+Phase 33 is deliberately last. The iPhone app is built from the same code
 as the web, but a WKWebView is not a browser: whether its share sheet
 accepts a file, how the on-screen keyboard behaves, what the Keychain does
 on a cold start — each has to be seen on the simulator, and seeing them
