@@ -224,9 +224,10 @@ describe('QuizPage', () => {
         '#3 of 48',
       );
       expect(card).toContain('4:07.3');
-      // And the record itself can be handed to the share sheet, which is a
-      // different picture from the run's.
-      expect(screen.getByTestId('results-share-record')).toBeTruthy();
+      // One share on the screen, in the hero's corner: it hands over the
+      // record's picture by itself (quiz-results.ts).
+      expect(screen.queryByTestId('results-share-record')).toBeNull();
+      expect(screen.getByTestId('results-share')).toBeTruthy();
     });
 
     it('marks a place in the first three with a medal, and stays quiet', async () => {

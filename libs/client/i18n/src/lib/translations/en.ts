@@ -344,23 +344,32 @@ export const en = {
     // The sheet's own heading; some targets use it as the subject line.
     title: 'World Quiz',
     action: 'Share the result',
+    /**
+     * What the picture leads with, in the player's own voice; the rule that
+     * picks one is `shareClaim` in `client/ui`.
+     */
+    claim: {
+      record: 'New personal record!',
+      first: "I'm #1 on the board!",
+      topThree: "I'm in the top three!",
+      ranked: "I'm on the leaderboard!",
+      perfect: 'A flawless run!',
+      plain: 'My World Quiz result',
+    },
+    /** The invitation at the foot of every picture. */
+    beatMe: 'Beat my result',
+    /** A board this player is alone on, where "#1 of 1" is no boast. */
+    firstOnBoard: 'First result on this board',
     result: {
       heading: 'World Quiz — {{category}}, {{region}}, {{difficulty}}',
       // The picture's band already says World Quiz, so the card names only
       // what was played.
       subject: '{{category}} · {{region}} · {{difficulty}}',
       score: '{{correct}}/{{answered}} correct · {{accuracy}}% · {{time}}',
-      rank: 'On the leaderboard: #{{rank}} of {{players}}',
     },
     record: {
       action: 'Share the {{board}} record',
-      heading: 'World Quiz — {{board}}',
       score: '{{score}} · {{place}}',
-      // The picture lays the same record out as a card, so the place and
-      // the size of the board become figures with labels of their own.
-      perfect: 'Flawless run',
-      place: 'Place',
-      players: 'Players',
     },
     copied: 'Copied — paste it wherever you like.',
     failed: 'This browser can neither share nor copy the result.',

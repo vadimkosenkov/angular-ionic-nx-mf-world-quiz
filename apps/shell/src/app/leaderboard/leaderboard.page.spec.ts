@@ -317,7 +317,9 @@ describe('LeaderboardPage', () => {
     expect(shared).toHaveLength(1);
     expect(shared[0]).toMatchObject({
       title: 'World Quiz',
-      text: 'World Quiz — Capitals · World · Easy · Quick round\n4:07.3 · #2 of 3',
+      // The claim the picture leads with opens the message too; a record
+      // looked up here is not news, so it claims the place.
+      text: "I'm in the top three!\n4:07.3 · #2 of 3\nCapitals · World · Easy · Quick round",
       url: 'https://play.example.test',
     });
     // The picture travels with it where the device takes files; its words
