@@ -2,9 +2,9 @@ import { LEADERBOARD_BOARDS } from '@world-quiz/quiz/domain';
 import {
   DEFAULT_LEADERBOARD_SIZE,
   LEADERBOARD_BOARD_IDS,
+  leaderboardBoardIdSchema,
   leaderboardQuerySchema,
   nicknameSchema,
-  startChallengeRequestSchema,
   updateProfileRequestSchema,
 } from './leaderboard';
 
@@ -15,17 +15,18 @@ describe('leaderboard contracts', () => {
     );
   });
 
-  it('starts a challenge only on a known board', () => {
+  it('accepts a board id and nothing that merely looks like one', () => {
     expect(
-      startChallengeRequestSchema.safeParse({ board: 'flags-hard' }).success,
+      leaderboardBoardIdSchema.safeParse('flags-hard-europe-fixed').success,
     ).toBe(true);
-    expect(
-      startChallengeRequestSchema.safeParse({ board: 'flags-europe' }).success,
-    ).toBe(false);
-    expect(
-      startChallengeRequestSchema.safeParse({ board: 'flags-hard', seed: 'x' })
-        .success,
-    ).toBe(false);
+    // The old four boards, a training mode, and a region that is not one.
+    for (const id of [
+      'flags-hard',
+      'flags-hard-europe-endless',
+      'flags-hard-balkans-fixed',
+    ]) {
+      expect(leaderboardBoardIdSchema.safeParse(id).success).toBe(false);
+    }
   });
 
   it('reads the board size from the query string, bounded', () => {

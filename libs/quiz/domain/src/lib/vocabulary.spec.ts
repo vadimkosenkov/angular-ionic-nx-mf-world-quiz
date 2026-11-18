@@ -4,13 +4,15 @@ import {
   isLeaderboardBoardId,
   isQuizCategory,
   isQuizScope,
+  isQuizMode,
+  isRankedMode,
   isRegion,
-  isTrainingMode,
   LEADERBOARD_BOARDS,
   QUIZ_CATEGORIES,
+  QUIZ_MODES,
   QUIZ_SCOPES,
+  RANKED_MODES,
   REGIONS,
-  TRAINING_MODES,
 } from './vocabulary';
 
 describe('quiz vocabulary', () => {
@@ -19,8 +21,10 @@ describe('quiz vocabulary', () => {
     expect(DIFFICULTIES).toEqual(['easy', 'hard']);
   });
 
-  it('has exactly three training modes', () => {
-    expect(TRAINING_MODES).toEqual(['fixed', 'endless', 'timed']);
+  it('has three modes, two of which are ranked', () => {
+    expect(QUIZ_MODES).toEqual(['fixed', 'endless', 'timed']);
+    // Endless has no end to compare one player's run with another's.
+    expect(RANKED_MODES).toEqual(['fixed', 'timed']);
   });
 
   it('classifies countries into six regions and lets quizzes use World or one region', () => {
@@ -33,7 +37,7 @@ describe('quiz vocabulary', () => {
     for (const list of [
       QUIZ_CATEGORIES,
       DIFFICULTIES,
-      TRAINING_MODES,
+      QUIZ_MODES,
       QUIZ_SCOPES,
     ]) {
       expect(new Set(list).size).toBe(list.length);
@@ -42,26 +46,38 @@ describe('quiz vocabulary', () => {
 });
 
 describe('LEADERBOARD_BOARDS', () => {
-  it('defines exactly four global boards: category × difficulty', () => {
-    expect(LEADERBOARD_BOARDS.map((board) => board.id)).toEqual([
-      'capitals-easy',
-      'capitals-hard',
-      'flags-easy',
-      'flags-hard',
-    ]);
-  });
-
-  it('always uses the complete World scope (no regional boards)', () => {
-    expect(LEADERBOARD_BOARDS.every((board) => board.scope === 'world')).toBe(
-      true,
+  it('is every combination of the four choices a setup asks for', () => {
+    expect(LEADERBOARD_BOARDS).toHaveLength(
+      QUIZ_CATEGORIES.length *
+        DIFFICULTIES.length *
+        QUIZ_SCOPES.length *
+        RANKED_MODES.length,
+    );
+    expect(new Set(LEADERBOARD_BOARDS.map((board) => board.id)).size).toBe(
+      LEADERBOARD_BOARDS.length,
     );
   });
 
-  it('does not create boards for training modes', () => {
-    const ids: readonly string[] = LEADERBOARD_BOARDS.map((board) => board.id);
-    for (const mode of TRAINING_MODES) {
-      expect(ids.some((id) => id.includes(mode))).toBe(false);
+  it('names a board after those choices, in one order', () => {
+    expect(LEADERBOARD_BOARDS[0]).toEqual({
+      id: 'capitals-easy-world-fixed',
+      category: 'capitals',
+      difficulty: 'easy',
+      scope: 'world',
+      mode: 'fixed',
+      metric: 'time',
+    });
+  });
+
+  it('ranks a quick round by time and a timed round by answers', () => {
+    for (const board of LEADERBOARD_BOARDS) {
+      expect(board.metric).toBe(board.mode === 'fixed' ? 'time' : 'correct');
     }
+  });
+
+  it('has no board for Endless, which has no end to compare', () => {
+    const ids: readonly string[] = LEADERBOARD_BOARDS.map((board) => board.id);
+    expect(ids.some((id) => id.includes('endless'))).toBe(false);
   });
 });
 
@@ -69,10 +85,11 @@ describe('type guards', () => {
   it.each([
     [isQuizCategory, 'capitals', 'reverse-capitals'],
     [isDifficulty, 'hard', 'expert'],
-    [isTrainingMode, 'timed', 'streak'],
+    [isQuizMode, 'timed', 'streak'],
+    [isRankedMode, 'fixed', 'endless'],
     [isRegion, 'oceania', 'world'],
     [isQuizScope, 'world', 'antarctica'],
-    [isLeaderboardBoardId, 'flags-hard', 'flags-timed'],
+    [isLeaderboardBoardId, 'flags-hard-oceania-timed', 'flags-hard'],
   ] as const)('%o accepts %s and rejects %s', (guard, valid, invalid) => {
     expect(guard(valid)).toBe(true);
     expect(guard(invalid)).toBe(false);

@@ -157,43 +157,55 @@ export const quizAnswers = pgTable(
 );
 
 /**
- * Leaderboard challenges: issued by the server with its own seed, played once.
+ * A run that earned a place on a public board: one row per ranked session
+ * (docs/domain/leaderboard.md).
  *
- * When the session that plays a challenge is recorded, the row gets that
- * session and the server's verdict: `outcome` is `ranked` or the reason it is
- * not, and `completion_ms` / `recorded_at` are the ranking keys. Rankings are
- * queries over the ranked rows (docs/domain/leaderboard.md).
+ * Every ordinary session in a ranked mode is judged when it is recorded, in
+ * the same transaction; a run that was not flawless simply has no row here.
+ * Rankings are queries over these rows: each player's best run per board,
+ * numbered in the board's order.
  */
-export const challenges = pgTable(
-  'challenges',
+export const leaderboardRuns = pgTable(
+  'leaderboard_runs',
   {
-    id: uuid('id').primaryKey(),
+    /** The session that was played; the row is its verdict. */
+    sessionId: uuid('session_id')
+      .primaryKey()
+      .references(() => quizSessions.id, { onDelete: 'cascade' }),
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    /** `capitals-easy`, `capitals-hard`, `flags-easy` or `flags-hard`. */
+    /** For example `capitals-hard-europe-fixed`. */
     board: text('board').notNull(),
-    seed: text('seed').notNull(),
-    issuedAt: timestampMs('issued_at').notNull(),
-    /** The session that played it; `null` while unplayed. */
-    sessionId: uuid('session_id')
-      .unique()
-      .references(() => quizSessions.id, { onDelete: 'cascade' }),
-    /** `ranked`, or why the run is not ranked. */
-    outcome: text('outcome'),
-    /** The run's completion time, as measured by the client and checked. */
-    completionMs: integer('completion_ms'),
+    /** The board's metric: milliseconds, or correct answers. */
+    score: integer('score').notNull(),
+    /** The run's own length; the tie-break where the score is a count. */
+    timeMs: integer('time_ms').notNull(),
+    /**
+     * The domain's `rankingKey`: one ascending key for every board, so a
+     * single `ORDER BY` and a single index rank all 56 of them, whether the
+     * best score is the lowest (a time) or the highest (a count).
+     */
+    rankKey: integer('rank_key').notNull(),
     /** When the server accepted the run: the first tie-break. */
-    recordedAt: timestampMs('recorded_at'),
-    /** Whether the run beat the player's previous best on the board. */
-    personalRecord: boolean('personal_record'),
+    recordedAt: timestampMs('recorded_at').notNull(),
+    /** Whether the run beat the player's own previous best on the board. */
+    personalRecord: boolean('personal_record').notNull(),
   },
   (table) => [
-    index('challenges_user_idx').on(table.userId),
-    // The ranking order, over ranked runs only.
-    index('challenges_ranking_idx')
-      .on(table.board, table.completionMs, table.recordedAt, table.sessionId)
-      .where(sql`${table.outcome} = 'ranked'`),
+    // The order a board is ranked in, and the one `DISTINCT ON` needs to
+    // pick each player's best run.
+    index('leaderboard_runs_best_idx').on(
+      table.board,
+      table.userId,
+      table.rankKey,
+      table.timeMs,
+      table.recordedAt,
+      table.sessionId,
+    ),
+    index('leaderboard_runs_user_idx').on(table.userId),
+    check('leaderboard_runs_score_non_negative', sql`${table.score} >= 0`),
+    check('leaderboard_runs_time_non_negative', sql`${table.timeMs} >= 0`),
   ],
 );
 
@@ -203,6 +215,6 @@ export const schema = {
   refreshTokens,
   quizSessions,
   quizAnswers,
-  challenges,
+  leaderboardRuns,
 };
 export type Schema = typeof schema;

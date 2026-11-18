@@ -53,7 +53,7 @@ mastery, so progress reflects current knowledge.
 ## Which answers count
 
 Every recorded answer counts, whatever the mode: Fixed, Endless, Timed,
-Practice Mistakes and leaderboard challenges. A correct answer in Practice
+Practice Mistakes included. A correct answer in Practice
 Mistakes is how a mistake gets fixed.
 
 ## Progress as a fold over events

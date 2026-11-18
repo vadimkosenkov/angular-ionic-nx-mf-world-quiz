@@ -6,10 +6,14 @@ import {
   type MemoryStorage,
 } from '@world-quiz/client/settings';
 import {
+  DEFAULT_BOARD,
   DEFAULT_SETUP,
+  LAST_BOARD_STORAGE_KEY,
   LAST_SETUP_STORAGE_KEY,
   LastSetupStore,
+  parseBoard,
   parseSetup,
+  type RememberedBoard,
   type RememberedSetup,
 } from './last-setup.store';
 
@@ -38,6 +42,13 @@ const settle = () => new Promise((resolve) => setTimeout(resolve));
 const EUROPE_HARD: RememberedSetup = {
   category: 'flags',
   scope: 'europe',
+  difficulty: 'hard',
+  mode: 'timed',
+};
+
+const ASIA_TIMED: RememberedBoard = {
+  category: 'flags',
+  scope: 'asia',
   difficulty: 'hard',
   mode: 'timed',
 };
@@ -97,6 +108,48 @@ describe('LastSetupStore', () => {
 
     expect(store.setup()).toEqual(DEFAULT_SETUP);
     expect(reported).toEqual([failure]);
+  });
+
+  it('remembers the board a player last looked at, beside the quiz', async () => {
+    const { store, storage } = setup({
+      [LAST_SETUP_STORAGE_KEY]: JSON.stringify(EUROPE_HARD),
+    });
+    await store.load();
+
+    // The two are separate facts: a player may play Europe on Hard and look
+    // at the easy World board of the quick round.
+    expect(store.board()).toEqual(DEFAULT_BOARD);
+
+    store.rememberBoard(ASIA_TIMED);
+    await settle();
+
+    expect(store.board()).toEqual(ASIA_TIMED);
+    expect(store.setup()).toEqual(EUROPE_HARD);
+    expect(
+      JSON.parse(storage.snapshot()[LAST_BOARD_STORAGE_KEY] ?? 'null'),
+    ).toEqual(ASIA_TIMED);
+  });
+
+  it('reads back the board last looked at', async () => {
+    const { store } = setup({
+      [LAST_BOARD_STORAGE_KEY]: JSON.stringify(ASIA_TIMED),
+    });
+    await store.load();
+
+    expect(store.board()).toEqual(ASIA_TIMED);
+  });
+});
+
+describe('parseBoard', () => {
+  it('falls back to a ranked mode for one that has no board', () => {
+    expect(
+      parseBoard(JSON.stringify({ ...ASIA_TIMED, mode: 'endless' })),
+    ).toEqual({ ...ASIA_TIMED, mode: DEFAULT_BOARD.mode });
+  });
+
+  it('falls back to the defaults for nothing or rubbish', () => {
+    expect(parseBoard(null)).toEqual(DEFAULT_BOARD);
+    expect(parseBoard('not json')).toEqual(DEFAULT_BOARD);
   });
 });
 

@@ -4,8 +4,10 @@
 > Achievements, Settings (Phase 3); quiz setup and the Capitals (Phase 4)
 > and Flags (Phase 5) quizzes, each loaded from its own microfrontend;
 > sign-in with Google (Phase 7b), required before playing, with progress kept
-> on the device and synced with the account (Phase 8b); leaderboard
-> challenges, rankings, records and the public nickname (Phase 9b).
+> on the device and synced with the account (Phase 8b); boards, rankings,
+> records and the public nickname (Phase 9b), with a board per quiz setting
+> and ranked runs coming from ordinary games (Phase 25,
+> [ADR-014](../decisions/ADR-014-ranked-boards.md)).
 
 ## Stack
 
@@ -27,7 +29,7 @@ apps/shell/src/app/
   app.ts               <ion-app><ion-router-outlet/></ion-app>
   tabs/                ion-tabs with a translucent tab bar
   home/                greeting, overall progress, Play and Learn cards, practice, achievements
-  leaderboard/         challenge start, global ranking per board, my records
+  leaderboard/         the board picker, the ranking, the player's own row, my records
   achievements/        summary, legend, all 14 achievements
   settings/            account (sign-in), theme, language, about
   quiz/
@@ -60,17 +62,16 @@ Libraries used by the shell:
 
 ## Routing
 
-| URL                                                                        | Page                                                  | Loading                               |
-| -------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------- |
-| `/welcome`                                                                 | welcome + sign-in (`signedOutGuard`: players go home) | lazy (`loadComponent`)                |
-| `/`                                                                        | redirect to `/home`                                   | —                                     |
-| `/home`, `/leaderboard`, `/achievements`, `/settings`                      | tab pages inside `TabsPage`                           | lazy (`loadComponent`)                |
-| `/quiz/setup`                                                              | quiz setup (shell)                                    | lazy (`loadComponent`)                |
-| `/quiz/setup?category=`                                                    | preselects Capitals or Flags (Home's Practise rows)   | —                                     |
-| `/quiz/capitals?scope=&difficulty=&mode=&count=`                           | Capitals microfrontend                                | `loadChildren` over Native Federation |
-| `/quiz/flags?scope=&difficulty=&mode=&count=`                              | Flags microfrontend                                   | `loadChildren` over Native Federation |
-| `/quiz/<category>?mode=challenge&difficulty=&scope=world&challenge=&seed=` | a leaderboard challenge (started from Leaderboard)    | same remotes                          |
-| anything else                                                              | redirect to `/home`                                   | —                                     |
+| URL                                                   | Page                                                  | Loading                               |
+| ----------------------------------------------------- | ----------------------------------------------------- | ------------------------------------- |
+| `/welcome`                                            | welcome + sign-in (`signedOutGuard`: players go home) | lazy (`loadComponent`)                |
+| `/`                                                   | redirect to `/home`                                   | —                                     |
+| `/home`, `/leaderboard`, `/achievements`, `/settings` | tab pages inside `TabsPage`                           | lazy (`loadComponent`)                |
+| `/quiz/setup`                                         | quiz setup (shell)                                    | lazy (`loadComponent`)                |
+| `/quiz/setup?category=`                               | preselects Capitals or Flags (Home's Practise rows)   | —                                     |
+| `/quiz/capitals?scope=&difficulty=&mode=&count=`      | Capitals microfrontend                                | `loadChildren` over Native Federation |
+| `/quiz/flags?scope=&difficulty=&mode=&count=`         | Flags microfrontend                                   | `loadChildren` over Native Federation |
+| anything else                                         | redirect to `/home`                                   | —                                     |
 
 Everything except `/welcome` is behind `signedInGuard`
 ([ADR-011](../decisions/ADR-011-sign-in-required.md)): it waits for the
@@ -139,29 +140,75 @@ may know about each other, is described in
 - Progress and sync: [state-management.md](state-management.md) and
   [ADR-006](../decisions/ADR-006-local-persistence.md).
 
-## Leaderboard (challenges, rankings, records)
+## Leaderboard (boards, rankings, records)
 
 Rules: [leaderboard.md](../domain/leaderboard.md).
 
-- **Global**: the board chosen (four boards), with a card that starts a
-  challenge on it: `POST /v1/challenges`, then the board's quiz opens with
-  the challenge id and the server's seed in the URL. Below, the ranking
-  (`httpResource` on `GET /v1/leaderboards/:board`): rank, nickname, time
-  (`m:ss.t`), the player's own row marked (`aria-current`, from their
-  records), and the number of players. Loading, error with retry and empty
+- **A board is the four settings a quiz is played with**, so it is chosen
+  with the very controls the quiz setup asks those questions with: tiles for
+  the quiz type and the difficulty, `wq-region-options` for the region, and a
+  row per ranked mode whose second line says what that board asks of a player
+  ("Answer 10 random questions correctly, faster than anyone else"), in the
+  words they would use themselves rather than as a description of a SQL
+  order. The same question must not look like a different question from
+  screen to screen.
+- **The picker opens where the player left it.** The four choices are
+  `linkedSignal`s over `LastSetupStore.board()`, remembered when a board is
+  shown — the same convenience the quiz setup has, kept as a separate fact
+  from it (a player may well play Europe on Hard and look at the easy World
+  board).
+- **The ranking opens over the page** (`wq-dialog`) when the player presses
+  "Show the board" — a button in the page, under the last choice, exactly
+  where the quiz setup's Start quiz now is. Four choices and a table do not
+  fit on a phone together, and the table is what the player came for; under
+  the choices it started a screen down. Asking for the same board again
+  reloads it — a run finished since may have reached it — and nothing is
+  fetched until it is asked for.
+- The dialog's title is just "Leaderboard"; which of the 56 boards it is
+  stands under a trophy in the card, as **two lines** (category · region,
+  then difficulty · mode), because the four settings on one line wrapped
+  after the third on a phone.
+- Inside the dialog: rank, nickname, the score in the board's own terms (a
+  time `m:ss.t`, or "21 correct" with the time beside it) and the number of
+  players. The player's own row is highlighted in place (`aria-current`) and,
+  when their place is below the page shown, **pinned under the list** — the
+  board is worth opening from #248. Loading, error with retry and empty
   states are explicit.
-- **My records**: every board with the player's best time and place
-  (`GET /v1/me/records`), or "No perfect run yet".
-- Both are loaded again when the tab is shown and **after every sync**
-  (`SyncService.lastSyncedAt`): Ionic can show this cached page again without
-  `ionViewWillEnter`, e.g. after "New challenge" on the results.
-- **Results of a challenge** (in the remote): "Checking your run…", then
-  "Ranked #N", the time and "New personal record!", or why the run is not
-  ranked, or that it could not be sent (offline). "Play again" becomes "New
-  challenge" and returns to the leaderboard: a challenge is played once.
-- **Public name**: Settings → Account shows the nickname and edits it inline,
-  validated with the API's own `nicknameSchema` before sending (`PATCH
-/v1/me` through `AuthStore.setNickname`).
+- **Nothing is started here.** Any game in a ranked mode competes, so the
+  screen has no "play" of its own. Which modes are ranked is said where a
+  mode is chosen instead: an "i" beside Game mode on the quiz setup
+  (`setup.modeInfo`) — by the time a player is looking at a board, the run is
+  already played.
+- **My records**: one row per board the player ranks on, with the score and
+  the place, each shareable as a picture; nothing at all is "No records yet"
+  rather than 56 empty rows.
+- The player's own row takes its name from `GET /v1/me/records`, which
+  carries the nickname: the public board is the same for everyone (that is
+  what lets it be cached), and ranks are unique, so the two are matched by
+  rank and no nickname is ever compared.
+- Records are loaded when the tab is shown and **after every sync**
+  (`SyncService.lastSyncedAt`), and so is an open board: Ionic can show this
+  cached page again without `ionViewWillEnter`, and a run reaches the API
+  through the sync.
+- **The place on the results** (in the remote): the sink hands over a promise
+  of the API's answer only when the run could rank at all, so the card says
+  "Checking the board…", then the place and the score, or that the run is
+  saved but not on the board yet (offline). A run that could never rank is
+  not mentioned — a screen that explains why every ordinary game did not win
+  would say it after every game.
+- **A personal record is the loud case.** It turns that card into the brand
+  gradient the shared picture is drawn on: a trophy, "New personal record!"
+  as the headline, the board under it and two labelled figures (the place,
+  and the time or the count with the time beside it), with one slow sheen as
+  it arrives (none under `prefers-reduced-motion`). It carries a share of its
+  own, which hands over the **record's** picture (`recordShareCard`, the one
+  "My records" shares) rather than the run's — the record is what the player
+  wants to show. Everything quieter stays a plain card, with a gold, silver
+  or bronze medal beside a place in the first three; a screen that celebrates
+  everything celebrates nothing.
+- **Public name**: Settings → Account shows the nickname and edits it in a
+  dialog, validated with the API's own `nicknameSchema` before sending
+  (`PATCH /v1/me` through `AuthStore.setNickname`).
 
 ## Sharing a result
 
@@ -307,6 +354,11 @@ Everything is derived; nothing is copied from the Figma mock-ups:
     store, so a player moves them freely and the screen starts again from the
     remembered setup whenever it is opened afresh. A query parameter still
     wins: Home's "Practise" rows carry `?category=&mode=practice`.
+  - The modes that reach a board say so on the row itself (a "Ranked" pill),
+    and **Start quiz is part of the page**, under the last choice: a button
+    pinned to the foot of the screen is visible before the choices it uses
+    are. It is hidden while the tour runs, which is what keeps a quiz from
+    starting mid-explanation.
   - `start()` is what remembers, not every tap, and **Practice Mistakes is
     never remembered** — it is an action, not a preference, and a player who
     practised once would come back to a screen whose Start button is disabled
@@ -314,6 +366,10 @@ Everything is derived; nothing is copied from the Figma mock-ups:
   - Like the tours, this is device state (`KEY_VALUE_STORAGE`), not account
     state: signing out does not make the player want a different region.
     `provideLastSetup()` loads it before the first render.
+  - The same store keeps the **board** the leaderboard last showed, under a
+    key of its own. The two are the same four questions and the same kind of
+    fact, so they share the plumbing — but never the value: one overwriting
+    the other would move the ground under whichever screen is opened next.
 - **The region is a sketch as well as a name.** `wq-region-options`
   (`client/ui`) is the region grid of both the quiz setup and the countries
   reference: each option carries a hand-drawn globe of that part of the

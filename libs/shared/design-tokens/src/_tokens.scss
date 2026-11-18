@@ -70,6 +70,15 @@
   // needs 3:1.
   --wq-color-success-mark: #8fe0a4;
   --wq-color-on-success-mark: #0f5c3a;
+
+  // The medal on a top-three place (the results card). A medal is an object
+  // rather than a surface, so the hues are the expected gold/silver/bronze
+  // and only their lightness follows the theme: these are the dark-ink
+  // versions, for a light page. The place is written out beside the medal,
+  // so the colour carries no meaning on its own.
+  --wq-color-medal-gold: #b8860b;
+  --wq-color-medal-silver: #7d8495;
+  --wq-color-medal-bronze: #a8603a;
   --wq-color-warning: #955800;
   --wq-color-warning-container: #fff1d6;
   // The lit bulb of a hint (a guided tour's card). A hint is not a warning
@@ -212,6 +221,11 @@
   // needs 3:1.
   --wq-color-success-mark: #8fe0a4;
   --wq-color-on-success-mark: #0f5c3a;
+
+  // The same three medals, lightened for a dark page.
+  --wq-color-medal-gold: #f0bf52;
+  --wq-color-medal-silver: #c3c9d8;
+  --wq-color-medal-bronze: #dc9a63;
   --wq-color-warning: #f5b54a;
   --wq-color-warning-container: #3d2a0c;
   --wq-color-hint: #ffc84d;

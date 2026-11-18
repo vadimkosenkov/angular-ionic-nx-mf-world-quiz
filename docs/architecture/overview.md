@@ -33,22 +33,22 @@ flowchart LR
 
 ## Building blocks
 
-| Unit                                               | Responsibility                                                                                                                          | Status                                                                                                                                                                          |
-| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/shell`                                       | Bootstrap, auth, tabs, Home, Quiz Setup, Countries, Leaderboard, Achievements, Settings; Native Federation host                         | ✅ welcome + required sign-in, tabs, Home, quiz setup, the countries reference, Leaderboard (challenges, rankings, records), Achievements, Settings (nickname), federation host |
-| `apps/capitals`                                    | Capitals play + results route; Native Federation remote                                                                                 | ✅ ([microfrontends.md](microfrontends.md))                                                                                                                                     |
-| `apps/flags`                                       | Flags play + results route; Native Federation remote                                                                                    | ✅ ([microfrontends.md](microfrontends.md))                                                                                                                                     |
-| `apps/api`                                         | REST API: auth, sessions (idempotent result ingestion), progress sync, leaderboard                                                      | ✅ sign-in (Google, Apple), sessions per player, server-graded and idempotent, history for sync, leaderboard challenges, boards and records ([backend.md](backend.md))          |
-| `apps/site`                                        | Angular SSR: prerendered legal pages, server-rendered public leaderboard                                                                | ✅ en/ru, home, Privacy, Terms, leaderboards ([site.md](site.md))                                                                                                               |
-| `apps/shell-e2e`                                   | Cypress user journeys                                                                                                                   | ✅ navigation, theme, language, Capitals quiz across the federation boundary · 📐 the remaining journeys                                                                        |
-| `libs/quiz/domain`                                 | Pure TS quiz rules shared by client and server: engine, answer matching, scoring, mastery, progress, achievements, leaderboard          | ✅                                                                                                                                                                              |
-| `libs/quiz/countries`                              | 195-country dataset (en/ru), UN M49 regions, flag asset paths                                                                           | ✅                                                                                                                                                                              |
-| `libs/shared/util`                                 | Dependency-free helpers (`Clock`, `Result`, `assertNever`)                                                                              | ✅                                                                                                                                                                              |
-| `libs/client/ui`, `client/i18n`, `client/settings` | Design system, English/Russian i18n, settings store and theme/language sync                                                             | ✅                                                                                                                                                                              |
-| `libs/client/quiz-ports`                           | The shell ↔ remote contract: `QUIZ_RESULT_SINK`, `QUIZ_PROGRESS_READER`, `COUNTRY_DATASET`, `CLOCK`                                     | ✅                                                                                                                                                                              |
-| `libs/client/quiz-feature`                         | The quiz screens themselves (play, results), used by every remote                                                                       | ✅                                                                                                                                                                              |
-| `libs/client/auth`, `libs/client/progress`         | Sign-in state and API calls; progress on the device (IndexedDB), outbox and sync ([ADR-006](../decisions/ADR-006-local-persistence.md)) | ✅                                                                                                                                                                              |
-| `libs/shared/contracts`                            | Zod schemas of API requests, responses and errors, shared by server and client                                                          | ✅                                                                                                                                                                              |
+| Unit                                               | Responsibility                                                                                                                          | Status                                                                                                                                                                                               |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/shell`                                       | Bootstrap, auth, tabs, Home, Quiz Setup, Countries, Leaderboard, Achievements, Settings; Native Federation host                         | ✅ welcome + required sign-in, tabs, Home, quiz setup, the countries reference, Leaderboard (56 boards, rankings, the player's own row, records), Achievements, Settings (nickname), federation host |
+| `apps/capitals`                                    | Capitals play + results route; Native Federation remote                                                                                 | ✅ ([microfrontends.md](microfrontends.md))                                                                                                                                                          |
+| `apps/flags`                                       | Flags play + results route; Native Federation remote                                                                                    | ✅ ([microfrontends.md](microfrontends.md))                                                                                                                                                          |
+| `apps/api`                                         | REST API: auth, sessions (idempotent result ingestion), progress sync, leaderboard                                                      | ✅ sign-in (Google, Apple), sessions per player, server-graded and idempotent, history for sync, ranked runs, boards and records ([backend.md](backend.md))                                          |
+| `apps/site`                                        | Angular SSR: prerendered legal pages, server-rendered public leaderboard                                                                | ✅ en/ru, home, Privacy, Terms, leaderboards ([site.md](site.md))                                                                                                                                    |
+| `apps/shell-e2e`                                   | Cypress user journeys                                                                                                                   | ✅ navigation, theme, language, Capitals quiz across the federation boundary · 📐 the remaining journeys                                                                                             |
+| `libs/quiz/domain`                                 | Pure TS quiz rules shared by client and server: engine, answer matching, scoring, mastery, progress, achievements, leaderboard          | ✅                                                                                                                                                                                                   |
+| `libs/quiz/countries`                              | 195-country dataset (en/ru), UN M49 regions, flag asset paths                                                                           | ✅                                                                                                                                                                                                   |
+| `libs/shared/util`                                 | Dependency-free helpers (`Clock`, `Result`, `assertNever`)                                                                              | ✅                                                                                                                                                                                                   |
+| `libs/client/ui`, `client/i18n`, `client/settings` | Design system, English/Russian i18n, settings store and theme/language sync                                                             | ✅                                                                                                                                                                                                   |
+| `libs/client/quiz-ports`                           | The shell ↔ remote contract: `QUIZ_RESULT_SINK`, `QUIZ_PROGRESS_READER`, `COUNTRY_DATASET`, `CLOCK`                                     | ✅                                                                                                                                                                                                   |
+| `libs/client/quiz-feature`                         | The quiz screens themselves (play, results), used by every remote                                                                       | ✅                                                                                                                                                                                                   |
+| `libs/client/auth`, `libs/client/progress`         | Sign-in state and API calls; progress on the device (IndexedDB), outbox and sync ([ADR-006](../decisions/ADR-006-local-persistence.md)) | ✅                                                                                                                                                                                                   |
+| `libs/shared/contracts`                            | Zod schemas of API requests, responses and errors, shared by server and client                                                          | ✅                                                                                                                                                                                                   |
 
 ## Key architectural principles
 
@@ -77,10 +77,10 @@ Hard mode. Details: [countries.md](../domain/countries.md).
 
 ### Training vs competition
 
-| Concept                                                            | Modes                                                | Ranked globally?                   |
-| ------------------------------------------------------------------ | ---------------------------------------------------- | ---------------------------------- |
-| **Training** (optimised for learning)                              | Fixed, Endless, Timed, Practice Mistakes; any region | Never                              |
-| **Leaderboard challenge** (optimised for perfect accuracy + speed) | Complete World set, Easy or Hard                     | Yes: 4 boards, fastest perfect run |
+| Concept           | Modes                                   | Ranked globally?                                                        |
+| ----------------- | --------------------------------------- | ----------------------------------------------------------------------- |
+| **Learning only** | Endless, Practice Mistakes              | Never: nothing to compare, or a set only one player is asked            |
+| **Ranked modes**  | Quick round (10 questions), Time attack | Yes, when flawless: one board per category × region × difficulty × mode |
 
 Details: [quiz engine](../domain/quiz-engine.md) · [answer matching](../domain/answer-matching.md) · [scoring](../domain/scoring.md) · [mastery](../domain/mastery.md) · [achievements](../domain/achievements.md) · [leaderboard](../domain/leaderboard.md).
 
@@ -106,8 +106,8 @@ typos). The app has no custom speech-recognition UI and no external AI/LLM judgi
 | 7b  | `feat/auth-client`           | Sign-in, sign-out and account deletion in the app                                                                             | ✅ merged      |
 | 8a  | `feat/sync-server`           | A player's history for sync (`GET /v1/sessions`, keyset pages) — API                                                          | ✅ merged      |
 | 8b  | `feat/sync-client`           | Sign-in first, local store (IndexedDB), outbox, sync                                                                          | ✅ merged      |
-| 9a  | `feat/leaderboard-server`    | Challenges with a server seed, ranked runs, public boards, records, nicknames — API                                           | ✅ merged      |
-| 9b  | `feat/leaderboard-client`    | Challenges and the leaderboard screen in the app                                                                              | ✅ merged      |
+| 9a  | `feat/leaderboard-server`    | Ranked runs, public boards, records, nicknames — API                                                                          | ✅ merged      |
+| 9b  | `feat/leaderboard-client`    | The leaderboard screen in the app                                                                                             | ✅ merged      |
 | 9c  | `feat/site-ssr`              | `apps/site` SSR: legal pages, public leaderboard; SSR-in-shell spike, ADR-003                                                 | ✅ merged      |
 | 10  | `feat/achievements-mistakes` | Achievements, practice mistakes                                                                                               | ✅ merged      |
 | 11  | `feat/e2e`                   | Full Cypress journeys                                                                                                         | ✅ merged      |
@@ -126,13 +126,13 @@ typos). The app has no custom speech-recognition UI and no external AI/LLM judgi
 | 21b | `feat/home-play-card`        | One Play card on Home, a setup that remembers, region sketches and square category tiles                                      | ✅ merged      |
 | 22  | `feat/share-sounds`          | Sharing a result; a sound on the actions that start something; the account card restyled                                      | ✅ merged      |
 | 23  | `feat/share-image`           | A result shared as a picture: a card drawn on a canvas, the text kept as the fallback                                         | ✅ merged      |
-| 24  | `feat/release-notes`         | What changed in this release: a bell on Home, a page of notes, and a release cut per deploy                                   | 🚧 this branch |
-| 25  | `feat/leaderboards-v2`       | Boards per mode, region and difficulty; top 100 plus the player's own row                                                     | planned        |
+| 24  | `feat/release-notes`         | What changed in this release: a bell on Home, a page of notes, and a release cut per deploy                                   | ✅ merged      |
+| 25  | `feat/ranked-boards`         | A board per mode, region and difficulty, fed by ordinary games; the player's own row                                          | 🚧 this branch |
 | 26  | `feat/friends`               | Friends, their achievements, and a board of you and your friends                                                              | planned        |
 | 27  | `feat/auth-fixes`            | Google sign-in: straight to Home after signing in, no surprise sign-outs, and the player's Google picture on the account card | planned        |
 | 28  | `feat/voice-answers`         | Hard mode answered out loud: the Web Speech API on the web, a decision on iOS after                                           | planned        |
 | 29  | `feat/template-formatting`   | Control flow printed as the Angular docs write it, with no formatting workaround                                              | planned        |
-| 30  | `feat/sound-design`          | Sounds worth hearing: richer tones for the answers, the start and the finish                                                  | planned        |
+| 30  | `feat/sound-design`          | Sounds worth hearing: richer tones for the answers, the start and the finish, and a fanfare of its own for a personal record  | planned        |
 | 31  | `feat/glass-polish`          | The glass material taken further: depth, edges and how it answers what scrolls under it                                       | planned        |
 | 32  | `feat/ios-pass`              | A pass over the iPhone app on the simulator: everything built since 13b, checked there                                        | planned, last  |
 
@@ -158,7 +158,7 @@ down. `<!-- prettier-ignore -->` is explicitly not the answer: in HTML it
 protects only the next node, so it holds only while a block's body is bare
 text and silently stops working as soon as the body contains an element.
 
-Phase 29 is about how the app sounds. The tones of 14b are oscillator beeps
+Phase 30 is about how the app sounds. The tones of 14b are oscillator beeps
 — two or three notes of a triangle wave, 90 ms each — and a test group's
 complaint about them is that they grate. The phase reworks what every event
 plays (and how loud): a softer envelope, more than one voice per note, and
@@ -166,7 +166,14 @@ tones that read as approval and as information rather than as a buzzer. It
 is judged by ear, so it starts with a page that plays the candidates side by
 side rather than with a commit.
 
-Phase 30 is deliberately last. The iPhone app is built from the same code
+It also owes the leaderboard a sound. A **new personal record** is the
+loudest thing the app has to say (phase 25 gives it a card of its own), and
+it currently shares `celebrate` with a perfect run and an unlocked
+achievement. The phase adds an event heard nowhere else — a short fanfare,
+with its own haptic — so a record is recognised before the card is read; the
+existing `celebrate` stays for everything else.
+
+Phase 32 is deliberately last. The iPhone app is built from the same code
 as the web, but a WKWebView is not a browser: whether its share sheet
 accepts a file, how the on-screen keyboard behaves, what the Keychain does
 on a cold start — each has to be seen on the simulator, and seeing them
@@ -183,7 +190,11 @@ fallback: desktop Safari and Firefox share no files. Screenshotting the page
 with a library is not the way — the results card is glass over a blurred
 backdrop, which those libraries cannot draw.
 
-Phase 24 replaces the earlier plan for separate regional boards: region and
-difficulty become part of every board, Quick round is ranked by time and Time
-attack by correct answers, and a challenge is started from Home rather than
-from the leaderboard screen.
+Phase 25 replaced the earlier plan for separate regional boards, and the
+leaderboard it was built on. A board is now the four settings a quiz is
+played with — category, region, difficulty and ranked mode, 56 of them — and
+there is nothing to start: any game in a ranked mode competes, Quick round by
+its time and Time attack by its correct answers. The server-issued
+195-country challenge is gone, together with what it could prove about a
+time; the reasoning and the cost are in
+[ADR-014](../decisions/ADR-014-ranked-boards.md).

@@ -13,7 +13,7 @@ export interface PlayOptions {
   readonly step?: number;
   /** Which answers (by index) are deliberately wrong. */
   readonly wrong?: ReadonlySet<number>;
-  /** Endless only: how many questions to answer before stopping. */
+  /** Endless and Time attack: how many questions to answer before stopping. */
   readonly answers?: number;
 }
 

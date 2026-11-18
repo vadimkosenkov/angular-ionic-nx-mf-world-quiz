@@ -25,7 +25,7 @@ export interface RunShareFacts {
   /** Already formatted, as the screen shows it ("1:12"). */
   readonly duration: string;
   readonly perfect: boolean;
-  /** The ranked line of a challenge, already translated; `null` otherwise. */
+  /** The line about the place on a board, translated; `null` otherwise. */
   readonly rank: string | null;
 }
 
@@ -37,8 +37,8 @@ export interface RunShareFacts {
  * It says what the message says, laid out as a card: what was asked for,
  * where and how hard above the score, how it was played on its own line
  * under that, and accuracy and time as the figures beneath. The line
- * between them is the rank the server gave — or, failing that, a perfect
- * run.
+ * between them is the place the API gave the run — or, failing that, a
+ * perfect run.
  */
 export function runShareCard(
   run: RunShareFacts,

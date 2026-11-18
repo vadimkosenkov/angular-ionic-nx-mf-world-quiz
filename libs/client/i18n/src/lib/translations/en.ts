@@ -66,7 +66,6 @@ export const en = {
     endless: 'Endless',
     timed: 'Time attack',
     practice: 'Practice mistakes',
-    challenge: 'Leaderboard challenge',
   },
   regions: {
     world: 'World',
@@ -175,25 +174,31 @@ export const en = {
     },
   },
   leaderboard: {
-    title: 'Leaderboard',
+    title: 'Leaderboards',
     views: {
-      global: 'Global',
+      global: 'Board',
       mine: 'My records',
     },
-    boardsLabel: 'Leaderboard category',
-    boards: {
-      'capitals-easy': 'Capitals · Easy',
-      'capitals-hard': 'Capitals · Hard',
-      'flags-easy': 'Flags · Easy',
-      'flags-hard': 'Flags · Hard',
+    // The four settings a board stands for, assembled from the names the
+    // quiz setup already uses for them.
+    boardName: '{{category}} · {{region}} · {{difficulty}} · {{mode}}',
+    // The same four settings in the ranking dialog, as two deliberate
+    // lines: what is asked and where, then how it is played. On a phone
+    // the one line wrapped after the third setting, which reads as an
+    // accident; these two are a grouping.
+    boardTitle: 'Leaderboard',
+    boardSubject: '{{category}} · {{region}}',
+    boardStyle: '{{difficulty}} · {{mode}}',
+    // What a board asks of a player, in the words they would use
+    // themselves. "Ranked by the time the ten questions took" is a
+    // description of a SQL order, not an invitation to play.
+    metric: {
+      fixed:
+        'Answer {{count}} random questions correctly, faster than anyone else.',
+      timed: 'Answer as many questions correctly as you can in 60 seconds.',
     },
-    rules:
-      'Answer all {{count}} countries correctly. The fastest perfect run wins.',
-    online:
-      'Play it online: the time counts from the first question to the last answer, and the result must reach the server right away.',
-    start: 'Start challenge · {{board}}',
-    startFailed:
-      'The challenge could not be started. Check your connection and try again.',
+    show: 'Show the board',
+    close: 'Close',
     loading: 'Loading the leaderboard…',
     loadFailed: {
       title: 'The leaderboard cannot be loaded',
@@ -201,7 +206,7 @@ export const en = {
     },
     retry: 'Try again',
     empty: {
-      title: 'No perfect runs yet',
+      title: 'No flawless runs yet',
       message: 'Be the first on this board.',
     },
     you: '(you)',
@@ -212,7 +217,11 @@ export const en = {
       other: '{{count}} players ranked',
     },
     place: '#{{rank}} of {{players}}',
-    noRecord: 'No perfect run yet',
+    correct: '{{correct}} correct',
+    noRecords: {
+      title: 'No records yet',
+      message: 'Play a quick round or a time attack without a single mistake.',
+    },
   },
   achievements: {
     title: 'Achievements',
@@ -245,6 +254,12 @@ export const en = {
       hard: 'Type or dictate the answer',
     },
     mode: 'Game mode',
+    modeInfo:
+      'Quick round and Time attack are ranked.\n\nEndless and Practice mistakes are for learning only.',
+    modeInfoLabel: 'About the game modes',
+    // The mark on the two modes that play against everyone else. It sits
+    // on the row rather than over a group of rows.
+    rankedBadge: 'Ranked',
     modeHint: {
       fixed: '{{count}} questions',
       endless: 'Play until you stop',
@@ -311,26 +326,18 @@ export const en = {
     review: 'To review',
     playAgain: 'Play again',
     backHome: 'Back to home',
-    newChallenge: 'New challenge',
-    challenge: {
+    board: {
       title: 'Leaderboard',
-      checking: 'Checking your run with the server…',
+      checking: 'Checking the board…',
       unsent:
-        'Not sent: you are offline. The run is saved and will be sent later, but challenges sent late are not ranked.',
-      ranked: 'Ranked #{{rank}}',
+        'Not on the board yet: you are offline. The run is saved and reaches the board with the next sync.',
+      ranked: '#{{rank}} of {{players}}',
       time: 'Time: {{time}}',
+      correct: '{{correct}} correct in {{time}}',
+      // The two figures a record card shows under its headline.
+      place: 'Place',
+      answers: 'Correct',
       record: 'New personal record!',
-      reasons: {
-        'not-finished': 'Not ranked: the run was not finished.',
-        incomplete: 'Not ranked: every country must be answered.',
-        'has-incorrect-answers': 'Not ranked: every answer must be correct.',
-        'invalid-question-set':
-          'Not ranked: the run did not cover the whole world.',
-        expired: 'Not ranked: the challenge expired before the result arrived.',
-        late: 'Not ranked: the result reached the server too long after the run.',
-        'implausible-time':
-          'Not ranked: the run took longer than the server allows for it.',
-      },
     },
   },
   share: {
@@ -343,15 +350,15 @@ export const en = {
       // what was played.
       subject: '{{category}} · {{region}} · {{difficulty}}',
       score: '{{correct}}/{{answered}} correct · {{accuracy}}% · {{time}}',
-      rank: 'Ranked #{{rank}} on the leaderboard',
+      rank: 'On the leaderboard: #{{rank}} of {{players}}',
     },
     record: {
       action: 'Share the {{board}} record',
       heading: 'World Quiz — {{board}}',
-      score: 'Perfect run in {{time}} · {{place}}',
+      score: '{{score}} · {{place}}',
       // The picture lays the same record out as a card, so the place and
       // the size of the board become figures with labels of their own.
-      perfect: 'Perfect run',
+      perfect: 'Flawless run',
       place: 'Place',
       players: 'Players',
     },

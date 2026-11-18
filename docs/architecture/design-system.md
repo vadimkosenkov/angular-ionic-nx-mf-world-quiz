@@ -286,15 +286,32 @@ outgrows the phone long before the layout changes. The two tiles still share
 one height, because the row stretches them and the mastery line is pushed to
 the foot of whichever is taller.
 
-The tile's own rules live with the quiz setup rather than in `client/ui`,
-because that screen is the only one that offers a choice of this shape; the
-option it builds on (`.wq-option`) is the shared one.
-
 A tile is a `button` with `aria-pressed`, not a radio: there is no form
 here, and `ion-list` semantics would be wrong (see below).
 
-The game modes stay a list of wide rows: there are four of them, one is
-disabled when there is nothing to practise, and their hints are sentences.
+The game modes stay a list of wide rows (`.wq-option.row`): there are four
+of them, one is disabled when there is nothing to practise, and their hints
+are sentences. What a player picks a mode by is what the game is played
+against, so the two that play against everyone else carry a small
+**"Ranked" pill** beside the name. It was first tried as two sub-headings
+over two groups — which splits one short list into two, adds a heading level
+the screen does not otherwise have, and still leaves the fact somewhere
+other than on the row it is true of. The two ranked modes are listed first,
+so the mark is read once at the top instead of twice from the middle of the
+list. On the chosen row the pill takes the filled colours, because the
+container colour it normally uses is that row's own background.
+
+**Both shapes live in `client/ui`** (`styles/_base.scss`: `.wq-option.tile`,
+`.wq-option.row`, `.wq-options.tiles` and the `.wq-option-icon/-text/-name/
+-note/-footnote` parts), not with the quiz setup, because the setup is no
+longer the only screen that asks the quiz's four questions — the
+leaderboard's board picker asks the same four, and a question asked with a
+different control reads as a different question.
+
+A section heading can carry an "i" beside it (the setup's game modes): the
+page gives `.wq-section-title` `display: flex` and shrinks the button to
+24px through `--wq-info-size` — from a selector that beats the component's
+own `:host`, since the button it scales is inside `wq-info-button`.
 
 ### The page header
 
@@ -544,6 +561,49 @@ card, and its letters are the app's own system font stack — the app loads no
 web font, so nothing has to be embedded. The text message stays the fallback
 for the browsers that share no files.
 
+### The ranking opens over the page
+
+A board is four settings and a table, and a phone shows one of the two. The
+choices stay on the page and the table opens over it in a `wq-dialog` when
+the player asks for it, which also means nothing is fetched until a board is
+actually looked at.
+
+Inside, the dialog's own title says what the card is ("Leaderboard") and a
+centred header says which of the 56 boards it is: a trophy in a disc, then
+the four settings as **two deliberate lines** — what is asked and where,
+then how it is played. As one line they wrapped after the third setting on a
+phone, which reads as an accident; split in two it reads as a grouping, and
+it is the same at every width.
+
+### A record is worth a fanfare; a place is not
+
+The results screen says two different things about a public board, and they
+are deliberately not the same size.
+
+An ordinary place is a plain card: the caption, the place in the primary
+colour, and what the board ranks by under it. A place in the **first three**
+carries a medal in gold, silver or bronze (`--wq-color-medal-*`, defined for
+both themes — a medal is an object, not a surface, so only its lightness
+follows the theme). The number is written out beside it, so the colour adds
+to what is already said rather than carrying it.
+
+A **personal record** takes the card the result is _shared_ as: the brand
+gradient (`--wq-color-primary` to `--wq-color-accent`, the same two the
+share picture's band is drawn with), a trophy in a disc of the card's own
+ink, "New personal record!" as the headline, the board under it, and the
+place and the score as two labelled figures — the shape the hero already
+gives accuracy and time. One slow sheen crosses it as it arrives, drawn in
+the card's own ink at low opacity so no colour is invented, and it does not
+move at all under `prefers-reduced-motion`.
+
+The record carries a share of its own, which hands over the **record's**
+picture rather than the run's: the two are different pictures, and the
+record is the one the player wants to show. It is the same quiet round
+button the hero uses, in the card's ink instead of secondary text.
+
+A screen that celebrates everything celebrates nothing: being checked,
+waiting offline and a place outside the first three all stay quiet.
+
 ### The mark sits on the fact, not beside it
 
 The countries reference lists two facts per row — the capital in words and
@@ -595,13 +655,24 @@ surface.
 
 ### Actions live at the bottom
 
-A screen's next step is always in the same place: `.wq-action-bar`, fixed to
-the bottom above the content (which keeps `--wq-action-bar-clearance` free).
-Its buttons are `ion-button.wq-glass-button`: pill-shaped with a **solid**
-fill — primary, or `secondary` (surface, primary label, border). A
-translucent tinted fill was tried and dropped: over busy content the label
-lost contrast and the button looked washed out. Used for Start quiz, Check,
-Finish, Play again and Back to home.
+A screen's next step is always the same button:
+`ion-button.wq-glass-button` — pill-shaped with a **solid** fill, primary or
+`secondary` (surface, primary label, border). A translucent tinted fill was
+tried and dropped: over busy content the label lost contrast and the button
+looked washed out.
+
+Where that button sits depends on what it needs from the player first.
+
+- A screen the player **answers questions on** keeps it in the page, under
+  the last question: the quiz setup's Start quiz, the leaderboard's Show the
+  board. A button pinned to the foot of such a screen is on screen before
+  the choices it uses are, and a player who has not learnt to scroll presses
+  it with three of the four choices unseen. Under the last one it is the end
+  of the list, and reaching it means having passed them.
+- A screen the player **acts on** keeps it in `.wq-action-bar`, fixed to the
+  bottom above the content (which keeps `--wq-action-bar-clearance` free),
+  because there is nothing above it to read first: Check and Finish in a
+  quiz, Play again and Back to home on the results.
 
 The one exception is the verdict between two questions. It is shown under the
 flag, where the player is already looking, and the **card itself** is the
@@ -634,7 +705,8 @@ What belongs there, and what does not:
 
 - A **toast** reports the outcome of something the player just did — the
   public name was saved, it could not be saved, you are signed out, the
-  account is gone, the challenge could not be started. It is about an action,
+  account is gone, the results that were waiting have been saved. It is
+  about an action,
   not about the screen. "Try again" on an unverified sign-in belongs here
   too: when the API is still unreachable the screen looks exactly as it did,
   and without a word the button looks broken.
@@ -820,6 +892,13 @@ secondary text colour it read as a disabled control. Ionic's label grows to
 fill its row by itself, so the rows that carry a note hand that growth back
 (`.setting ion-label`).
 
+A note that makes two points is written as **two paragraphs**, separated by a
+blank line in the translation, and `wq-info-button` splits it into a `<p>`
+each: the game modes' note says which modes are ranked, and then that the
+other two are for learning. One sentence per point, not one block — the
+mode note used to explain the whole leaderboard in four lines, and nobody
+reads a popover that long.
+
 A **disabled** control is the exception: it has to say why without being
 asked, so the vibration toggle keeps its reason in a visually hidden
 paragraph it points at with `aria-describedby`, as well as behind the `i`.
@@ -927,12 +1006,12 @@ punishment), a short fanfare for a perfect run, an achievement or a record.
 Quiet by design (`0.12` peak gain, 90 ms per note) and faded in and out so
 the speaker does not click.
 
-A press that **starts** something — Start on the quiz setup, Start challenge
-on the leaderboard, Play again on the results — has a sound of its own: a
-rising fourth, a register below the answer tones, so it cannot be mistaken
-for "right". It plays on the press rather than when the quiz appears: asking
-the API for a challenge is a round trip, and a sound that arrives a second
-later no longer belongs to the press. A press that only opens a screen (the
+A press that **starts** something — Start on the quiz setup, "Play this
+quiz" on the leaderboard, Play again on the results — has a sound of its own:
+a rising fourth, a register below the answer tones, so it cannot be mistaken
+for "right". It plays on the press rather than when the quiz appears: loading
+a quiz remote is a round trip, and a sound that arrives a second later no
+longer belongs to the press. A press that only opens a screen (the
 Play card on Home, a Practise row) is silent — it starts nothing.
 
 **Haptics.** The iPhone only: iOS separates an _impact_ (something was

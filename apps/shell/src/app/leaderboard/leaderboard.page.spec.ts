@@ -4,7 +4,7 @@ import {
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { NavController } from '@ionic/angular';
-import { fireEvent, render, screen } from '@testing-library/angular';
+import { fireEvent, render, screen, within } from '@testing-library/angular';
 import { signal } from '@angular/core';
 import { SyncService } from '@world-quiz/client/progress';
 import {
@@ -16,24 +16,30 @@ import {
 import { APP_URL } from '@world-quiz/client/quiz-ports';
 import type { Leaderboard, MyRecords } from '@world-quiz/shared/contracts';
 import { provideShellTesting, TEST_API_URL } from '../../testing/shell-testing';
+import { LastSetupStore } from '../core/last-setup.store';
 import { LeaderboardPage } from './leaderboard.page';
 
 const settle = () => new Promise((resolve) => setTimeout(resolve));
 
+/** The board the page opens on: Capitals, the whole world, Easy, quick round. */
+const DEFAULT_BOARD = 'capitals-easy-world-fixed';
+
 const BOARD: Leaderboard = {
-  board: 'capitals-easy',
+  board: DEFAULT_BOARD,
   players: 3,
   entries: [
     {
       rank: 1,
       nickname: 'Speedy',
-      completionTimeMs: 185_400,
+      score: 185_400,
+      timeMs: 185_400,
       recordedAt: '2026-09-22T10:00:00.000Z',
     },
     {
       rank: 2,
       nickname: 'Ann the Explorer',
-      completionTimeMs: 247_300,
+      score: 247_300,
+      timeMs: 247_300,
       recordedAt: '2026-09-22T10:05:00.000Z',
     },
   ],
@@ -42,11 +48,22 @@ const BOARD: Leaderboard = {
 const RECORDS: MyRecords = {
   records: [
     {
-      board: 'capitals-easy',
+      board: DEFAULT_BOARD,
+      nickname: 'Ann the Explorer',
       rank: 2,
       players: 3,
-      completionTimeMs: 247_300,
+      score: 247_300,
+      timeMs: 247_300,
       recordedAt: '2026-09-22T10:05:00.000Z',
+    },
+    {
+      board: 'flags-hard-europe-timed',
+      nickname: 'Ann the Explorer',
+      rank: 5,
+      players: 40,
+      score: 12,
+      timeMs: 55_000,
+      recordedAt: '2026-09-22T11:00:00.000Z',
     },
   ],
 };
@@ -102,16 +119,24 @@ async function renderPage({
   const failWith = (request: TestRequest) =>
     request.flush(null, { status: 503, statusText: 'Unavailable' });
 
-  await answer('/v1/leaderboards/capitals-easy', (request) =>
-    board === 'error' ? failWith(request) : request.flush(board),
-  );
   await answer('/v1/me/records', (request) =>
     records === 'error' ? failWith(request) : request.flush(records),
   );
+
+  /** Presses "Show the board" and answers the request it makes. */
+  const openBoard = async (id = DEFAULT_BOARD) => {
+    fireEvent.click(screen.getByTestId('board-show'));
+    view.fixture.detectChanges();
+    await answer(`/v1/leaderboards/${id}`, (request) =>
+      board === 'error' ? failWith(request) : request.flush(board),
+    );
+  };
+
   return {
     ...view,
     http,
     answer,
+    openBoard,
     roots,
     lastSyncedAt,
     shared,
@@ -122,32 +147,39 @@ async function renderPage({
   };
 }
 
+/** The ranking's own rows; the board picker is a list of options too. */
+const entryRows = () =>
+  within(screen.getByTestId('leaderboard-entries')).getAllByRole('listitem');
+
 const emit = (testId: string, value: unknown) =>
   screen
     .getByTestId(testId)
     .dispatchEvent(new CustomEvent('ionChange', { detail: { value } }));
 
 describe('LeaderboardPage', () => {
-  it('shows the four perfect-run boards and the rules with the real country count', async () => {
+  it('says what a board asks of a player, in their own words', async () => {
     await renderPage();
 
-    for (const board of [
-      'Capitals · Easy',
-      'Capitals · Hard',
-      'Flags · Easy',
-      'Flags · Hard',
-    ]) {
-      expect(screen.getByText(board)).toBeTruthy();
-    }
-    expect(screen.getByTestId('leaderboard-rules').textContent).toContain(
-      'Answer all 195 countries correctly',
+    // What a board asks for is on the mode itself: the numbers in the table
+    // mean nothing without it, and it changes with the mode.
+    expect(screen.getByTestId('board-mode-fixed').textContent).toContain(
+      'Answer 10 random questions correctly, faster than anyone else.',
     );
+    expect(screen.getByTestId('board-mode-timed').textContent).toContain(
+      'Answer as many questions correctly as you can in 60 seconds.',
+    );
+    // Nothing is asked of the API until the player asks for a board.
+    expect(screen.queryByTestId('leaderboard-ranking')).toBeNull();
   });
 
-  it('ranks the fastest players, with times, the field size and the player marked', async () => {
-    await renderPage();
+  it('opens the board named by the four choices, with the player marked', async () => {
+    const { openBoard } = await renderPage();
+    await openBoard();
 
-    const rows = screen.getAllByRole('listitem');
+    const dialog = screen.getByRole('dialog');
+    expect(dialog.textContent).toContain('Capitals · World');
+    expect(dialog.textContent).toContain('Easy · Quick round');
+    const rows = entryRows();
     expect(
       rows.map((row) => row.textContent?.replace(/\s+/g, ' ').trim()),
     ).toEqual(['1 Speedy 3:05.4', '2 Ann the Explorer (you) 4:07.3']);
@@ -157,34 +189,93 @@ describe('LeaderboardPage', () => {
     );
   });
 
-  it('loads the board that is chosen', async () => {
+  it('shows the board the four choices describe', async () => {
     const { answer, fixture } = await renderPage();
 
-    emit('leaderboard-board', 'flags-hard');
+    fireEvent.click(screen.getByTestId('board-category-flags'));
+    fireEvent.click(screen.getByTestId('board-difficulty-hard'));
+    fireEvent.click(screen.getByTestId('board-scope-europe'));
+    fireEvent.click(screen.getByTestId('board-mode-timed'));
     fixture.detectChanges();
-    await answer('/v1/leaderboards/flags-hard', (request) =>
-      request.flush({ board: 'flags-hard', players: 0, entries: [] }),
+    fireEvent.click(screen.getByTestId('board-show'));
+    fixture.detectChanges();
+    await answer('/v1/leaderboards/flags-hard-europe-timed', (request) =>
+      request.flush({
+        board: 'flags-hard-europe-timed',
+        players: 1,
+        entries: [
+          {
+            rank: 1,
+            nickname: 'Speedy',
+            score: 21,
+            timeMs: 58_200,
+            recordedAt: '2026-09-22T10:00:00.000Z',
+          },
+        ],
+      }),
     );
 
-    expect(screen.getByTestId('leaderboard-empty').textContent).toContain(
-      'No perfect runs yet',
+    // The four settings as two deliberate lines, under the trophy.
+    const dialog = screen.getByRole('dialog');
+    expect(dialog.textContent).toContain('Flags · Europe');
+    expect(dialog.textContent).toContain('Hard · Time attack');
+    // A Time attack board counts answers; the time is the tie-break beside it.
+    const row = entryRows()[0];
+    expect(row?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+      '1 Speedy 21 correct 0:58.2',
     );
+    // And the screen opens on this board next time: answering the same four
+    // questions before every look is work the app can do once.
+    expect(TestBed.inject(LastSetupStore).board()).toEqual({
+      category: 'flags',
+      scope: 'europe',
+      difficulty: 'hard',
+      mode: 'timed',
+    });
   });
 
-  it('says so, and offers to retry, when rankings cannot be loaded', async () => {
-    const { answer } = await renderPage({ board: 'error' });
+  it('closes the board and asks for it again when it is opened afresh', async () => {
+    const { openBoard, fixture } = await renderPage();
+    await openBoard();
+
+    fireEvent.click(screen.getByTestId('dialog-close'));
+    fixture.detectChanges();
+    expect(screen.queryByRole('dialog')).toBeNull();
+
+    // Looking again is a new look: a run finished since may have reached it.
+    await openBoard();
+    expect(entryRows()).toHaveLength(2);
+  });
+
+  it("pins the player's own row under a page that does not reach their place", async () => {
+    const { openBoard } = await renderPage({
+      board: { ...BOARD, entries: [BOARD.entries[0] as never] },
+    });
+    await openBoard();
+
+    expect(
+      screen
+        .getByTestId('leaderboard-my-row')
+        .textContent?.replace(/\s+/g, ' ')
+        .trim(),
+    ).toBe('2 Ann the Explorer (you) 4:07.3');
+  });
+
+  it('says so, and offers to retry, when the board cannot be loaded', async () => {
+    const { openBoard, answer } = await renderPage({ board: 'error' });
+    await openBoard();
 
     expect(screen.getByTestId('leaderboard-error').textContent).toContain(
       'cannot be loaded',
     );
     fireEvent.click(screen.getByText('Try again'));
-    await answer('/v1/leaderboards/capitals-easy', (request) =>
+    await answer(`/v1/leaderboards/${DEFAULT_BOARD}`, (request) =>
       request.flush(BOARD),
     );
-    expect(screen.getAllByRole('listitem')).toHaveLength(2);
+    expect(entryRows()).toHaveLength(2);
   });
 
-  it("lists the player's records on every board", async () => {
+  it("lists the player's records, one row per board they rank on", async () => {
     const { fixture } = await renderPage();
 
     emit('leaderboard-view', 'mine');
@@ -192,34 +283,46 @@ describe('LeaderboardPage', () => {
 
     expect(
       screen
-        .getByTestId('record-capitals-easy')
+        .getByTestId(`record-${DEFAULT_BOARD}`)
         .textContent?.replace(/\s+/g, ' ')
         .trim(),
-    ).toBe('Capitals · Easy 4:07.3 #2 of 3');
-    expect(screen.getByTestId('record-flags-hard').textContent).toContain(
-      'No perfect run yet',
+    ).toBe('Capitals · World · Easy · Quick round 4:07.3 #2 of 3');
+    expect(
+      screen
+        .getByTestId('record-flags-hard-europe-timed')
+        .textContent?.replace(/\s+/g, ' ')
+        .trim(),
+    ).toBe('Flags · Europe · Hard · Time attack 12 correct #5 of 40');
+  });
+
+  it('invites a first flawless run when there are no records', async () => {
+    const { fixture } = await renderPage({ records: { records: [] } });
+
+    emit('leaderboard-view', 'mine');
+    fixture.detectChanges();
+
+    expect(screen.getByTestId('leaderboard-no-records').textContent).toContain(
+      'No records yet',
     );
   });
 
-  it('shares a record as the board, the time and the place', async () => {
+  it('shares a record as the board, the score and the place', async () => {
     const { fixture, shared } = await renderPage();
 
     emit('leaderboard-view', 'mine');
     fixture.detectChanges();
-    fireEvent.click(screen.getByTestId('share-record-capitals-easy'));
+    fireEvent.click(screen.getByTestId(`share-record-${DEFAULT_BOARD}`));
     await settle();
 
     expect(shared).toHaveLength(1);
     expect(shared[0]).toMatchObject({
       title: 'World Quiz',
-      text: 'World Quiz — Capitals · Easy\nPerfect run in 4:07.3 · #2 of 3',
+      text: 'World Quiz — Capitals · World · Easy · Quick round\n4:07.3 · #2 of 3',
       url: 'https://play.example.test',
     });
     // The picture travels with it where the device takes files; its words
     // are tested in `record-share-card.spec.ts`.
     expect(shared[0]?.image).toBeTypeOf('function');
-    // A board the player has never finished has nothing to share.
-    expect(screen.queryByTestId('share-record-flags-hard')).toBeNull();
   });
 
   it('says so when the record was copied rather than shared', async () => {
@@ -228,85 +331,36 @@ describe('LeaderboardPage', () => {
 
     emit('leaderboard-view', 'mine');
     fixture.detectChanges();
-    fireEvent.click(screen.getByTestId('share-record-capitals-easy'));
+    fireEvent.click(screen.getByTestId(`share-record-${DEFAULT_BOARD}`));
     await settle();
 
     expect(toasts.current()).toMatchObject({ tone: 'success' });
   });
 
-  it("starts a challenge and opens the board's quiz with its id and seed", async () => {
-    const { answer, roots, fixture } = await renderPage();
-
-    emit('leaderboard-board', 'flags-hard');
-    fixture.detectChanges();
-    fireEvent.click(screen.getByTestId('challenge-start'));
-    await answer('/v1/challenges', (request) => {
-      expect(request.request.body).toEqual({ board: 'flags-hard' });
-      request.flush({
-        id: 'b0e5c0de-0000-4000-8000-000000000001',
-        board: 'flags-hard',
-        seed: 'server-seed',
-        issuedAt: '2026-09-22T10:00:00.000Z',
-        expiresAt: '2026-09-22T13:00:00.000Z',
-      });
-    });
-
-    expect(roots).toEqual([
-      {
-        url: '/quiz/flags',
-        extras: {
-          queryParams: {
-            mode: 'challenge',
-            difficulty: 'hard',
-            scope: 'world',
-            challenge: 'b0e5c0de-0000-4000-8000-000000000001',
-            seed: 'server-seed',
-          },
-        },
-      },
-    ]);
-  });
-
-  it('says so when a challenge cannot be started', async () => {
-    const { answer, roots, toasts } = await renderPage();
-
-    fireEvent.click(screen.getByTestId('challenge-start'));
-    await answer('/v1/challenges', (request) =>
-      request.error(new ProgressEvent('error')),
-    );
-
-    expect(toasts.current()).toMatchObject({ tone: 'error' });
-    expect(toasts.current()?.text).toContain('could not be started');
-    expect(roots).toEqual([]);
-  });
-
-  it('only accepts known views and boards from segment events', async () => {
+  it('only accepts a known view from the segment event', async () => {
     const { fixture } = await renderPage();
     const page = fixture.componentInstance as unknown as {
       view: () => string;
-      board: () => string;
     };
 
-    emit('leaderboard-board', 'flags-hard');
-    emit('leaderboard-board', 'flags-timed');
-    emit('leaderboard-board', undefined);
     emit('leaderboard-view', 'mine');
     emit('leaderboard-view', 'friends');
+    fixture.detectChanges();
 
     expect(page.view()).toBe('mine');
-    expect(page.board()).toBe('flags-hard');
   });
 
-  it('loads again after a sync, so a run just recorded appears', async () => {
-    const { answer, lastSyncedAt, fixture } = await renderPage({
-      board: { board: 'capitals-easy', players: 0, entries: [] },
+  it('loads the board again after a sync, so a run just recorded appears', async () => {
+    const { answer, openBoard, lastSyncedAt, fixture } = await renderPage({
+      board: { board: DEFAULT_BOARD, players: 0, entries: [] },
       records: { records: [] },
     });
+    await openBoard();
     expect(screen.getByTestId('leaderboard-empty')).toBeTruthy();
 
     lastSyncedAt.set(1);
     fixture.detectChanges();
-    await answer('/v1/leaderboards/capitals-easy', (request) =>
+    await answer(`/v1/leaderboards/${DEFAULT_BOARD}`, (request) =>
       request.flush(BOARD),
     );
     await answer('/v1/me/records', (request) => request.flush(RECORDS));

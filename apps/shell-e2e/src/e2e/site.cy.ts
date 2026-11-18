@@ -37,15 +37,20 @@ describe('site', () => {
   });
 
   it('renders the leaderboard on the server, and answers 404 for an unknown board', () => {
-    cy.request(`${SITE}/en/leaderboard/flags-hard`).then((response) => {
-      expect(response.headers['cache-control']).to.equal('public, max-age=30');
-      expect(response.body).to.contain('Flags · Hard');
-      expect(response.body).to.match(
-        /data-testid="site-ranking-(empty|unavailable)"|<table/,
-      );
-    });
+    cy.request(`${SITE}/en/leaderboard/flags-hard-europe-fixed`).then(
+      (response) => {
+        expect(response.headers['cache-control']).to.equal(
+          'public, max-age=30',
+        );
+        expect(response.body).to.contain('Flags · Europe · Hard');
+        expect(response.body).to.match(
+          /data-testid="site-ranking-(empty|unavailable)"|<table/,
+        );
+      },
+    );
     cy.request({
-      url: `${SITE}/en/leaderboard/flags-timed`,
+      // Endless is a training mode, so there is no board for it.
+      url: `${SITE}/en/leaderboard/flags-hard-europe-endless`,
       failOnStatusCode: false,
     })
       .its('status')

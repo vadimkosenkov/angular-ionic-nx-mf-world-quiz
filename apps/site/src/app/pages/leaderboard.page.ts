@@ -7,12 +7,17 @@ import {
   input,
   RESPONSE_INIT,
 } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { leaderboardSchema } from '@world-quiz/shared/contracts';
 import {
+  DIFFICULTIES,
   formatRunTime,
-  LEADERBOARD_BOARDS,
+  leaderboardBoardById,
+  leaderboardBoardFor,
   type LeaderboardBoardId,
+  QUIZ_CATEGORIES,
+  QUIZ_SCOPES,
+  RANKED_MODES,
 } from '@world-quiz/quiz/domain';
 import { SiteI18n } from '../i18n/site-i18n';
 import { PageMeta } from '../page-meta';
@@ -24,10 +29,15 @@ import { SITE_CONFIG } from '../site-config';
  * search engines and visitors without JavaScript see the real ranking. The
  * response reaches the browser in the page (transfer cache): hydration does
  * not ask the API again. Pages may be cached for 30 seconds.
+ *
+ * There are 56 boards (docs/domain/leaderboard.md), so they are not a list of
+ * links: the picker is four groups of links, one per setting, and each link
+ * changes that one setting of the board being shown. Every board is a real
+ * URL a search engine can reach, and the page needs no JavaScript to switch.
  */
 @Component({
   selector: 'wq-leaderboard-page',
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink],
   templateUrl: './leaderboard.page.html',
   styleUrl: './leaderboard.page.scss',
 })
@@ -36,11 +46,69 @@ export class LeaderboardPage {
   private readonly response = inject(RESPONSE_INIT, { optional: true });
   protected readonly i18n = inject(SiteI18n);
   protected readonly text = this.i18n.text;
-  protected readonly boards = LEADERBOARD_BOARDS;
   protected readonly formatRunTime = formatRunTime;
 
   /** The `:board` route parameter, validated by the route's `canMatch`. */
   readonly board = input.required<LeaderboardBoardId>();
+
+  protected readonly current = computed(() =>
+    leaderboardBoardById(this.board()),
+  );
+
+  /** What this board ranks by: a time, or a number of answers. */
+  protected readonly metric = computed(() => this.current().metric);
+
+  /** The board's name, the four settings it stands for. */
+  protected readonly boardName = computed(() => {
+    const t = this.text().leaderboard;
+    const board = this.current();
+    return [
+      t.category[board.category],
+      t.scope[board.scope],
+      t.difficulty[board.difficulty],
+      t.mode[board.mode],
+    ].join(' · ');
+  });
+
+  /** The picker: one group of links per setting of the board. */
+  protected readonly groups = computed(() => {
+    const t = this.text().leaderboard;
+    const { category, difficulty, scope, mode } = this.current();
+    return [
+      {
+        label: t.pick.category,
+        options: QUIZ_CATEGORIES.map((value) => ({
+          name: t.category[value],
+          board: leaderboardBoardFor(value, difficulty, scope, mode).id,
+          active: value === category,
+        })),
+      },
+      {
+        label: t.pick.scope,
+        options: QUIZ_SCOPES.map((value) => ({
+          name: t.scope[value],
+          board: leaderboardBoardFor(category, difficulty, value, mode).id,
+          active: value === scope,
+        })),
+      },
+      {
+        label: t.pick.difficulty,
+        options: DIFFICULTIES.map((value) => ({
+          name: t.difficulty[value],
+          board: leaderboardBoardFor(category, value, scope, mode).id,
+          active: value === difficulty,
+        })),
+      },
+      {
+        label: t.pick.mode,
+        options: RANKED_MODES.map((value) => ({
+          name: t.mode[value],
+          board: leaderboardBoardFor(category, difficulty, scope, value).id,
+          active: value === mode,
+        })),
+      },
+    ];
+  });
 
   protected readonly ranking = httpResource(
     () => `${this.config.apiUrl}/v1/leaderboards/${this.board()}`,
@@ -48,8 +116,7 @@ export class LeaderboardPage {
   );
 
   protected readonly title = computed(
-    () =>
-      `${this.text().leaderboard.boards[this.board()]} · ${this.text().leaderboard.title} · World Quiz`,
+    () => `${this.boardName()} · ${this.text().leaderboard.title} · World Quiz`,
   );
 
   constructor() {

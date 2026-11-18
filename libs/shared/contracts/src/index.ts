@@ -7,9 +7,13 @@ export {
 export type { ProblemDetails } from './lib/common';
 export {
   DEFAULT_HISTORY_PAGE_SIZE,
+  LEGACY_CHALLENGE_MODE,
+  LEGACY_CHALLENGE_QUESTION_COUNT,
+  legacySubmitSessionRequestSchema,
   MAX_HISTORY_PAGE_SIZE,
   MAX_SUBMISSIONS_PER_SESSION,
   MAX_TYPED_ANSWER_LENGTH,
+  parsePostedSession,
   quizConfigSchema,
   sessionHistoryEntrySchema,
   sessionHistoryPageSchema,
@@ -17,8 +21,11 @@ export {
   sessionResultSchema,
   submitSessionRequestSchema,
   submittedAnswerSchema,
+  withoutLegacyChallengeMode,
 } from './lib/sessions';
 export type {
+  LegacySubmitSessionRequest,
+  PostedSession,
   SessionHistoryEntry,
   SessionHistoryPage,
   SessionHistoryQuery,
@@ -44,9 +51,6 @@ export type {
   User,
 } from './lib/auth';
 export {
-  challengeOutcomeSchema,
-  challengeSchema,
-  CHALLENGE_UNRANKED_REASONS,
   DEFAULT_LEADERBOARD_SIZE,
   LEADERBOARD_BOARD_IDS,
   leaderboardBoardIdSchema,
@@ -54,17 +58,16 @@ export {
   leaderboardQuerySchema,
   leaderboardSchema,
   MAX_LEADERBOARD_SIZE,
+  myRecordSchema,
   myRecordsSchema,
   nicknameSchema,
-  startChallengeRequestSchema,
+  rankedOutcomeSchema,
   updateProfileRequestSchema,
 } from './lib/leaderboard';
 export type {
-  Challenge,
-  ChallengeOutcome,
-  ChallengeUnrankedReason,
   Leaderboard,
+  MyRecord,
   MyRecords,
-  StartChallengeRequest,
+  RankedOutcome,
   UpdateProfileRequest,
 } from './lib/leaderboard';

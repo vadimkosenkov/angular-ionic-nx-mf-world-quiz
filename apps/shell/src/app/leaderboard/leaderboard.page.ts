@@ -1,9 +1,10 @@
-import { HttpClient, httpResource } from '@angular/common/http';
+import { httpResource } from '@angular/common/http';
 import {
   Component,
   computed,
   effect,
   inject,
+  linkedSignal,
   signal,
   untracked,
 } from '@angular/core';
@@ -14,18 +15,19 @@ import {
   IonLabel,
   IonSegment,
   IonSegmentButton,
-  NavController,
   type SegmentCustomEvent,
   type ViewWillEnter,
 } from '@ionic/angular';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AUTH_CONFIG } from '@world-quiz/client/auth';
-import { Feedback } from '@world-quiz/client/feedback';
 import { PluralPipe } from '@world-quiz/client/i18n';
-import { ProgressStore, SyncService } from '@world-quiz/client/progress';
+import { SyncService } from '@world-quiz/client/progress';
 import {
+  Dialog,
   EmptyState,
   PageHeader,
+  recordShareCard,
+  RegionOptions,
   SHARE_TARGET,
   shareCardFile,
   shareLines,
@@ -34,19 +36,28 @@ import {
 } from '@world-quiz/client/ui';
 import { APP_URL } from '@world-quiz/client/quiz-ports';
 import {
-  challengeSchema,
   leaderboardSchema,
-  type MyRecords,
+  type MyRecord,
   myRecordsSchema,
 } from '@world-quiz/shared/contracts';
 import {
+  DEFAULT_FIXED_QUESTION_COUNT,
+  type Difficulty,
+  DIFFICULTIES,
   formatRunTime,
-  isLeaderboardBoardId,
-  LEADERBOARD_BOARDS,
   type LeaderboardBoardId,
+  leaderboardBoardById,
+  leaderboardBoardFor,
+  isQuizScope,
+  type LeaderboardMetric,
+  QUIZ_CATEGORIES,
+  type QuizCategory,
+  type QuizScope,
+  type RankedMode,
+  RANKED_MODES,
 } from '@world-quiz/quiz/domain';
-import { firstValueFrom } from 'rxjs';
-import { recordShareCard } from './record-share-card';
+import { LastSetupStore } from '../core/last-setup.store';
+import { regionOptions } from '../core/region-options';
 
 const LEADERBOARD_VIEWS = ['global', 'mine'] as const;
 type LeaderboardView = (typeof LEADERBOARD_VIEWS)[number];
@@ -55,16 +66,36 @@ function isLeaderboardView(value: unknown): value is LeaderboardView {
   return (LEADERBOARD_VIEWS as readonly unknown[]).includes(value);
 }
 
+/** A row of the ranking, or the player's own record, as the list shows it. */
+interface BoardRow {
+  readonly rank: number;
+  readonly name: string;
+  /** What the board ranks by, in words ("4:07.3" or "21 correct"). */
+  readonly score: string;
+  /** The run's own time, shown only where the score counts answers. */
+  readonly time: string | null;
+  readonly me: boolean;
+}
+
 /**
- * Global ranking and personal records for the four perfect-run boards, and
- * where a challenge starts (docs/domain/leaderboard.md).
+ * The public boards and the player's own records (docs/domain/leaderboard.md).
  *
- * Starting asks the API for a challenge — its id and the seed the quiz must
- * use — and opens the board's quiz with them. Boards and records come from
- * the API and are loaded again whenever the tab is shown and after every
- * sync: a finished run reaches the API through the sync, and Ionic may show
- * this page again from its cache without `ionViewWillEnter` (for example
- * after `navigateRoot('/leaderboard')` from a challenge's results).
+ * A board is the four settings a quiz is played with — category, region,
+ * difficulty and ranked mode — so there are 56 of them, and they are chosen
+ * with the very controls the quiz setup asks those questions with: the same
+ * question must not look like a different one from screen to screen.
+ *
+ * The ranking itself opens **over** the page when the player asks for it.
+ * Four choices and a table do not fit on a phone together, and the table is
+ * what they came for; under the choices it would start a screen down.
+ *
+ * Nothing is started here. Any game in a ranked mode competes, and the API
+ * answers the finished session with the place it earned — so this screen
+ * shows boards and never opens a quiz.
+ *
+ * Records are loaded when the tab is shown and after every sync: a finished
+ * run reaches the API through the sync, and Ionic may show this page again
+ * from its cache without `ionViewWillEnter`.
  */
 @Component({
   selector: 'wq-leaderboard-page',
@@ -79,55 +110,151 @@ function isLeaderboardView(value: unknown): value is LeaderboardView {
     TranslocoPipe,
     PluralPipe,
     EmptyState,
+    RegionOptions,
+    Dialog,
   ],
   templateUrl: './leaderboard.page.html',
   styleUrl: './leaderboard.page.scss',
 })
 export class LeaderboardPage implements ViewWillEnter {
-  private readonly http = inject(HttpClient);
-  private readonly nav = inject(NavController);
   private readonly apiUrl = inject(AUTH_CONFIG).apiUrl;
-  protected readonly progress = inject(ProgressStore);
   private readonly sync = inject(SyncService);
   private readonly toasts = inject(Toasts);
-  private readonly feedback = inject(Feedback);
   private readonly shareTarget = inject(SHARE_TARGET);
   /** Where this deployment lives, for the link in a shared record. */
   private readonly appUrl = inject(APP_URL);
   private readonly transloco = inject(TranslocoService);
+  private readonly lastSetup = inject(LastSetupStore);
 
-  protected readonly boards = LEADERBOARD_BOARDS;
+  protected readonly categories = QUIZ_CATEGORIES;
+  protected readonly difficulties = DIFFICULTIES;
+  protected readonly modes = RANKED_MODES;
+  /** The regions, named and counted exactly as the quiz setup names them. */
+  protected readonly regionOptions = regionOptions();
+
+  /** The same icons the setup screen gives these choices. */
+  protected readonly categoryIcons: Readonly<Record<QuizCategory, string>> = {
+    capitals: 'business-outline',
+    flags: 'flag-outline',
+  };
+  protected readonly difficultyIcons: Readonly<Record<Difficulty, string>> = {
+    easy: 'apps-outline',
+    hard: 'create-outline',
+  };
+  protected readonly modeIcons: Readonly<Record<RankedMode, string>> = {
+    fixed: 'list-outline',
+    timed: 'timer-outline',
+  };
+
+  /** How many questions a Quick round asks, for the mode's own sentence. */
+  protected readonly metricParams = { count: DEFAULT_FIXED_QUESTION_COUNT };
+
   protected readonly view = signal<LeaderboardView>('global');
-  protected readonly board = signal<LeaderboardBoardId>('capitals-easy');
-  protected readonly starting = signal(false);
-  protected readonly formatRunTime = formatRunTime;
 
-  /** The board's ranking; public, the same for everyone. */
+  /**
+   * The picker opens on the board the player last asked for, exactly as the
+   * quiz setup opens on the game they last played: answering the same four
+   * questions before every look is work the app can do once. A
+   * `linkedSignal` lets the player move each choice freely while the screen
+   * still starts from what was remembered.
+   */
+  protected readonly category = linkedSignal<QuizCategory>(
+    () => this.lastSetup.board().category,
+  );
+  protected readonly scope = linkedSignal<QuizScope>(
+    () => this.lastSetup.board().scope,
+  );
+  protected readonly difficulty = linkedSignal<Difficulty>(
+    () => this.lastSetup.board().difficulty,
+  );
+  protected readonly mode = linkedSignal<RankedMode>(
+    () => this.lastSetup.board().mode,
+  );
+
+  /** The board those four choices stand for. */
+  protected readonly board = computed(() =>
+    leaderboardBoardFor(
+      this.category(),
+      this.difficulty(),
+      this.scope(),
+      this.mode(),
+    ),
+  );
+
+  /**
+   * The board being shown, or `null` while the player is still choosing.
+   *
+   * Nothing is loaded until they ask for it: four choices and a table do not
+   * fit on one phone screen, so the table opens over the page instead of
+   * waiting below it, and a board is fetched when it is actually looked at.
+   */
+  protected readonly shown = signal<LeaderboardBoardId | null>(null);
+
+  /** The ranking of the board being shown; public, the same for everyone. */
   protected readonly ranking = httpResource(
-    () => `${this.apiUrl}/v1/leaderboards/${this.board()}`,
+    () => {
+      const board = this.shown();
+      return board ? `${this.apiUrl}/v1/leaderboards/${board}` : undefined;
+    },
     { parse: (body) => leaderboardSchema.parse(body) },
   );
 
-  /** The player's best ranked run per board. */
+  /** The player's best run per board, and their place on each. */
   protected readonly records = httpResource(
     () => `${this.apiUrl}/v1/me/records`,
     { parse: (body) => myRecordsSchema.parse(body) },
   );
 
-  /** Every board with the player's record on it, if any. */
-  protected readonly myRecords = computed(() => {
-    const records = this.records.hasValue() ? this.records.value().records : [];
-    return this.boards.map((board) => ({
-      board: board.id,
-      record: records.find((record) => record.board === board.id) ?? null,
+  private readonly myRecords = computed(() =>
+    this.records.hasValue() ? this.records.value().records : [],
+  );
+
+  /** The player's own record on the board being shown, if they have one. */
+  protected readonly myRecord = computed(
+    () =>
+      this.myRecords().find((record) => record.board === this.shown()) ?? null,
+  );
+
+  protected readonly entries = computed<BoardRow[]>(() => {
+    const board = this.shown();
+    if (!board || !this.ranking.hasValue()) return [];
+    const mine = this.myRecord();
+    const metric = leaderboardBoardById(board).metric;
+    return this.ranking.value().entries.map((entry) => ({
+      rank: entry.rank,
+      name: entry.nickname,
+      score: this.scoreText(entry.score, metric),
+      time: metric === 'correct' ? formatRunTime(entry.timeMs) : null,
+      // Ranks are unique within a board, so the player's own record names
+      // their row without comparing nicknames, which are not unique.
+      me: entry.rank === mine?.rank,
     }));
   });
 
-  /** The player's rank on the board shown, to highlight their row. */
-  protected readonly myRank = computed(
-    () =>
-      this.myRecords().find((entry) => entry.board === this.board())?.record
-        ?.rank ?? null,
+  /** How many players have a ranked run on the board being shown. */
+  protected readonly players = computed(() =>
+    this.ranking.hasValue() ? this.ranking.value().players : 0,
+  );
+
+  /**
+   * The player's own row, pinned under the list when their place is below
+   * the page shown — the board is worth looking at even from #248.
+   */
+  protected readonly myRow = computed<BoardRow | null>(() => {
+    const mine = this.myRecord();
+    if (!mine) return null;
+    const shown = this.entries().some((entry) => entry.me);
+    return shown ? null : this.rowOf(mine);
+  });
+
+  /** Every board the player has a record on, best place first. */
+  protected readonly recordRows = computed(() =>
+    this.myRecords().map((record) => ({
+      board: record.board,
+      name: this.boardName(record.board),
+      row: this.rowOf(record),
+      record,
+    })),
   );
 
   constructor() {
@@ -145,56 +272,90 @@ export class LeaderboardPage implements ViewWillEnter {
   }
 
   private reload(): void {
-    this.ranking.reload();
     this.records.reload();
+    if (this.shown()) this.ranking.reload();
+  }
+
+  /**
+   * Opens the board the four choices describe. Asking for the same board
+   * again is a request to look again, not a no-op: a run the player has
+   * just finished may have reached it since.
+   */
+  protected show(): void {
+    const { id } = this.board();
+    this.lastSetup.rememberBoard({
+      category: this.category(),
+      scope: this.scope(),
+      difficulty: this.difficulty(),
+      mode: this.mode(),
+    });
+    if (this.shown() === id) this.ranking.reload();
+    else this.shown.set(id);
+  }
+
+  /**
+   * The same four settings as two lines, for the ranking dialog: what is
+   * asked and where, then how it is played. One line wrapped after the
+   * third setting on a phone, which reads as an accident rather than as a
+   * grouping.
+   */
+  protected boardLines(id: LeaderboardBoardId): {
+    readonly subject: string;
+    readonly style: string;
+  } {
+    const board = leaderboardBoardById(id);
+    return {
+      subject: this.transloco.translate('leaderboard.boardSubject', {
+        category: this.transloco.translate(`categories.${board.category}`),
+        region: this.transloco.translate(`regions.${board.scope}`),
+      }),
+      style: this.transloco.translate('leaderboard.boardStyle', {
+        difficulty: this.transloco.translate(`difficulty.${board.difficulty}`),
+        mode: this.transloco.translate(`modes.${board.mode}`),
+      }),
+    };
+  }
+
+  /** The four settings a board stands for, in the player's language. */
+  protected boardName(id: LeaderboardBoardId): string {
+    const board = leaderboardBoardById(id);
+    return this.transloco.translate('leaderboard.boardName', {
+      category: this.transloco.translate(`categories.${board.category}`),
+      region: this.transloco.translate(`regions.${board.scope}`),
+      difficulty: this.transloco.translate(`difficulty.${board.difficulty}`),
+      mode: this.transloco.translate(`modes.${board.mode}`),
+    });
+  }
+
+  /** What a score means on a board: a time, or a number of answers. */
+  private scoreText(score: number, metric: LeaderboardMetric): string {
+    return metric === 'time'
+      ? formatRunTime(score)
+      : this.transloco.translate('leaderboard.correct', { correct: score });
+  }
+
+  private rowOf(record: MyRecord): BoardRow {
+    const metric = leaderboardBoardById(record.board).metric;
+    return {
+      rank: record.rank,
+      // The player's own nickname, as the board shows it to everyone else.
+      name: record.nickname,
+      score: this.scoreText(record.score, metric),
+      time: metric === 'correct' ? formatRunTime(record.timeMs) : null,
+      me: true,
+    };
+  }
+
+  /** `wq-region-options` hands back a plain string, as the setup does. */
+  protected selectScope(scope: string): void {
+    if (isQuizScope(scope)) this.scope.set(scope);
   }
 
   // `ionChange` is a DOM event for Angular's strict templates, so the Ionic
   // event type is applied here and the value is validated before use.
   protected onViewChange(event: Event): void {
     const { value } = (event as SegmentCustomEvent).detail;
-    if (isLeaderboardView(value)) {
-      this.view.set(value);
-    }
-  }
-
-  protected onBoardChange(event: Event): void {
-    const { value } = (event as SegmentCustomEvent).detail;
-    if (isLeaderboardBoardId(value)) {
-      this.board.set(value);
-    }
-  }
-
-  /** Asks the API for a challenge on the board shown, and plays it. */
-  protected async startChallenge(): Promise<void> {
-    const board = this.boards.find((entry) => entry.id === this.board());
-    if (!board || this.starting()) return;
-    // The press, not the server's answer: asking for a challenge is a round
-    // trip, and a sound that arrives a second late no longer belongs to the
-    // press. A challenge that cannot be started says so in a toast.
-    this.feedback.play('start');
-    this.starting.set(true);
-    try {
-      const challenge = challengeSchema.parse(
-        await firstValueFrom(
-          this.http.post(`${this.apiUrl}/v1/challenges`, { board: board.id }),
-        ),
-      );
-      await this.nav.navigateForward(`/quiz/${board.category}`, {
-        queryParams: {
-          mode: 'challenge',
-          difficulty: board.difficulty,
-          scope: 'world',
-          challenge: challenge.id,
-          seed: challenge.seed,
-        },
-      });
-    } catch {
-      // Nothing on screen changed, so the button would look broken.
-      this.toasts.failure(this.transloco.translate('leaderboard.startFailed'));
-    } finally {
-      this.starting.set(false);
-    }
+    if (isLeaderboardView(value)) this.view.set(value);
   }
 
   /**
@@ -202,26 +363,32 @@ export class LeaderboardPage implements ViewWillEnter {
    * where there is none. The board and the place are translated here, in the
    * player's language, because what is shared is a sentence, not data.
    */
-  protected async shareRecord(
-    board: LeaderboardBoardId,
-    record: MyRecords['records'][number],
-  ): Promise<void> {
+  protected async shareRecord(record: MyRecord): Promise<void> {
+    const facts = {
+      board: this.boardName(record.board),
+      score: this.scoreText(
+        record.score,
+        leaderboardBoardById(record.board).metric,
+      ),
+      rank: record.rank,
+      players: record.players,
+    };
     const outcome = await this.shareTarget.share({
       title: this.transloco.translate('share.title'),
       text: shareLines(
         this.transloco.translate('share.record.heading', {
-          board: this.transloco.translate(`leaderboard.boards.${board}`),
+          board: facts.board,
         }),
         this.transloco.translate('share.record.score', {
-          time: formatRunTime(record.completionTimeMs),
+          score: facts.score,
           place: this.transloco.translate('leaderboard.place', {
-            rank: record.rank,
-            players: record.players,
+            rank: facts.rank,
+            players: facts.players,
           }),
         }),
       ),
       ...(this.appUrl ? { url: this.appUrl } : {}),
-      image: () => shareCardFile(this.recordCard(board, record)),
+      image: () => shareCardFile(this.recordCard(facts)),
     });
     if (outcome === 'copied') {
       this.toasts.success(this.transloco.translate('share.copied'));
@@ -231,18 +398,9 @@ export class LeaderboardPage implements ViewWillEnter {
   }
 
   /** The words of the picture; the layout is `recordShareCard`'s business. */
-  private recordCard(
-    board: LeaderboardBoardId,
-    record: MyRecords['records'][number],
-  ): ShareCard {
-    return recordShareCard(
-      {
-        board,
-        time: formatRunTime(record.completionTimeMs),
-        rank: record.rank,
-        players: record.players,
-      },
-      (key, params) => this.transloco.translate(key, params),
+  private recordCard(facts: Parameters<typeof recordShareCard>[0]): ShareCard {
+    return recordShareCard(facts, (key, params) =>
+      this.transloco.translate(key, params),
     );
   }
 }

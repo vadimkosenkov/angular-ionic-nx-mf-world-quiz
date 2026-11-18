@@ -37,34 +37,81 @@
   </dl>
 </section>
 
-@if (challenge(); as challenge) {
+@if (place(); as place) {
+<!-- A place on a board is the one thing on this screen the player cannot
+     work out for themselves, and a personal record is the one thing worth a
+     fanfare: it takes the brand gradient, a trophy and figures of its own,
+     while being checked, waiting offline or placing #47 stays quiet. -->
 <section
-  class="wq-card challenge"
+  class="wq-card board"
   role="status"
-  data-testid="results-challenge"
-  [attr.data-status]="challenge.status"
+  data-testid="results-board"
+  [attr.data-status]="place.status"
+  [class.award]="personalRecord()"
 >
-  <h2>{{ 'results.challenge.title' | transloco }}</h2>
-  @switch (challenge.status) { @case ('checking') {
-  <p>{{ 'results.challenge.checking' | transloco }}</p>
+  @switch (place.status) { @case ('checking') {
+  <h2>{{ 'results.board.title' | transloco }}</h2>
+  <p>{{ 'results.board.checking' | transloco }}</p>
   } @case ('unsent') {
-  <p>{{ 'results.challenge.unsent' | transloco }}</p>
-  } @case ('done') { @let verdict = challenge.outcome; @if (verdict.ranked) {
+  <h2>{{ 'results.board.title' | transloco }}</h2>
+  <p>{{ 'results.board.unsent' | transloco }}</p>
+  } @case ('ranked') { @let verdict = place.outcome; @if
+  (verdict.personalRecord) {
+  <!-- The record's own share hands over the picture of the record, not of
+       the run: it is the record the player wants to show. -->
+  <button
+    type="button"
+    class="share"
+    data-testid="results-share-record"
+    [attr.aria-label]="'share.record.action' | transloco: { board: boardName() }"
+    [disabled]="sharing()"
+    (click)="shareRecord()"
+  >
+    <ion-icon name="share-outline" aria-hidden="true" />
+  </button>
+  <div class="award-icon" aria-hidden="true">
+    <ion-icon name="trophy" />
+  </div>
+  <h2 class="headline" data-testid="results-record">
+    {{ 'results.board.record' | transloco }}
+  </h2>
+  <p class="board-name">{{ boardName() }}</p>
+  <dl class="figures">
+    <div>
+      <dt>{{ 'results.board.place' | transloco }}</dt>
+      <dd data-testid="results-rank">
+        {{ 'results.board.ranked' | transloco: { rank: verdict.rank, players:
+        verdict.players } }}
+      </dd>
+    </div>
+    <div>
+      <dt>
+        @if (metric() === 'time') { {{ 'results.time' | transloco }} } @else {
+        {{ 'results.board.answers' | transloco }} }
+      </dt>
+      <dd>
+        @if (metric() === 'time') { {{ formatRunTime(verdict.score) }} } @else {
+        {{ verdict.score }}
+        <span class="tiebreak">{{ formatRunTime(verdict.timeMs) }}</span> }
+      </dd>
+    </div>
+  </dl>
+  } @else {
+  <h2>{{ 'results.board.title' | transloco }}</h2>
   <p class="rank" data-testid="results-rank">
-    {{ 'results.challenge.ranked' | transloco: { rank: verdict.rank } }}
+    @if (medal(); as medal) {
+    <ion-icon name="medal" aria-hidden="true" [attr.data-medal]="medal" />
+    }
+    <span>
+      {{ 'results.board.ranked' | transloco: { rank: verdict.rank, players:
+      verdict.players } }}
+    </span>
   </p>
-  @if (verdict.completionTimeMs !== null) {
   <p>
-    {{ 'results.challenge.time' | transloco: { time:
-    formatRunTime(verdict.completionTimeMs) } }}
-  </p>
-  } @if (verdict.personalRecord) {
-  <p class="record" data-testid="results-record">
-    {{ 'results.challenge.record' | transloco }}
-  </p>
-  } } @else {
-  <p data-testid="results-unranked">
-    {{ 'results.challenge.reasons.' + verdict.reason | transloco }}
+    @if (metric() === 'time') { {{ 'results.board.time' | transloco: { time:
+    formatRunTime(verdict.score) } }} } @else { {{ 'results.board.correct' |
+    transloco: { correct: verdict.score, time: formatRunTime(verdict.timeMs) }
+    }} }
   </p>
   } } }
 </section>
@@ -110,7 +157,6 @@
     data-testid="results-play-again"
     (click)="playAgain.emit()"
   >
-    {{ (isChallenge() ? 'results.newChallenge' : 'results.playAgain') |
-    transloco }}
+    {{ 'results.playAgain' | transloco }}
   </ion-button>
 </div>

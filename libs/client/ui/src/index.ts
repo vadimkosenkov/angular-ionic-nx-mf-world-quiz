@@ -29,6 +29,8 @@ export {
   shareCardFile,
   shareCardPlan,
 } from './lib/share/share-card';
+export { recordShareCard } from './lib/share/record-share-card';
+export type { RecordShareFacts } from './lib/share/record-share-card';
 export type {
   ShareCard,
   ShareCardOp,

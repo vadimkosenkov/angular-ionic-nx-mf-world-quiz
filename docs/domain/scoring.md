@@ -10,7 +10,7 @@ stored "score" field that a client could set.
 
 | Field                              | Meaning                                                                                                           |
 | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `totalQuestions`                   | Planned length (Fixed, Challenge); `null` for Endless and Timed                                                   |
+| `totalQuestions`                   | Planned length (Fixed); `null` for Endless and Timed                                                              |
 | `answered`, `correct`, `incorrect` | Counts of recorded answers                                                                                        |
 | `accuracy`                         | `correct / answered`, `0` if nothing was answered                                                                 |
 | `durationMs`                       | `finishedAt − startedAt`; `null` while active. Timed sessions end at the deadline, so they are at most 60 000 ms. |
@@ -21,12 +21,14 @@ stored "score" field that a client could set.
 
 ## How each mode presents the result
 
-| Mode      | Headline                            | Example            |
-| --------- | ----------------------------------- | ------------------ |
-| Fixed     | `correct / totalQuestions`          | 9/10               |
-| Endless   | `correct / answered`                | 23/27              |
-| Timed     | `correct`                           | 17 correct answers |
-| Challenge | completion time (only if `perfect`) | 6:42.310           |
+| Mode    | Headline                   | Example            |
+| ------- | -------------------------- | ------------------ |
+| Fixed   | `correct / totalQuestions` | 9/10               |
+| Endless | `correct / answered`       | 23/27              |
+| Timed   | `correct`                  | 17 correct answers |
+
+A flawless Fixed or Timed run also earns a place on a public board, which
+ranks it by its time or by its count ([leaderboard.md](leaderboard.md)).
 
 Metrics are never compared across modes: a Timed count and a Fixed ratio
 measure different things.
@@ -39,6 +41,8 @@ show the correct spelling. No partial points are given.
 
 ## Personal records
 
-Personal records exist only for the four leaderboard challenges (fastest
-perfect run per board); see [leaderboard.md](leaderboard.md). Training sessions
-produce summaries and update [mastery](mastery.md), but they do not create records.
+A personal record is the player's best **flawless** run on one of the 56
+boards — the fastest quick round, or the time attack with the most answers;
+see [leaderboard.md](leaderboard.md). A run with a mistake, an Endless
+session and a Practice Mistakes round produce a summary and update
+[mastery](mastery.md), but never a record.

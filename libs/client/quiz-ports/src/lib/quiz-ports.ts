@@ -11,7 +11,7 @@ import type {
   ScopeProgress,
   SessionSummary,
 } from '@world-quiz/quiz/domain';
-import type { ChallengeOutcome } from '@world-quiz/shared/contracts';
+import type { RankedOutcome } from '@world-quiz/shared/contracts';
 import { type Clock, systemClock } from '@world-quiz/shared/util';
 
 /**
@@ -79,26 +79,20 @@ export interface QuizSessionOutcome {
   /** Countries that still need practice in this category after the session. */
   readonly mistakes: readonly CountryCode[];
   /**
-   * Leaderboard challenges only: the server's verdict on the run, once it has
-   * been sent — or `null` when it could not be sent now (offline; it waits in
-   * the outbox and, sent late, will not be ranked).
+   * A run that can reach a public board: the place the API gave it, once the
+   * session has been sent — or `null` when it was not sent now (offline: it
+   * waits in the outbox and reaches the board with the next sync) or the API
+   * did not rank it.
+   *
+   * Present only when the run is a candidate at all (`evaluateRankedRun`), so
+   * a screen that has nothing to wait for shows nothing.
    */
-  readonly challenge?: Promise<ChallengeOutcome | null>;
-}
-
-/** What a remote knows about the session beyond the session itself. */
-export interface QuizSessionContext {
-  /** The leaderboard challenge the session plays (`mode: 'challenge'`). */
-  readonly challengeId?: string;
+  readonly ranked?: Promise<RankedOutcome | null>;
 }
 
 /** Where a remote sends a finished quiz session. */
 export interface QuizResultSink {
-  submit(
-    session: QuizSession,
-    summary: SessionSummary,
-    context?: QuizSessionContext,
-  ): QuizSessionOutcome;
+  submit(session: QuizSession, summary: SessionSummary): QuizSessionOutcome;
 }
 
 export const QUIZ_RESULT_SINK = new InjectionToken<QuizResultSink>(

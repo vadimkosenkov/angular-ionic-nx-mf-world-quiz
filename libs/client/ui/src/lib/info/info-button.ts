@@ -1,4 +1,4 @@
-import { Component, input, signal } from '@angular/core';
+import { Component, computed, input, signal } from '@angular/core';
 import { IonContent, IonIcon, IonPopover } from '@ionic/angular';
 
 /**
@@ -39,7 +39,9 @@ import { IonContent, IonIcon, IonPopover } from '@ionic/angular';
     >
       <ng-template>
         <ion-content class="ion-padding">
-          <p class="note" data-testid="info-note">{{ text() }}</p>
+          @for (paragraph of paragraphs(); track $index) {
+            <p class="note" data-testid="info-note">{{ paragraph }}</p>
+          }
         </ion-content>
       </ng-template>
     </ion-popover>
@@ -49,6 +51,14 @@ import { IonContent, IonIcon, IonPopover } from '@ionic/angular';
 export class InfoButton {
   /** The note itself (this library has no texts). */
   readonly text = input.required<string>();
+
+  /**
+   * A note long enough to make two points is written as two paragraphs,
+   * separated by a blank line in the translation. The split happens here
+   * rather than in the texts, so a note stays one key to translate and a
+   * one-paragraph note needs nothing.
+   */
+  protected readonly paragraphs = computed(() => this.text().split('\n\n'));
   /** Translated name of the button, e.g. "About sounds". */
   readonly label = input.required<string>();
 

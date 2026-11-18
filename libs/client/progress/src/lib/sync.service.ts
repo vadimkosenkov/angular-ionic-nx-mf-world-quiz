@@ -112,9 +112,9 @@ export class SyncService {
   }
 
   /**
-   * Syncs, then gives the API's answer to one session sent now — for a
-   * challenge, the verdict the player waits for. `null` when it could not be
-   * sent (offline, or signed out).
+   * Syncs, then gives the API's answer to one session sent now — the place
+   * on a board the player waits for. `null` when it could not be sent
+   * (offline, or signed out).
    */
   async resultOf(sessionId: string): Promise<SessionResult | null> {
     await this.sync();

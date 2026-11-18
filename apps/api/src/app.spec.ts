@@ -17,7 +17,6 @@ const unusedSessions: SessionService = {
   history: notUsed,
 };
 const unusedLeaderboard: LeaderboardService = {
-  startChallenge: notUsed,
   board: notUsed,
   records: notUsed,
   outcome: notUsed,

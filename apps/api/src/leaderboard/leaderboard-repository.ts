@@ -1,88 +1,79 @@
-import type { LeaderboardBoardId } from '@world-quiz/quiz/domain';
-import { and, asc, count, eq, isNull, lt, sql } from 'drizzle-orm';
+import type { LeaderboardBoardId, RankedScore } from '@world-quiz/quiz/domain';
+import { and, asc, count, eq, sql } from 'drizzle-orm';
 import type { Database } from '../db/database';
-import { challenges, users } from '../db/schema';
+import { leaderboardRuns, users } from '../db/schema';
 
-/** A challenge as issued; the run fields are filled when it is played. */
-export interface StoredChallenge {
-  readonly id: string;
-  readonly userId: string;
-  readonly board: LeaderboardBoardId;
-  readonly seed: string;
-  readonly issuedAt: number;
-  /** The session that played it, `null` while unplayed. */
-  readonly sessionId: string | null;
-}
-
-export interface RankedRun {
+/** One player's best run on a board, with the place it holds. */
+export interface RankedPlace {
   readonly userId: string;
   readonly nickname: string | null;
   readonly rank: number;
-  readonly completionMs: number;
+  /** How many players have a ranked run on the board. */
+  readonly players: number;
+  readonly score: number;
+  readonly timeMs: number;
   readonly recordedAt: number;
 }
 
-export interface PlayerRecord {
+export interface PlayerRecord extends RankedPlace {
   readonly board: LeaderboardBoardId;
-  readonly rank: number;
-  readonly players: number;
-  readonly completionMs: number;
-  readonly recordedAt: number;
 }
 
 /**
- * Challenges and rankings. Knows SQL, not quiz rules.
+ * Rankings. Knows SQL, not quiz rules.
  *
- * A ranking is a query over ranked runs (docs/domain/leaderboard.md): each
- * player's best run (`DISTINCT ON`), numbered by `row_number()` in the order
- * of `compareLeaderboardEntries` — completion time, then the server's
- * `recorded_at`, then the session id — so ranks are unique and stable.
+ * A ranking is a query over the ranked runs (docs/domain/leaderboard.md):
+ * each player's best run (`DISTINCT ON`), numbered by `row_number()` in the
+ * order of `compareLeaderboardEntries` — the board's ranking key, then the
+ * run's own time, then the server's `recorded_at`, then the session id — so
+ * ranks are unique and stable. The key is ascending on every board, which is
+ * what lets one query serve a board that ranks by time and one that ranks by
+ * the number of answers.
  */
 export interface LeaderboardRepository {
-  issueChallenge(challenge: Omit<StoredChallenge, 'sessionId'>): Promise<void>;
-  findChallenge(id: string): Promise<StoredChallenge | null>;
-  /** Deletes the player's challenges issued before `before` and never played. */
-  deleteUnplayedChallenges(userId: string, before: number): Promise<void>;
-  /** The fastest players on a board, one run each, and how many there are. */
+  /** The best players on a board, one run each, and how many there are. */
   board(
     board: LeaderboardBoardId,
     limit: number,
-  ): Promise<{ players: number; runs: RankedRun[] }>;
-  /** The player's best ranked run on a board, with its rank. */
-  playerRank(
+  ): Promise<{ players: number; runs: RankedPlace[] }>;
+  /** The player's best run on a board, with its rank. */
+  playerPlace(
     userId: string,
     board: LeaderboardBoardId,
-  ): Promise<RankedRun | null>;
-  /** The player's best ranked run on every board where they have one. */
+  ): Promise<RankedPlace | null>;
+  /** The player's best run on every board where they have one. */
   playerRecords(userId: string): Promise<PlayerRecord[]>;
+  /** The score to beat for a player's next run on a board. */
+  playerBest(
+    userId: string,
+    board: LeaderboardBoardId,
+  ): Promise<RankedScore | null>;
 }
 
 export function createLeaderboardRepository(
   db: Database,
 ): LeaderboardRepository {
-  /** Every player's best ranked run on each board (or on one board). */
+  /** Every player's best run on each board (or on one board). */
   const bestRuns = (board?: LeaderboardBoardId) =>
     db
-      .selectDistinctOn([challenges.board, challenges.userId], {
-        board: challenges.board,
-        userId: challenges.userId,
-        completionMs: challenges.completionMs,
-        recordedAt: challenges.recordedAt,
-        sessionId: challenges.sessionId,
+      .selectDistinctOn([leaderboardRuns.board, leaderboardRuns.userId], {
+        board: leaderboardRuns.board,
+        userId: leaderboardRuns.userId,
+        score: leaderboardRuns.score,
+        timeMs: leaderboardRuns.timeMs,
+        rankKey: leaderboardRuns.rankKey,
+        recordedAt: leaderboardRuns.recordedAt,
+        sessionId: leaderboardRuns.sessionId,
       })
-      .from(challenges)
-      .where(
-        and(
-          eq(challenges.outcome, 'ranked'),
-          board ? eq(challenges.board, board) : undefined,
-        ),
-      )
+      .from(leaderboardRuns)
+      .where(board ? eq(leaderboardRuns.board, board) : undefined)
       .orderBy(
-        challenges.board,
-        challenges.userId,
-        asc(challenges.completionMs),
-        asc(challenges.recordedAt),
-        asc(challenges.sessionId),
+        leaderboardRuns.board,
+        leaderboardRuns.userId,
+        asc(leaderboardRuns.rankKey),
+        asc(leaderboardRuns.timeMs),
+        asc(leaderboardRuns.recordedAt),
+        asc(leaderboardRuns.sessionId),
       )
       .as('best');
 
@@ -93,9 +84,10 @@ export function createLeaderboardRepository(
       .select({
         board: best.board,
         userId: best.userId,
-        completionMs: best.completionMs,
+        score: best.score,
+        timeMs: best.timeMs,
         recordedAt: best.recordedAt,
-        rank: sql<number>`row_number() over (partition by ${best.board} order by ${best.completionMs}, ${best.recordedAt}, ${best.sessionId})`
+        rank: sql<number>`row_number() over (partition by ${best.board} order by ${best.rankKey}, ${best.timeMs}, ${best.recordedAt}, ${best.sessionId})`
           .mapWith(Number)
           .as('rank'),
         players: sql<number>`count(*) over (partition by ${best.board})`
@@ -106,60 +98,17 @@ export function createLeaderboardRepository(
       .as('ranked');
   };
 
-  const toRun = (row: {
+  const toPlace = (row: {
     userId: string;
     nickname: string | null;
     rank: number;
-    completionMs: number | null;
-    recordedAt: Date | null;
-  }): RankedRun => ({
-    userId: row.userId,
-    nickname: row.nickname,
-    rank: row.rank,
-    completionMs: row.completionMs ?? 0,
-    recordedAt: row.recordedAt?.getTime() ?? 0,
-  });
+    players: number;
+    score: number;
+    timeMs: number;
+    recordedAt: Date;
+  }): RankedPlace => ({ ...row, recordedAt: row.recordedAt.getTime() });
 
   return {
-    async issueChallenge(challenge) {
-      await db.insert(challenges).values({
-        id: challenge.id,
-        userId: challenge.userId,
-        board: challenge.board,
-        seed: challenge.seed,
-        issuedAt: new Date(challenge.issuedAt),
-      });
-    },
-
-    async findChallenge(id) {
-      const [row] = await db
-        .select()
-        .from(challenges)
-        .where(eq(challenges.id, id))
-        .limit(1);
-      if (!row) return null;
-      return {
-        id: row.id,
-        userId: row.userId,
-        board: row.board as LeaderboardBoardId,
-        seed: row.seed,
-        issuedAt: row.issuedAt.getTime(),
-        sessionId: row.sessionId,
-      };
-    },
-
-    async deleteUnplayedChallenges(userId, before) {
-      await db
-        .delete(challenges)
-        .where(
-          and(
-            eq(challenges.userId, userId),
-            isNull(challenges.sessionId),
-            lt(challenges.issuedAt, new Date(before)),
-          ),
-        );
-    },
-
     async board(board, limit) {
       const ranked = rankedRuns(board);
       const rows = await db
@@ -167,7 +116,9 @@ export function createLeaderboardRepository(
           userId: ranked.userId,
           nickname: users.nickname,
           rank: ranked.rank,
-          completionMs: ranked.completionMs,
+          players: ranked.players,
+          score: ranked.score,
+          timeMs: ranked.timeMs,
           recordedAt: ranked.recordedAt,
         })
         .from(ranked)
@@ -177,24 +128,26 @@ export function createLeaderboardRepository(
       const [total] = await db
         .select({ players: count() })
         .from(bestRuns(board));
-      return { players: total?.players ?? 0, runs: rows.map(toRun) };
+      return { players: total?.players ?? 0, runs: rows.map(toPlace) };
     },
 
-    async playerRank(userId, board) {
+    async playerPlace(userId, board) {
       const ranked = rankedRuns(board);
       const [row] = await db
         .select({
           userId: ranked.userId,
           nickname: users.nickname,
           rank: ranked.rank,
-          completionMs: ranked.completionMs,
+          players: ranked.players,
+          score: ranked.score,
+          timeMs: ranked.timeMs,
           recordedAt: ranked.recordedAt,
         })
         .from(ranked)
         .innerJoin(users, eq(users.id, ranked.userId))
         .where(eq(ranked.userId, userId))
         .limit(1);
-      return row ? toRun(row) : null;
+      return row ? toPlace(row) : null;
     },
 
     async playerRecords(userId) {
@@ -202,21 +155,40 @@ export function createLeaderboardRepository(
       const rows = await db
         .select({
           board: ranked.board,
+          userId: ranked.userId,
+          nickname: users.nickname,
           rank: ranked.rank,
           players: ranked.players,
-          completionMs: ranked.completionMs,
+          score: ranked.score,
+          timeMs: ranked.timeMs,
           recordedAt: ranked.recordedAt,
         })
         .from(ranked)
+        .innerJoin(users, eq(users.id, ranked.userId))
         .where(eq(ranked.userId, userId))
         .orderBy(asc(ranked.board));
       return rows.map((row) => ({
+        ...toPlace(row),
         board: row.board as LeaderboardBoardId,
-        rank: row.rank,
-        players: row.players,
-        completionMs: row.completionMs ?? 0,
-        recordedAt: row.recordedAt?.getTime() ?? 0,
       }));
+    },
+
+    async playerBest(userId, board) {
+      const [row] = await db
+        .select({
+          score: leaderboardRuns.score,
+          timeMs: leaderboardRuns.timeMs,
+        })
+        .from(leaderboardRuns)
+        .where(
+          and(
+            eq(leaderboardRuns.userId, userId),
+            eq(leaderboardRuns.board, board),
+          ),
+        )
+        .orderBy(asc(leaderboardRuns.rankKey), asc(leaderboardRuns.timeMs))
+        .limit(1);
+      return row ? { value: row.score, timeMs: row.timeMs } : null;
     },
   };
 }

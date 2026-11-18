@@ -9,18 +9,13 @@ import type {
   SessionEndReason,
   SubmittedAnswer,
 } from '@world-quiz/quiz/domain';
-import {
-  and,
-  asc,
-  eq,
-  inArray,
-  isNull,
-  lte,
-  sql,
-  TransactionRollbackError,
-} from 'drizzle-orm';
+import { and, asc, eq, inArray, lte, sql } from 'drizzle-orm';
+import type {
+  RankedRunVerdict,
+  StoredRankedRun,
+} from '../leaderboard/ranked-run-rules';
 import type { Database } from '../db/database';
-import { challenges, quizAnswers, quizSessions } from '../db/schema';
+import { leaderboardRuns, quizAnswers, quizSessions } from '../db/schema';
 import type { HistoryPosition } from './history-cursor';
 
 /** A graded session, ready to be stored. All numbers come from the replay. */
@@ -48,25 +43,16 @@ export interface NewSession {
     readonly judgement: AnswerJudgement;
     readonly answeredAt: number;
   }[];
-  /** Challenge sessions: the challenge they play and the server's verdict. */
-  readonly challenge?: ChallengeVerdict & { readonly id: string };
-}
-
-/** What the server decided about a challenge run. */
-export interface ChallengeVerdict {
-  readonly board: LeaderboardBoardId;
-  /** `ranked`, or why not (`ChallengeUnrankedReason`). */
-  readonly outcome: string;
-  readonly completionMs: number | null;
-  readonly personalRecord: boolean;
+  /** The board this run earned a place on, when it earned one. */
+  readonly ranked?: RankedRunVerdict;
 }
 
 export interface StoredSession {
-  /** Without the challenge outcome, which depends on the current ranking. */
+  /** Without the run's place, which depends on the current ranking. */
   readonly result: SessionResult;
   readonly requestHash: string;
   readonly userId: string;
-  readonly challenge: ChallengeVerdict | null;
+  readonly ranked: StoredRankedRun | null;
 }
 
 /** A history entry with the position it has in the player's history. */
@@ -91,12 +77,10 @@ export interface SessionRepository {
    * Stores the session and its answers atomically. Nothing is written when a
    * session with this id already exists (`exists`: a retry or a concurrent
    * duplicate) or when the owner no longer exists (`owner-missing`: the
-   * account was deleted while an access token was still valid). A challenge
-   * is attached only if no other session has played it (`challenge-used`).
+   * account was deleted while an access token was still valid). A run that
+   * earned a place on a board is stored with it, in the same transaction.
    */
-  insert(
-    session: NewSession,
-  ): Promise<'inserted' | 'exists' | 'owner-missing' | 'challenge-used'>;
+  insert(session: NewSession): Promise<'inserted' | 'exists' | 'owner-missing'>;
   /**
    * The player's sessions in `(recordedAt, id)` order, each with its graded
    * answers in the order they were given.
@@ -108,24 +92,27 @@ export function createSessionRepository(db: Database): SessionRepository {
   return {
     async findById(id) {
       const [row] = await db
-        .select({ session: quizSessions, challenge: challenges })
+        .select({ session: quizSessions, ranked: leaderboardRuns })
         .from(quizSessions)
-        .leftJoin(challenges, eq(challenges.sessionId, quizSessions.id))
+        .leftJoin(
+          leaderboardRuns,
+          eq(leaderboardRuns.sessionId, quizSessions.id),
+        )
         .where(eq(quizSessions.id, id))
         .limit(1);
       if (!row) return null;
 
-      const { session, challenge } = row;
+      const { session, ranked } = row;
       return {
         requestHash: session.requestHash,
         userId: session.userId,
         result: toResult(session),
-        challenge: challenge
+        ranked: ranked
           ? {
-              board: challenge.board as LeaderboardBoardId,
-              outcome: challenge.outcome ?? 'ranked',
-              completionMs: challenge.completionMs,
-              personalRecord: challenge.personalRecord ?? false,
+              board: ranked.board as LeaderboardBoardId,
+              score: ranked.score,
+              timeMs: ranked.timeMs,
+              personalRecord: ranked.personalRecord,
             }
           : null,
       };
@@ -189,7 +176,6 @@ export function createSessionRepository(db: Database): SessionRepository {
       try {
         return await insertWithAnswers(session);
       } catch (error) {
-        if (error instanceof TransactionRollbackError) return 'challenge-used';
         if (isForeignKeyViolation(error)) return 'owner-missing';
         throw error;
       }
@@ -240,27 +226,19 @@ export function createSessionRepository(db: Database): SessionRepository {
         );
       }
 
-      if (session.challenge) {
-        // Only an unplayed challenge takes the session: two different
-        // sessions racing for one challenge cannot both be recorded.
-        const attached = await tx
-          .update(challenges)
-          .set({
-            sessionId: session.id,
-            outcome: session.challenge.outcome,
-            completionMs: session.challenge.completionMs,
-            recordedAt: new Date(session.recordedAt),
-            personalRecord: session.challenge.personalRecord,
-          })
-          .where(
-            and(
-              eq(challenges.id, session.challenge.id),
-              eq(challenges.userId, session.userId),
-              isNull(challenges.sessionId),
-            ),
-          )
-          .returning({ id: challenges.id });
-        if (attached.length === 0) tx.rollback();
+      if (session.ranked) {
+        // The verdict belongs to the session: it is written with it, so a
+        // board can never hold a run whose session was not recorded.
+        await tx.insert(leaderboardRuns).values({
+          sessionId: session.id,
+          userId: session.userId,
+          board: session.ranked.board,
+          score: session.ranked.score,
+          timeMs: session.ranked.timeMs,
+          rankKey: session.ranked.rankKey,
+          recordedAt: new Date(session.recordedAt),
+          personalRecord: session.ranked.personalRecord,
+        });
       }
       return 'inserted' as const;
     });

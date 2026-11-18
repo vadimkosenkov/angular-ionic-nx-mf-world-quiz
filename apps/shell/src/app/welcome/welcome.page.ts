@@ -10,7 +10,7 @@ import {
 import { PluralPipe } from '@world-quiz/client/i18n';
 import { ProgressStore } from '@world-quiz/client/progress';
 import { SettingsStore } from '@world-quiz/client/settings';
-import { TRAINING_MODES } from '@world-quiz/quiz/domain';
+import { QUIZ_MODES } from '@world-quiz/quiz/domain';
 import { AccountNotices } from '../auth/account-notices';
 import { NATIVE_PLATFORM } from '../core/platform';
 import { RUNTIME_CONFIG } from '../runtime-config';
@@ -39,7 +39,7 @@ export class WelcomePage {
   private readonly nav = inject(NavController);
   private readonly notices = inject(AccountNotices);
 
-  protected readonly modeCount = TRAINING_MODES.length;
+  protected readonly modeCount = QUIZ_MODES.length;
   /**
    * Google's sign-in runs in Google's own page, which Google refuses to show
    * inside an app's web view, so the iPhone app needs a native sign-in — it

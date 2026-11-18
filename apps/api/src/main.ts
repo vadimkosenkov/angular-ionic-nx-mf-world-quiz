@@ -40,11 +40,8 @@ const accessTokens = createAccessTokens(
   config.auth.jwtSecret ?? randomBytes(32).toString('base64url'),
 );
 
-const challenges = createLeaderboardRepository(database.db);
-const leaderboard = createLeaderboardService({
-  repository: challenges,
-  clock: systemClock,
-});
+const boards = createLeaderboardRepository(database.db);
+const leaderboard = createLeaderboardService({ repository: boards });
 
 const app = createApp({
   clock: systemClock,
@@ -53,7 +50,7 @@ const app = createApp({
     repository: createSessionRepository(database.db),
     engine: createQuizEngine(COUNTRIES),
     clock: systemClock,
-    challenges,
+    boards,
     leaderboard,
   }),
   auth: createAuthService({

@@ -107,16 +107,6 @@ describe('QuizEngine.start', () => {
       { ...fixedEasy, scope: 'asia', countryCodes: ['fr'] },
       'empty-pool',
     ],
-    [
-      'regional challenge',
-      { ...fixedEasy, mode: 'challenge', scope: 'europe' },
-      'challenge-requires-world-scope',
-    ],
-    [
-      'restricted challenge',
-      { ...fixedEasy, mode: 'challenge', countryCodes: ['fr'] },
-      'challenge-cannot-be-restricted',
-    ],
   ])('rejects %s', (_, config, error) => {
     expect(engine.start(config, { seed: 's', startedAt: T0 })).toEqual({
       ok: false,
@@ -439,36 +429,6 @@ describe('Timed mode', () => {
   });
 });
 
-describe('Challenge mode', () => {
-  it('asks every country exactly once and completes after the last one', () => {
-    let session = start({ ...fixedEasy, mode: 'challenge' });
-    expect(engine.questions(session).length).toBe(FIXTURE_DATASET.length);
-
-    for (let i = 0; i < FIXTURE_DATASET.length; i++) {
-      session = answer(session, correctAnswer(session), T0 + (i + 1) * 1_000);
-    }
-
-    expect(session.endReason).toBe('completed');
-    expect(new Set(session.answers.map((a) => a.countryCode)).size).toBe(
-      FIXTURE_DATASET.length,
-    );
-    expect(engine.summarize(session)).toMatchObject({
-      perfect: true,
-      durationMs: FIXTURE_DATASET.length * 1_000,
-    });
-  });
-
-  it('uses the same question order for the same seed (comparable runs)', () => {
-    const order = (seed: string) => {
-      const session = start({ ...fixedEasy, mode: 'challenge' }, seed);
-      return Array.from({ length: FIXTURE_DATASET.length }, (_, i) =>
-        engine.questions(session).questionAt(i),
-      );
-    };
-    expect(order('weekly-1')).toEqual(order('weekly-1'));
-  });
-});
-
 describe('replay (server-side re-validation)', () => {
   function play(
     config: QuizConfig,
@@ -630,7 +590,7 @@ describe('replay (server-side re-validation)', () => {
   it('rejects an invalid config', () => {
     expect(
       engine.replay({
-        config: { ...fixedEasy, mode: 'challenge', scope: 'asia' },
+        config: { ...fixedEasy, scope: 'asia', countryCodes: ['fr'] },
         seed: 's',
         startedAt: T0,
         finishedAt: T0,
@@ -639,10 +599,7 @@ describe('replay (server-side re-validation)', () => {
       }),
     ).toEqual({
       ok: false,
-      error: {
-        kind: 'invalid-config',
-        reason: 'challenge-requires-world-scope',
-      },
+      error: { kind: 'invalid-config', reason: 'empty-pool' },
     });
   });
 });

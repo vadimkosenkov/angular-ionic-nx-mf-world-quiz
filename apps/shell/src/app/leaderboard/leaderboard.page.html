@@ -17,88 +17,126 @@
     </ion-segment>
 
     @if (view() === 'global') {
-    <ion-segment
-      class="boards wq-segment-pill"
-      data-testid="leaderboard-board"
-      [scrollable]="true"
-      [value]="board()"
-      [attr.aria-label]="'leaderboard.boardsLabel' | transloco"
-      (ionChange)="onBoardChange($event)"
-    >
-      @for (item of boards; track item.id) {
-      <ion-segment-button [value]="item.id">
-        <ion-label>{{ 'leaderboard.boards.' + item.id | transloco }}</ion-label>
-      </ion-segment-button>
-      }
-    </ion-segment>
-    } @if (view() === 'global') {
-    <section class="wq-card challenge" data-testid="leaderboard-challenge">
-      <p class="rules" data-testid="leaderboard-rules">
-        {{ 'leaderboard.rules' | transloco: { count: progress.countryCount } }}
-      </p>
-      <p class="wq-text-secondary online">
-        {{ 'leaderboard.online' | transloco }}
-      </p>
-      <ion-button
-        class="wq-glass-button"
-        expand="block"
-        data-testid="challenge-start"
-        [disabled]="starting()"
-        (click)="startChallenge()"
-      >
-        {{ 'leaderboard.start' | transloco: { board: 'leaderboard.boards.' +
-        board() | transloco } }}
-      </ion-button>
-    </section>
-
-    <section class="wq-card ranking" data-testid="leaderboard-ranking">
-      @if (ranking.isLoading() && !ranking.hasValue()) {
-      <p class="wq-text-secondary status" role="status">
-        {{ 'leaderboard.loading' | transloco }}
-      </p>
-      } @else if (ranking.error()) {
-      <wq-empty-state
-        data-testid="leaderboard-error"
-        icon="cloud-offline-outline"
-        [heading]="'leaderboard.loadFailed.title' | transloco"
-        [message]="'leaderboard.loadFailed.message' | transloco"
-      >
-        <ion-button fill="clear" (click)="ranking.reload()">
-          {{ 'leaderboard.retry' | transloco }}
-        </ion-button>
-      </wq-empty-state>
-      } @else if (ranking.hasValue()) { @let data = ranking.value(); @if
-      (data.entries.length === 0) {
-      <wq-empty-state
-        data-testid="leaderboard-empty"
-        icon="podium-outline"
-        [heading]="'leaderboard.empty.title' | transloco"
-        [message]="'leaderboard.empty.message' | transloco"
-      />
-      } @else {
-      <ol class="entries" data-testid="leaderboard-entries">
-        @for (entry of data.entries; track entry.rank) {
-        <li
-          [class.me]="entry.rank === myRank()"
-          [attr.aria-current]="entry.rank === myRank() ? 'true' : null"
-        >
-          <span class="rank">{{ entry.rank }}</span>
-          {{ ' ' }}
-          <span class="name">
-            {{ entry.nickname }} @if (entry.rank === myRank()) {
-            <span class="you">{{ 'leaderboard.you' | transloco }}</span>
-            }
-          </span>
-          {{ ' ' }}
-          <span class="time">{{ formatRunTime(entry.completionTimeMs) }}</span>
+    <!-- A board is the four settings a quiz is played with, so it is chosen
+         with the very controls the quiz setup asks them with: the same
+         question has to look like the same question. -->
+    <section class="wq-section" aria-labelledby="board-category-title">
+      <h2 id="board-category-title" class="wq-section-title">
+        {{ 'setup.category' | transloco }}
+      </h2>
+      <ul class="wq-options grid tiles" data-testid="board-category">
+        @for (item of categories; track item) {
+        <li>
+          <button
+            type="button"
+            class="wq-option tile"
+            [class.selected]="category() === item"
+            [attr.aria-pressed]="category() === item"
+            [attr.data-testid]="'board-category-' + item"
+            (click)="category.set(item)"
+          >
+            <span class="wq-option-icon" aria-hidden="true">
+              <ion-icon [name]="categoryIcons[item]" />
+            </span>
+            <span class="wq-option-name">
+              {{ 'categories.' + item | transloco }}
+            </span>
+            <span class="wq-option-note">
+              {{ 'setup.categories.' + item | transloco }}
+            </span>
+          </button>
         </li>
         }
-      </ol>
-      <p class="wq-text-secondary players">
-        {{ 'leaderboard.players' | wqPlural: data.players }}
-      </p>
-      } }
+      </ul>
     </section>
+
+    <section class="wq-section" aria-labelledby="board-scope-title">
+      <h2 id="board-scope-title" class="wq-section-title">
+        {{ 'setup.scope' | transloco }}
+      </h2>
+      <wq-region-options
+        testId="board-scope"
+        [options]="regionOptions()"
+        [selected]="scope()"
+        (chosen)="selectScope($event)"
+      />
+    </section>
+
+    <section class="wq-section" aria-labelledby="board-difficulty-title">
+      <h2 id="board-difficulty-title" class="wq-section-title">
+        {{ 'setup.difficulty' | transloco }}
+      </h2>
+      <ul class="wq-options grid tiles" data-testid="board-difficulty">
+        @for (item of difficulties; track item) {
+        <li>
+          <button
+            type="button"
+            class="wq-option tile"
+            [class.selected]="difficulty() === item"
+            [attr.aria-pressed]="difficulty() === item"
+            [attr.data-testid]="'board-difficulty-' + item"
+            (click)="difficulty.set(item)"
+          >
+            <span class="wq-option-icon" aria-hidden="true">
+              <ion-icon [name]="difficultyIcons[item]" />
+            </span>
+            <span class="wq-option-name">
+              {{ 'difficulty.' + item | transloco }}
+            </span>
+            <span class="wq-option-note">
+              {{ 'setup.difficultyHint.' + item | transloco }}
+            </span>
+          </button>
+        </li>
+        }
+      </ul>
+    </section>
+
+    <section class="wq-section" aria-labelledby="board-mode-title">
+      <h2 id="board-mode-title" class="wq-section-title">
+        {{ 'setup.mode' | transloco }}
+      </h2>
+      <!-- The row's second line is what this board ranks by: the numbers in
+           the table mean nothing without it, and it changes with the mode. -->
+      <ul class="wq-options" data-testid="board-mode">
+        @for (item of modes; track item) {
+        <li>
+          <button
+            type="button"
+            class="wq-option row"
+            [class.selected]="mode() === item"
+            [attr.aria-pressed]="mode() === item"
+            [attr.data-testid]="'board-mode-' + item"
+            (click)="mode.set(item)"
+          >
+            <span class="wq-option-icon" aria-hidden="true">
+              <ion-icon [name]="modeIcons[item]" />
+            </span>
+            <span class="wq-option-text">
+              <span class="wq-option-name">
+                {{ 'modes.' + item | transloco }}
+              </span>
+              <span class="wq-option-note">
+                {{ 'leaderboard.metric.' + item | transloco: metricParams }}
+              </span>
+            </span>
+          </button>
+        </li>
+        }
+      </ul>
+    </section>
+
+    <!-- The board itself opens over the page. Four choices and a table do
+         not fit on a phone at once, and the table is what the player came
+         for: below the choices it would start a screen down. -->
+    <ion-button
+      class="wq-glass-button"
+      expand="block"
+      data-testid="board-show"
+      (click)="show()"
+    >
+      {{ 'leaderboard.show' | transloco }}
+    </ion-button>
     } @else {
     <section class="wq-card records" data-testid="leaderboard-records">
       @if (records.error()) {
@@ -112,41 +150,39 @@
           {{ 'leaderboard.retry' | transloco }}
         </ion-button>
       </wq-empty-state>
+      } @else if (recordRows().length === 0) {
+      <wq-empty-state
+        data-testid="leaderboard-no-records"
+        icon="podium-outline"
+        [heading]="'leaderboard.noRecords.title' | transloco"
+        [message]="'leaderboard.noRecords.message' | transloco"
+      />
       } @else {
       <ul>
-        @for (entry of myRecords(); track entry.board) {
+        @for (entry of recordRows(); track entry.board) {
         <li [attr.data-testid]="'record-' + entry.board">
-          <span class="board"
-            >{{ 'leaderboard.boards.' + entry.board | transloco }}</span
-          >
-          {{ ' ' }} @if (entry.record; as record) {
-          <span class="time">{{ formatRunTime(record.completionTimeMs) }}</span>
-          <!-- Before the place, not after it: the row is a grid whose last
-               line spans both columns, so a control placed after it would
-               land on a line of its own. -->
+          <span class="board">{{ entry.name }}</span>
+          {{ ' ' }}
+          <span class="score">{{ entry.row.score }}</span>
+          <!-- Before the place, not after it: the row is a grid whose
+                   last line spans both columns, so a control placed after
+                   it would land on a line of its own. -->
           <button
             type="button"
             class="share-record"
             [attr.data-testid]="'share-record-' + entry.board"
             [attr.aria-label]="
-              'share.record.action'
-                | transloco
-                  : { board: 'leaderboard.boards.' + entry.board | transloco }
-            "
-            (click)="shareRecord(entry.board, record)"
+                    'share.record.action' | transloco: { board: entry.name }
+                  "
+            (click)="shareRecord(entry.record)"
           >
             <ion-icon name="share-outline" aria-hidden="true" />
           </button>
           {{ ' ' }}
           <span class="wq-text-secondary place">
-            {{ 'leaderboard.place' | transloco: { rank: record.rank, players:
-            record.players } }}
+            {{ 'leaderboard.place' | transloco : { rank: entry.row.rank,
+            players: entry.record.players } }}
           </span>
-          } @else {
-          <span class="wq-text-secondary place">
-            {{ 'leaderboard.noRecord' | transloco }}
-          </span>
-          }
         </li>
         }
       </ul>
@@ -155,3 +191,92 @@
     }
   </div>
 </ion-content>
+
+@if (shown(); as board) {
+<wq-dialog
+  [title]="'leaderboard.boardTitle' | transloco"
+  [closeLabel]="'leaderboard.close' | transloco"
+  (dismissed)="shown.set(null)"
+>
+  <div class="ranking" data-testid="leaderboard-ranking">
+    <!-- Which board this is, under a trophy: the four settings as two
+         deliberate lines rather than one that wraps after the third. -->
+    @let lines = boardLines(board);
+    <header class="board-head">
+      <span class="board-icon" aria-hidden="true">
+        <ion-icon name="trophy" />
+      </span>
+      <p class="board-subject" data-testid="leaderboard-board-name">
+        {{ lines.subject }}
+      </p>
+      <p class="board-style">{{ lines.style }}</p>
+    </header>
+    @if (ranking.isLoading()) {
+    <p class="wq-text-secondary status" role="status">
+      {{ 'leaderboard.loading' | transloco }}
+    </p>
+    } @else if (ranking.error()) {
+    <wq-empty-state
+      data-testid="leaderboard-error"
+      icon="cloud-offline-outline"
+      [heading]="'leaderboard.loadFailed.title' | transloco"
+      [message]="'leaderboard.loadFailed.message' | transloco"
+    >
+      <ion-button fill="clear" (click)="ranking.reload()">
+        {{ 'leaderboard.retry' | transloco }}
+      </ion-button>
+    </wq-empty-state>
+    } @else if (entries().length === 0) {
+    <wq-empty-state
+      data-testid="leaderboard-empty"
+      icon="podium-outline"
+      [heading]="'leaderboard.empty.title' | transloco"
+      [message]="'leaderboard.empty.message' | transloco"
+    />
+    } @else {
+    <ol class="entries" data-testid="leaderboard-entries">
+      @for (entry of entries(); track entry.rank) {
+      <li [class.me]="entry.me" [attr.aria-current]="entry.me ? 'true' : null">
+        <span class="rank">{{ entry.rank }}</span>
+        {{ ' ' }}
+        <span class="name">
+          {{ entry.name }} @if (entry.me) {
+          <span class="you"> {{ 'leaderboard.you' | transloco }} </span>
+          }
+        </span>
+        {{ ' ' }}
+        <span class="score">
+          {{ entry.score }} @if (entry.time) {
+          <span class="time">{{ entry.time }}</span>
+          }
+        </span>
+      </li>
+      }
+    </ol>
+    @if (myRow(); as mine) {
+    <!-- Below the page shown: the player's own place is the reason to look
+             at a board of 300 players at all. -->
+    <ol class="entries mine" data-testid="leaderboard-my-row">
+      <li class="me" aria-current="true">
+        <span class="rank">{{ mine.rank }}</span>
+        {{ ' ' }}
+        <span class="name">
+          {{ mine.name }}
+          <span class="you">{{ 'leaderboard.you' | transloco }}</span>
+        </span>
+        {{ ' ' }}
+        <span class="score">
+          {{ mine.score }} @if (mine.time) {
+          <span class="time">{{ mine.time }}</span>
+          }
+        </span>
+      </li>
+    </ol>
+    }
+    <p class="wq-text-secondary players">
+      {{ 'leaderboard.players' | wqPlural: players() }}
+    </p>
+    }
+  </div>
+</wq-dialog>
+}

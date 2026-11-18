@@ -1,8 +1,10 @@
 import type { QuizConfig, SessionRecord } from '@world-quiz/quiz/domain';
 import {
   DEFAULT_HISTORY_PAGE_SIZE,
+  LEGACY_CHALLENGE_QUESTION_COUNT,
   MAX_HISTORY_PAGE_SIZE,
   MAX_SUBMISSIONS_PER_SESSION,
+  parsePostedSession,
   sessionHistoryQuerySchema,
   type SubmitSessionRequest,
   submitSessionRequestSchema,
@@ -135,5 +137,94 @@ describe('sessionHistoryQuerySchema', () => {
     [{ since: '0' }],
   ])('rejects %j', (query) => {
     expect(sessionHistoryQuerySchema.safeParse(query).success).toBe(false);
+  });
+});
+
+/**
+ * The body an app of the time wrote for a leaderboard challenge, which a
+ * device that played one offline may still be holding (ADR-014).
+ */
+const legacyChallengeRequest = () => ({
+  ...validRequest(),
+  config: {
+    category: 'capitals',
+    difficulty: 'easy',
+    mode: 'challenge',
+    scope: 'world',
+  },
+  challengeId: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
+});
+
+describe('parsePostedSession', () => {
+  it('reads a current body as it is', () => {
+    const parsed = parsePostedSession(validRequest());
+
+    expect(parsed).toMatchObject({ ok: true, legacy: false });
+  });
+
+  it('says a legacy challenge in the vocabulary that is left', () => {
+    const parsed = parsePostedSession(legacyChallengeRequest());
+
+    expect(parsed.ok && parsed.legacy).toBe(true);
+    expect(parsed.ok && parsed.request.config).toEqual({
+      category: 'capitals',
+      difficulty: 'easy',
+      scope: 'world',
+      mode: 'fixed',
+      questionCount: LEGACY_CHALLENGE_QUESTION_COUNT,
+    });
+  });
+
+  it('keeps the answers, the seed and the times of a legacy session untouched', () => {
+    const legacy = legacyChallengeRequest();
+
+    const parsed = parsePostedSession(legacy);
+
+    expect(parsed.ok && parsed.request).toMatchObject({
+      id: legacy.id,
+      seed: legacy.seed,
+      startedAt: legacy.startedAt,
+      finishedAt: legacy.finishedAt,
+      endReason: legacy.endReason,
+      submissions: legacy.submissions,
+    });
+  });
+
+  it('drops the challenge it answered: there is nothing left to check it against', () => {
+    const parsed = parsePostedSession(legacyChallengeRequest());
+
+    expect(parsed.ok && 'challengeId' in parsed.request).toBe(false);
+  });
+
+  it('translates the same body the same way, so a retry hashes the same', () => {
+    const legacy = legacyChallengeRequest();
+
+    const first = parsePostedSession(legacy);
+    const second = parsePostedSession(legacy);
+
+    expect(first).toEqual(second);
+  });
+
+  it('refuses a challenge over a region: a challenge was always the World set', () => {
+    const parsed = parsePostedSession({
+      ...legacyChallengeRequest(),
+      config: {
+        category: 'capitals',
+        difficulty: 'easy',
+        mode: 'challenge',
+        scope: 'europe',
+      },
+    });
+
+    expect(parsed.ok).toBe(false);
+  });
+
+  it('reports the current contract errors for an ordinary broken body', () => {
+    const parsed = parsePostedSession({ ...validRequest(), id: 'x' });
+
+    expect(parsed.ok).toBe(false);
+    expect(
+      !parsed.ok && parsed.error.issues.map((issue) => issue.path.join('.')),
+    ).toEqual(['id']);
   });
 });

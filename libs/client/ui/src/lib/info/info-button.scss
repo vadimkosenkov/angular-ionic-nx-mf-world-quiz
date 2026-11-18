@@ -39,4 +39,8 @@ ion-popover {
   margin: 0;
   color: var(--wq-color-text-primary);
   font-size: var(--wq-font-size-caption);
+
+  & + & {
+    margin-top: var(--wq-space-2);
+  }
 }

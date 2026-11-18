@@ -23,7 +23,7 @@ flagAssetPath('fr'); // 'flags/fr.svg'
 ## Commands
 
 ```bash
-npx nx test quiz-countries                  # dataset, flags, real-data matching, challenge replay
+npx nx test quiz-countries                  # dataset, flags, real-data matching, a ranked run replayed
 npx nx typecheck quiz-countries
 npx nx run quiz-countries:check-wikidata    # manual drift check against Wikidata (network)
 ```

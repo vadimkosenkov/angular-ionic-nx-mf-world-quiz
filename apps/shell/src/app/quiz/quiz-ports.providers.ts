@@ -4,10 +4,10 @@ import {
   QUIZ_RESULT_SINK,
   type QuizProgressReader,
   type QuizResultSink,
-  type QuizSessionContext,
   type QuizSessionOutcome,
 } from '@world-quiz/client/quiz-ports';
 import {
+  evaluateRankedRun,
   newlyUnlockedAchievements,
   practiceCandidates,
   type QuizCategory,
@@ -27,24 +27,26 @@ export class ShellQuizResultSink implements QuizResultSink {
   private readonly progress = inject(ProgressStore);
   private readonly sync = inject(SyncService);
 
-  submit(
-    session: QuizSession,
-    summary: SessionSummary,
-    context: QuizSessionContext = {},
-  ): QuizSessionOutcome {
+  submit(session: QuizSession, summary: SessionSummary): QuizSessionOutcome {
     const before = this.progress.achievements();
-    const recorded = this.progress.recordSession(session, context);
+    const recorded = this.progress.recordSession(session);
     const after = this.progress.achievements();
-    // Sent now when online; otherwise it waits in the outbox. A challenge's
-    // verdict is what the results screen waits for.
+    // Every finished session is sent now when online, and waits in the
+    // outbox otherwise. The API's own answer is worth waiting for only when
+    // the run can reach a board: the server grades the session and the
+    // answer carries the place it earned.
     const sent = this.sync.resultOf(recorded.id);
+    const ranked = evaluateRankedRun(session, summary).eligible
+      ? sent.then((result) => result?.ranked ?? null)
+      : null;
+    // Nothing reads the answer to a run that cannot rank, and a promise no
+    // one watches would fail as an unhandled rejection.
+    if (!ranked) void sent.catch(() => null);
 
     return {
       newlyUnlocked: newlyUnlockedAchievements(before, after),
       mistakes: this.mistakesFor(session.config.category),
-      ...(context.challengeId
-        ? { challenge: sent.then((result) => result?.challenge ?? null) }
-        : {}),
+      ...(ranked ? { ranked } : {}),
     };
   }
 

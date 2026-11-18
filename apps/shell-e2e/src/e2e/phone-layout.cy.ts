@@ -38,12 +38,22 @@ describe('phone layout', () => {
     expectAbove('[data-testid="achievement-preview"]', 'ion-tab-bar');
   });
 
-  it('keeps the last game mode above the start button', () => {
+  it("keeps the quiz setup's own Start button reachable", () => {
+    // The action is in the page, under the last choice, rather than in a bar
+    // pinned to the foot of the screen -- so what must stay reachable at the
+    // end of the page is the button itself. (The setup is pushed over the
+    // tabs, so there is no tab bar on this screen to measure against.)
     cy.visit('/quiz/setup?category=capitals');
-    byTestId('setup-mode-practice', { timeout: 20_000 }).then(scrollPageToEnd);
-    expectAbove(
-      '[data-testid="setup-mode-practice"]',
-      'wq-quiz-setup-page .wq-action-bar',
-    );
+    byTestId('setup-start', { timeout: 20_000 }).then(scrollPageToEnd);
+    cy.get('[data-testid="setup-start"]')
+      .should('be.visible')
+      .then(($button) => {
+        const { bottom } = $button.get(0).getBoundingClientRect();
+        cy.window().then((win) => {
+          expect(bottom, 'Start ends inside the screen').to.be.at.most(
+            win.innerHeight,
+          );
+        });
+      });
   });
 });

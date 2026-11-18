@@ -14,7 +14,7 @@ import { QUIZ_SCOPES } from './vocabulary';
 /**
  * Learning progress: one `MasteryState` per category × country.
  *
- * Every answered question (training, practice or challenge) is a
+ * Every answered question (any mode, a practice round included) is a
  * `ProgressEvent`. Progress is a pure fold over events, so the server can
  * rebuild it deterministically when answers from several offline devices
  * arrive out of order.

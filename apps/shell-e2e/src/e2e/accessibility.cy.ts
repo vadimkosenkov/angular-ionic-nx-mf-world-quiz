@@ -46,7 +46,11 @@ describe('accessibility', () => {
 
     it('checks the Leaderboard tab', () => {
       cy.visit('/leaderboard');
-      byTestId('leaderboard-board', { timeout: 20_000 }).should('exist');
+      byTestId('board-show', { timeout: 20_000 }).should('exist');
+      expectAccessible();
+      // The board itself opens over the page, so it is its own screen.
+      byTestId('board-show').click({ scrollBehavior: 'center' });
+      byTestId('leaderboard-ranking', { timeout: 20_000 }).should('exist');
       expectAccessible();
     });
 
@@ -121,7 +125,7 @@ describe('accessibility', () => {
     for (const path of [
       '/en',
       '/en/privacy',
-      '/en/leaderboard/capitals-easy',
+      '/en/leaderboard/capitals-easy-world-fixed',
     ]) {
       it(`checks ${path}`, () => {
         cy.visit(`${SITE}${path}`);

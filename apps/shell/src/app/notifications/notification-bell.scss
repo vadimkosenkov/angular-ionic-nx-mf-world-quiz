@@ -8,6 +8,17 @@
   position: relative;
 }
 
+// Ionic hangs the popover from the element the press landed on, not from
+// the button the handler is on. So everything drawn inside the button is
+// something to see and never something to press: a press that reached the
+// 24 px icon opened the list centred on the icon, and one that reached the
+// 10 px mark opened it over the bell — the same button, two placements,
+// depending on where the finger came down. With this, every press is a
+// press on the button.
+.wq-header-action > * {
+  pointer-events: none;
+}
+
 // A mark, not a number: there is never a useful count up here, and a digit
 // in a 44 px circle is unreadable anyway. It carries the page background as
 // a ring, so it reads as a dot on the glass rather than a smudge in it.
@@ -15,11 +26,6 @@
   position: absolute;
   top: 8px;
   right: 8px;
-  // The mark is something to see, never something to press. Ionic hangs
-  // the popover from the element the press landed on, so a press that
-  // reached this dot opened the list from a 10 px box in the bell's top
-  // corner — over the bell. A press here is a press on the bell.
-  pointer-events: none;
   width: 10px;
   height: 10px;
   border: 2px solid var(--wq-color-surface);

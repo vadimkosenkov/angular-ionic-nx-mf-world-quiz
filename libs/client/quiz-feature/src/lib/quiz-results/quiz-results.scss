@@ -97,7 +97,7 @@
   }
 }
 
-.challenge,
+.board,
 .unlocked,
 .review {
   padding: var(--wq-space-5);
@@ -134,28 +134,164 @@
   color: var(--wq-color-success);
 }
 
-.challenge {
+.board {
   p {
     margin: 0 0 var(--wq-space-1);
     font-variant-numeric: tabular-nums;
   }
 
   .rank {
+    display: flex;
+    align-items: center;
+    gap: var(--wq-space-2);
     font-size: 1.5rem;
     font-weight: 800;
     color: var(--wq-color-primary);
   }
 
-  .record {
-    font-weight: 700;
-    color: var(--wq-color-success);
+  // A medal for the first three places, in its own colour. The place is
+  // written out beside it, so the colour adds to what is already said.
+  .rank ion-icon {
+    flex: none;
+    font-size: 1.75rem;
+
+    &[data-medal='1'] {
+      color: var(--wq-color-medal-gold);
+    }
+
+    &[data-medal='2'] {
+      color: var(--wq-color-medal-silver);
+    }
+
+    &[data-medal='3'] {
+      color: var(--wq-color-medal-bronze);
+    }
+  }
+}
+
+// A personal record is the one thing on this screen worth a fanfare, so it
+// takes the card the result is *shared* as: the brand gradient, a trophy and
+// two figures. The quieter states (being checked, waiting offline, a place
+// outside the first three) stay a plain card -- a screen that celebrates
+// everything celebrates nothing.
+.board.award {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--wq-space-2);
+  overflow: hidden;
+  padding: var(--wq-space-6) var(--wq-space-5);
+  border: 0;
+  background: linear-gradient(
+    135deg,
+    var(--wq-color-primary),
+    var(--wq-color-accent)
+  );
+  color: var(--wq-color-on-primary);
+  text-align: center;
+
+  // The light that falls across the card as it arrives. It is one layer
+  // over the gradient, drawn in the gradient's own ink at low opacity, so
+  // no colour is invented here.
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -50% -30%;
+    background: radial-gradient(
+      circle at 30% 15%,
+      var(--wq-color-on-primary),
+      transparent 55%
+    );
+    opacity: 0.22;
+    animation: wq-award-sheen 900ms ease-out both;
+    pointer-events: none;
+  }
+
+  .award-icon {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border-radius: var(--wq-radius-pill);
+    // The trophy sits in a disc of the card's own ink, which reads on the
+    // gradient in both themes without a colour of its own.
+    background: color-mix(in srgb, var(--wq-color-on-primary) 18%, transparent);
+    font-size: 34px;
+  }
+
+  .headline {
+    margin: 0;
+    font-size: 1.375rem;
+    font-weight: 800;
+    letter-spacing: normal;
+    text-transform: none;
+    color: inherit;
+  }
+
+  .board-name {
+    margin: 0;
+    font-size: var(--wq-font-size-caption);
+    font-weight: 600;
+    opacity: 0.85;
+  }
+
+  // The place and what the board ranks by, as two labelled figures -- the
+  // same shape the hero gives accuracy and time, and the shared picture
+  // gives place and players.
+  .figures {
+    display: flex;
+    gap: var(--wq-space-6);
+    margin: var(--wq-space-2) 0 0;
+
+    dt {
+      font-size: var(--wq-font-size-caption);
+      font-weight: 600;
+      opacity: 0.85;
+    }
+
+    dd {
+      margin: var(--wq-space-1) 0 0;
+      font-size: 1.5rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  // On a board that counts answers, the run's time is the tie-break under
+  // the count rather than a figure of its own.
+  .tiebreak {
+    display: block;
+    font-size: var(--wq-font-size-caption);
+    font-weight: 600;
+    opacity: 0.8;
+  }
+}
+
+@keyframes wq-award-sheen {
+  from {
+    opacity: 0;
+    transform: scale(1.2);
+  }
+
+  to {
+    opacity: 0.22;
+    transform: none;
+  }
+}
+
+// The card still arrives, it simply arrives without the light moving.
+@media (prefers-reduced-motion: reduce) {
+  .board.award::after {
+    animation: none;
   }
 }
 
 // The share control: a round, quiet button in the hero's corner. It is a
 // plain button rather than an `ion-button`, which brings its own min-height
 // and margins and would sit off the corner.
-.hero .share {
+.hero .share,
+.board.award .share {
   position: absolute;
   top: var(--wq-space-3);
   right: var(--wq-space-3);
@@ -177,4 +313,10 @@
     opacity: 0.5;
     cursor: default;
   }
+}
+
+// The record card's share sits on the gradient, so it takes the card's own
+// ink rather than the secondary text colour the hero's share uses.
+.board.award .share {
+  color: var(--wq-color-on-primary);
 }

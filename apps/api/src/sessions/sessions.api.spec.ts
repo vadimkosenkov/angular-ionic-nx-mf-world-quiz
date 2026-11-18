@@ -1,4 +1,5 @@
 import {
+  LEGACY_CHALLENGE_QUESTION_COUNT,
   type SessionHistoryEntry,
   sessionHistoryPageSchema,
   type SubmitSessionRequest,
@@ -221,6 +222,93 @@ describe('/v1/sessions', () => {
         endReason: 'stopped',
         completed: false,
         durationMs: 4_500,
+      });
+    });
+
+    // A device that finished a leaderboard challenge offline still has that
+    // request in its outbox, written in a mode the domain no longer has
+    // (ADR-014). Refusing it would mark a real game as rejected and drop its
+    // answers from the player's progress.
+    describe('a session played in the mode that is gone', () => {
+      /** What the app of the time wrote: the World set, in its own mode. */
+      const asChallenge = (session: SubmitSessionRequest) => ({
+        ...session,
+        config: {
+          category: session.config.category,
+          difficulty: session.config.difficulty,
+          mode: 'challenge',
+          scope: 'world',
+        },
+        challengeId: crypto.randomUUID(),
+      });
+
+      /** The same run in today's vocabulary: a quick round over the World. */
+      const worldRound: QuizConfig = {
+        category: 'capitals',
+        difficulty: 'easy',
+        mode: 'fixed',
+        scope: 'world',
+        questionCount: LEGACY_CHALLENGE_QUESTION_COUNT,
+      };
+
+      it('grades it exactly as the run it was', async () => {
+        const session = playSession(engine, worldRound, {
+          wrong: new Set([1]),
+        });
+
+        const response = await post(asChallenge(session));
+
+        expect(response.status).toBe(201);
+        expect(response.body.summary).toMatchObject({
+          answered: FIXTURE_DATASET.length,
+          correct: FIXTURE_DATASET.length - 1,
+          completed: true,
+          perfect: false,
+        });
+      });
+
+      it('never puts it on a board, flawless or not', async () => {
+        const legacy = await post(asChallenge(playSession(engine, worldRound)));
+        // A quick round of today's length, over the same World set, does
+        // compete — so the absence above is the rule and not a dead board.
+        const today = await post(
+          playSession(engine, {
+            category: 'capitals',
+            difficulty: 'easy',
+            mode: 'fixed',
+            scope: 'world',
+          }),
+        );
+
+        expect(legacy.body.summary.perfect).toBe(true);
+        expect(legacy.body.ranked).toBeUndefined();
+        expect(today.body.ranked).toBeDefined();
+      });
+
+      it('answers a retry with the stored result', async () => {
+        const body = asChallenge(playSession(engine, worldRound));
+
+        const first = await post(body);
+        const second = await post(body);
+
+        expect([first.status, second.status]).toEqual([201, 200]);
+        expect(second.body).toEqual(first.body);
+      });
+
+      it('refuses a challenge over a region, which never existed', async () => {
+        const session = playSession(engine, { ...worldRound, scope: 'europe' });
+
+        const response = await post({
+          ...asChallenge(session),
+          config: {
+            category: 'capitals',
+            difficulty: 'easy',
+            mode: 'challenge',
+            scope: 'europe',
+          },
+        });
+
+        expect(response.status).toBe(400);
       });
     });
 

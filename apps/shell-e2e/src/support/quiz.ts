@@ -68,6 +68,23 @@ export const advanceQuizTime = (ms: number) =>
     advance?.(ms);
   });
 
+/**
+ * Plays a whole round correctly at a human pace.
+ *
+ * Cypress answers ten questions in a second or two, which is faster than
+ * anyone could read them — and the API refuses such a run as implausible
+ * (`MIN_RANKED_ANSWER_MS`, docs/domain/leaderboard.md), so it would never
+ * reach a board. The quiz's clock is shifted instead of really waiting, so
+ * the recorded run takes as long as a person's would (the page must be
+ * visited with `controlQuizTime`).
+ */
+export const answerRankedRound = (questions: number, pace = 500) => {
+  for (let question = 0; question < questions; question++) {
+    advanceQuizTime(pace);
+    answerChoice(true);
+  }
+};
+
 export interface CountryKey {
   readonly code: string;
   readonly name: { readonly en: string; readonly ru: string };

@@ -145,45 +145,53 @@ describe('shell quiz ports', () => {
     expect(reader.mistakes('capitals')).toEqual([]);
   });
 
-  it("sends a challenge run with its challenge id and hands over the server's verdict", async () => {
-    const { sink, progress, syncs } = setup();
-    const verdict = {
-      board: 'capitals-hard' as const,
-      ranked: true,
-      completionTimeMs: 2_000,
-      personalRecord: false,
+  it("hands over the API's answer for a run that can reach a board", async () => {
+    const { sink, syncs } = setup();
+    const place = {
+      board: 'capitals-hard-world-fixed' as const,
+      score: 10_000,
+      timeMs: 10_000,
       rank: 4,
+      players: 12,
+      personalRecord: false,
     };
-    const finished = session([{ code: 'fr', correct: true }]);
-    const training = sink.submit(
-      finished,
-      summarizeSession(finished, finished.answers.length),
-    );
+    // A flawless quick round: ten questions, every answer right.
+    const codes = FIXTURE_DATASET.slice(0, 10).map((country) => country.code);
+    const flawless = session(codes.map((code) => ({ code, correct: true })));
+    const spoilt = session([
+      ...codes.slice(0, 9).map((code) => ({ code, correct: true })),
+      { code: codes[9] ?? '', correct: false },
+    ]);
+
     syncs.answer = {
       id: 'x',
-      config: finished.config,
+      config: flawless.config,
       summary: {
-        answered: 1,
-        correct: 1,
+        answered: 10,
+        correct: 10,
         incorrect: 0,
         accuracy: 1,
-        durationMs: 1,
+        durationMs: 10,
         endReason: 'completed',
         completed: true,
         perfect: true,
       },
       recordedAt: '2026-09-22T10:00:00.000Z',
-      challenge: verdict,
+      ranked: place,
     };
 
-    const outcome = sink.submit(
-      finished,
-      summarizeSession(finished, finished.answers.length),
-      { challengeId: 'challenge-1' },
+    const ranked = sink.submit(
+      flawless,
+      summarizeSession(flawless, flawless.answers.length),
+    );
+    const unranked = sink.submit(
+      spoilt,
+      summarizeSession(spoilt, spoilt.answers.length),
     );
 
-    expect(training.challenge).toBeUndefined();
-    expect(progress.pending().at(-1)?.request?.challengeId).toBe('challenge-1');
-    expect(await outcome.challenge).toEqual(verdict);
+    expect(await ranked.ranked).toEqual(place);
+    // A run with a wrong answer cannot reach a board, so nothing is waited
+    // for and the results screen stays quiet.
+    expect(unranked.ranked).toBeUndefined();
   });
 });
