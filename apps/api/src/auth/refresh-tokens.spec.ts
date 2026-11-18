@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm';
 import type { DatabaseHandle } from '../db/database';
 import { refreshTokens, users } from '../db/schema';
+import { generateInviteCode } from '../friends/invite-code';
 import { createTestDatabase } from '../testing/test-database';
 import {
   createRefreshTokenStore,
@@ -20,7 +21,7 @@ describe('refresh tokens', () => {
     store = createRefreshTokenStore(database.db);
     const [user] = await database.db
       .insert(users)
-      .values({ displayName: 'Ann' })
+      .values({ displayName: 'Ann', inviteCode: generateInviteCode() })
       .returning({ id: users.id });
     userId = user!.id;
   });
@@ -95,7 +96,7 @@ describe('refresh tokens', () => {
   it('are deleted with their user', async () => {
     const [other] = await database.db
       .insert(users)
-      .values({})
+      .values({ inviteCode: generateInviteCode() })
       .returning({ id: users.id });
     await store.issue(other!.id, NOW);
 

@@ -1,6 +1,7 @@
 import { count, eq } from 'drizzle-orm';
 import type { DatabaseHandle } from '../db/database';
 import { quizAnswers, quizSessions, users } from '../db/schema';
+import { generateInviteCode } from '../friends/invite-code';
 import { readAnswers } from '../testing/read-answers';
 import { createTestDatabase } from '../testing/test-database';
 import { createSessionRepository, type NewSession } from './session-repository';
@@ -53,7 +54,7 @@ describe('SessionRepository', () => {
     database = await createTestDatabase();
     const [owner] = await database.db
       .insert(users)
-      .values({ displayName: 'Owner' })
+      .values({ displayName: 'Owner', inviteCode: generateInviteCode() })
       .returning({ id: users.id });
     ownerId = owner!.id;
   });

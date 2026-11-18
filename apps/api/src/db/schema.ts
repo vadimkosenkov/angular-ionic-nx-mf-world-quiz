@@ -31,6 +31,14 @@ export const users = pgTable('users', {
    * is never published without the player choosing it.
    */
   nickname: text('nickname'),
+  /**
+   * What this player hands to someone they want as a friend: the only way
+   * to be found, because there is no directory and no search by name. It
+   * is replaceable, so a code that ended up in the wrong place can be
+   * retired. Filled for every row (0002/0003); the column is written by
+   * the repository, which retries on the one-in-a-billion collision.
+   */
+  inviteCode: text('invite_code').notNull().unique(),
   createdAt: timestampMs('created_at').notNull().defaultNow(),
 });
 
@@ -209,9 +217,51 @@ export const leaderboardRuns = pgTable(
   ],
 );
 
+/**
+ * Two players who agreed to see each other's results.
+ *
+ * One row holds the whole relationship, in the direction it was asked in:
+ * `pending` while the addressee has not answered, `accepted` once they
+ * have. Asking someone who has already asked you does not make a second
+ * row — it accepts theirs, which is also what makes two simultaneous
+ * requests safe.
+ */
+export const friendships = pgTable(
+  'friendships',
+  {
+    requesterId: uuid('requester_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    addresseeId: uuid('addressee_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /** `pending` or `accepted`; a refusal deletes the row. */
+    status: text('status').notNull(),
+    requestedAt: timestampMs('requested_at').notNull(),
+    /** When the addressee accepted; `null` while the request waits. */
+    respondedAt: timestampMs('responded_at'),
+  },
+  (table) => [
+    primaryKey({ columns: [table.requesterId, table.addresseeId] }),
+    // "Who is waiting for me" and "who am I waiting for" are both lists a
+    // player opens, and the friends board reads the accepted rows.
+    index('friendships_addressee_idx').on(table.addresseeId, table.status),
+    index('friendships_requester_idx').on(table.requesterId, table.status),
+    check(
+      'friendships_not_self',
+      sql`${table.requesterId} <> ${table.addresseeId}`,
+    ),
+    check(
+      'friendships_status',
+      sql`${table.status} in ('pending', 'accepted')`,
+    ),
+  ],
+);
+
 export const schema = {
   users,
   userIdentities,
+  friendships,
   refreshTokens,
   quizSessions,
   quizAnswers,

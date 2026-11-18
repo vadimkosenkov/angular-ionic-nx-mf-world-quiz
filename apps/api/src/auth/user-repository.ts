@@ -2,6 +2,7 @@ import type { User } from '@world-quiz/shared/contracts';
 import { and, asc, eq, TransactionRollbackError } from 'drizzle-orm';
 import type { Database } from '../db/database';
 import { userIdentities, users } from '../db/schema';
+import { generateInviteCode } from '../friends/invite-code';
 import { defaultNickname } from './nickname';
 
 /** A provider account, or the development pseudo-provider. */
@@ -28,6 +29,26 @@ export interface UserRepository {
   delete(id: string): Promise<boolean>;
 }
 
+/**
+ * How many times a sign-in that drew an invite code somebody already holds
+ * draws again. Two of 32^8 codes colliding is already a lottery win; three
+ * in a row is not a case worth more code than this.
+ */
+const INVITE_CODE_ATTEMPTS = 5;
+
+/**
+ * PostgreSQL's `unique_violation`. The two drivers wrap errors
+ * differently, so the code is looked for on the error and its cause.
+ */
+function isUniqueViolation(error: unknown): boolean {
+  const code = (candidate: unknown) =>
+    (candidate as { code?: unknown } | null)?.code;
+  return (
+    code(error) === '23505' ||
+    code((error as { cause?: unknown } | null)?.cause) === '23505'
+  );
+}
+
 export function createUserRepository(db: Database): UserRepository {
   const findById = async (id: string): Promise<User | null> => {
     const [user] = await db
@@ -49,6 +70,7 @@ export function createUserRepository(db: Database): UserRepository {
       providers: identities.map(
         (identity) => identity.provider as User['providers'][number],
       ),
+      inviteCode: user.inviteCode,
       createdAt: user.createdAt.toISOString(),
     };
   };
@@ -89,14 +111,14 @@ export function createUserRepository(db: Database): UserRepository {
       const existing = await ownerOf(identity);
       if (existing) return requireUser(existing);
 
-      let created: string | null;
-      try {
-        created = await db.transaction(async (tx) => {
+      const insert = () =>
+        db.transaction(async (tx) => {
           const [user] = await tx
             .insert(users)
             .values({
               displayName,
               email: identity.email,
+              inviteCode: generateInviteCode(),
               createdAt: new Date(now),
             })
             .returning({ id: users.id });
@@ -116,9 +138,18 @@ export function createUserRepository(db: Database): UserRepository {
           if (linked.length === 0) tx.rollback();
           return user!.id;
         });
-      } catch (error) {
-        if (!(error instanceof TransactionRollbackError)) throw error;
-        created = null;
+
+      let created: string | null = null;
+      for (let attempt = 1; ; attempt += 1) {
+        try {
+          created = await insert();
+          break;
+        } catch (error) {
+          if (error instanceof TransactionRollbackError) break;
+          // Somebody already holds the code that was drawn: draw again.
+          if (!isUniqueViolation(error) || attempt === INVITE_CODE_ATTEMPTS)
+            throw error;
+        }
       }
 
       const userId = created ?? (await ownerOf(identity));
