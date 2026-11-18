@@ -28,6 +28,7 @@ import {
   PageHeader,
   recordShareCard,
   RegionOptions,
+  shareClaim,
   SHARE_TARGET,
   shareCardFile,
   shareLines,
@@ -364,28 +365,41 @@ export class LeaderboardPage implements ViewWillEnter {
    * player's language, because what is shared is a sentence, not data.
    */
   protected async shareRecord(record: MyRecord): Promise<void> {
+    const metric = leaderboardBoardById(record.board).metric;
     const facts = {
       board: this.boardName(record.board),
-      score: this.scoreText(
-        record.score,
-        leaderboardBoardById(record.board).metric,
+      // The picture writes the figure big and labels it underneath; the
+      // message below has no room for a label and spells it out instead.
+      score:
+        metric === 'time' ? formatRunTime(record.score) : `${record.score}`,
+      scoreLabel: this.transloco.translate(
+        metric === 'time' ? 'results.time' : 'results.board.answers',
       ),
       rank: record.rank,
       players: record.players,
+      // A record looked up here was set some time ago: it is the player's
+      // best, but it is not news, so the picture claims the place instead.
+      fresh: false,
     };
     const outcome = await this.shareTarget.share({
       title: this.transloco.translate('share.title'),
+      // Where a picture cannot travel, the message says the same things in
+      // the same order, starting with the claim the picture leads with.
       text: shareLines(
-        this.transloco.translate('share.record.heading', {
-          board: facts.board,
-        }),
+        this.transloco.translate(
+          `share.claim.${shareClaim({
+            rank: facts.rank,
+            players: facts.players,
+          })}`,
+        ),
         this.transloco.translate('share.record.score', {
-          score: facts.score,
+          score: this.scoreText(record.score, metric),
           place: this.transloco.translate('leaderboard.place', {
             rank: facts.rank,
             players: facts.players,
           }),
         }),
+        facts.board,
       ),
       ...(this.appUrl ? { url: this.appUrl } : {}),
       image: () => shareCardFile(this.recordCard(facts)),

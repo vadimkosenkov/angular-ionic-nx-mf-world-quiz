@@ -542,6 +542,11 @@ the `.wq-action-bar`, which is for what the player does next (play again, go
 home). It is a plain `<button>`, because an `ion-button` brings its own
 height and margins and will not sit in a corner or a grid cell.
 
+**One screen, one share.** The results screen has a single button, and it
+knows what to hand over: a run that set a personal record is shared as the
+record, anything else as the run. Two buttons that sent two different
+pictures asked the player to choose between things they had not seen.
+
 An icon alone says nothing to a screen reader, so each one carries an
 `aria-label`; a record's label names its board ("Share the Capitals · Easy
 record"), or four rows would all offer the same thing. The message itself is
@@ -552,14 +557,54 @@ neither. A sheet that opened is its own confirmation, and a sheet the player
 closed was their decision — both say nothing (`client/ui/share.ts`,
 [frontend.md](frontend.md)).
 
-What is shared is a **picture** wherever the device takes files: a 1080px
-square drawn on a canvas, with the app's name over the brand gradient, what
-was played, the score (or a record's time) in the size it deserves, two
-figures with labels under it and the address at the foot. Its colours are
-the `--wq-*` tokens read from `<html>`, so a dark-theme player shares a dark
-card, and its letters are the app's own system font stack — the app loads no
-web font, so nothing has to be embedded. The text message stays the fallback
-for the browsers that share no files.
+What is shared is a **picture** wherever the device takes files, and the
+picture goes **alone** — no message beside it. An app that receives a file
+and a text may post them as two things, and the paragraph then says what the
+card already says, in the voice of a report. The text is what travels where
+a file cannot (desktop Safari, Firefox), and only there.
+
+So the card has to explain itself. It leads with a **claim in the player's
+own voice** — "New personal record!", "I'm in the top three!" — because a
+picture that opens with "0:34.8" makes the reader hunt for the small print
+to find out whether that is good. Under it comes the figure that backs the
+claim, then what was played in a smaller size, then where the run landed. At
+the foot, one line dares the reader to beat it, in the app's own colour,
+because it is the one thing on the picture to act on.
+
+The claim is chosen from what the run actually did, loudest first
+(`shareClaim` in `client/ui`): a new record beats a place, because it is
+news; a flawless run that no board ranks is still worth a sentence. A board
+nobody else is on says "First result on this board" rather than "#1 of 1",
+which is the kind of boast that invites laughter.
+
+Both pictures are the **same object**: a white card under a band in
+`--wq-color-primary` carrying the app's name. What tells them apart is the
+**trophy** over a record's claim — Ionicons' `trophy` path drawn on the
+canvas, since a picture has no icon font, in the app's gold on a disc of the
+same gold at a background's strength — and the row underneath it, where the
+**medal** and the figure the record was set with stand side by side, divided
+by a hairline. A record is about where the player landed; a run is about how
+it went, so its own card keeps the big headline figure and ends with
+accuracy and time.
+
+The place is a **filled gold disc with the number in white**, the way a
+medal is engraved, and it is the largest thing under the claim: where a run
+landed is the fact the reader is being told. All three places take the same
+gold — the app's `--wq-color-hint` (#fdbe02) — because silver and bronze
+are a grey and a brown disc on a white card, while the number on the disc
+already says which place it was. The gold is fixed rather than read from
+the palette (`--wq-color-medal-*` are the darkened **text** versions a
+light page writes a place in): a medal is the same object in either theme.
+
+A run's figures keep their label **above** them, the way the app's own
+results card writes them. The record's single figure carries its label
+underneath ("Time", "Correct"), where it belongs to the figure rather than
+reading as a heading for the medal beside it — and the figure itself is bare
+("21", not "21 correct"), because beside a medal there is only room for a
+number. Everything else is the `--wq-*` tokens read from `<html>`, so a
+dark-theme player shares a dark card, and the letters are the app's own
+system font stack — the app loads no web font, so nothing has to be
+embedded.
 
 ### The ranking opens over the page
 
@@ -596,10 +641,9 @@ gives accuracy and time. One slow sheen crosses it as it arrives, drawn in
 the card's own ink at low opacity so no colour is invented, and it does not
 move at all under `prefers-reduced-motion`.
 
-The record carries a share of its own, which hands over the **record's**
-picture rather than the run's: the two are different pictures, and the
-record is the one the player wants to show. It is the same quiet round
-button the hero uses, in the card's ink instead of secondary text.
+A record is what the hero's share hands over when there is one: the record's
+picture, not the run's, because that is what the player wants to show. The
+card itself carries no second button.
 
 A screen that celebrates everything celebrates nothing: being checked,
 waiting offline and a place outside the first three all stay quiet.

@@ -153,7 +153,7 @@ describe('QuizResults', () => {
         ],
       });
 
-    it('hands over the run as text and a link to the app', async () => {
+    it('hands over the run, claim first, with a link to the app', async () => {
       const target = shareTarget('shared');
       await renderWith(target, 'https://play.example.test');
 
@@ -163,7 +163,9 @@ describe('QuizResults', () => {
       expect(target.shared).toHaveLength(1);
       expect(target.shared[0]).toMatchObject({
         title: 'World Quiz',
-        text: 'World Quiz — Capitals, World, Easy\n8/10 correct · 80% · 1:35',
+        // The message opens with the same claim the picture leads with, so
+        // the two can never say different things.
+        text: 'My World Quiz result\n8/10 correct · 80% · 1:35\nWorld Quiz — Capitals, World, Easy',
         url: 'https://play.example.test',
       });
       // The picture goes with it, for the devices that take one; what it

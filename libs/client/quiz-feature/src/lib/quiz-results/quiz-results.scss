@@ -290,8 +290,7 @@
 // The share control: a round, quiet button in the hero's corner. It is a
 // plain button rather than an `ion-button`, which brings its own min-height
 // and margins and would sit off the corner.
-.hero .share,
-.board.award .share {
+.hero .share {
   position: absolute;
   top: var(--wq-space-3);
   right: var(--wq-space-3);
@@ -313,10 +312,4 @@
     opacity: 0.5;
     cursor: default;
   }
-}
-
-// The record card's share sits on the gradient, so it takes the card's own
-// ink rather than the secondary text colour the hero's share uses.
-.board.award .share {
-  color: var(--wq-color-on-primary);
 }

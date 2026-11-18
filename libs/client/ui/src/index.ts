@@ -31,6 +31,8 @@ export {
 } from './lib/share/share-card';
 export { recordShareCard } from './lib/share/record-share-card';
 export type { RecordShareFacts } from './lib/share/record-share-card';
+export { shareClaim, shareMedal } from './lib/share/share-claim';
+export type { ShareClaim, ShareClaimFacts } from './lib/share/share-claim';
 export type {
   ShareCard,
   ShareCardOp,
@@ -38,6 +40,7 @@ export type {
   ShareCardPalette,
   ShareCardPlan,
   ShareCardStat,
+  ShareCardTone,
 } from './lib/share/share-card';
 export { ToastHost } from './lib/toast/toast-host';
 export { TOAST_DURATION_MS, TOAST_SCHEDULER, Toasts } from './lib/toast/toasts';

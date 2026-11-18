@@ -1,4 +1,5 @@
 import type { ShareCard, TranslateFn } from '@world-quiz/client/ui';
+import { shareClaim, shareMedal } from '@world-quiz/client/ui';
 import type {
   Difficulty,
   QuizCategory,
@@ -25,8 +26,10 @@ export interface RunShareFacts {
   /** Already formatted, as the screen shows it ("1:12"). */
   readonly duration: string;
   readonly perfect: boolean;
-  /** The line about the place on a board, translated; `null` otherwise. */
-  readonly rank: string | null;
+  /** The place the run earned on a public board, if it earned one. */
+  readonly rank: number | null;
+  /** How many players that board holds; only meaningful with a rank. */
+  readonly players: number | null;
 }
 
 /**
@@ -34,26 +37,37 @@ export interface RunShareFacts {
  * so they are tested without rendering a screen (as `country-rows.ts` does
  * for the countries reference).
  *
- * It says what the message says, laid out as a card: what was asked for,
- * where and how hard above the score, how it was played on its own line
- * under that, and accuracy and time as the figures beneath. The line
- * between them is the place the API gave the run — or, failing that, a
- * perfect run.
+ * The claim is first — what the player would have typed above the picture —
+ * then the score that backs it, then what was played and how. A place in
+ * the first three gets its medal, and accuracy and time stay as the figures
+ * at the foot, because a run is about how it went and not only about where
+ * it landed.
  */
 export function runShareCard(
   run: RunShareFacts,
   translate: TranslateFn,
 ): ShareCard {
+  // A board nobody else is on is nobody to have beaten, and a board whose
+  // size the run never learned is read the same way: the card says "First
+  // result on this board" there, so the claim must not boast either.
+  const alone = run.rank !== null && (run.players ?? 0) <= 1;
+  const claim = shareClaim({
+    rank: run.rank,
+    players: alone ? 1 : run.players,
+    perfect: run.perfect,
+  });
   return {
     title: translate('share.title'),
+    claim: translate(`share.claim.${claim}`),
+    headline: `${run.correct} / ${run.answered}`,
     subject: translate('share.result.subject', {
       category: translate(`categories.${run.category}`),
       region: translate(`regions.${run.scope}`),
       difficulty: translate(`difficulty.${run.difficulty}`),
     }),
     detail: translate(`modes.${run.mode}`),
-    headline: `${run.correct} / ${run.answered}`,
-    note: run.rank ?? (run.perfect ? translate('results.perfect') : null),
+    medal: alone ? null : shareMedal(run.rank),
+    note: rankNote(run, alone, translate),
     stats: [
       {
         label: translate('results.accuracy'),
@@ -61,5 +75,27 @@ export function runShareCard(
       },
       { label: translate('results.time'), value: run.duration },
     ],
+    callToAction: translate('share.beatMe'),
   };
+}
+
+/**
+ * Where the run landed, for a place no medal carries: the first three have
+ * it written on the disc, and the card leaves this line out for them. A run
+ * that reached no board has nothing to say here at all — the claim has
+ * already said whether it was flawless, and an empty line is better than a
+ * sentence about not ranking.
+ */
+function rankNote(
+  run: RunShareFacts,
+  alone: boolean,
+  translate: TranslateFn,
+): string | null {
+  if (run.rank === null) return null;
+  return alone
+    ? translate('share.firstOnBoard')
+    : translate('leaderboard.place', {
+        rank: run.rank,
+        players: run.players ?? 0,
+      });
 }

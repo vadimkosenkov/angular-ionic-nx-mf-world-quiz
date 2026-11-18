@@ -116,9 +116,9 @@ describe('sharing a picture', () => {
       'shared',
     );
     expect(shared[0]?.files?.[0]?.type).toBe('image/png');
-    // A sheet carrying a file may drop a separate address, so it travels
-    // inside the text.
-    expect(shared[0]?.text).toBe(`${payload.text}\n${payload.url}`);
+    // The picture travels alone: an app that receives a file and a text
+    // posts them as two things, and the text repeats what the card says.
+    expect(shared[0]).not.toHaveProperty('text');
     expect(shared[0]).not.toHaveProperty('url');
   });
 

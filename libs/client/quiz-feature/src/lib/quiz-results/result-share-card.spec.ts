@@ -16,12 +16,14 @@ const run: RunShareFacts = {
   duration: '1:12',
   perfect: false,
   rank: null,
+  players: null,
 };
 
 describe('runShareCard', () => {
-  it('puts the score first and the figures under it', () => {
+  it('leads with a claim and backs it with the score', () => {
     const card = runShareCard(run, translate);
 
+    expect(card.claim).toBe('share.claim.plain');
     expect(card.headline).toBe('18 / 20');
     expect(card.stats).toEqual([
       { label: 'results.accuracy', value: '90%' },
@@ -50,22 +52,53 @@ describe('runShareCard', () => {
     expect(card.detail).toBe('modes.practice');
   });
 
-  it('says nothing between the score and the figures about an ordinary run', () => {
-    expect(runShareCard(run, translate).note).toBeNull();
+  it('invites the reader to beat it', () => {
+    expect(runShareCard(run, translate).callToAction).toBe('share.beatMe');
   });
 
-  it('celebrates a perfect run', () => {
+  it('says nothing about a place a run never reached', () => {
+    const card = runShareCard(run, translate);
+
+    expect(card.note).toBeNull();
+    expect(card.medal ?? null).toBeNull();
+  });
+
+  it('claims a flawless run that no board ranks', () => {
     const card = runShareCard({ ...run, perfect: true }, translate);
 
-    expect(card.note).toBe('results.perfect');
+    expect(card.claim).toBe('share.claim.perfect');
   });
 
-  it('prefers the rank the server gave to the perfect run', () => {
+  it('prefers the place to the flawless run: the place is the louder fact', () => {
     const card = runShareCard(
-      { ...run, perfect: true, rank: 'Ranked #2' },
+      { ...run, perfect: true, rank: 2, players: 47 },
       translate,
     );
 
-    expect(card.note).toBe('Ranked #2');
+    expect(card.claim).toBe('share.claim.topThree');
+    expect(card.medal).toBe(2);
+    expect(card.note).toBe('leaderboard.place(2,47)');
+  });
+
+  it('says first place out loud, with its medal', () => {
+    const card = runShareCard({ ...run, rank: 1, players: 12 }, translate);
+
+    expect(card.claim).toBe('share.claim.first');
+    expect(card.medal).toBe(1);
+  });
+
+  it('gives a place below the third no medal', () => {
+    const card = runShareCard({ ...run, rank: 9, players: 47 }, translate);
+
+    expect(card.claim).toBe('share.claim.ranked');
+    expect(card.medal).toBeNull();
+    expect(card.note).toBe('leaderboard.place(9,47)');
+  });
+
+  it('does not boast about being first of one', () => {
+    const card = runShareCard({ ...run, rank: 1, players: 1 }, translate);
+
+    expect(card.medal).toBeNull();
+    expect(card.note).toBe('share.firstOnBoard');
   });
 });
