@@ -1,9 +1,10 @@
 /**
- * Sharing a finished run and a personal record: the app draws the picture,
- * builds the message in the player's language and hands both to the device.
- * That is the part a unit test cannot show — the real screens, the real
- * translations, a real canvas and the address this deployment is served
- * from.
+ * Sharing a finished run and a personal record: the app draws the picture
+ * and hands it to the device — alone, because everything the picture has to
+ * say is on it. Where files cannot travel it builds the message instead, in
+ * the player's language. That is the part a unit test cannot show — the
+ * real screens, the real translations, a real canvas and the address this
+ * deployment is served from.
  */
 import { answerChoice, byTestId, recordShares } from '../support/quiz';
 
@@ -49,15 +50,10 @@ describe('sharing', () => {
         // still be a valid PNG, so the size is what says it has content.
         expect(file.size).to.be.greaterThan(5_000);
       });
-    // The message goes with the picture, and carries the address inside it:
-    // a sheet holding a file may drop a separate link.
-    cy.window().then((win) => {
-      cy.window()
-        .its('sharedPayloads.0.text')
-        .should('contain', 'World Quiz — Capitals, Europe')
-        .and('contain', '1/1 correct · 100%')
-        .and('contain', win.location.origin);
-    });
+    // Nothing travels beside it: a chat that receives a file and a text
+    // posts them as two things, and the text would repeat the card.
+    cy.window().its('sharedPayloads.0.text').should('be.undefined');
+    cy.window().its('sharedPayloads.0.url').should('be.undefined');
 
     // Written out so the card can be looked at, and so a change to the
     // drawing is visible in a pull request rather than only in code.
@@ -83,9 +79,12 @@ describe('sharing', () => {
 
     cy.window().its('sharedPayloads').should('have.length', 1);
     cy.window().its('sharedPayloads.0.files').should('be.undefined');
+    // The message opens with the claim the picture would have led with.
     cy.window()
       .its('sharedPayloads.0.text')
-      .should('contain', 'World Quiz — Capitals, Europe');
+      .should('contain', 'A flawless run!')
+      .and('contain', '1/1 correct · 100%')
+      .and('contain', 'World Quiz — Capitals, Europe');
     // With no file in the way, the address travels in its own field.
     cy.window().then((win) => {
       cy.window().its('sharedPayloads.0.url').should('eq', win.location.origin);
@@ -111,9 +110,7 @@ describe('sharing', () => {
         expect(file.type).to.eq('image/png');
         expect(file.size).to.be.greaterThan(5_000);
       });
-    cy.window()
-      .its('sharedPayloads.0.text')
-      .should('contain', '4:07.3 · #2 of 3');
+    cy.window().its('sharedPayloads.0.text').should('be.undefined');
 
     cy.window()
       .its('sharedPayloads.0.files.0')
@@ -127,7 +124,7 @@ describe('sharing', () => {
       );
   });
 
-  it('shares a run in Russian when the app is in Russian', () => {
+  it('draws the picture in Russian when the app is in Russian', () => {
     cy.visit('/settings');
     byTestId('language-ru').click({ scrollBehavior: 'center' });
 
@@ -137,9 +134,26 @@ describe('sharing', () => {
     answerChoice(true);
     byTestId('results-share').click();
 
-    cy.window().its('sharedPayloads.0.text').should('contain', '1/1 верно');
     cy.window()
       .its('sharedPayloads.0.files.0.size')
-      .should('be.greaterThan', 0);
+      .should('be.greaterThan', 5_000);
+  });
+
+  // What the picture says cannot be read back out of a PNG, so the words of
+  // the Russian card are checked where the same strings travel as text.
+  it('claims the run in Russian where no file can travel', () => {
+    cy.visit('/settings');
+    byTestId('language-ru').click({ scrollBehavior: 'center' });
+
+    cy.visit('/quiz/capitals?scope=europe&difficulty=easy&mode=fixed&count=1', {
+      onBeforeLoad: recordShares({ files: false }),
+    });
+    answerChoice(true);
+    byTestId('results-share').click();
+
+    cy.window()
+      .its('sharedPayloads.0.text')
+      .should('contain', 'Прошёл без единой ошибки!')
+      .and('contain', '1/1 верно');
   });
 });

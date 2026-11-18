@@ -1,7 +1,11 @@
 {
   "unreleased": {
-    "en": [],
-    "ru": []
+    "en": [
+      "A shared result now says what it is: the picture leads with the moment it captures, shows a medal for a place in the first three, and goes on its own, without a wall of text beside it."
+    ],
+    "ru": [
+      "Отправленный результат теперь говорит сам за себя: картинка начинается с того, что вы сделали, показывает медаль за место в тройке и уходит одна, без простыни текста рядом."
+    ]
   },
   "releases": [
     {

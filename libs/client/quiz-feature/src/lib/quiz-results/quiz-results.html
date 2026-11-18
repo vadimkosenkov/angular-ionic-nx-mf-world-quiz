@@ -57,18 +57,10 @@
   <p>{{ 'results.board.unsent' | transloco }}</p>
   } @case ('ranked') { @let verdict = place.outcome; @if
   (verdict.personalRecord) {
-  <!-- The record's own share hands over the picture of the record, not of
-       the run: it is the record the player wants to show. -->
-  <button
-    type="button"
-    class="share"
-    data-testid="results-share-record"
-    [attr.aria-label]="'share.record.action' | transloco: { board: boardName() }"
-    [disabled]="sharing()"
-    (click)="shareRecord()"
-  >
-    <ion-icon name="share-outline" aria-hidden="true" />
-  </button>
+  <!-- One share on this screen, in the hero's corner: it knows a record
+       when there is one and hands over the record's picture. Two buttons
+       that sent different pictures left the player guessing which was the
+       right one to press. -->
   <div class="award-icon" aria-hidden="true">
     <ion-icon name="trophy" />
   </div>

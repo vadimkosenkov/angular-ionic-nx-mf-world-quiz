@@ -329,19 +329,24 @@ export const ru: TranslationShape = {
   share: {
     title: 'World Quiz',
     action: 'Поделиться результатом',
+    claim: {
+      record: 'Новый личный рекорд!',
+      first: 'Я первый в рейтинге!',
+      topThree: 'Я в тройке лучших!',
+      ranked: 'Я в таблице лидеров!',
+      perfect: 'Прошёл без единой ошибки!',
+      plain: 'Мой результат в World Quiz',
+    },
+    beatMe: 'Побей мой результат',
+    firstOnBoard: 'Первый результат на этой доске',
     result: {
       heading: 'World Quiz — {{category}}, {{region}}, {{difficulty}}',
       subject: '{{category}} · {{region}} · {{difficulty}}',
       score: '{{correct}}/{{answered}} верно · {{accuracy}}% · {{time}}',
-      rank: '#{{rank}} из {{players}} в рейтинге',
     },
     record: {
       action: 'Поделиться рекордом: {{board}}',
-      heading: 'World Quiz — {{board}}',
       score: '{{score}} · {{place}}',
-      perfect: 'Забег без ошибок',
-      place: 'Место',
-      players: 'Игроков',
     },
     copied: 'Скопировано — вставьте, куда нужно.',
     failed:

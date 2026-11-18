@@ -239,12 +239,36 @@ remote cannot know any of this, the host passes it as `APP_URL`
 ### The picture
 
 A chat shows a picture, not a line of text, so a run and a record are also
-**drawn** as a card (`client/ui/share/share-card.ts`): the app's name over
-the brand gradient, what was played — category, region and difficulty, with
-the training mode on a line of its own under it — the one figure the card is
-about, and two figures with labels beneath. It is a 1080px square, which
-every chat shows whole. The address is **not** on the picture: it is a card
-to look at, and the link belongs in the message beside it.
+**drawn** as a card (`client/ui/share/share-card.ts`), a 1080px square that
+every chat shows whole. The picture travels **alone**: where a file can be
+shared, no text and no link go with it, because an app that receives both
+may post them as two things and the text then repeats the card.
+
+That makes the card responsible for explaining itself, so it is laid out in
+reading order: the **claim** first ("New personal record!"), the figure that
+backs it, what was played, where the run landed, and one line at the foot
+daring the reader to beat it. `shareClaim`
+(`client/ui/share/share-claim.ts`) picks the claim from what the run did,
+loudest first: a record over a place, a place over a flawless run, and
+nothing at all over a claim it cannot back up. A place in the first three is
+a **filled gold disc with the number in white**, the largest thing under
+the claim, because where the run landed is the fact the picture is there to
+tell. All three places share the app's `--wq-color-hint` gold — silver and
+bronze are a grey and a brown disc on a white card, and the number says
+which place it was — fixed rather than read from `--wq-color-medal-*`,
+which are the darkened text versions a light page writes a place in. A board the player is alone on says so instead of
+boasting about being first of one.
+
+Both pictures are the same object — a white card under a band in
+`--wq-color-primary` carrying the app's name. A **record** is told apart by
+the trophy over its claim (Ionicons' `trophy` path on the canvas, since a
+picture has no icon font) and by the row under it, where the medal and the
+figure the record was set with stand side by side, divided by a hairline,
+the figure labelled underneath ("Time", "Correct") and bare ("21", not "21
+correct") because beside a medal there is only room for a number. A run's
+card keeps its big headline figure instead and ends with accuracy and time.
+The address is **not** on the picture: it is a card to look at, not an
+advertisement.
 
 It is drawn on a `<canvas>`, not screenshotted. The results card on screen
 is glass over a blurred backdrop, which the libraries that rasterise the DOM
@@ -266,11 +290,18 @@ leaderboard), built outside their components for the same reason.
 
 The picture is offered **only where the device takes files**:
 `SHARE_TARGET` asks `canShare({ files })` first and paints nothing when the
-answer is no (desktop Safari and Firefox), so the fallback is the text that
-was already there. Where a file does travel, the address goes inside the
-text — a sheet carrying a file may drop a separate `url` — and a canvas the
-browser refuses (an old WebView without `roundRect`) simply means no
-picture, never a failed share.
+answer is no (desktop Safari and Firefox), so the fallback is the text. That
+message opens with the **same claim** the picture would have led with, so
+the two can never say different things, and it carries the address in its
+own field. A canvas the browser refuses (an old WebView without `roundRect`)
+simply means no picture, never a failed share.
+
+The results screen has **one** share button. Which picture it hands over
+follows what happened — the record when the run set one, the run otherwise —
+because two buttons side by side asked the player to choose between two
+pictures they had not seen. "My records" on the leaderboard stays the second
+way to share a record that was set earlier; a record looked up there is not
+news, so its claim is the place rather than "New personal record!".
 
 ### Which version is running
 

@@ -58,13 +58,14 @@ export function shareLines(
  * Safari; a desktop Chrome or Firefox has no sheet, so the message is copied
  * instead and the screen says so. A share that throws for any other reason
  * than the player cancelling also falls back to the clipboard: the player
- * asked for the text, and they can still paste it.
+ * asked for the result, and they can still paste it.
  *
- * A picture is offered first, and only where `canShare` says the very data
- * about to be sent is acceptable — iOS takes files, desktop Safari and
- * Firefox do not, and a browser that refuses answers `false` instead of
- * throwing halfway. The address travels inside the text there: a sheet that
- * carries a file may drop a separate `url`.
+ * **The picture is what is shared.** It is offered first, and only where
+ * `canShare` says the very data about to be sent is acceptable — a phone
+ * takes files, desktop Safari and Firefox do not, and a browser that
+ * refuses answers `false` instead of throwing halfway. Where a file cannot
+ * travel, the text is all there is, so it carries the facts and the
+ * address; where the picture travels, it goes on its own.
  */
 export function browserShareTarget(
   target: ShareCapableNavigator | undefined = typeof navigator === 'undefined'
@@ -113,6 +114,12 @@ export function browserShareTarget(
  * The data of a share that carries the picture, or `null` when this device
  * cannot take one — the picture is painted only after `canShare` has said
  * that a file would be accepted at all.
+ *
+ * The picture travels **alone**: no text, no url. An app that receives both
+ * may post them as two things, and the paragraph beside the card then says
+ * the same facts again, in the voice of a report. Everything the reader
+ * needs — the claim, the figure, where it was played and the invitation to
+ * beat it — is drawn on the card itself (`share-card.ts`).
  */
 async function imageShareData(
   target: ShareCapableNavigator,
@@ -125,11 +132,7 @@ async function imageShareData(
   }
   const file = await payload.image();
   if (!file) return null;
-  const data: ShareData = {
-    files: [file],
-    title: payload.title,
-    text: shareLines(payload.text, payload.url),
-  };
+  const data: ShareData = { files: [file], title: payload.title };
   return safely(() => target.canShare?.(data) ?? false) ? data : null;
 }
 

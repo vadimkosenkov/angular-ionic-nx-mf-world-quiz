@@ -14,10 +14,12 @@ import type { RankedOutcome } from '@world-quiz/shared/contracts';
 import { APP_URL, COUNTRY_DATASET } from '@world-quiz/client/quiz-ports';
 import {
   recordShareCard,
+  shareClaim,
   SHARE_TARGET,
   shareCardFile,
   shareLines,
   Toasts,
+  type RecordShareFacts,
   type ShareCard,
 } from '@world-quiz/client/ui';
 import { Feedback } from '@world-quiz/client/feedback';
@@ -148,83 +150,36 @@ export class QuizResults {
   });
 
   /**
-   * Hands the run to whatever the device shares with: a picture of the run
-   * through the system sheet on a phone, the same run as text where files
-   * cannot be shared, the clipboard where there is no sheet at all. Only
-   * the two outcomes the player cannot see for themselves are reported —
-   * the sheet opening is its own confirmation, and closing it was their
-   * choice.
+   * Hands the result to whatever the device shares with: the picture
+   * through the system sheet on a phone, the same result as text where
+   * files cannot be shared, the clipboard where there is no sheet at all.
+   *
+   * **One button, one picture.** Which picture it is follows what happened:
+   * a run that set a personal record is shared as the record, because that
+   * is what the player wants to show; anything else is shared as the run.
+   * A second button beside it only asked the player to choose between two
+   * things they had not seen.
+   *
+   * Only the two outcomes the player cannot see for themselves are
+   * reported — the sheet opening is its own confirmation, and closing it
+   * was their choice.
    */
   protected async share(): Promise<void> {
     if (this.sharing()) return;
     this.sharing.set(true);
     try {
+      const record = this.sharedRecord();
       const outcome = await this.shareTarget.share({
         title: this.translate('share.title'),
-        text: shareLines(
-          this.translate('share.result.heading', {
-            category: this.translate(`categories.${this.config().category}`),
-            region: this.translate(`regions.${this.config().scope}`),
-            difficulty: this.translate(
-              `difficulty.${this.config().difficulty}`,
-            ),
-          }),
-          this.translate('share.result.score', {
-            correct: this.summary().correct,
-            answered: this.summary().answered,
-            accuracy: this.accuracyPercent(),
-            time: this.duration(),
-          }),
-          this.shareRank(),
-        ),
-        ...(this.appUrl ? { url: this.appUrl } : {}),
-        image: () => shareCardFile(this.shareCard()),
-      });
-      if (outcome === 'copied') {
-        this.toasts.success(this.translate('share.copied'));
-      } else if (outcome === 'failed') {
-        this.toasts.failure(this.translate('share.failed'));
-      }
-    } finally {
-      this.sharing.set(false);
-    }
-  }
-
-  /**
-   * Hands the **record** to the share sheet: the same picture "My records"
-   * shares, because what the player wants to show is the record, not the
-   * run that happened to set it. The run's own share stays in the hero's
-   * corner, and the two are deliberately different pictures.
-   */
-  protected async shareRecord(): Promise<void> {
-    const place = this.place();
-    if (this.sharing() || place?.status !== 'ranked') return;
-    this.sharing.set(true);
-    try {
-      const facts = {
-        board: this.boardName(),
-        score: this.recordScore(place.outcome),
-        rank: place.outcome.rank,
-        players: place.outcome.players,
-      };
-      const outcome = await this.shareTarget.share({
-        title: this.translate('share.title'),
-        text: shareLines(
-          this.translate('share.record.heading', { board: facts.board }),
-          this.translate('share.record.score', {
-            score: facts.score,
-            place: this.translate('leaderboard.place', {
-              rank: facts.rank,
-              players: facts.players,
-            }),
-          }),
-        ),
+        text: record ? this.recordText(record) : this.runText(),
         ...(this.appUrl ? { url: this.appUrl } : {}),
         image: () =>
           shareCardFile(
-            recordShareCard(facts, (key, params) =>
-              this.translate(key, params),
-            ),
+            record
+              ? recordShareCard(record, (key, params) =>
+                  this.translate(key, params),
+                )
+              : this.runCard(),
           ),
       });
       if (outcome === 'copied') {
@@ -237,7 +192,88 @@ export class QuizResults {
     }
   }
 
+  /** The record this run has just set, when it set one. */
+  private sharedRecord(): RecordShareFacts | null {
+    const place = this.place();
+    if (place?.status !== 'ranked' || !place.outcome.personalRecord) {
+      return null;
+    }
+    return {
+      board: this.boardName(),
+      // The picture writes the figure big and labels it underneath; the
+      // message spells the same number out as a phrase.
+      score: this.recordFigure(place.outcome),
+      scoreLabel: this.translate(
+        leaderboardMetricOf(place.outcome.board) === 'time'
+          ? 'results.time'
+          : 'results.board.answers',
+      ),
+      rank: place.outcome.rank,
+      players: place.outcome.players,
+      fresh: true,
+    };
+  }
+
+  /**
+   * The message that travels where a picture cannot. It opens with the same
+   * claim the picture leads with, so the two never say different things.
+   */
+  private recordText(record: RecordShareFacts): string {
+    const place = this.place();
+    return shareLines(
+      this.translate(
+        `share.claim.${shareClaim({
+          personalRecord: true,
+          rank: record.rank,
+          players: record.players,
+        })}`,
+      ),
+      this.translate('share.record.score', {
+        score:
+          place?.status === 'ranked'
+            ? this.recordScore(place.outcome)
+            : record.score,
+        place: this.translate('leaderboard.place', {
+          rank: record.rank,
+          players: record.players,
+        }),
+      }),
+      record.board,
+    );
+  }
+
+  private runText(): string {
+    const config = this.config();
+    return shareLines(
+      this.translate(
+        `share.claim.${shareClaim({
+          rank: this.shareRank(),
+          players: this.sharePlayers(),
+          perfect: this.summary().perfect,
+        })}`,
+      ),
+      this.translate('share.result.score', {
+        correct: this.summary().correct,
+        answered: this.summary().answered,
+        accuracy: this.accuracyPercent(),
+        time: this.duration(),
+      }),
+      this.translate('share.result.heading', {
+        category: this.translate(`categories.${config.category}`),
+        region: this.translate(`regions.${config.scope}`),
+        difficulty: this.translate(`difficulty.${config.difficulty}`),
+      }),
+    );
+  }
+
   /** What the board ranks by, as the record card says it. */
+  /** The bare figure the picture puts in big: "4:07.3", or "21". */
+  private recordFigure(outcome: RankedOutcome): string {
+    return leaderboardMetricOf(outcome.board) === 'time'
+      ? formatRunTime(outcome.score)
+      : `${outcome.score}`;
+  }
+
   private recordScore(outcome: RankedOutcome): string {
     return leaderboardMetricOf(outcome.board) === 'time'
       ? formatRunTime(outcome.score)
@@ -245,7 +281,7 @@ export class QuizResults {
   }
 
   /** The words of the picture; the layout is `runShareCard`'s business. */
-  private shareCard(): ShareCard {
+  private runCard(): ShareCard {
     const summary = this.summary();
     const config = this.config();
     return runShareCard(
@@ -260,6 +296,7 @@ export class QuizResults {
         duration: this.duration(),
         perfect: summary.perfect,
         rank: this.shareRank(),
+        players: this.sharePlayers(),
       },
       (key, params) => this.translate(key, params),
     );
@@ -276,14 +313,16 @@ export class QuizResults {
     return config.countryCodes?.length ? 'practice' : config.mode;
   }
 
-  /** A place on a public board is worth a line of its own. */
-  private shareRank(): string | null {
+  /** The place the run earned, when the API has already given it one. */
+  private shareRank(): number | null {
     const place = this.place();
-    if (place?.status !== 'ranked') return null;
-    return this.translate('share.result.rank', {
-      rank: place.outcome.rank,
-      players: place.outcome.players,
-    });
+    return place?.status === 'ranked' ? place.outcome.rank : null;
+  }
+
+  /** How many players stand on that board. */
+  private sharePlayers(): number | null {
+    const place = this.place();
+    return place?.status === 'ranked' ? place.outcome.players : null;
   }
 
   private translate(key: string, params?: Record<string, unknown>): string {
