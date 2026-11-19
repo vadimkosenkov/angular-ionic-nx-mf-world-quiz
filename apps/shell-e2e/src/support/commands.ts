@@ -58,6 +58,8 @@ export interface SignedIn {
   readonly userId: string;
   /** For calling the API directly from a test. */
   readonly authorization: string;
+  /** The permanent code this player is found by (ADR-015). */
+  readonly inviteCode: string;
 }
 
 Cypress.Commands.add(
@@ -90,5 +92,6 @@ Cypress.Commands.add(
       .then((response): SignedIn => ({
         userId: response.body.user.id,
         authorization: `Bearer ${response.body.accessToken}`,
+        inviteCode: response.body.user.inviteCode,
       })),
 );

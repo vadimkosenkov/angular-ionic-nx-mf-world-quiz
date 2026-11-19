@@ -5,6 +5,7 @@
  * heading order — are the ones that break silently.
  */
 import { expectAccessible } from '../support/accessibility';
+import { API } from '../support/commands';
 import { byTestId, chooseAnswer } from '../support/quiz';
 
 describe('accessibility', () => {
@@ -36,6 +37,44 @@ describe('accessibility', () => {
       cy.visit('/countries');
       byTestId('country-list', { timeout: 20_000 }).should('exist');
       expectAccessible();
+    });
+
+    it('checks the friends screens, and the invite over them', () => {
+      cy.visit('/friends');
+      byTestId('friends-empty', { timeout: 20_000 }).should('exist');
+      expectAccessible();
+
+      // The invite opens over the page, so it is its own screen: a QR, the
+      // code, and a field for somebody else's.
+      byTestId('friends-invite').click();
+      byTestId('invite-dialog', { timeout: 20_000 }).should('exist');
+      expectAccessible();
+    });
+
+    it("checks a friend's page", () => {
+      // A page only a friend may open, so the friendship is made first.
+      cy.signIn('e2e-a11y-friend', 'Friendly Player').then((friend) => {
+        cy.signIn().then((me) => {
+          cy.request({
+            method: 'POST',
+            url: `${API}/v1/friends/requests`,
+            headers: { authorization: friend.authorization },
+            body: { code: me.inviteCode },
+          });
+          cy.visit('/friends');
+          cy.get(`[data-testid="friend-accept-${friend.userId}"]`, {
+            timeout: 20_000,
+          }).click();
+          cy.get('[data-testid="friend-list"]', { timeout: 20_000 }).should(
+            'exist',
+          );
+          expectAccessible();
+
+          cy.get(`[data-testid="friend-${friend.userId}"]`).click();
+          byTestId('friend-who', { timeout: 20_000 }).should('exist');
+          expectAccessible();
+        });
+      });
     });
 
     it('checks the release notes', () => {
