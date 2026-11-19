@@ -236,6 +236,16 @@ screen. One card, and the setup screen owns the choice. The shape stayed:
 it is what made the two cards read as the page's main controls rather than
 as list items.
 
+There are three such cards since friends arrived — play, learn, the people
+you know — and the third is deliberately identical in shape: a door out of
+Home is a door out of Home, and a card invented for friends would read as an
+advertisement for them. Its icon tile carries the **unread mark** (a 12 px
+dot in `--wq-color-primary`, ringed in the surface colour, exactly the bell's)
+when somebody is waiting for an answer, and its footer then says how many
+requests there are in `--wq-color-primary-strong` (`.news`) instead of how
+many friends there are. The mark sits on the thing it is about, not only in
+the bell: the bell is the list of everything the app has to say.
+
 A card that is the only thing in its section does not need a
 `.wq-section-title` above it as well — its own title is the `h2`.
 
@@ -619,6 +629,31 @@ the four settings as **two deliberate lines** — what is asked and where,
 then how it is played. As one line they wrapped after the third setting on a
 phone, which reads as an accident; split in two it reads as a grouping, and
 it is the same at every width.
+
+### An invite is a dialog, and the QR in it is not themed
+
+The invite (`wq-invite-dialog`) is a `wq-dialog` like every other question
+the app asks: a QR of the link, the code as two groups of four ("ANN1 2345",
+because eight characters in a row are read out wrong), one line saying what
+to do with them, the share button, and the field for somebody else's code.
+It is not a card at the top of the friends screen: the screen is the list of
+people, and the invite is something done once and then rarely.
+
+`wq-qr-code` (`client/ui`) draws the matrix as **one SVG path** — a rect per
+dark module would be a thousand elements — over a white rect with the
+standard four-module quiet zone. It is the one surface in the app that does
+**not** follow the theme: a scanner needs dark-on-light with real contrast,
+and a QR in the dark palette is a QR that does not scan. The code is a
+`role="img"` with a name; the matrix itself is `aria-hidden`.
+
+### The same board, over fewer people
+
+Who is on a board is a segment inside the ranking dialog ("Everyone",
+"Friends"), not a second screen or a second button: it changes who is
+ranked, not what is asked. The player's own row keeps its highlight, and
+the pinned row below the list is **dropped** on a board of friends — the
+rank the app knows for the player is the public one, and pinning it under a
+narrower board would state a place that is not that board's.
 
 ### A record is worth a fanfare; a place is not
 

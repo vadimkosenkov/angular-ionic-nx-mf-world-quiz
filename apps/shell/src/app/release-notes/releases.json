@@ -1,10 +1,12 @@
 {
   "unreleased": {
     "en": [
-      "A shared result now says what it is: the picture leads with the moment it captures, shows a medal for a place in the first three, and goes on its own, without a wall of text beside it."
+      "A shared result now says what it is: the picture leads with the moment it captures, shows a medal for a place in the first three, and goes on its own, without a wall of text beside it.",
+      "Friends: hand somebody your code or scan theirs, and every leaderboard gains a Friends view with a page of each friend's records and progress."
     ],
     "ru": [
-      "Отправленный результат теперь говорит сам за себя: картинка начинается с того, что вы сделали, показывает медаль за место в тройке и уходит одна, без простыни текста рядом."
+      "Отправленный результат теперь говорит сам за себя: картинка начинается с того, что вы сделали, показывает медаль за место в тройке и уходит одна, без простыни текста рядом.",
+      "Друзья: дайте кому-нибудь свой код или отсканируйте чужой — у каждого рейтинга появится вид «Друзья», а у друга — страница с его рекордами и прогрессом."
     ]
   },
   "releases": [
