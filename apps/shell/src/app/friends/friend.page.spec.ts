@@ -64,7 +64,9 @@ const PROFILE: FriendProfile = {
   ],
 };
 
-async function renderPage(profile: FriendProfile | 'error' = PROFILE) {
+async function renderPage(
+  profile: FriendProfile | 'gone' | 'unreachable' = PROFILE,
+) {
   const back: string[] = [];
   const view = await render(FriendPage, {
     inputs: { id: ID },
@@ -97,10 +99,12 @@ async function renderPage(profile: FriendProfile | 'error' = PROFILE) {
     throw new Error(`${method} ${url} was not sent`);
   };
 
-  await answer('GET', `/v1/friends/${ID}`, (request) =>
-    profile === 'error'
+  const fail = (request: TestRequest) =>
+    profile === 'gone'
       ? request.flush(null, { status: 404, statusText: 'Not Found' })
-      : request.flush(profile),
+      : request.error(new ProgressEvent('error'));
+  await answer('GET', `/v1/friends/${ID}`, (request) =>
+    typeof profile === 'string' ? fail(request) : request.flush(profile),
   );
 
   return { ...view, answer, back, toasts: TestBed.inject(Toasts) };
@@ -146,12 +150,32 @@ describe('FriendPage', () => {
   });
 
   it('says the page is not theirs to see when the API says there is no such player', async () => {
-    await renderPage('error');
+    await renderPage('gone');
 
     expect(screen.getByTestId('friend-gone').textContent).toContain(
       'not yours to see',
     );
     expect(screen.queryByTestId('friend-remove')).toBeNull();
+    // There is nothing to try again: the answer was about the friendship.
+    expect(screen.queryByTestId('friend-retry')).toBeNull();
+  });
+
+  it('blames the connection, not the friendship, when the API cannot be reached', async () => {
+    // Telling a player their friendship has ended because their train went
+    // into a tunnel would be a lie with no button underneath it.
+    const { answer } = await renderPage('unreachable');
+
+    expect(screen.queryByTestId('friend-gone')).toBeNull();
+    expect(screen.getByTestId('friend-offline').textContent).toContain(
+      'cannot be loaded',
+    );
+
+    fireEvent.click(screen.getByTestId('friend-retry'));
+    await answer('GET', `/v1/friends/${ID}`, (request) =>
+      request.flush(PROFILE),
+    );
+
+    expect(screen.getByTestId('friend-who').textContent).toContain('Boris');
   });
 
   it('asks before ending a friendship, then goes back to the list', async () => {

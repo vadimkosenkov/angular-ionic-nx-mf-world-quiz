@@ -1,4 +1,4 @@
-import { httpResource } from '@angular/common/http';
+import { HttpErrorResponse, httpResource } from '@angular/common/http';
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { IonButton, IonContent, IonIcon, NavController } from '@ionic/angular';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
@@ -112,10 +112,23 @@ export class FriendPage {
     return friend ? friendSince(friend.since, this.settings.locale()) : '';
   });
 
-  /** The page could not be read: no longer a friend, offline, or an error. */
-  protected readonly failed = computed(
-    () => this.profile.error() !== undefined,
-  );
+  /**
+   * Why the page is empty, when it is.
+   *
+   * A 404 is the API saying this player is not yours to see — not a
+   * friend any more, or gone altogether — and that is a fact about the
+   * friendship, so the page says so and offers nothing to press. Anything
+   * else is the connection, and telling the player a friendship has ended
+   * because their train went into a tunnel would be a lie with a button
+   * missing underneath it.
+   */
+  protected readonly failure = computed<'gone' | 'unreachable' | null>(() => {
+    const error = this.profile.error();
+    if (!error) return null;
+    return error instanceof HttpErrorResponse && error.status === 404
+      ? 'gone'
+      : 'unreachable';
+  });
 
   protected readonly records = computed<readonly RecordRow[]>(() =>
     (this.profile.hasValue() ? this.profile.value().records : []).map(

@@ -312,6 +312,9 @@ export const ru: TranslationShape = {
         title: 'Рекордов пока нет',
         message: 'Он ещё не прошёл рейтинговую игру без ошибок.',
       },
+      offline: {
+        title: 'Страницу не удалось загрузить',
+      },
       gone: {
         title: 'Эта страница вам недоступна',
         message:

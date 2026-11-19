@@ -37,6 +37,7 @@ import {
 } from '@world-quiz/client/ui';
 import { APP_URL } from '@world-quiz/client/quiz-ports';
 import {
+  type LeaderboardEntry,
   leaderboardSchema,
   type MyRecord,
   myRecordsSchema,
@@ -245,18 +246,34 @@ export class LeaderboardPage implements ViewWillEnter {
     if (!board || !this.ranking.hasValue()) return [];
     const mine = this.myRecord();
     const metric = leaderboardBoardById(board).metric;
-    return this.ranking.value().entries.map((entry) => ({
-      rank: entry.rank,
-      name: entry.nickname,
-      score: this.scoreText(entry.score, metric),
-      time: metric === 'correct' ? formatRunTime(entry.timeMs) : null,
-      // The player's own row is the one holding their own run. Rank will
-      // not do here: on a board of friends the places are numbered over
-      // fewer people, so the player's global rank names somebody else's
-      // row. What both answers carry about the same run is the moment the
-      // server recorded it, which is unique to the millisecond.
-      me: Boolean(mine) && entry.recordedAt === mine?.recordedAt,
-    }));
+    // Which row is the player's own.
+    //
+    // On the public board it is the one at their rank: `/v1/me/records`
+    // carries the place that board gave them, and places on it are unique.
+    // A board of friends numbers its places over fewer people, so that
+    // number names somebody else's row there; what both answers carry
+    // about the same run is the moment the server recorded it, and the
+    // nickname beside it. Two runs can share a millisecond — the ranking
+    // itself breaks that tie by session — so **one** row is marked, not
+    // every row that matches.
+    const isMine =
+      this.audience() === 'friends'
+        ? (entry: LeaderboardEntry) =>
+            entry.recordedAt === mine?.recordedAt &&
+            entry.nickname === mine?.nickname
+        : (entry: LeaderboardEntry) => entry.rank === mine?.rank;
+    let marked = false;
+    return this.ranking.value().entries.map((entry) => {
+      const me = Boolean(mine) && !marked && isMine(entry);
+      if (me) marked = true;
+      return {
+        rank: entry.rank,
+        name: entry.nickname,
+        score: this.scoreText(entry.score, metric),
+        time: metric === 'correct' ? formatRunTime(entry.timeMs) : null,
+        me,
+      };
+    });
   });
 
   /** How many players have a ranked run on the board being shown. */

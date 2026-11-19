@@ -189,6 +189,14 @@ Rules: [leaderboard.md](../domain/leaderboard.md).
   says nothing about where the player stands among the people they know. An
   empty one says so in its own words ("Nobody you know is on this board
   yet"), because the public board's "be the first" is wrong advice there.
+- **Which row is the player's own** is answered differently on the two
+  sides. On the public board it is the row at their rank, which is unique
+  there and comes straight from `/v1/me/records`. A board of friends
+  numbers its places over fewer people, so that number names somebody
+  else's row; there the run is found by the moment the server recorded it
+  and the nickname beside it — and **one** row is marked, never every row
+  that matches, because two runs can share a millisecond (the ranking
+  itself breaks that tie by session).
 - **My records**: one row per board the player ranks on, with the score and
   the place, each shareable as a picture; nothing at all is "No records yet"
   rather than 56 empty rows.
@@ -258,6 +266,13 @@ Rules and endpoints: [ADR-015](../decisions/ADR-015-friends.md),
   came of it**: a code that cannot be used must not be retried on every
   start. The code is read as a route **input** inside an effect, not in the
   constructor — a required input read before the router has set it throws.
+- **A page that cannot be read says which of the two it is.** A 404 is the
+  API saying this player is not yours to see — not a friend any more, or
+  gone — and that is a fact about the friendship, so the page says so and
+  offers nothing to press. Anything else is the connection, and gets the
+  same offline card with a retry that the list has: telling a player their
+  friendship has ended because their train went into a tunnel would be a
+  lie with a button missing underneath it.
 - **A friend's page** (`friend.page.ts`) is `GET /v1/friends/:id`: their
   nickname, how long you have been friends, their best run per board (with a
   gold/silver/bronze medal for a place in the first three, the score in the

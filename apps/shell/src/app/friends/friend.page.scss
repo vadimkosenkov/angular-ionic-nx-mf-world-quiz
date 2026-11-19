@@ -95,6 +95,14 @@
   justify-content: center;
 }
 
+// The same way out of an unreadable page as the list has (friends.page.scss):
+// the card itself has no padding, so the row under the words carries it.
+.retry {
+  display: flex;
+  justify-content: center;
+  padding: 0 var(--wq-space-5) var(--wq-space-5);
+}
+
 .note {
   margin: 0;
 }

@@ -6,13 +6,33 @@
 
 <ion-content [fullscreen]="true" class="wq-aurora">
   <div class="wq-page friend">
-    @if (failed()) {
+    @if (failure() === 'gone') {
     <div class="wq-card" data-testid="friend-gone">
       <wq-empty-state
         icon="person-remove-outline"
         [heading]="'friends.one.gone.title' | transloco"
         [message]="'friends.one.gone.message' | transloco"
       />
+    </div>
+    } @else if (failure() === 'unreachable') {
+    <!-- The connection, not the friendship: the same card the list shows
+         when it cannot be read, with the same way out of it. -->
+    <div class="wq-card" data-testid="friend-offline">
+      <wq-empty-state
+        icon="cloud-offline-outline"
+        [heading]="'friends.one.offline.title' | transloco"
+        [message]="'friends.offline.message' | transloco"
+      />
+      <div class="retry">
+        <ion-button
+          fill="outline"
+          size="small"
+          data-testid="friend-retry"
+          (click)="profile.reload()"
+        >
+          {{ 'friends.offline.retry' | transloco }}
+        </ion-button>
+      </div>
     </div>
     } @else if (friend(); as friend) {
     <section class="wq-card who" data-testid="friend-who">

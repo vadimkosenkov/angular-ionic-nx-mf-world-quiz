@@ -326,6 +326,9 @@ export const en = {
         title: 'No records yet',
         message: 'They have not finished a flawless ranked run.',
       },
+      offline: {
+        title: 'This page cannot be loaded',
+      },
       gone: {
         title: 'This page is not yours to see',
         message:
