@@ -439,9 +439,9 @@ PostgreSQL is where concurrency is real: the test "records two identical
 requests that race each other exactly once" exercises the primary key and
 `ON CONFLICT DO NOTHING`; on PGlite the same test passes because queries run
 one at a time. A friendship's own race — two people asking each other at the
-same moment — is tested against the constraint instead of against a timing
-window: the second row for a pair is written directly and the database
-refuses it.
+same moment — is tested both ways: the two requests are really sent at once
+(`Promise.all`), and the second row for a pair is also written directly to
+show the database refusing it, which holds on PGlite as well.
 
 ## Running
 

@@ -207,6 +207,31 @@ describe('friends', () => {
       ]);
     });
 
+    it('leaves one row when two players ask each other at the same moment', async () => {
+      // Real concurrency only exists on PostgreSQL (TEST_DATABASE_URL);
+      // PGlite runs one query at a time and takes the same path the second
+      // request would take anyway. Both answers are a success either way:
+      // what must not happen is two rows, which would put each player in
+      // the other's incoming *and* outgoing list.
+      const [bobsCode, alicesCode] = await Promise.all([
+        inviteCodeOf(bob),
+        inviteCodeOf(alice),
+      ]);
+      const [fromAlice, fromBob] = await Promise.all([
+        as(alice).post('/v1/friends/requests', { code: bobsCode }),
+        as(bob).post('/v1/friends/requests', { code: alicesCode }),
+      ]);
+
+      expect([fromAlice.status, fromBob.status]).toEqual([201, 201]);
+      const rows = await database.db.select().from(friendships);
+      expect(rows).toHaveLength(1);
+      for (const lists of [await listsOf(alice), await listsOf(bob)]) {
+        expect(
+          lists.friends.length + lists.incoming.length + lists.outgoing.length,
+        ).toBe(1);
+      }
+    });
+
     it('leaves one row for a pair, whichever way round it is written', async () => {
       // Two people asking each other at the same moment both find nothing
       // and both insert — with different keys, because a row is kept in
