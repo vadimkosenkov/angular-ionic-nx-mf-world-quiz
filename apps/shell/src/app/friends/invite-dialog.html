@@ -1,0 +1,76 @@
+<wq-dialog
+  data-testid="invite-dialog"
+  [title]="'friends.invite.title' | transloco"
+  [closeLabel]="'common.close' | transloco"
+  (dismissed)="dismissed.emit()"
+>
+  @if (code(); as inviteCode) {
+  <div class="invite">
+    @if (link(); as inviteLink) {
+    <wq-qr-code
+      class="qr"
+      data-testid="invite-qr"
+      [value]="inviteLink"
+      [label]="'friends.invite.qrLabel' | transloco"
+    />
+    }
+    <p class="code" data-testid="invite-code">{{ spacedCode() }}</p>
+    <p class="wq-text-secondary explain">
+      {{ 'friends.invite.explain' | transloco }}
+    </p>
+    <ion-button
+      expand="block"
+      class="wq-glass-button"
+      data-testid="invite-share"
+      (click)="share()"
+    >
+      <ion-icon slot="start" name="share-outline" aria-hidden="true" />
+      {{ 'friends.invite.share' | transloco }}
+    </ion-button>
+  </div>
+  }
+
+  <!-- The other half of the same moment: their code, typed in here. -->
+  <form class="add" (submit)="$event.preventDefault(); add()">
+    <label class="wq-text-secondary" for="friend-code">
+      {{ 'friends.add.label' | transloco }}
+    </label>
+    <div class="field">
+      <!-- A plain input, not ion-input: Ionic's web components do not
+           upgrade in jsdom, and what this field does with what is typed is
+           worth testing without a browser. -->
+      <input
+        id="friend-code"
+        class="input"
+        type="text"
+        inputmode="latin"
+        autocapitalize="characters"
+        autocomplete="off"
+        spellcheck="false"
+        maxlength="20"
+        data-testid="friend-code"
+        [attr.placeholder]="'friends.add.placeholder' | transloco"
+        [attr.aria-describedby]="error() ? 'friend-code-error' : null"
+        [value]="typed()"
+        (input)="onTyped($event)"
+      />
+      <ion-button
+        type="submit"
+        data-testid="friend-add"
+        [disabled]="store.busy() || typed().length === 0"
+      >
+        {{ 'friends.add.action' | transloco }}
+      </ion-button>
+    </div>
+    @if (error(); as message) {
+    <p
+      id="friend-code-error"
+      class="error"
+      role="alert"
+      data-testid="friend-code-error"
+    >
+      {{ message | transloco }}
+    </p>
+    }
+  </form>
+</wq-dialog>

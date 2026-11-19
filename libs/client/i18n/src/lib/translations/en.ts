@@ -17,6 +17,8 @@ export const en = {
   },
   common: {
     progressValue: '{{value}} of {{max}}',
+    close: 'Close',
+    cancel: 'Cancel',
   },
   // The app's one transient message (see `Toasts`); the texts it shows come
   // from the screen that asked for it.
@@ -30,6 +32,15 @@ export const en = {
     label: 'Messages',
     labelUnread: 'Messages, one unread',
     empty: 'Nothing new right now.',
+    friends: {
+      title: {
+        one: '{{count}} friend request',
+        few: '{{count}} friend requests',
+        many: '{{count}} friend requests',
+        other: '{{count}} friend requests',
+      },
+      action: 'See who is waiting',
+    },
     release: {
       title: 'Update {{version}}',
       action: 'See what changed',
@@ -98,6 +109,18 @@ export const en = {
       many: '{{count}} regions',
       other: '{{count}} regions',
     },
+    friends: {
+      one: '{{count}} friend',
+      few: '{{count}} friends',
+      many: '{{count}} friends',
+      other: '{{count}} friends',
+    },
+    friendRequests: {
+      one: '{{count}} request waiting',
+      few: '{{count}} requests waiting',
+      many: '{{count}} requests waiting',
+      other: '{{count}} requests waiting',
+    },
   },
   welcome: {
     tagline: 'Master every capital and flag',
@@ -151,6 +174,10 @@ export const en = {
         description: 'Every country with its capital and its flag',
         open: 'Browse',
       },
+    },
+    friends: {
+      kind: 'Together',
+      description: 'Compare your records with the people you know',
     },
     achievements: {
       title: 'Achievements',
@@ -208,6 +235,8 @@ export const en = {
     empty: {
       title: 'No flawless runs yet',
       message: 'Be the first on this board.',
+      friends:
+        'Nobody you know is on this board yet. Hand your code to somebody.',
     },
     you: '(you)',
     players: {
@@ -218,9 +247,97 @@ export const en = {
     },
     place: '#{{rank}} of {{players}}',
     correct: '{{correct}} correct',
+    audience: {
+      label: 'Who is on this board',
+      everyone: 'Everyone',
+      friends: 'Friends',
+    },
+    rank: '#{{rank}}',
     noRecords: {
       title: 'No records yet',
       message: 'Play a quick round or a time attack without a single mistake.',
+    },
+  },
+  // Friends: found only by the code a player hands over themselves, and
+  // never by searching for them (ADR-015).
+  friends: {
+    title: 'Friends',
+    open: 'Open',
+    failed: 'That did not work. Try again.',
+    offline: {
+      title: 'Your friends cannot be loaded',
+      message:
+        'The list lives on the World Quiz server; this needs a connection.',
+      retry: 'Try again',
+    },
+    empty: {
+      title: 'Nobody here yet',
+      message:
+        'Give your code to somebody you know, or type in theirs. You will then share a board.',
+    },
+    invite: {
+      action: 'Invite a friend',
+      title: 'Invite a friend',
+      explain:
+        'They scan the code, open the link, or type the eight characters.',
+      qrLabel: 'A QR code of your invite link',
+      share: 'Share the invite',
+      copied: 'The invite is copied.',
+      message: 'Play World Quiz with me.',
+      code: 'My code: {{code}}',
+      landing: 'One moment…',
+    },
+    add: {
+      label: "Have somebody else's code?",
+      placeholder: 'Their code',
+      action: 'Add',
+      sent: 'Asked {{name}} to be friends.',
+      accepted: 'You and {{name}} are friends now.',
+      error: {
+        'invalid-code': 'A code is eight characters, like K7M2 X4PQ.',
+        self: 'That code is yours. Give it to somebody else.',
+        'unknown-code': 'Nobody holds that code. Check the characters.',
+        failed: 'The request could not be sent. Try again.',
+      },
+    },
+    requests: {
+      title: 'Waiting for you',
+      note: 'wants to be friends',
+      accept: 'Accept',
+      decline: 'Say no to {{name}}',
+      accepted: 'You and {{name}} are friends now.',
+      declined: 'Request removed.',
+    },
+    list: {
+      title: 'Friends',
+      since: 'friends since {{date}}',
+    },
+    sent: {
+      title: 'Asked',
+      note: 'asked on {{date}}',
+      cancel: 'Take back the request to {{name}}',
+    },
+    one: {
+      title: 'Friend',
+      since: 'Friends since {{date}}',
+      records: 'Their records',
+      achievements: 'What they have learned',
+      noRecords: {
+        title: 'No records yet',
+        message: 'They have not finished a flawless ranked run.',
+      },
+      gone: {
+        title: 'This page is not yours to see',
+        message:
+          'You are not friends any more, or the player has left. Your own friends are on the previous screen.',
+      },
+    },
+    remove: {
+      action: 'Remove friend',
+      title: 'Remove {{name}}?',
+      text: 'You will both lose the shared board. They are not told, and you can ask each other again later.',
+      confirm: 'Remove',
+      done: '{{name}} is no longer a friend.',
     },
   },
   achievements: {

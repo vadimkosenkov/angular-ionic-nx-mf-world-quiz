@@ -1,0 +1,140 @@
+<wq-page-header
+  backHref="/friends"
+  [heading]="heading()"
+  [backLabel]="'nav.back' | transloco"
+/>
+
+<ion-content [fullscreen]="true" class="wq-aurora">
+  <div class="wq-page friend">
+    @if (failed()) {
+    <div class="wq-card" data-testid="friend-gone">
+      <wq-empty-state
+        icon="person-remove-outline"
+        [heading]="'friends.one.gone.title' | transloco"
+        [message]="'friends.one.gone.message' | transloco"
+      />
+    </div>
+    } @else if (friend(); as friend) {
+    <section class="wq-card who" data-testid="friend-who">
+      <span class="initial" aria-hidden="true">{{ initial() }}</span>
+      <span class="name">
+        <span class="nickname">{{ friend.nickname }}</span>
+        <span class="wq-text-secondary">
+          {{ 'friends.one.since' | transloco: { date: since() } }}
+        </span>
+      </span>
+    </section>
+
+    <section class="wq-section" aria-labelledby="friend-records">
+      <h2 id="friend-records" class="wq-section-title">
+        {{ 'friends.one.records' | transloco }}
+      </h2>
+      @if (records().length === 0) {
+      <div class="wq-card">
+        <wq-empty-state
+          icon="trophy-outline"
+          [heading]="'friends.one.noRecords.title' | transloco"
+          [message]="'friends.one.noRecords.message' | transloco"
+        />
+      </div>
+      } @else {
+      <ul class="wq-card wq-card-rows" data-testid="friend-records">
+        @for (row of records(); track row.board) {
+        <li class="wq-row">
+          <span class="wq-row-name">
+            {{ row.subject }}
+            <span class="wq-text-secondary wq-row-note">{{ row.style }}</span>
+          </span>
+          {{ ' ' }}
+          <span class="standing">
+            @if (row.medal; as medal) {
+            <span class="medal" [class]="medal" aria-hidden="true">
+              {{ row.rank }}
+            </span>
+            <span class="wq-visually-hidden">
+              {{ 'leaderboard.rank' | transloco: { rank: row.rank } }}
+            </span>
+            } @else {
+            <span class="rank wq-text-secondary">
+              {{ 'leaderboard.rank' | transloco: { rank: row.rank } }}
+            </span>
+            }
+            <span class="score">{{ row.score }}</span>
+          </span>
+        </li>
+        }
+      </ul>
+      }
+    </section>
+
+    <section class="wq-section" aria-labelledby="friend-achievements">
+      <h2 id="friend-achievements" class="wq-section-title">
+        {{ 'friends.one.achievements' | transloco }}
+      </h2>
+      <ul class="wq-card achievements" data-testid="friend-achievements">
+        @for (row of achievements(); track row.id) {
+        <li>
+          <div class="achievement-row">
+            <span>
+              {{ row.name }} @if (row.unlocked) {
+              <ion-icon
+                class="done"
+                name="checkmark-circle"
+                aria-hidden="true"
+              />
+              <span class="wq-visually-hidden">
+                {{ 'achievements.statuses.unlocked' | transloco }}
+              </span>
+              }
+            </span>
+            <span class="wq-text-secondary">
+              {{ row.mastered }}/{{ row.total }}
+            </span>
+          </div>
+          <wq-progress-bar
+            [value]="row.mastered"
+            [max]="row.total"
+            [label]="row.name"
+            [tone]="row.unlocked ? 'success' : 'primary'"
+          />
+        </li>
+        }
+      </ul>
+    </section>
+
+    <div class="end">
+      <ion-button
+        fill="clear"
+        color="danger"
+        data-testid="friend-remove"
+        (click)="confirming.set(true)"
+      >
+        {{ 'friends.remove.action' | transloco }}
+      </ion-button>
+    </div>
+    }
+  </div>
+</ion-content>
+
+@if (confirming() && friend(); as friend) {
+<wq-dialog
+  tone="danger"
+  describedBy="remove-friend-text"
+  data-testid="remove-friend"
+  [title]="'friends.remove.title' | transloco: { name: friend.nickname }"
+  [closeLabel]="'common.cancel' | transloco"
+  (dismissed)="confirming.set(false)"
+>
+  <p id="remove-friend-text" class="note">
+    {{ 'friends.remove.text' | transloco }}
+  </p>
+  <ion-button
+    expand="block"
+    color="danger"
+    data-testid="remove-friend-confirm"
+    (click)="remove()"
+  >
+    {{ 'friends.remove.confirm' | transloco }}
+  </ion-button>
+</wq-dialog>
+}

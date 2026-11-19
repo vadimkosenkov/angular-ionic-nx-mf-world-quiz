@@ -65,6 +65,33 @@ export const appRoutes: Route[] = [
       import('./countries/countries.page').then((m) => m.CountriesPage),
   },
   {
+    // Opened from Home's Friends card and pushed over the tabs, like the
+    // reference: somewhere the player goes to do something and comes back.
+    path: 'friends',
+    canActivate: [signedInGuard],
+    loadComponent: () =>
+      import('./friends/friends.page').then((m) => m.FriendsPage),
+  },
+  {
+    // A friend's own page. The id is bound to the component's `id` input by
+    // `withComponentInputBinding()`.
+    path: 'friends/:id',
+    canActivate: [signedInGuard],
+    loadComponent: () =>
+      import('./friends/friend.page').then((m) => m.FriendPage),
+  },
+  {
+    // The other end of an invite link, and the only route besides /welcome
+    // that is **not** behind the guard (ADR-011): it shows nothing of the
+    // app. It writes the code down and sends the player on — to the friends
+    // screen when they are signed in, to the welcome screen when they are
+    // not, and the request is sent as soon as there is an account to send
+    // it from (invite.page.ts, friends.store.ts).
+    path: 'invite/:code',
+    loadComponent: () =>
+      import('./friends/invite.page').then((m) => m.InvitePage),
+  },
+  {
     // Reached from the bell on Home and from Settings, and pushed over the
     // tabs like the reference: a page to read, not a tab to come back to.
     path: 'release-notes',

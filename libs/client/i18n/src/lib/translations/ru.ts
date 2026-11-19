@@ -7,6 +7,8 @@ export const ru: TranslationShape = {
   },
   common: {
     progressValue: '{{value}} из {{max}}',
+    close: 'Закрыть',
+    cancel: 'Отмена',
   },
   toast: {
     dismiss: 'Закрыть сообщение',
@@ -16,6 +18,15 @@ export const ru: TranslationShape = {
     label: 'Сообщения',
     labelUnread: 'Сообщения, одно непрочитанное',
     empty: 'Пока ничего нового.',
+    friends: {
+      title: {
+        one: '{{count}} заявка в друзья',
+        few: '{{count}} заявки в друзья',
+        many: '{{count}} заявок в друзья',
+        other: '{{count}} заявок в друзья',
+      },
+      action: 'Посмотреть, кто ждёт',
+    },
     release: {
       title: 'Обновление {{version}}',
       action: 'Посмотреть, что изменилось',
@@ -84,6 +95,18 @@ export const ru: TranslationShape = {
       many: '{{count}} регионов',
       other: '{{count}} региона',
     },
+    friends: {
+      one: '{{count}} друг',
+      few: '{{count}} друга',
+      many: '{{count}} друзей',
+      other: '{{count}} друзей',
+    },
+    friendRequests: {
+      one: '{{count}} заявка ждёт',
+      few: '{{count}} заявки ждут',
+      many: '{{count}} заявок ждут',
+      other: '{{count}} заявок ждут',
+    },
   },
   welcome: {
     tagline: 'Выучите все столицы и флаги',
@@ -143,6 +166,10 @@ export const ru: TranslationShape = {
         open: 'Открыть',
       },
     },
+    friends: {
+      kind: 'Вместе',
+      description: 'Сравните свои рекорды с теми, кого вы знаете',
+    },
     achievements: {
       title: 'Достижения',
       seeAll: 'Все',
@@ -195,6 +222,8 @@ export const ru: TranslationShape = {
     empty: {
       title: 'Пока нет безошибочных забегов',
       message: 'Станьте первым в этом рейтинге.',
+      friends:
+        'Из ваших знакомых здесь пока никого. Дайте кому-нибудь свой код.',
     },
     you: '(вы)',
     players: {
@@ -205,9 +234,96 @@ export const ru: TranslationShape = {
     },
     place: '#{{rank}} из {{players}}',
     correct: '{{correct}} верных',
+    audience: {
+      label: 'Кто в этой таблице',
+      everyone: 'Все',
+      friends: 'Друзья',
+    },
+    rank: '№{{rank}}',
     noRecords: {
       title: 'Рекордов пока нет',
       message: 'Сыграйте быстрый раунд или забег на время без единой ошибки.',
+    },
+  },
+  // Друзья: найти человека можно только по коду, который он дал сам
+  // (ADR-015).
+  friends: {
+    title: 'Друзья',
+    open: 'Открыть',
+    failed: 'Не получилось. Попробуйте ещё раз.',
+    offline: {
+      title: 'Друзья не загрузились',
+      message: 'Список хранится на сервере World Quiz — нужно подключение.',
+      retry: 'Повторить',
+    },
+    empty: {
+      title: 'Здесь пока никого',
+      message:
+        'Дайте свой код тому, кого знаете, или введите его код. После этого у вас будет общая таблица.',
+    },
+    invite: {
+      action: 'Пригласить друга',
+      title: 'Пригласить друга',
+      explain:
+        'Можно отсканировать код, открыть ссылку или ввести восемь символов.',
+      qrLabel: 'QR-код вашей ссылки-приглашения',
+      share: 'Поделиться приглашением',
+      copied: 'Приглашение скопировано.',
+      message: 'Играй со мной в World Quiz.',
+      code: 'Мой код: {{code}}',
+      landing: 'Секунду…',
+    },
+    add: {
+      label: 'Есть чужой код?',
+      placeholder: 'Код друга',
+      action: 'Добавить',
+      sent: 'Заявка отправлена: {{name}}.',
+      accepted: 'Теперь вы друзья с {{name}}.',
+      error: {
+        'invalid-code': 'Код — это восемь символов, например K7M2 X4PQ.',
+        self: 'Это ваш собственный код. Дайте его кому-нибудь другому.',
+        'unknown-code': 'Такого кода ни у кого нет. Проверьте символы.',
+        failed: 'Заявку не удалось отправить. Попробуйте ещё раз.',
+      },
+    },
+    requests: {
+      title: 'Ждут ответа',
+      note: 'хочет дружить',
+      accept: 'Принять',
+      decline: 'Отказать {{name}}',
+      accepted: 'Теперь вы друзья с {{name}}.',
+      declined: 'Заявка удалена.',
+    },
+    list: {
+      title: 'Друзья',
+      since: 'дружите с {{date}}',
+    },
+    sent: {
+      title: 'Вы позвали',
+      note: 'заявка от {{date}}',
+      cancel: 'Отозвать заявку: {{name}}',
+    },
+    one: {
+      title: 'Друг',
+      since: 'Дружите с {{date}}',
+      records: 'Его рекорды',
+      achievements: 'Что он выучил',
+      noRecords: {
+        title: 'Рекордов пока нет',
+        message: 'Он ещё не прошёл рейтинговую игру без ошибок.',
+      },
+      gone: {
+        title: 'Эта страница вам недоступна',
+        message:
+          'Вы больше не друзья, или игрок удалил аккаунт. Ваши друзья — на предыдущем экране.',
+      },
+    },
+    remove: {
+      action: 'Удалить из друзей',
+      title: 'Удалить {{name}}?',
+      text: 'Общая таблица пропадёт у вас обоих. Игрок об этом не узнает, и позже вы сможете позвать друг друга снова.',
+      confirm: 'Удалить',
+      done: '{{name}} больше не в друзьях.',
     },
   },
   achievements: {
