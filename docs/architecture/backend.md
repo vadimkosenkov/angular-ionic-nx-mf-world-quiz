@@ -237,9 +237,15 @@ Who may see whom, and why there is no search:
 - **One row per relationship** (`friendships`, primary key on the pair) in the
   direction it was asked, so both players are found by looking at both
   columns. Asking somebody who has already asked you **accepts their row**
-  instead of inserting a second one, which is also what makes two
-  simultaneous requests safe: the primary key leaves one standing and the
-  repository looks again.
+  instead of inserting a second one.
+- **The pair is unique whichever way round it was written**: a unique index
+  over the two ids sorted (`friendships_pair_idx`, on
+  `least(requester_id, addressee_id)` and `greatest(...)`). The primary key
+  covers one direction only, so two people asking **each other** at the same
+  moment would otherwise both find nothing, write two different keys and both
+  be let through — leaving each of them in the other's incoming _and_
+  outgoing list. The second insert now conflicts, and the repository looks
+  again and accepts the row that won.
 - **404, never 403**, for a player who is not a friend: whether an id exists
   is itself private. An id that is not even a UUID gets the same answer.
 - Every response is `Cache-Control: no-store` — these are personal lists that
@@ -432,7 +438,10 @@ key, so a PostgreSQL run never reuses a PGlite result.
 PostgreSQL is where concurrency is real: the test "records two identical
 requests that race each other exactly once" exercises the primary key and
 `ON CONFLICT DO NOTHING`; on PGlite the same test passes because queries run
-one at a time.
+one at a time. A friendship's own race — two people asking each other at the
+same moment — is tested against the constraint instead of against a timing
+window: the second row for a pair is written directly and the database
+refuses it.
 
 ## Running
 

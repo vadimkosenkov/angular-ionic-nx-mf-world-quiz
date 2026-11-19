@@ -10,6 +10,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
 
@@ -247,6 +248,16 @@ export const friendships = pgTable(
     // player opens, and the friends board reads the accepted rows.
     index('friendships_addressee_idx').on(table.addresseeId, table.status),
     index('friendships_requester_idx').on(table.requesterId, table.status),
+    // One row per pair, whichever way round it was asked. The primary key
+    // alone only stops the same request arriving twice: two people asking
+    // each other at the same moment write two different keys, and both
+    // inserts would be let through — leaving each of them in the other's
+    // incoming *and* outgoing list. With this index the second insert
+    // conflicts, and the repository looks again and accepts the first.
+    uniqueIndex('friendships_pair_idx').on(
+      sql`least(${table.requesterId}, ${table.addresseeId})`,
+      sql`greatest(${table.requesterId}, ${table.addresseeId})`,
+    ),
     check(
       'friendships_not_self',
       sql`${table.requesterId} <> ${table.addresseeId}`,

@@ -36,7 +36,9 @@ What a "friends" feature needs is decided by three questions:
   list the player must accept.
 - **Friendship is mutual.** A request is one row, and only the addressee can
   accept it. Asking somebody who has already asked you accepts their request
-  instead of adding a second one. Declining and unfriending are the same
+  instead of adding a second one — and the database says so too, with a
+  unique index over the pair's two ids sorted, so two people asking each
+  other at the same instant cannot leave two rows behind. Declining and unfriending are the same
   act — the row goes — so there is **no block list**: a player who was
   removed can ask again, and a player who does not want to be asked never
   hands their code out.

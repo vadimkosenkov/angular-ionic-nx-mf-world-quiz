@@ -23,14 +23,29 @@ export type FriendRequestOutcome =
   /** They had asked first, so the two requests met. */
   | 'accepted';
 
+/** The state of the pair after asking, as the row itself records it. */
+export interface FriendRequestRecord {
+  readonly status: FriendRequestOutcome;
+  /**
+   * When the row started counting: accepted now (or earlier), or sent. It
+   * is **not** the other player's account: `since` is about the two of
+   * them, and the answer says what the lists will say tomorrow.
+   */
+  readonly since: number;
+}
+
 /**
  * Who knows whom. Knows SQL, not the rules of the screens above it.
  *
  * A relationship is one row in the direction it was asked in, so the two
  * players are always found by looking at both columns. Asking someone who
- * has already asked you accepts their row instead of adding a second one —
- * which is also what makes two simultaneous requests safe, because the
- * primary key leaves only one of them standing.
+ * has already asked you accepts their row instead of adding a second one.
+ *
+ * Two people asking each other at the same moment are stopped by the
+ * database rather than by the order the statements happen to run in: the
+ * primary key only covers one direction, so the pair carries a unique
+ * index over its two ids sorted (`friendships_pair_idx`, schema.ts). The
+ * loser of that race looks again and finds the winner's row to accept.
  */
 export interface FriendRepository {
   findByInviteCode(code: string): Promise<FriendRow | null>;
@@ -39,7 +54,7 @@ export interface FriendRepository {
     requesterId: string,
     addresseeId: string,
     now: number,
-  ): Promise<FriendRequestOutcome>;
+  ): Promise<FriendRequestRecord>;
   /** Accepts a request this player received; `false` if there is none. */
   accept(userId: string, otherId: string, now: number): Promise<boolean>;
   /** Removes the relationship in either direction and either state. */
@@ -103,21 +118,24 @@ export function createFriendRepository(db: Database): FriendRepository {
     addresseeId: string,
     now: number,
     attempt = 0,
-  ): Promise<FriendRequestOutcome> => {
+  ): Promise<FriendRequestRecord> => {
     const [existing] = await db
       .select({
         requesterId: friendships.requesterId,
         status: friendships.status,
+        since: sinceColumn,
       })
       .from(friendships)
       .where(pairWhere(requesterId, addresseeId))
       .limit(1);
 
     if (existing) {
-      if (existing.status === 'accepted') return 'accepted';
+      if (existing.status === 'accepted') {
+        return { status: 'accepted', since: existing.since.getTime() };
+      }
       // They asked first, so this request is the answer to theirs.
       if (existing.requesterId === addresseeId) {
-        await db
+        const [accepted] = await db
           .update(friendships)
           .set({ status: 'accepted', respondedAt: new Date(now) })
           .where(
@@ -126,13 +144,16 @@ export function createFriendRepository(db: Database): FriendRepository {
               eq(friendships.addresseeId, requesterId),
               eq(friendships.status, 'pending'),
             ),
-          );
-        return 'accepted';
+          )
+          .returning({ since: friendships.respondedAt });
+        return { status: 'accepted', since: accepted?.since?.getTime() ?? now };
       }
-      return 'requested';
+      // This player has already asked; the request keeps the day it was
+      // sent rather than being restarted by asking again.
+      return { status: 'requested', since: existing.since.getTime() };
     }
 
-    const inserted = await db
+    const [inserted] = await db
       .insert(friendships)
       .values({
         requesterId,
@@ -141,11 +162,14 @@ export function createFriendRepository(db: Database): FriendRepository {
         requestedAt: new Date(now),
       })
       .onConflictDoNothing()
-      .returning({ requesterId: friendships.requesterId });
-    if (inserted.length > 0) return 'requested';
+      .returning({ since: friendships.requestedAt });
+    if (inserted)
+      return { status: 'requested', since: inserted.since.getTime() };
+    // Somebody wrote a row for this pair in between — the same request
+    // arriving twice, or the other player's. Looking again settles both.
     return attempt === 0
       ? request(requesterId, addresseeId, now, 1)
-      : 'requested';
+      : { status: 'requested', since: now };
   };
 
   return {
