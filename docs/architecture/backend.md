@@ -52,6 +52,12 @@ apps/api/
       leaderboard-service.ts boards, records, the place a run earned
       ranked-run-rules.ts    does a replayed run belong on a board (domain + a plausibility floor)
       leaderboard-repository.ts  the ranking queries
+    friends/
+      friends.routes.ts      /v1/friends: the lists, requests, a friend's page, the shared board
+      friend-service.ts      the rules: who may see whom, a friend's achievements
+      friend-repository.ts   one row per relationship, in the direction it was asked
+      progress-repository.ts a player's answers as the domain's progress events
+      invite-code.ts         the 8-character code an account is found by
     testing/               test database, test API, fake identity provider, a helper that plays real sessions
 libs/shared/contracts/     Zod schemas of requests, responses and errors
 ```
@@ -211,6 +217,53 @@ sequenceDiagram
   the same for everyone, which is what lets it be cached; the player's own
   row comes from `/v1/me/records` and is matched by rank, which is unique.
 - A retry of the same session is idempotent and returns the same `ranked`.
+
+## Friends: `/v1/friends`
+
+Who may see whom, and why there is no search:
+[ADR-015](../decisions/ADR-015-friends.md). Every account carries a permanent
+8-character invite code (Crockford base32), handed back by `GET /v1/me` as
+`inviteCode`, and that code is the **only** way to be found.
+
+| Endpoint                              | Auth   | Does                                                                                                                         |
+| ------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `GET /v1/friends`                     | Bearer | The three lists: `friends`, `incoming` (waiting for this player's answer) and `outgoing`                                     |
+| `POST /v1/friends/requests {code}`    | Bearer | Asks the owner of an invite code; `201 {status: 'requested' \| 'accepted', friend}` — `accepted` when they had already asked |
+| `POST /v1/friends/:id/accept`         | Bearer | Accepts a waiting request; `404` when there is none from that player                                                         |
+| `DELETE /v1/friends/:id`              | Bearer | Declines a request or ends a friendship — the same act, `204` either way, quiet about a player who was never there           |
+| `GET /v1/friends/:id`                 | Bearer | A friend's page: nickname, their best run per board, their achievements. `404` to everyone who is not their friend           |
+| `GET /v1/friends/leaderboards/:board` | Bearer | The public board's ranking narrowed to the player and their friends, numbered from 1                                         |
+
+- **One row per relationship** (`friendships`, primary key on the pair) in the
+  direction it was asked, so both players are found by looking at both
+  columns. Asking somebody who has already asked you **accepts their row**
+  instead of inserting a second one.
+- **The pair is unique whichever way round it was written**: a unique index
+  over the two ids sorted (`friendships_pair_idx`, on
+  `least(requester_id, addressee_id)` and `greatest(...)`). The primary key
+  covers one direction only, so two people asking **each other** at the same
+  moment would otherwise both find nothing, write two different keys and both
+  be let through — leaving each of them in the other's incoming _and_
+  outgoing list. The second insert now conflicts, and the repository looks
+  again and accepts the row that won.
+- **404, never 403**, for a player who is not a friend: whether an id exists
+  is itself private. An id that is not even a UUID gets the same answer.
+- Every response is `Cache-Control: no-store` — these are personal lists that
+  change the moment somebody presses a button.
+- The **invite code** is validated by the contract (`inviteCodeSchema`), which
+  normalises what was typed first: case is ignored, spaces and dashes are
+  dropped, `I`/`L` read as `1` and `O` as `0`. A code nobody holds is `404`; a
+  player's own code is `400`.
+- A **friend's achievements** are computed on request from their stored
+  answers with the same domain functions the device uses — `rebuildProgress`
+  over `progress-repository.events()`, then `evaluateAchievements`. Nothing
+  about mastery is stored on either side.
+- The **shared board** is `leaderboardRepository.board(board, limit, among)`:
+  the same `DISTINCT ON` + `row_number()` query with
+  `user_id IN (player, …friends)`. No friends is a board of one; a set with no
+  ranked run is `{players: 0, entries: []}`.
+- A deleted account leaves every friends list by itself (the rows cascade with
+  the user).
 
 ## Signing in: `/v1/auth` and `/v1/me`
 
@@ -385,7 +438,10 @@ key, so a PostgreSQL run never reuses a PGlite result.
 PostgreSQL is where concurrency is real: the test "records two identical
 requests that race each other exactly once" exercises the primary key and
 `ON CONFLICT DO NOTHING`; on PGlite the same test passes because queries run
-one at a time.
+one at a time. A friendship's own race — two people asking each other at the
+same moment — is tested both ways: the two requests are really sent at once
+(`Promise.all`), and the second row for a pair is also written directly to
+show the database refusing it, which holds on PGlite as well.
 
 ## Running
 

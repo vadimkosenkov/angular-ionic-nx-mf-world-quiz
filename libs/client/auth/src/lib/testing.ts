@@ -8,6 +8,7 @@ export const USER: User = {
   nickname: 'Ann the Explorer',
   email: 'ann@example.com',
   providers: ['google'],
+  inviteCode: 'ANN12345',
   createdAt: '2026-09-21T10:00:00.000Z',
 };
 

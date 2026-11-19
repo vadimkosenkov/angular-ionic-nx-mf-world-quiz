@@ -68,6 +68,13 @@ export const userSchema = z.object({
   /** From the provider, if it shared one. Never used to link accounts. */
   email: z.string().nullable(),
   providers: z.array(z.enum([...IDENTITY_PROVIDERS, 'dev'])),
+  /**
+   * What this player hands to someone they want as a friend: the only way
+   * they can be found (ADR-015). It is permanent, because every invite
+   * already sent would die with a rotation, and the worst a leaked code can
+   * do is put a stranger in a list the player has to accept.
+   */
+  inviteCode: z.string(),
   createdAt: z.iso.datetime(),
 });
 export type User = z.infer<typeof userSchema>;

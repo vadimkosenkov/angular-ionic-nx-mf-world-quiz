@@ -10,6 +10,9 @@ import { createIdentityVerifier } from '../auth/identity-verifier';
 import { createRefreshTokenStore } from '../auth/refresh-tokens';
 import { createUserRepository } from '../auth/user-repository';
 import type { DatabaseHandle } from '../db/database';
+import { createFriendRepository } from '../friends/friend-repository';
+import { createFriendService } from '../friends/friend-service';
+import { createProgressRepository } from '../friends/progress-repository';
 import { createLeaderboardRepository } from '../leaderboard/leaderboard-repository';
 import {
   createLeaderboardService,
@@ -64,6 +67,13 @@ export async function createTestApi(
     clock,
     accessTokens,
     leaderboard,
+    friends: createFriendService({
+      repository: createFriendRepository(database.db),
+      progress: createProgressRepository(database.db),
+      leaderboard,
+      dataset: FIXTURE_DATASET,
+      clock,
+    }),
     sessions: createSessionService({
       repository: createSessionRepository(database.db),
       engine,
