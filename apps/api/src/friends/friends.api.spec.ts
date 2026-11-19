@@ -11,6 +11,7 @@ import { sql } from 'drizzle-orm';
 import request from 'supertest';
 import { defaultNickname } from '../auth/nickname';
 import type { DatabaseHandle } from '../db/database';
+import { friendships } from '../db/schema';
 import { playSession } from '../testing/play-session';
 import { createTestApi, TEST_START, type TestApi } from '../testing/test-api';
 import { createTestDatabase } from '../testing/test-database';
@@ -174,6 +175,58 @@ describe('friends', () => {
         incoming: [],
         outgoing: [],
       });
+    });
+
+    it('dates the answer by the request, not by the account', async () => {
+      // `since` is about the two of them. The invite code only says who
+      // the other player is, so an answer built from their account would
+      // report the day they signed up.
+      // Both moments are inside the 15 minutes an access token lives.
+      const asked = TEST_START + 120_000;
+      api.clock.set(asked);
+      const sent = await ask(alice, bob);
+      expect(sent.body.friend.since).toBe(new Date(asked).toISOString());
+
+      // Asking again does not restart the request that is already waiting.
+      api.clock.set(asked + 60_000);
+      const again = await ask(alice, bob);
+      expect(again.body.friend.since).toBe(new Date(asked).toISOString());
+
+      // And when the two requests meet, the answer is the day they did.
+      const met = TEST_START + 600_000;
+      api.clock.set(met);
+      const accepted = await ask(bob, alice);
+      expect(accepted.body.status).toBe('accepted');
+      expect(accepted.body.friend.since).toBe(new Date(met).toISOString());
+      expect((await listsOf(alice)).friends).toEqual([
+        {
+          id: bob.userId,
+          nickname: expect.any(String),
+          since: new Date(met).toISOString(),
+        },
+      ]);
+    });
+
+    it('leaves one row for a pair, whichever way round it is written', async () => {
+      // Two people asking each other at the same moment both find nothing
+      // and both insert — with different keys, because a row is kept in
+      // the direction it was asked. The database is what stops the second
+      // one; what the API does with the refusal is to look again and
+      // accept the row that won (friend-repository.ts).
+      await ask(alice, bob);
+      const bobFirst = database.db
+        .insert(friendships)
+        .values({
+          requesterId: bob.userId,
+          addresseeId: alice.userId,
+          status: 'pending',
+          requestedAt: new Date(api.clock.now()),
+        })
+        .execute();
+
+      await expect(bobFirst).rejects.toThrow();
+      expect((await listsOf(bob)).incoming).toHaveLength(1);
+      expect((await listsOf(bob)).outgoing).toEqual([]);
     });
 
     it('turns down the player own code', async () => {

@@ -64,6 +64,13 @@
       "when": 1795022947756,
       "tag": "0008_invite_code_required",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795061787924,
+      "tag": "0009_one_friendship_per_pair",
+      "breakpoints": true
     }
   ]
 }

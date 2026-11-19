@@ -74,8 +74,15 @@ export function createFriendService({
       const owner = await repository.findByInviteCode(code);
       if (!owner) return err('unknown-code');
       if (owner.id === userId) return err('self');
-      const status = await repository.request(userId, owner.id, clock.now());
-      return ok({ status, friend: toFriend(owner) });
+      // `since` belongs to the pair, not to the account: the invite code
+      // only knows who they are, so the row the write left behind is what
+      // says when this started.
+      const { status, since } = await repository.request(
+        userId,
+        owner.id,
+        clock.now(),
+      );
+      return ok({ status, friend: toFriend({ ...owner, since }) });
     },
 
     async accept(userId, otherId) {
