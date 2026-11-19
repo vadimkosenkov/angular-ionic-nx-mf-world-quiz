@@ -1,6 +1,9 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { render, screen } from '@testing-library/angular';
+import type { Friend } from '@world-quiz/shared/contracts';
 import { provideShellTesting } from '../../testing/shell-testing';
+import { FriendsStore } from '../friends/friends.store';
 import {
   NotificationsStore,
   RELEASE_SEEN_STORAGE_KEY,
@@ -20,9 +23,24 @@ const popover = () =>
     event?: Event;
   };
 
-async function renderBell(storage?: Readonly<Record<string, string>>) {
+const WAITING: Friend = {
+  id: '2f0e6b8f-0000-4000-8000-000000000002',
+  nickname: 'Boris',
+  since: '2026-11-18T10:00:00.000Z',
+};
+
+async function renderBell(
+  storage?: Readonly<Record<string, string>>,
+  incoming: readonly Friend[] = [],
+) {
   const rendered = await render(NotificationBell, {
-    providers: provideShellTesting({ storage }),
+    providers: [
+      ...provideShellTesting({ storage }),
+      {
+        provide: FriendsStore,
+        useValue: { incoming: signal(incoming) } as unknown as FriendsStore,
+      },
+    ],
   });
   // The store is loaded by an app initializer in the app itself.
   await TestBed.inject(NotificationsStore).load();
@@ -72,6 +90,20 @@ describe('NotificationBell', () => {
 
     expect(store.notifications()).toEqual([
       { kind: 'release', version: current },
+    ]);
+  });
+
+  it('carries the mark for a friend request on a device with nothing to read', async () => {
+    const { fixture } = await renderBell(
+      { [RELEASE_SEEN_STORAGE_KEY]: current },
+      [WAITING],
+    );
+    const store = TestBed.inject(NotificationsStore);
+    fixture.detectChanges();
+
+    expect(screen.getByTestId('notifications-dot')).toBeTruthy();
+    expect(store.notifications()).toEqual([
+      { kind: 'friend-requests', count: 1 },
     ]);
   });
 });

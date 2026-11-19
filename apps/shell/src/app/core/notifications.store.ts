@@ -9,6 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { KEY_VALUE_STORAGE } from '@world-quiz/client/settings';
+import { FriendsStore } from '../friends/friends.store';
 import {
   compareVersions,
   hasUnreadRelease,
@@ -21,15 +22,25 @@ export const RELEASE_SEEN_STORAGE_KEY = 'world-quiz.release.seen';
 
 /**
  * Something the app has to say to the player, as opposed to the outcome of
- * something they just did (that is a toast, design-system.md). Today there
- * is one kind; the bell is a list because a message about a friend's
- * challenge is the next thing to go in it.
+ * something they just did (that is a toast, design-system.md).
+ *
+ * There are two kinds. A release the player has not read about is the
+ * device's own business and is cleared by reading it; people waiting to be
+ * friends is the account's, and it is cleared by answering them — so this
+ * one carries no "seen" state at all, and leaves the list the moment the
+ * requests are dealt with.
  */
-export interface AppNotification {
-  readonly kind: 'release';
-  /** The release this message is about, e.g. `0.4`. */
-  readonly version: string;
-}
+export type AppNotification =
+  | {
+      readonly kind: 'release';
+      /** The release this message is about, e.g. `0.4`. */
+      readonly version: string;
+    }
+  | {
+      readonly kind: 'friend-requests';
+      /** How many people are waiting for an answer; never zero. */
+      readonly count: number;
+    };
 
 /**
  * What the bell on Home holds.
@@ -53,14 +64,22 @@ export interface AppNotification {
 export class NotificationsStore {
   private readonly storage = inject(KEY_VALUE_STORAGE);
   private readonly errorHandler = inject(ErrorHandler);
+  private readonly friends = inject(FriendsStore);
 
   private readonly seenState = signal<string | null>(null);
 
-  /** Everything the bell shows, newest first. */
+  /** Everything the bell shows: what somebody is waiting for first. */
   readonly notifications = computed<readonly AppNotification[]>(() => {
+    const messages: AppNotification[] = [];
+    const waiting = this.friends.incoming().length;
+    if (waiting > 0) {
+      messages.push({ kind: 'friend-requests', count: waiting });
+    }
     const release = latestRelease(RELEASES);
-    if (!release || !hasUnreadRelease(this.seenState(), RELEASES)) return [];
-    return [{ kind: 'release', version: release.version }];
+    if (release && hasUnreadRelease(this.seenState(), RELEASES)) {
+      messages.push({ kind: 'release', version: release.version });
+    }
+    return messages;
   });
 
   /** Whether the bell carries its mark. */

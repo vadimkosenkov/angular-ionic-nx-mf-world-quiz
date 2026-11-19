@@ -127,6 +127,54 @@
       </article>
     </section>
 
+    <!-- The third door out of Home, in the shape of the other two: what it
+         is, what it is worth opening for, and the way in as a pill. It is
+         also where the news about friends lives — a mark on the card as
+         well as on the bell, because the bell is a list of everything and
+         this is the thing it is about. -->
+    <section class="wq-section" aria-labelledby="friends-title">
+      <article class="offer" data-testid="friends-card">
+        <div class="offer-header">
+          <div>
+            <p class="offer-kind">{{ 'home.friends.kind' | transloco }}</p>
+            <h2 id="friends-title" class="offer-title">
+              {{ 'friends.title' | transloco }}
+            </h2>
+            <p class="description">
+              {{ 'home.friends.description' | transloco }}
+            </p>
+          </div>
+          <div class="offer-icon friends-icon" aria-hidden="true">
+            <ion-icon name="people" />
+            @if (requests() > 0) {
+            <span class="dot"></span>
+            }
+          </div>
+        </div>
+
+        <div class="offer-footer">
+          @if (requests() > 0) {
+          <span class="news" data-testid="friends-requests">
+            {{ 'counts.friendRequests' | wqPlural: requests() }}
+          </span>
+          } @else {
+          <span data-testid="friends-count">
+            {{ 'counts.friends' | wqPlural: friends.friends().length }}
+          </span>
+          }
+          <ion-button
+            class="go"
+            size="small"
+            routerLink="/friends"
+            data-testid="open-friends"
+          >
+            {{ 'friends.open' | transloco }}
+            <ion-icon slot="end" name="arrow-forward" aria-hidden="true" />
+          </ion-button>
+        </div>
+      </article>
+    </section>
+
     <section class="wq-section" aria-labelledby="practice-title">
       <h2 id="practice-title" class="wq-section-title">
         {{ 'home.practice.title' | transloco }}

@@ -137,3 +137,25 @@
     border-top: 1px solid var(--wq-color-border);
   }
 }
+
+// The same mark the bell carries, on the card the news is about.
+.friends-icon {
+  position: relative;
+
+  .dot {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--wq-color-primary);
+    border: 2px solid var(--wq-color-surface);
+  }
+}
+
+// What is new is said in the colour the app says "look here" in.
+.news {
+  color: var(--wq-color-primary-strong);
+  font-weight: 600;
+}

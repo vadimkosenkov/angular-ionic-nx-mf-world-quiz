@@ -42,6 +42,11 @@
   font-size: var(--wq-font-size-subtitle);
 }
 
+// Above the table and under the board's name: who the places are over.
+.audience {
+  margin-bottom: var(--wq-space-3);
+}
+
 .status,
 .players {
   margin: 0;

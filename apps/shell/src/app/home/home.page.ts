@@ -15,6 +15,7 @@ import {
   ProgressCard,
 } from '@world-quiz/client/ui';
 import { practiceCandidates, QUIZ_CATEGORIES } from '@world-quiz/quiz/domain';
+import { FriendsStore } from '../friends/friends.store';
 import { greetingFor } from '../core/greeting';
 import { LastSetupStore } from '../core/last-setup.store';
 import { NotificationBell } from '../notifications/notification-bell';
@@ -41,6 +42,8 @@ import { CLOCK } from '../core/tokens';
 })
 export class HomePage implements ViewWillEnter {
   protected readonly progress = inject(ProgressStore);
+  /** Who the player knows: the third card's count and its mark. */
+  protected readonly friends = inject(FriendsStore);
   /** What the Play card says pressing it is going to start. */
   protected readonly lastSetup = inject(LastSetupStore);
   private readonly clock = inject(CLOCK);
@@ -51,8 +54,13 @@ export class HomePage implements ViewWillEnter {
    */
   protected readonly greeting = signal(this.currentGreeting());
 
+  /** How many people are waiting for an answer; 0 draws no mark. */
+  protected readonly requests = computed(() => this.friends.incoming().length);
+
   ionViewWillEnter(): void {
     this.greeting.set(this.currentGreeting());
+    // Somebody may have asked while the app was open on another screen.
+    this.friends.reload();
   }
 
   private currentGreeting() {

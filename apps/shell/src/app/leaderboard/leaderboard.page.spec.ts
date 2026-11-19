@@ -261,6 +261,71 @@ describe('LeaderboardPage', () => {
     ).toBe('2 Ann the Explorer (you) 4:07.3');
   });
 
+  it('shows the same board over the player and their friends', async () => {
+    const { openBoard, answer, fixture } = await renderPage();
+    await openBoard();
+
+    emit('leaderboard-audience', 'friends');
+    fixture.detectChanges();
+    // The same board id, asked of the friends' own ranking.
+    await answer(`/v1/friends/leaderboards/${DEFAULT_BOARD}`, (request) =>
+      request.flush({
+        board: DEFAULT_BOARD,
+        players: 2,
+        entries: [
+          {
+            rank: 1,
+            nickname: 'Boris',
+            score: 190_000,
+            timeMs: 190_000,
+            recordedAt: '2026-09-22T10:00:00.000Z',
+          },
+          {
+            rank: 2,
+            nickname: 'Ann the Explorer',
+            score: 247_300,
+            timeMs: 247_300,
+            recordedAt: '2026-09-22T10:05:00.000Z',
+          },
+        ],
+      }),
+    );
+
+    expect(
+      entryRows().map((row) => row.textContent?.replace(/\s+/g, ' ').trim()),
+    ).toEqual(['1 Boris 3:10.0', '2 Ann the Explorer (you) 4:07.3']);
+    // The rank a record carries is the one on the public board, so it says
+    // nothing about where the player stands among their friends: nothing is
+    // pinned under a board of friends.
+    expect(screen.queryByTestId('leaderboard-my-row')).toBeNull();
+  });
+
+  it('says a board of friends is empty in its own words', async () => {
+    const { openBoard, answer, fixture } = await renderPage();
+    await openBoard();
+
+    emit('leaderboard-audience', 'friends');
+    fixture.detectChanges();
+    await answer(`/v1/friends/leaderboards/${DEFAULT_BOARD}`, (request) =>
+      request.flush({ board: DEFAULT_BOARD, players: 0, entries: [] }),
+    );
+
+    expect(screen.getByTestId('leaderboard-empty').textContent).toContain(
+      'Nobody you know is on this board yet',
+    );
+  });
+
+  it('only accepts a known audience from the segment event', async () => {
+    const { openBoard, fixture } = await renderPage();
+    await openBoard();
+
+    emit('leaderboard-audience', 'everybody-i-know');
+    fixture.detectChanges();
+
+    // Still the public board: nothing else was asked for.
+    expect(entryRows()).toHaveLength(2);
+  });
+
   it('says so, and offers to retry, when the board cannot be loaded', async () => {
     const { openBoard, answer } = await renderPage({ board: 'error' });
     await openBoard();
