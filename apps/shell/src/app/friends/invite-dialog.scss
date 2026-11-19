@@ -1,0 +1,70 @@
+.invite {
+  display: grid;
+  justify-items: center;
+  gap: var(--wq-space-3);
+  text-align: center;
+}
+
+// The code is the thing people read off the screen and type into another
+// phone, so it is set in a monospaced face with the digits and letters
+// spaced: `K7M2 X4PQ` is read in two glances, `K7M2X4PQ` in one squint.
+.code {
+  margin: 0;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.qr {
+  width: 160px;
+  height: 160px;
+  padding: var(--wq-space-2);
+  background: #ffffff;
+  border-radius: var(--wq-radius-sm);
+  border: 1px solid var(--wq-color-border);
+}
+
+.explain {
+  margin: 0;
+  font-size: var(--wq-font-size-caption);
+}
+
+.add {
+  display: grid;
+  gap: var(--wq-space-2);
+  margin-top: var(--wq-space-5);
+  padding-top: var(--wq-space-5);
+  border-top: 1px solid var(--wq-color-border);
+  text-align: start;
+
+  label {
+    font-size: var(--wq-font-size-caption);
+  }
+}
+
+.field {
+  display: flex;
+  gap: var(--wq-space-2);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--wq-touch-target);
+  padding: 0 var(--wq-space-4);
+  border: 1px solid var(--wq-color-border);
+  border-radius: var(--wq-radius-sm);
+  background: var(--wq-color-surface-secondary);
+  color: var(--wq-color-text-primary);
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 1rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.error {
+  margin: 0;
+  color: var(--wq-color-error);
+  font-size: var(--wq-font-size-caption);
+}

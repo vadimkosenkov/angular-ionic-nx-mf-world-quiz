@@ -129,8 +129,8 @@ typos). The app has no custom speech-recognition UI and no external AI/LLM judgi
 | 24  | `feat/release-notes`         | What changed in this release: a bell on Home, a page of notes, and a release cut per deploy                                   | ✅ merged      |
 | 25  | `feat/ranked-boards`         | A board per mode, region and difficulty, fed by ordinary games; the player's own row                                          | ✅ merged      |
 | 26  | `feat/share-claim`           | A shared result that explains itself: a claim in the player's voice, a medal, and the picture travelling alone                | ✅ merged      |
-| 27a | `feat/friends-server`        | The API of friends: an invite code, mutual requests, a friend's page, a board of friends                                      | 🚧 this branch |
-| 27b | `feat/friends-client`        | The screens: the friends list, an invite to share, a friend's profile, "All / Friends" on a board                             | planned        |
+| 27a | `feat/friends-server`        | The API of friends: an invite code, mutual requests, a friend's page, a board of friends                                      | ✅ merged      |
+| 27b | `feat/friends-client`        | The screens: the friends list, an invite to share, a friend's profile, "Everyone / Friends" on a board                        | 🚧 this branch |
 | 28  | `feat/auth-fixes`            | Google sign-in: straight to Home after signing in, no surprise sign-outs, and the player's Google picture on the account card | planned        |
 | 29  | `feat/voice-answers`         | Hard mode answered out loud: the Web Speech API on the web, a decision on iOS after                                           | planned        |
 | 30  | `feat/template-formatting`   | Control flow printed as the Angular docs write it, with no formatting workaround                                              | planned        |

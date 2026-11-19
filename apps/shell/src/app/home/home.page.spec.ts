@@ -1,15 +1,44 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { render, screen } from '@testing-library/angular';
 import { provideShellTesting } from '../../testing/shell-testing';
 import type { ManualClock } from '@world-quiz/shared/util';
 import { ProgressStore } from '@world-quiz/client/progress';
 import { finishedSession } from '@world-quiz/client/progress/testing';
+import type { Friend } from '@world-quiz/shared/contracts';
 import {
   LAST_SETUP_STORAGE_KEY,
   LastSetupStore,
 } from '../core/last-setup.store';
+import { FriendsStore } from '../friends/friends.store';
 import { CLOCK } from '../core/tokens';
 import { HomePage } from './home.page';
+
+/**
+ * The friends Home asks about: a stub, because what the card shows is the
+ * two lists, and standing the API up to produce them says nothing more.
+ */
+function friendsOf(friends: readonly Friend[], incoming: readonly Friend[]) {
+  const reloads: true[] = [];
+  const store = {
+    friends: signal(friends),
+    incoming: signal(incoming),
+    reload: () => reloads.push(true),
+  };
+  return {
+    reloads,
+    provider: {
+      provide: FriendsStore,
+      useValue: store as unknown as FriendsStore,
+    },
+  };
+}
+
+const friend = (nickname: string): Friend => ({
+  id: `0f0e6b8f-0000-4000-8000-00000000000${nickname.length}`,
+  nickname,
+  since: '2026-11-18T10:00:00.000Z',
+});
 
 /** What the Play card says it is going to start. */
 const playSetup = () =>
@@ -157,5 +186,47 @@ describe('HomePage', () => {
     expect(
       screen.getByRole('link', { name: 'See all' }).getAttribute('href'),
     ).toBe('/achievements');
+  });
+  it('offers the friends beside them, counting who there is', async () => {
+    const { provider } = friendsOf([friend('Boris'), friend('Clara')], []);
+    await render(HomePage, {
+      providers: [...provideShellTesting(), provider],
+    });
+
+    expect(
+      (await screen.findByTestId('open-friends')).getAttribute('href'),
+    ).toBe('/friends');
+    expect(screen.getByTestId('friends-count').textContent?.trim()).toBe(
+      '2 friends',
+    );
+    expect(screen.queryByTestId('friends-requests')).toBeNull();
+  });
+
+  it('marks the friends card when somebody is waiting for an answer', async () => {
+    // The bell is a list of everything the app has to say; the card is the
+    // thing this message is about, so it carries the mark as well.
+    const { provider } = friendsOf([friend('Boris')], [friend('Clara')]);
+    await render(HomePage, {
+      providers: [...provideShellTesting(), provider],
+    });
+
+    expect(
+      (await screen.findByTestId('friends-requests')).textContent?.trim(),
+    ).toBe('1 request waiting');
+    expect(screen.queryByTestId('friends-count')).toBeNull();
+    expect(screen.getByTestId('notifications-dot')).toBeTruthy();
+  });
+
+  it('asks who is waiting again whenever the tab is entered', async () => {
+    // Requests are answered on another screen and arrive while the app is
+    // open, so coming back to Home is a reason to look again.
+    const { provider, reloads } = friendsOf([], []);
+    const { fixture } = await render(HomePage, {
+      providers: [...provideShellTesting(), provider],
+    });
+
+    fixture.componentInstance.ionViewWillEnter();
+
+    expect(reloads.length).toBeGreaterThan(0);
   });
 });

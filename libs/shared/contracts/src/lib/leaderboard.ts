@@ -63,6 +63,7 @@ export const leaderboardEntrySchema = z.object({
   timeMs: z.int().nonnegative(),
   recordedAt: z.iso.datetime(),
 });
+export type LeaderboardEntry = z.infer<typeof leaderboardEntrySchema>;
 
 export const leaderboardSchema = z.object({
   board: leaderboardBoardIdSchema,

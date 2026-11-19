@@ -1,0 +1,171 @@
+<wq-page-header
+  backHref="/home"
+  [heading]="'friends.title' | transloco"
+  [backLabel]="'nav.back' | transloco"
+>
+  <button
+    type="button"
+    class="wq-header-action"
+    data-testid="friends-invite"
+    [attr.aria-label]="'friends.invite.action' | transloco"
+    (click)="inviting.set(true)"
+  >
+    <ion-icon name="person-add-outline" aria-hidden="true" />
+  </button>
+</wq-page-header>
+
+<ion-content [fullscreen]="true" class="wq-aurora">
+  <div class="wq-page friends">
+    @if (failed()) {
+    <div class="wq-card">
+      <wq-empty-state
+        icon="cloud-offline-outline"
+        [heading]="'friends.offline.title' | transloco"
+        [message]="'friends.offline.message' | transloco"
+      />
+      <div class="retry">
+        <ion-button
+          fill="outline"
+          size="small"
+          data-testid="friends-retry"
+          (click)="store.reload()"
+        >
+          {{ 'friends.offline.retry' | transloco }}
+        </ion-button>
+      </div>
+    </div>
+    } @else if (empty()) {
+    <!-- The one moment the invite is the point of the screen. -->
+    <div class="wq-card" data-testid="friends-empty">
+      <wq-empty-state
+        icon="people-outline"
+        [heading]="'friends.empty.title' | transloco"
+        [message]="'friends.empty.message' | transloco"
+      />
+      <div class="retry">
+        <ion-button
+          data-testid="friends-empty-invite"
+          (click)="inviting.set(true)"
+        >
+          <ion-icon slot="start" name="person-add-outline" aria-hidden="true" />
+          {{ 'friends.invite.action' | transloco }}
+        </ion-button>
+      </div>
+    </div>
+    } @if (incoming().length > 0) {
+    <section class="wq-section" aria-labelledby="friend-requests">
+      <h2 id="friend-requests" class="wq-section-title">
+        {{ 'friends.requests.title' | transloco }}
+      </h2>
+      <ul class="wq-card wq-card-rows" data-testid="friend-requests">
+        @for (row of incoming(); track row.friend.id) {
+        <li class="wq-row">
+          <span class="who">
+            <span class="initial" aria-hidden="true">{{ row.initial }}</span>
+            <span class="wq-row-name">
+              {{ row.friend.nickname }}
+              <span class="wq-text-secondary wq-row-note">
+                {{ 'friends.requests.note' | transloco }}
+              </span>
+            </span>
+          </span>
+          {{ ' ' }}
+          <span class="answers">
+            <ion-button
+              size="small"
+              [attr.data-testid]="'friend-accept-' + row.friend.id"
+              [disabled]="store.busy()"
+              (click)="accept(row.friend)"
+            >
+              {{ 'friends.requests.accept' | transloco }}
+            </ion-button>
+            <ion-button
+              size="small"
+              fill="clear"
+              color="medium"
+              [attr.aria-label]="
+                    'friends.requests.decline' | transloco: { name: row.friend.nickname }
+                  "
+              [attr.data-testid]="'friend-decline-' + row.friend.id"
+              [disabled]="store.busy()"
+              (click)="remove(row.friend)"
+            >
+              <ion-icon slot="icon-only" name="close" aria-hidden="true" />
+            </ion-button>
+          </span>
+        </li>
+        }
+      </ul>
+    </section>
+    } @if (friends().length > 0) {
+    <section class="wq-section" aria-labelledby="friend-list">
+      <h2 id="friend-list" class="wq-section-title">
+        {{ 'friends.list.title' | transloco }}
+      </h2>
+      <ul class="wq-card wq-card-rows" data-testid="friend-list">
+        @for (row of friends(); track row.friend.id) {
+        <li>
+          <button
+            type="button"
+            class="wq-row"
+            [attr.data-testid]="'friend-' + row.friend.id"
+            (click)="open(row.friend)"
+          >
+            <span class="who">
+              <span class="initial" aria-hidden="true">{{ row.initial }}</span>
+              <span class="wq-row-name">
+                {{ row.friend.nickname }}
+                <span class="wq-text-secondary wq-row-note">
+                  {{ 'friends.list.since' | transloco: { date: row.since } }}
+                </span>
+              </span>
+            </span>
+            {{ ' ' }}
+            <ion-icon class="go" name="chevron-forward" aria-hidden="true" />
+          </button>
+        </li>
+        }
+      </ul>
+    </section>
+    } @if (outgoing().length > 0) {
+    <section class="wq-section" aria-labelledby="friend-sent">
+      <h2 id="friend-sent" class="wq-section-title">
+        {{ 'friends.sent.title' | transloco }}
+      </h2>
+      <ul class="wq-card wq-card-rows" data-testid="friend-sent">
+        @for (row of outgoing(); track row.friend.id) {
+        <li class="wq-row">
+          <span class="who">
+            <span class="initial" aria-hidden="true">{{ row.initial }}</span>
+            <span class="wq-row-name">
+              {{ row.friend.nickname }}
+              <span class="wq-text-secondary wq-row-note">
+                {{ 'friends.sent.note' | transloco: { date: row.since } }}
+              </span>
+            </span>
+          </span>
+          {{ ' ' }}
+          <ion-button
+            size="small"
+            fill="clear"
+            color="medium"
+            [attr.aria-label]="
+                  'friends.sent.cancel' | transloco: { name: row.friend.nickname }
+                "
+            [attr.data-testid]="'friend-cancel-' + row.friend.id"
+            [disabled]="store.busy()"
+            (click)="remove(row.friend)"
+          >
+            <ion-icon slot="icon-only" name="close" aria-hidden="true" />
+          </ion-button>
+        </li>
+        }
+      </ul>
+    </section>
+    }
+  </div>
+</ion-content>
+
+@if (inviting()) {
+<wq-invite-dialog (dismissed)="inviting.set(false)" />
+}

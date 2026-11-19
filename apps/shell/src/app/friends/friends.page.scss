@@ -1,0 +1,52 @@
+// A row's first column: the initial disc and the two lines beside it.
+.who {
+  display: flex;
+  align-items: center;
+  gap: var(--wq-space-3);
+  min-width: 0;
+}
+
+// There are no pictures in this app, so a row leads with the first
+// character of the nickname — enough to tell two rows apart at a glance.
+.initial {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--wq-color-primary-container);
+  color: var(--wq-color-on-primary-container);
+  font-weight: 800;
+}
+
+.answers {
+  display: flex;
+  align-items: center;
+  gap: var(--wq-space-1);
+  flex: 0 0 auto;
+}
+
+// A row that opens a page is a button, so it has to be told to look like
+// the rows beside it rather than like a control.
+button.wq-row {
+  width: 100%;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.go {
+  flex: 0 0 auto;
+  color: var(--wq-color-text-secondary);
+  font-size: 18px;
+}
+
+.retry {
+  display: flex;
+  justify-content: center;
+  padding: 0 var(--wq-space-5) var(--wq-space-5);
+}

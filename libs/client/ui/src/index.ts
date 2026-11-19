@@ -9,6 +9,8 @@ export { PageHeader } from './lib/page-header/page-header';
 export { ProgressBar } from './lib/progress-bar/progress-bar';
 export type { ProgressTone } from './lib/progress-bar/progress-bar';
 export { ProgressCard } from './lib/progress-card/progress-card';
+export { QR_QUIET_ZONE, QrCode, qrMatrix, qrPath } from './lib/qr-code/qr-code';
+export type { QrMatrix } from './lib/qr-code/qr-code';
 export { RegionOptions } from './lib/region-options/region-options';
 export type { RegionOption } from './lib/region-options/region-options';
 export {

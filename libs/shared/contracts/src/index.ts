@@ -88,6 +88,7 @@ export {
 } from './lib/leaderboard';
 export type {
   Leaderboard,
+  LeaderboardEntry,
   MyRecord,
   MyRecords,
   RankedOutcome,

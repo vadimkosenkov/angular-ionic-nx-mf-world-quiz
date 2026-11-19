@@ -37,6 +37,7 @@ import {
 } from '@world-quiz/client/ui';
 import { APP_URL } from '@world-quiz/client/quiz-ports';
 import {
+  type LeaderboardEntry,
   leaderboardSchema,
   type MyRecord,
   myRecordsSchema,
@@ -65,6 +66,14 @@ type LeaderboardView = (typeof LEADERBOARD_VIEWS)[number];
 
 function isLeaderboardView(value: unknown): value is LeaderboardView {
   return (LEADERBOARD_VIEWS as readonly unknown[]).includes(value);
+}
+
+/** Who a ranking is over: everybody who plays, or the player's friends. */
+const BOARD_AUDIENCES = ['everyone', 'friends'] as const;
+type BoardAudience = (typeof BOARD_AUDIENCES)[number];
+
+function isBoardAudience(value: unknown): value is BoardAudience {
+  return (BOARD_AUDIENCES as readonly unknown[]).includes(value);
 }
 
 /** A row of the ranking, or the player's own record, as the list shows it. */
@@ -153,6 +162,13 @@ export class LeaderboardPage implements ViewWillEnter {
   protected readonly view = signal<LeaderboardView>('global');
 
   /**
+   * Whose ranking the open board shows. It stays as the player left it from
+   * one board to the next: somebody who came to compare with their friends
+   * is going to do it again on the next board, not once.
+   */
+  protected readonly audience = signal<BoardAudience>('everyone');
+
+  /**
    * The picker opens on the board the player last asked for, exactly as the
    * quiz setup opens on the game they last played: answering the same four
    * questions before every look is work the app can do once. A
@@ -191,11 +207,20 @@ export class LeaderboardPage implements ViewWillEnter {
    */
   protected readonly shown = signal<LeaderboardBoardId | null>(null);
 
-  /** The ranking of the board being shown; public, the same for everyone. */
+  /**
+   * The ranking of the board being shown.
+   *
+   * The two endpoints answer with the same thing — the public board is the
+   * same query over everybody, the friends board over the player and the
+   * people they know, numbered from 1 either way (ADR-015).
+   */
   protected readonly ranking = httpResource(
     () => {
       const board = this.shown();
-      return board ? `${this.apiUrl}/v1/leaderboards/${board}` : undefined;
+      if (!board) return undefined;
+      return this.audience() === 'friends'
+        ? `${this.apiUrl}/v1/friends/leaderboards/${board}`
+        : `${this.apiUrl}/v1/leaderboards/${board}`;
     },
     { parse: (body) => leaderboardSchema.parse(body) },
   );
@@ -221,15 +246,34 @@ export class LeaderboardPage implements ViewWillEnter {
     if (!board || !this.ranking.hasValue()) return [];
     const mine = this.myRecord();
     const metric = leaderboardBoardById(board).metric;
-    return this.ranking.value().entries.map((entry) => ({
-      rank: entry.rank,
-      name: entry.nickname,
-      score: this.scoreText(entry.score, metric),
-      time: metric === 'correct' ? formatRunTime(entry.timeMs) : null,
-      // Ranks are unique within a board, so the player's own record names
-      // their row without comparing nicknames, which are not unique.
-      me: entry.rank === mine?.rank,
-    }));
+    // Which row is the player's own.
+    //
+    // On the public board it is the one at their rank: `/v1/me/records`
+    // carries the place that board gave them, and places on it are unique.
+    // A board of friends numbers its places over fewer people, so that
+    // number names somebody else's row there; what both answers carry
+    // about the same run is the moment the server recorded it, and the
+    // nickname beside it. Two runs can share a millisecond — the ranking
+    // itself breaks that tie by session — so **one** row is marked, not
+    // every row that matches.
+    const isMine =
+      this.audience() === 'friends'
+        ? (entry: LeaderboardEntry) =>
+            entry.recordedAt === mine?.recordedAt &&
+            entry.nickname === mine?.nickname
+        : (entry: LeaderboardEntry) => entry.rank === mine?.rank;
+    let marked = false;
+    return this.ranking.value().entries.map((entry) => {
+      const me = Boolean(mine) && !marked && isMine(entry);
+      if (me) marked = true;
+      return {
+        rank: entry.rank,
+        name: entry.nickname,
+        score: this.scoreText(entry.score, metric),
+        time: metric === 'correct' ? formatRunTime(entry.timeMs) : null,
+        me,
+      };
+    });
   });
 
   /** How many players have a ranked run on the board being shown. */
@@ -245,7 +289,11 @@ export class LeaderboardPage implements ViewWillEnter {
     const mine = this.myRecord();
     if (!mine) return null;
     const shown = this.entries().some((entry) => entry.me);
-    return shown ? null : this.rowOf(mine);
+    // Only the public board can be too long to find yourself on. A board of
+    // friends holds everyone it has, and the player's global rank would be
+    // the wrong number to pin under it.
+    if (shown || this.audience() === 'friends') return null;
+    return this.rowOf(mine);
   });
 
   /** Every board the player has a record on, best place first. */
@@ -357,6 +405,11 @@ export class LeaderboardPage implements ViewWillEnter {
   protected onViewChange(event: Event): void {
     const { value } = (event as SegmentCustomEvent).detail;
     if (isLeaderboardView(value)) this.view.set(value);
+  }
+
+  protected onAudienceChange(event: Event): void {
+    const { value } = (event as SegmentCustomEvent).detail;
+    if (isBoardAudience(value)) this.audience.set(value);
   }
 
   /**

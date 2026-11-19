@@ -211,6 +211,22 @@
       </p>
       <p class="board-style">{{ lines.style }}</p>
     </header>
+    <!-- The same board, over fewer people. It is a switch and not a second
+         board because what it changes is who is on it, not what is asked. -->
+    <ion-segment
+      class="wq-segment-pill audience"
+      data-testid="leaderboard-audience"
+      [attr.aria-label]="'leaderboard.audience.label' | transloco"
+      [value]="audience()"
+      (ionChange)="onAudienceChange($event)"
+    >
+      <ion-segment-button value="everyone">
+        <ion-label>{{ 'leaderboard.audience.everyone' | transloco }}</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="friends">
+        <ion-label>{{ 'leaderboard.audience.friends' | transloco }}</ion-label>
+      </ion-segment-button>
+    </ion-segment>
     @if (ranking.isLoading()) {
     <p class="wq-text-secondary status" role="status">
       {{ 'leaderboard.loading' | transloco }}
@@ -231,7 +247,12 @@
       data-testid="leaderboard-empty"
       icon="podium-outline"
       [heading]="'leaderboard.empty.title' | transloco"
-      [message]="'leaderboard.empty.message' | transloco"
+      [message]="
+        (audience() === 'friends'
+          ? 'leaderboard.empty.friends'
+          : 'leaderboard.empty.message'
+        ) | transloco
+      "
     />
     } @else {
     <ol class="entries" data-testid="leaderboard-entries">

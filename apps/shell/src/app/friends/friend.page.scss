@@ -1,0 +1,108 @@
+.who {
+  display: flex;
+  align-items: center;
+  gap: var(--wq-space-4);
+  padding: var(--wq-space-5);
+}
+
+.initial {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--wq-color-primary-container);
+  color: var(--wq-color-on-primary-container);
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.name {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.nickname {
+  font-size: 1.25rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+// What they did on a board: the place, then the figure that earned it.
+.standing {
+  display: flex;
+  align-items: center;
+  gap: var(--wq-space-2);
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.score {
+  font-weight: 700;
+}
+
+// The first three places are a disc with the number in it, exactly as the
+// results screen and the shared picture draw them.
+.medal {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: var(--wq-color-on-primary);
+  font-size: var(--wq-font-size-caption);
+  font-weight: 800;
+
+  &.gold {
+    background: var(--wq-color-medal-gold);
+  }
+
+  &.silver {
+    background: var(--wq-color-medal-silver);
+  }
+
+  &.bronze {
+    background: var(--wq-color-medal-bronze);
+  }
+}
+
+.achievements {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wq-space-4);
+  margin: 0;
+  padding: var(--wq-space-5);
+  list-style: none;
+}
+
+.achievement-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--wq-space-3);
+  margin-bottom: var(--wq-space-2);
+  font-weight: 600;
+}
+
+.done {
+  color: var(--wq-color-success);
+  vertical-align: -2px;
+}
+
+.end {
+  display: flex;
+  justify-content: center;
+}
+
+// The same way out of an unreadable page as the list has (friends.page.scss):
+// the card itself has no padding, so the row under the words carries it.
+.retry {
+  display: flex;
+  justify-content: center;
+  padding: 0 var(--wq-space-5) var(--wq-space-5);
+}
+
+.note {
+  margin: 0;
+}

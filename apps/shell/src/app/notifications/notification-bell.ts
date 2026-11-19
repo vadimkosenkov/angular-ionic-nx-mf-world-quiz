@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { IonContent, IonIcon, IonPopover, NavController } from '@ionic/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { PluralPipe } from '@world-quiz/client/i18n';
 import { NotificationsStore } from '../core/notifications.store';
 
 /**
@@ -20,7 +21,7 @@ import { NotificationsStore } from '../core/notifications.store';
  */
 @Component({
   selector: 'wq-notification-bell',
-  imports: [IonContent, IonIcon, IonPopover, TranslocoPipe],
+  imports: [IonContent, IonIcon, IonPopover, PluralPipe, TranslocoPipe],
   template: `
     <button
       type="button"
@@ -47,9 +48,9 @@ import { NotificationsStore } from '../core/notifications.store';
       role="dialog"
       class="notifications"
       [attr.aria-label]="'notifications.title' | transloco"
-      [isOpen]="open()"
+      [isOpen]="isOpen()"
       [event]="anchor()"
-      (didDismiss)="open.set(false)"
+      (didDismiss)="isOpen.set(false)"
     >
       <ng-template>
         <ion-content class="ion-padding">
@@ -58,27 +59,53 @@ import { NotificationsStore } from '../core/notifications.store';
               {{ 'notifications.empty' | transloco }}
             </p>
           }
-          @for (notification of notifications(); track notification.version) {
-            <button
-              type="button"
-              class="message"
-              data-testid="notification-release"
-              (click)="openReleaseNotes()"
-            >
-              <ion-icon name="sparkles-outline" aria-hidden="true" />
-              <span class="words">
-                <span class="name">
-                  {{
-                    'notifications.release.title'
-                      | transloco: { version: notification.version }
-                  }}
-                </span>
-                <span class="note">
-                  {{ 'notifications.release.action' | transloco }}
-                </span>
-              </span>
-              <ion-icon name="chevron-forward" aria-hidden="true" />
-            </button>
+          @for (notification of notifications(); track notification.kind) {
+            @switch (notification.kind) {
+              @case ('friend-requests') {
+                <button
+                  type="button"
+                  class="message"
+                  data-testid="notification-friends"
+                  (click)="open('/friends')"
+                >
+                  <ion-icon name="person-add-outline" aria-hidden="true" />
+                  <span class="words">
+                    <span class="name">
+                      {{
+                        'notifications.friends.title'
+                          | wqPlural: notification.count
+                      }}
+                    </span>
+                    <span class="note">
+                      {{ 'notifications.friends.action' | transloco }}
+                    </span>
+                  </span>
+                  <ion-icon name="chevron-forward" aria-hidden="true" />
+                </button>
+              }
+              @case ('release') {
+                <button
+                  type="button"
+                  class="message"
+                  data-testid="notification-release"
+                  (click)="open('/release-notes')"
+                >
+                  <ion-icon name="sparkles-outline" aria-hidden="true" />
+                  <span class="words">
+                    <span class="name">
+                      {{
+                        'notifications.release.title'
+                          | transloco: { version: notification.version }
+                      }}
+                    </span>
+                    <span class="note">
+                      {{ 'notifications.release.action' | transloco }}
+                    </span>
+                  </span>
+                  <ion-icon name="chevron-forward" aria-hidden="true" />
+                </button>
+              }
+            }
           }
         </ion-content>
       </ng-template>
@@ -91,7 +118,7 @@ export class NotificationBell {
 
   protected readonly store = inject(NotificationsStore);
   protected readonly notifications = this.store.notifications;
-  protected readonly open = signal(false);
+  protected readonly isOpen = signal(false);
   /** The press the popover points at; Ionic reads it when it opens. */
   protected readonly anchor = signal<Event | undefined>(undefined);
 
@@ -102,11 +129,12 @@ export class NotificationBell {
 
   protected present(event: Event): void {
     this.anchor.set(event);
-    this.open.set(true);
+    this.isOpen.set(true);
   }
 
-  protected async openReleaseNotes(): Promise<void> {
-    this.open.set(false);
-    await this.nav.navigateForward('/release-notes');
+  /** Opens the page a message is about and closes the list. */
+  protected async open(path: string): Promise<void> {
+    this.isOpen.set(false);
+    await this.nav.navigateForward(path);
   }
 }

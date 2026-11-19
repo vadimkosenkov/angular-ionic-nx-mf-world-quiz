@@ -179,6 +179,24 @@ Rules: [leaderboard.md](../domain/leaderboard.md).
   mode is chosen instead: an "i" beside Game mode on the quiz setup
   (`setup.modeInfo`) — by the time a player is looking at a board, the run is
   already played.
+- **Everyone or friends.** A segment over the ranking asks who is on the
+  board, and the "Friends" side is the same board over fewer people —
+  `GET /v1/friends/leaderboards/:board`, the public query narrowed to the
+  player and their friends. It is a switch and not a second screen because
+  what it changes is who is ranked, not what is asked. The player's own row
+  is still highlighted in place, but **nothing is pinned** under a board of
+  friends: the rank a record carries is the one on the public board, so it
+  says nothing about where the player stands among the people they know. An
+  empty one says so in its own words ("Nobody you know is on this board
+  yet"), because the public board's "be the first" is wrong advice there.
+- **Which row is the player's own** is answered differently on the two
+  sides. On the public board it is the row at their rank, which is unique
+  there and comes straight from `/v1/me/records`. A board of friends
+  numbers its places over fewer people, so that number names somebody
+  else's row; there the run is found by the moment the server recorded it
+  and the nickname beside it — and **one** row is marked, never every row
+  that matches, because two runs can share a millisecond (the ranking
+  itself breaks that tie by session).
 - **My records**: one row per board the player ranks on, with the score and
   the place, each shareable as a picture; nothing at all is "No records yet"
   rather than 56 empty rows.
@@ -209,6 +227,69 @@ Rules: [leaderboard.md](../domain/leaderboard.md).
 - **Public name**: Settings → Account shows the nickname and edits it in a
   dialog, validated with the API's own `nicknameSchema` before sending
   (`PATCH /v1/me` through `AuthStore.setNickname`).
+
+## Friends (ADR-015)
+
+Rules and endpoints: [ADR-015](../decisions/ADR-015-friends.md),
+[backend.md](backend.md).
+
+- **`FriendsStore`** (`apps/shell/src/app/friends/friends.store.ts`) is the
+  one place the three lists live: `httpResource` on `GET /v1/friends`, which
+  asks for nothing at all while nobody is signed in. Mutations are plain
+  calls that **reload** the lists rather than patching them — accepting a
+  request empties one list and fills another, and the server is the one that
+  knows what the result was. Home's card and the bell read the same signals,
+  so a request is news on the first screen of the app without a second fetch.
+- **The invite is a dialog, not the top of the screen** (`invite-dialog.ts`):
+  the player's own code as a QR, as spaced characters ("ANN1 2345"), a share
+  that hands the link to the sheet or the clipboard, and the field for
+  somebody else's code. Both halves of the exchange are in one place because
+  they are one moment, usually with two phones side by side. The screen
+  itself is the list of people — an invite card holding the top of it for
+  ever would push the list half a screen down — so the invite lives behind
+  the `+` in the header, and the empty state offers it as its action.
+- **The code is checked before it is sent.** `inviteCodeSchema` /
+  `normaliseInviteCode` (contracts) read what was typed — case, spaces,
+  dashes, `I`/`L` as `1`, `O` as `0` — and the player's **own** code is
+  refused in the app: it is the one mistake the client can recognise on its
+  own, and it deserves an answer at once rather than a round trip. The
+  message appears beside the field (`role="alert"`), not as a toast: it is a
+  standing fact about what is typed there.
+- **The invite link is a public route.** `/invite/:code` is the only route
+  besides `/welcome` outside the sign-in guard, because an invite is usually
+  sent to somebody who has no account yet. The page shows nothing of the app:
+  it writes the code into `KEY_VALUE_STORAGE` (the device's note to itself,
+  not the account's — signing in takes a round trip to Google and this page
+  does not outlive it), waits for `AuthStore.whenRestored()` and sends the
+  player to `/friends` or `/welcome`. `FriendsStore` then sends the request
+  from an `effect` on `signedIn()`, once, and **forgets the code whatever
+  came of it**: a code that cannot be used must not be retried on every
+  start. The code is read as a route **input** inside an effect, not in the
+  constructor — a required input read before the router has set it throws.
+- **A page that cannot be read says which of the two it is.** A 404 is the
+  API saying this player is not yours to see — not a friend any more, or
+  gone — and that is a fact about the friendship, so the page says so and
+  offers nothing to press. Anything else is the connection, and gets the
+  same offline card with a retry that the list has: telling a player their
+  friendship has ended because their train went into a tunnel would be a
+  lie with a button missing underneath it.
+- **A friend's page** (`friend.page.ts`) is `GET /v1/friends/:id`: their
+  nickname, how long you have been friends, their best run per board (with a
+  gold/silver/bronze medal for a place in the first three, the score in the
+  board's own terms) and their achievements, the ones they have got furthest
+  with first. A page that is not yours to see — not a friend any more, or the
+  player has left — is a 404 from the API and says the same thing here,
+  never that you are not allowed.
+- **Ending a friendship is asked for on that page**, in a `tone="danger"`
+  dialog: it is where there is something to look at before deciding.
+  Declining a request and unfriending are the same call, so the lists
+  themselves only ever offer the quick answer (accept, or the `×` that says
+  no).
+- Home's **Friends card** is the third `.offer` card, in the shape of Play
+  and Learn, and carries the mark when somebody is waiting: the bell is a
+  list of everything the app has to say, and the card is the thing this
+  message is about. Coming back to the tab asks who is waiting again
+  (`ionViewWillEnter`), because requests arrive while the app is open.
 
 ## Sharing a result
 

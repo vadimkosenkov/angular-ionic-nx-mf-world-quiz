@@ -1,19 +1,38 @@
-import { ErrorHandler } from '@angular/core';
+import { ErrorHandler, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import {
   createMemoryStorage,
   KEY_VALUE_STORAGE,
   type MemoryStorage,
 } from '@world-quiz/client/settings';
+import type { Friend } from '@world-quiz/shared/contracts';
+import { FriendsStore } from '../friends/friends.store';
 import { latestRelease, RELEASES } from '../release-notes/release-notes';
 import {
   NotificationsStore,
   RELEASE_SEEN_STORAGE_KEY,
 } from './notifications.store';
 
+/**
+ * Who is waiting to be friends is the only thing this store asks of the
+ * friends: a stub keeps the spec from standing up the API's configuration
+ * and an HTTP client for a list it never reads.
+ */
+function friendsWaiting(count: number): FriendsStore {
+  const incoming = signal<readonly Friend[]>(
+    Array.from({ length: count }, (_, index) => ({
+      id: `00000000-0000-4000-8000-00000000000${index}`,
+      nickname: `Player ${index}`,
+      since: '2026-11-18T10:00:00.000Z',
+    })),
+  );
+  return { incoming } as unknown as FriendsStore;
+}
+
 function setup(
   stored?: Readonly<Record<string, string>>,
   override?: Partial<MemoryStorage>,
+  waiting = 0,
 ) {
   const reported: unknown[] = [];
   const storage = { ...createMemoryStorage({ ...stored }), ...override };
@@ -21,6 +40,7 @@ function setup(
   TestBed.configureTestingModule({
     providers: [
       { provide: KEY_VALUE_STORAGE, useValue: storage },
+      { provide: FriendsStore, useValue: friendsWaiting(waiting) },
       {
         provide: ErrorHandler,
         useValue: { handleError: (error: unknown) => reported.push(error) },
@@ -106,6 +126,35 @@ describe('NotificationsStore', () => {
 
     expect(storage.snapshot()[RELEASE_SEEN_STORAGE_KEY]).toBe(ahead);
     expect(notifications.unread()).toBe(false);
+  });
+
+  it('puts people waiting to be friends before the release', async () => {
+    // Somebody is waiting for an answer; the notes are not going anywhere.
+    const { notifications } = setup(
+      { [RELEASE_SEEN_STORAGE_KEY]: older },
+      undefined,
+      2,
+    );
+    await notifications.load();
+
+    expect(notifications.unread()).toBe(true);
+    expect(notifications.notifications()).toEqual([
+      { kind: 'friend-requests', count: 2 },
+      { kind: 'release', version: current },
+    ]);
+  });
+
+  it('marks the bell for a friend request on a device with nothing to read', async () => {
+    // A request carries no "seen" state: answering it is what clears it,
+    // so reading the notes must not silence it.
+    const { notifications } = setup(undefined, undefined, 1);
+    await notifications.load();
+    await notifications.markReleasesRead();
+
+    expect(notifications.unread()).toBe(true);
+    expect(notifications.notifications()).toEqual([
+      { kind: 'friend-requests', count: 1 },
+    ]);
   });
 
   it('reports storage it cannot read and shows nothing', async () => {
